@@ -101,7 +101,7 @@ VAR
   
 
 OBJ
-  RC :   "RC_Receiver-2.spin"                           '1 cog
+  RC :   "RC_Receiver.spin"                             '1 cog
   Sens : "Sensors.spin"                                 '1 cog
   IMU :  "QuatIMU.spin"                                 '1 cogs (float command stream processor) 
   ESC :  "Servo32-Highres.spin"                         '1 cog
