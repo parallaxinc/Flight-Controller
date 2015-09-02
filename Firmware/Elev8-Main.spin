@@ -625,7 +625,37 @@ PUB All_LED( Color )
   LongFill( @LEDValue[0], Color, LED_COUNT) 
 
 
-PUB BeepHz( Hz , Delay ) | i
+PUB BeepHz( Hz , Delay ) | i, loop, d, ctr
+
+  'Note that each loop does a high and low cycle, so we use a baseline of 40_000_000 cycles instead of 80_000_000 (1/2)
+
+  d := 40_000_000 / Hz          'Compute the amount of time to delay between pulses to get the right frequency
+  loop := (Delay * 40_000) / d  'How many iterations of the loop to make "Delay" milliseconds?
+
+  DIRA[BUZZER_1] := 1    
+  DIRA[BUZZER_2] := 1
+   
+  ctr := cnt
+    
+  repeat i from 0 to loop
+    OUTA[BUZZER_1] := 1    
+    OUTA[BUZZER_2] := 0
+
+    ctr += d
+    waitcnt( ctr )    
+
+    OUTA[BUZZER_1] := 0    
+    OUTA[BUZZER_2] := 1
+
+    ctr += d
+    waitcnt( ctr )    
+
+  OUTA[BUZZER_1] := 0    
+  OUTA[BUZZER_2] := 0
+   
+
+
+PUB BeepHz2( Hz , Delay ) | i
 
   DIRA[BUZZER_1] := 1                                   'Enable the buzzer pin output
   Freq.Synth("A", BUZZER_1, Hz )
