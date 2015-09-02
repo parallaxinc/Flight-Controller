@@ -1,0 +1,40 @@
+' ----------------------------------------------------------------------
+' PINS reference
+'
+' ELEV8FC (Flight Controller) - 2015.04.22. - Speedy Prototype
+'
+' NOTE: DIN/DOUT pins relative to SENSORS! Swap on FC (master) !
+' ----------------------------------------------------------------------
+
+'  0 - RCV 5
+'  1 - RCV 6
+'  2 - RCV 7
+'  3 - RCV 8
+'  4 - XBEE CTS
+'  5 - XBEE RTS
+'  6 - XBEE DOUT
+'  7 - XBEE DIN
+'  8 - CS ALT   ' LPS25H Altimeter CS
+'  9 - INT1 A/G ' LSM9DS1 Accel/Gyro Int1
+' 10 - INT M    ' LSM9DS1 Magnetometer Int
+' 11 - CS A/G   ' LSM9DS1 Accel/Gyro CS
+' 12 - SPI DOUT
+' 13 - SPI DIN
+' 14 - SPI Clock
+' 15 - CS M     ' LSM9DS1 Magnetometer CS
+' 16 - BUZZER
+' 17 - AUX
+' 18 - ELEV8 BUS
+' 19 - LED BUS  ' Onboard WS2812B @ address 0
+' 20 - ESC 2
+' 21 - ESC 4
+' 22 - ESC 3
+' 23 - ESC 1
+' 24 - RCV 4
+' 25 - RCV 3
+' 26 - RCV 2
+' 27 - RCV 1
+' 28 - I2C SCL
+' 29 - I2C SDA
+' 30 - PropPlug TX
+' 31 - PropPlug RX

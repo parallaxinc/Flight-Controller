@@ -1,0 +1,40 @@
+LSM9DS1:
+P12 - SCL - SDI Clock
+P14 - SPI Data IN
+P13 - SPI Data OUT (SDO_AG / SDO_M)
+P10 - CS_M
+P11 - CS_AG
+
+LPS25H:
+P9  - CS
+ (others same as above)
+
+Receiver:
+P0
+P1
+P2
+P3
+P4
+P5
+P27
+P26
+
+
+P15
+P16 - ESCs
+P17
+P18
+
+P19 - AUX header
+P20 - AUX header
+P21 - Expansion bus
+
+
+P28 - I2C SDA  (Eeprom, I2C)
+P29 - I2C SCL
+
+
+P6, P7 - Buzzer:
+
+
+P8 - LED
