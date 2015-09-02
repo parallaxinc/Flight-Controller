@@ -354,11 +354,12 @@ namespace Elev8
 						//gHeading.Value = (float)(Math.Atan2( MagX, MagY ) * 1800.0/Math.PI);
 						gHeading.Value = ComputeTiltCompensatedHeading();
 
+						double pressure = (double)Alt / 4096.0;
 
-						float altitudeFeet = (1 - (float)Math.Pow( (double)Alt / 1013.25, 0.190284 )) * 145366.45f;
+						float altitudeFeet = (1 - (float)Math.Pow( pressure / 1013.25, 0.190284 )) * 145366.45f;
 						float altTempDegrees = 42.5f + (float)AltTemp / 480.0f;
 
-						lblAltimeter.Text = string.Format( "{0}hPa ({1:0} ft)", Alt / 4096, altitudeFeet );
+						lblAltimeter.Text = string.Format( "{0:0.00}hPa ({1:0.0} ft)", pressure, altitudeFeet );
 						lblAltimeterTemp.Text = string.Format( "{0:0.0}*C", altTempDegrees );
 					}
 
