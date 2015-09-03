@@ -38,7 +38,8 @@ CON
   CS_M   = 10   '15
 
   LED_PIN = 8
-  LED_COUNT = 1  
+  LED_COUNT = 1
+  LED_TESTDELAY = 6_000_000
 
   BUZZER_1 = 6
   BUZZER_2 = 7
@@ -66,6 +67,7 @@ CON
   LED_Half    = $7f_7f_7f
   LED_Quarter = $3f_3f_3f
   LED_Eighth  = $1f_1f_1f
+  LED_Dim     = $0f_0f_0f
 
   'For example...
   LED_Orange  = (LED_Red & LED_Full) | (LED_Green & LED_Half)  
@@ -456,7 +458,7 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
 
 
 
-PUB DoDebugModeOutput | loop, addr, phase
+PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
   if( Mode == MODE_None )
     return
 
@@ -530,12 +532,19 @@ PUB DoDebugModeOutput | loop, addr, phase
         BeepHz(3000, 50)
         
       elseif( NudgeMotor == 5 )
-        repeat loop from 0 to $f0_f0_f0 step $04_04_04 
-          All_LED( loop )
-           waitcnt( cnt + 500_000 )
-        repeat loop from $f0_f0_f0 to 0 step $04_04_04 
-          All_LED( loop )
-          waitcnt( cnt + 500_000 )
+        'repeat loop from 0 to $f0_f0_f0 step $04_04_04 
+          'All_LED( loop )
+           'waitcnt( cnt + 500_000 )
+        'repeat loop from $f0_f0_f0 to 0 step $04_04_04 
+          'All_LED( loop )
+          'waitcnt( cnt + 500_000 )
+        
+        ' RGB led will fade-up/down through 3 colors: red, green, blue  
+        repeat ledcoloridx from 0 to 2
+            repeat ledbrightidx from 0 to 8
+
+                All_LED( LEDTestSeqColor[ledcoloridx] & LEDTestSeqBright[ledbrightidx] )
+                waitcnt( cnt + LED_TESTDELAY ) 
 
         All_LED( 0 )
 
@@ -703,4 +712,20 @@ PUB Beep3
   Beep
   waitcnt( 5_000_000 + cnt ) 
   Beep
-   
+  
+  
+DAT
+
+  LEDTestSeqColor   long    LED_Red
+                    long    LED_Green
+                    long    LED_Blue
+                    
+  LEDTestSeqBright  long    LED_Dim
+                    long    LED_Eighth
+                    long    LED_Quarter
+                    long    LED_Half
+                    long    LED_Full
+                    long    LED_Half
+                    long    LED_Quarter
+                    long    LED_Eighth
+                    long    LED_Dim
