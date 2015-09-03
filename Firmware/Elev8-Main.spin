@@ -49,6 +49,7 @@ CON
   MODE_MotorTest = 3
   MODE_IMUTest = 4
   MODE_IMUComp = 5
+  MODE_VibrationTest = 6
 
 
   'LED Color values
@@ -420,7 +421,7 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
   if( c < 0 )
     return
 
-  if( c =< Mode_IMUComp )
+  if( c =< MODE_VibrationTest )
     Mode := c
     return
 
@@ -610,6 +611,17 @@ PUB DoDebugModeOutput | loop, addr, phase
 
       dbg.txBulk( @TxData, 12 )   'Send 12 bytes of data from @TxData onward (sends 6 words worth of data)                         
 
+  elseif( Mode == MODE_VibrationTest )
+    dbg.txFast( $77 )      
+    dbg.txFast( $77 )      
+    dbg.txFast( Mode )
+     
+    TxData[0] := GyroX
+    TxData[1] := GyroY
+    TxData[2] := GyroZ
+     
+    dbg.txBulk( @TxData, 6 )   'Send 20 bytes of data from @TxData onward (sends 10 words worth of data)                         
+      
 
 {
 PUB Beep(delay, count) | i

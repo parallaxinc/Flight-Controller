@@ -41,8 +41,8 @@ namespace Elev8
 		int QHead = 0;
 		int QTail = 0;
 
-		byte[] OutputMode = { 0, 1, 2, 3, 2, 4, 5, 2};			// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5
-		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 12+3 };	// None=0, Radio=11, Sensors=31, Motor=0, IMU=25, IMUComp=12  (bytes)
+		byte[] OutputMode = { 0, 1, 2, 3, 2, 4, 5, 6 };				// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
+		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 12+3, 3+6 };	// None=0, Radio=19, Sensors=31, Motor=0, IMU=25, IMUComp=12, VibeTest=6 (bytes)
 		int SampleCounter = 0;
 
 
@@ -404,7 +404,13 @@ namespace Elev8
 						gyOffset.Text = offsetY.ToString();
 						gzOffset.Text = offsetZ.ToString();
 					}
+					break;
 
+
+				case 0x06:	// Vibration test packet
+					GyroX = GetCommWord();
+					GyroY = GetCommWord();
+					GyroZ = GetCommWord();
 
 					if(currentMode == Mode.VibrationTest)
 					{
@@ -414,15 +420,9 @@ namespace Elev8
 						gySample[2] = GyroZ;
 						grGyro.AddSample( gySample, true );
 
-						int[] accSample = new int[3];
-						accSample[0] = AccelX;
-						accSample[1] = AccelY;
-						accSample[2] = AccelZ;
-						grAccel.AddSample( accSample, true );
-
 						SampleCounter++;
 
-						if((SampleCounter & 31) == 31)
+						if((SampleCounter & 255) == 255)
 						{
 							grGyro.UpdateStats();
 							lblGXMin.Text = grGyro.Mins[0].ToString();
@@ -439,23 +439,6 @@ namespace Elev8
 							lblGZMax.Text = grGyro.Maxs[2].ToString();
 							lblGZAvg.Text = grGyro.Avgs[2].ToString( "00.0000" );
 							lblGZVar.Text = grGyro.Vars[2].ToString( "0.00000" );
-
-
-							grAccel.UpdateStats();
-							lblAXMin.Text = grAccel.Mins[0].ToString();
-							lblAXMax.Text = grAccel.Maxs[0].ToString();
-							lblAXAvg.Text = grAccel.Avgs[0].ToString( "00.0000" );
-							lblAXVar.Text = grAccel.Vars[0].ToString( "0.00000" );
-
-							lblAYMin.Text = grAccel.Mins[1].ToString();
-							lblAYMax.Text = grAccel.Maxs[1].ToString();
-							lblAYAvg.Text = grAccel.Avgs[1].ToString( "00.0000" );
-							lblAYVar.Text = grAccel.Vars[1].ToString( "0.00000" );
-
-							lblAZMin.Text = grAccel.Mins[2].ToString();
-							lblAZMax.Text = grAccel.Maxs[2].ToString();
-							lblAZAvg.Text = grAccel.Avgs[2].ToString( "00.0000" );
-							lblAZVar.Text = grAccel.Vars[2].ToString( "0.00000" );
 						}
 					}
 					break;

@@ -32,6 +32,14 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager( typeof( MainForm ) );
 			this.tcMainTabs = new System.Windows.Forms.TabControl();
 			this.tpRadioTest = new System.Windows.Forms.TabPage();
+			this.lblAux4 = new System.Windows.Forms.Label();
+			this.lblAux3 = new System.Windows.Forms.Label();
+			this.lblAux2 = new System.Windows.Forms.Label();
+			this.lblAux1 = new System.Windows.Forms.Label();
+			this.label36 = new System.Windows.Forms.Label();
+			this.label35 = new System.Windows.Forms.Label();
+			this.label34 = new System.Windows.Forms.Label();
+			this.label33 = new System.Windows.Forms.Label();
 			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.label4 = new System.Windows.Forms.Label();
 			this.label3 = new System.Windows.Forms.Label();
@@ -115,22 +123,6 @@
 			this.label31 = new System.Windows.Forms.Label();
 			this.label30 = new System.Windows.Forms.Label();
 			this.label29 = new System.Windows.Forms.Label();
-			this.grAccel = new Elev8.Graph();
-			this.groupBox4 = new System.Windows.Forms.GroupBox();
-			this.lblAZAvg = new System.Windows.Forms.Label();
-			this.lblAZVar = new System.Windows.Forms.Label();
-			this.lblAZMin = new System.Windows.Forms.Label();
-			this.lblAZMax = new System.Windows.Forms.Label();
-			this.groupBox5 = new System.Windows.Forms.GroupBox();
-			this.lblAYAvg = new System.Windows.Forms.Label();
-			this.lblAYVar = new System.Windows.Forms.Label();
-			this.lblAYMin = new System.Windows.Forms.Label();
-			this.lblAYMax = new System.Windows.Forms.Label();
-			this.groupBox6 = new System.Windows.Forms.GroupBox();
-			this.lblAXAvg = new System.Windows.Forms.Label();
-			this.lblAXVar = new System.Windows.Forms.Label();
-			this.lblAXMin = new System.Windows.Forms.Label();
-			this.lblAXMax = new System.Windows.Forms.Label();
 			this.groupBox3 = new System.Windows.Forms.GroupBox();
 			this.lblGZAvg = new System.Windows.Forms.Label();
 			this.lblGZVar = new System.Windows.Forms.Label();
@@ -148,14 +140,6 @@
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.grGyro = new Elev8.Graph();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
-			this.label33 = new System.Windows.Forms.Label();
-			this.label34 = new System.Windows.Forms.Label();
-			this.label35 = new System.Windows.Forms.Label();
-			this.label36 = new System.Windows.Forms.Label();
-			this.lblAux4 = new System.Windows.Forms.Label();
-			this.lblAux3 = new System.Windows.Forms.Label();
-			this.lblAux2 = new System.Windows.Forms.Label();
-			this.lblAux1 = new System.Windows.Forms.Label();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -167,9 +151,6 @@
 			this.tpIMUTest.SuspendLayout();
 			this.tpIMUComp.SuspendLayout();
 			this.tpVibration.SuspendLayout();
-			this.groupBox4.SuspendLayout();
-			this.groupBox5.SuspendLayout();
-			this.groupBox6.SuspendLayout();
 			this.groupBox3.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
@@ -216,6 +197,78 @@
 			this.tpRadioTest.TabIndex = 0;
 			this.tpRadioTest.Text = "Radio Test";
 			this.tpRadioTest.UseVisualStyleBackColor = true;
+			// 
+			// lblAux4
+			// 
+			this.lblAux4.Location = new System.Drawing.Point( 528, 135 );
+			this.lblAux4.Name = "lblAux4";
+			this.lblAux4.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux4.TabIndex = 22;
+			this.lblAux4.Text = "0";
+			this.lblAux4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// lblAux3
+			// 
+			this.lblAux3.Location = new System.Drawing.Point( 528, 108 );
+			this.lblAux3.Name = "lblAux3";
+			this.lblAux3.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux3.TabIndex = 21;
+			this.lblAux3.Text = "0";
+			this.lblAux3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// lblAux2
+			// 
+			this.lblAux2.Location = new System.Drawing.Point( 528, 81 );
+			this.lblAux2.Name = "lblAux2";
+			this.lblAux2.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux2.TabIndex = 20;
+			this.lblAux2.Text = "0";
+			this.lblAux2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// lblAux1
+			// 
+			this.lblAux1.Location = new System.Drawing.Point( 528, 54 );
+			this.lblAux1.Name = "lblAux1";
+			this.lblAux1.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux1.TabIndex = 19;
+			this.lblAux1.Text = "0";
+			this.lblAux1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// label36
+			// 
+			this.label36.AutoSize = true;
+			this.label36.Location = new System.Drawing.Point( 491, 135 );
+			this.label36.Name = "label36";
+			this.label36.Size = new System.Drawing.Size( 34, 13 );
+			this.label36.TabIndex = 18;
+			this.label36.Text = "Aux4:";
+			// 
+			// label35
+			// 
+			this.label35.AutoSize = true;
+			this.label35.Location = new System.Drawing.Point( 491, 108 );
+			this.label35.Name = "label35";
+			this.label35.Size = new System.Drawing.Size( 34, 13 );
+			this.label35.TabIndex = 17;
+			this.label35.Text = "Aux3:";
+			// 
+			// label34
+			// 
+			this.label34.AutoSize = true;
+			this.label34.Location = new System.Drawing.Point( 491, 81 );
+			this.label34.Name = "label34";
+			this.label34.Size = new System.Drawing.Size( 34, 13 );
+			this.label34.TabIndex = 16;
+			this.label34.Text = "Aux2:";
+			// 
+			// label33
+			// 
+			this.label33.AutoSize = true;
+			this.label33.Location = new System.Drawing.Point( 491, 54 );
+			this.label33.Name = "label33";
+			this.label33.Size = new System.Drawing.Size( 34, 13 );
+			this.label33.TabIndex = 15;
+			this.label33.Text = "Aux1:";
 			// 
 			// textBox1
 			// 
@@ -1041,10 +1094,6 @@
 			this.tpVibration.Controls.Add( this.label31 );
 			this.tpVibration.Controls.Add( this.label30 );
 			this.tpVibration.Controls.Add( this.label29 );
-			this.tpVibration.Controls.Add( this.grAccel );
-			this.tpVibration.Controls.Add( this.groupBox4 );
-			this.tpVibration.Controls.Add( this.groupBox5 );
-			this.tpVibration.Controls.Add( this.groupBox6 );
 			this.tpVibration.Controls.Add( this.groupBox3 );
 			this.tpVibration.Controls.Add( this.groupBox2 );
 			this.tpVibration.Controls.Add( this.groupBox1 );
@@ -1059,7 +1108,7 @@
 			// label32
 			// 
 			this.label32.AutoSize = true;
-			this.label32.Location = new System.Drawing.Point( 182, 155 );
+			this.label32.Location = new System.Drawing.Point( 180, 128 );
 			this.label32.Name = "label32";
 			this.label32.Size = new System.Drawing.Size( 49, 13 );
 			this.label32.TabIndex = 27;
@@ -1068,7 +1117,7 @@
 			// label31
 			// 
 			this.label31.AutoSize = true;
-			this.label31.Location = new System.Drawing.Point( 137, 155 );
+			this.label31.Location = new System.Drawing.Point( 135, 128 );
 			this.label31.Name = "label31";
 			this.label31.Size = new System.Drawing.Size( 26, 13 );
 			this.label31.TabIndex = 26;
@@ -1077,7 +1126,7 @@
 			// label30
 			// 
 			this.label30.AutoSize = true;
-			this.label30.Location = new System.Drawing.Point( 82, 155 );
+			this.label30.Location = new System.Drawing.Point( 80, 128 );
 			this.label30.Name = "label30";
 			this.label30.Size = new System.Drawing.Size( 27, 13 );
 			this.label30.TabIndex = 25;
@@ -1086,165 +1135,11 @@
 			// label29
 			// 
 			this.label29.AutoSize = true;
-			this.label29.Location = new System.Drawing.Point( 27, 155 );
+			this.label29.Location = new System.Drawing.Point( 25, 128 );
 			this.label29.Name = "label29";
 			this.label29.Size = new System.Drawing.Size( 24, 13 );
 			this.label29.TabIndex = 24;
 			this.label29.Text = "Min";
-			// 
-			// grAccel
-			// 
-			this.grAccel.Location = new System.Drawing.Point( 246, 169 );
-			this.grAccel.Name = "grAccel";
-			this.grAccel.Size = new System.Drawing.Size( 379, 148 );
-			this.grAccel.TabIndex = 1;
-			// 
-			// groupBox4
-			// 
-			this.groupBox4.Controls.Add( this.lblAZAvg );
-			this.groupBox4.Controls.Add( this.lblAZVar );
-			this.groupBox4.Controls.Add( this.lblAZMin );
-			this.groupBox4.Controls.Add( this.lblAZMax );
-			this.groupBox4.Location = new System.Drawing.Point( 8, 268 );
-			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size( 231, 40 );
-			this.groupBox4.TabIndex = 22;
-			this.groupBox4.TabStop = false;
-			this.groupBox4.Text = "AZ";
-			// 
-			// lblAZAvg
-			// 
-			this.lblAZAvg.Location = new System.Drawing.Point( 118, 14 );
-			this.lblAZAvg.Name = "lblAZAvg";
-			this.lblAZAvg.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAZAvg.TabIndex = 11;
-			this.lblAZAvg.Text = "0.0";
-			this.lblAZAvg.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAZVar
-			// 
-			this.lblAZVar.Location = new System.Drawing.Point( 173, 14 );
-			this.lblAZVar.Name = "lblAZVar";
-			this.lblAZVar.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAZVar.TabIndex = 10;
-			this.lblAZVar.Text = "0.0";
-			this.lblAZVar.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAZMin
-			// 
-			this.lblAZMin.Location = new System.Drawing.Point( 8, 14 );
-			this.lblAZMin.Name = "lblAZMin";
-			this.lblAZMin.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAZMin.TabIndex = 8;
-			this.lblAZMin.Text = "0.0";
-			this.lblAZMin.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAZMax
-			// 
-			this.lblAZMax.Location = new System.Drawing.Point( 63, 14 );
-			this.lblAZMax.Name = "lblAZMax";
-			this.lblAZMax.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAZMax.TabIndex = 9;
-			this.lblAZMax.Text = "0.0";
-			this.lblAZMax.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// groupBox5
-			// 
-			this.groupBox5.Controls.Add( this.lblAYAvg );
-			this.groupBox5.Controls.Add( this.lblAYVar );
-			this.groupBox5.Controls.Add( this.lblAYMin );
-			this.groupBox5.Controls.Add( this.lblAYMax );
-			this.groupBox5.Location = new System.Drawing.Point( 7, 223 );
-			this.groupBox5.Name = "groupBox5";
-			this.groupBox5.Size = new System.Drawing.Size( 231, 40 );
-			this.groupBox5.TabIndex = 21;
-			this.groupBox5.TabStop = false;
-			this.groupBox5.Text = "AY";
-			// 
-			// lblAYAvg
-			// 
-			this.lblAYAvg.Location = new System.Drawing.Point( 118, 14 );
-			this.lblAYAvg.Name = "lblAYAvg";
-			this.lblAYAvg.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAYAvg.TabIndex = 11;
-			this.lblAYAvg.Text = "0.0";
-			this.lblAYAvg.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAYVar
-			// 
-			this.lblAYVar.Location = new System.Drawing.Point( 173, 14 );
-			this.lblAYVar.Name = "lblAYVar";
-			this.lblAYVar.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAYVar.TabIndex = 10;
-			this.lblAYVar.Text = "0.0";
-			this.lblAYVar.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAYMin
-			// 
-			this.lblAYMin.Location = new System.Drawing.Point( 8, 14 );
-			this.lblAYMin.Name = "lblAYMin";
-			this.lblAYMin.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAYMin.TabIndex = 8;
-			this.lblAYMin.Text = "0.0";
-			this.lblAYMin.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAYMax
-			// 
-			this.lblAYMax.Location = new System.Drawing.Point( 63, 14 );
-			this.lblAYMax.Name = "lblAYMax";
-			this.lblAYMax.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAYMax.TabIndex = 9;
-			this.lblAYMax.Text = "0.0";
-			this.lblAYMax.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// groupBox6
-			// 
-			this.groupBox6.Controls.Add( this.lblAXAvg );
-			this.groupBox6.Controls.Add( this.lblAXVar );
-			this.groupBox6.Controls.Add( this.lblAXMin );
-			this.groupBox6.Controls.Add( this.lblAXMax );
-			this.groupBox6.Location = new System.Drawing.Point( 7, 178 );
-			this.groupBox6.Name = "groupBox6";
-			this.groupBox6.Size = new System.Drawing.Size( 231, 40 );
-			this.groupBox6.TabIndex = 20;
-			this.groupBox6.TabStop = false;
-			this.groupBox6.Text = "AX";
-			// 
-			// lblAXAvg
-			// 
-			this.lblAXAvg.Location = new System.Drawing.Point( 118, 16 );
-			this.lblAXAvg.Name = "lblAXAvg";
-			this.lblAXAvg.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAXAvg.TabIndex = 7;
-			this.lblAXAvg.Text = "0.0";
-			this.lblAXAvg.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAXVar
-			// 
-			this.lblAXVar.Location = new System.Drawing.Point( 173, 16 );
-			this.lblAXVar.Name = "lblAXVar";
-			this.lblAXVar.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAXVar.TabIndex = 6;
-			this.lblAXVar.Text = "0.0";
-			this.lblAXVar.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAXMin
-			// 
-			this.lblAXMin.Location = new System.Drawing.Point( 8, 16 );
-			this.lblAXMin.Name = "lblAXMin";
-			this.lblAXMin.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAXMin.TabIndex = 4;
-			this.lblAXMin.Text = "0.0";
-			this.lblAXMin.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAXMax
-			// 
-			this.lblAXMax.Location = new System.Drawing.Point( 63, 16 );
-			this.lblAXMax.Name = "lblAXMax";
-			this.lblAXMax.Size = new System.Drawing.Size( 49, 13 );
-			this.lblAXMax.TabIndex = 5;
-			this.lblAXMax.Text = "0.0";
-			this.lblAXMax.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// groupBox3
 			// 
@@ -1252,7 +1147,7 @@
 			this.groupBox3.Controls.Add( this.lblGZVar );
 			this.groupBox3.Controls.Add( this.lblGZMin );
 			this.groupBox3.Controls.Add( this.lblGZMax );
-			this.groupBox3.Location = new System.Drawing.Point( 8, 104 );
+			this.groupBox3.Location = new System.Drawing.Point( 8, 85 );
 			this.groupBox3.Name = "groupBox3";
 			this.groupBox3.Size = new System.Drawing.Size( 231, 40 );
 			this.groupBox3.TabIndex = 19;
@@ -1301,7 +1196,7 @@
 			this.groupBox2.Controls.Add( this.lblGYVar );
 			this.groupBox2.Controls.Add( this.lblGYMin );
 			this.groupBox2.Controls.Add( this.lblGYMax );
-			this.groupBox2.Location = new System.Drawing.Point( 7, 59 );
+			this.groupBox2.Location = new System.Drawing.Point( 7, 46 );
 			this.groupBox2.Name = "groupBox2";
 			this.groupBox2.Size = new System.Drawing.Size( 231, 40 );
 			this.groupBox2.TabIndex = 18;
@@ -1350,7 +1245,7 @@
 			this.groupBox1.Controls.Add( this.lblGXVar );
 			this.groupBox1.Controls.Add( this.lblGXMin );
 			this.groupBox1.Controls.Add( this.lblGXMax );
-			this.groupBox1.Location = new System.Drawing.Point( 7, 14 );
+			this.groupBox1.Location = new System.Drawing.Point( 7, 7 );
 			this.groupBox1.Name = "groupBox1";
 			this.groupBox1.Size = new System.Drawing.Size( 231, 40 );
 			this.groupBox1.TabIndex = 17;
@@ -1395,87 +1290,15 @@
 			// 
 			// grGyro
 			// 
-			this.grGyro.Location = new System.Drawing.Point( 246, 5 );
+			this.grGyro.Location = new System.Drawing.Point( 3, 144 );
 			this.grGyro.Name = "grGyro";
-			this.grGyro.Size = new System.Drawing.Size( 379, 148 );
+			this.grGyro.Size = new System.Drawing.Size( 627, 178 );
 			this.grGyro.TabIndex = 0;
 			// 
 			// tickTimer
 			// 
 			this.tickTimer.Interval = 20;
 			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
-			// 
-			// label33
-			// 
-			this.label33.AutoSize = true;
-			this.label33.Location = new System.Drawing.Point( 491, 54 );
-			this.label33.Name = "label33";
-			this.label33.Size = new System.Drawing.Size( 34, 13 );
-			this.label33.TabIndex = 15;
-			this.label33.Text = "Aux1:";
-			// 
-			// label34
-			// 
-			this.label34.AutoSize = true;
-			this.label34.Location = new System.Drawing.Point( 491, 81 );
-			this.label34.Name = "label34";
-			this.label34.Size = new System.Drawing.Size( 34, 13 );
-			this.label34.TabIndex = 16;
-			this.label34.Text = "Aux2:";
-			// 
-			// label35
-			// 
-			this.label35.AutoSize = true;
-			this.label35.Location = new System.Drawing.Point( 491, 108 );
-			this.label35.Name = "label35";
-			this.label35.Size = new System.Drawing.Size( 34, 13 );
-			this.label35.TabIndex = 17;
-			this.label35.Text = "Aux3:";
-			// 
-			// label36
-			// 
-			this.label36.AutoSize = true;
-			this.label36.Location = new System.Drawing.Point( 491, 135 );
-			this.label36.Name = "label36";
-			this.label36.Size = new System.Drawing.Size( 34, 13 );
-			this.label36.TabIndex = 18;
-			this.label36.Text = "Aux4:";
-			// 
-			// lblAux4
-			// 
-			this.lblAux4.Location = new System.Drawing.Point( 528, 135 );
-			this.lblAux4.Name = "lblAux4";
-			this.lblAux4.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux4.TabIndex = 22;
-			this.lblAux4.Text = "0";
-			this.lblAux4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAux3
-			// 
-			this.lblAux3.Location = new System.Drawing.Point( 528, 108 );
-			this.lblAux3.Name = "lblAux3";
-			this.lblAux3.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux3.TabIndex = 21;
-			this.lblAux3.Text = "0";
-			this.lblAux3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAux2
-			// 
-			this.lblAux2.Location = new System.Drawing.Point( 528, 81 );
-			this.lblAux2.Name = "lblAux2";
-			this.lblAux2.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux2.TabIndex = 20;
-			this.lblAux2.Text = "0";
-			this.lblAux2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// lblAux1
-			// 
-			this.lblAux1.Location = new System.Drawing.Point( 528, 54 );
-			this.lblAux1.Name = "lblAux1";
-			this.lblAux1.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux1.TabIndex = 19;
-			this.lblAux1.Text = "0";
-			this.lblAux1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// MainForm
 			// 
@@ -1509,9 +1332,6 @@
 			this.tpIMUComp.PerformLayout();
 			this.tpVibration.ResumeLayout( false );
 			this.tpVibration.PerformLayout();
-			this.groupBox4.ResumeLayout( false );
-			this.groupBox5.ResumeLayout( false );
-			this.groupBox6.ResumeLayout( false );
 			this.groupBox3.ResumeLayout( false );
 			this.groupBox2.ResumeLayout( false );
 			this.groupBox1.ResumeLayout( false );
@@ -1603,22 +1423,6 @@
 		private OrientationCube ocCompQ1;
 		private System.Windows.Forms.Label label27;
 		private System.Windows.Forms.TabPage tpVibration;
-		private Graph grAccel;
-		private System.Windows.Forms.GroupBox groupBox4;
-		private System.Windows.Forms.Label lblAZAvg;
-		private System.Windows.Forms.Label lblAZVar;
-		private System.Windows.Forms.Label lblAZMin;
-		private System.Windows.Forms.Label lblAZMax;
-		private System.Windows.Forms.GroupBox groupBox5;
-		private System.Windows.Forms.Label lblAYAvg;
-		private System.Windows.Forms.Label lblAYVar;
-		private System.Windows.Forms.Label lblAYMin;
-		private System.Windows.Forms.Label lblAYMax;
-		private System.Windows.Forms.GroupBox groupBox6;
-		private System.Windows.Forms.Label lblAXAvg;
-		private System.Windows.Forms.Label lblAXVar;
-		private System.Windows.Forms.Label lblAXMin;
-		private System.Windows.Forms.Label lblAXMax;
 		private System.Windows.Forms.GroupBox groupBox3;
 		private System.Windows.Forms.Label lblGZAvg;
 		private System.Windows.Forms.Label lblGZVar;

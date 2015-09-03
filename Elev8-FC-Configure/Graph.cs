@@ -10,7 +10,7 @@ namespace Elev8
 {
 	public partial class Graph : UserControl
 	{
-		public bool Scrolling = true;
+		public bool Scrolling = false;
 
 		int numSamples = 0;
 		int curSample = 0;
@@ -38,7 +38,7 @@ namespace Elev8
 				Maxs[i] = 32700;
 			}
 
-			SetSampleCount( ClientSize.Width );
+			SetSampleCount( ClientSize.Width * 2 );
 			invalidRect = ClientRectangle;
 		}
 
@@ -56,7 +56,7 @@ namespace Elev8
 		public void AddSample( int[] x , bool bInvalidate )
 		{
 			samples[curSample] = x;
-			int invalid = curSample;
+			int invalid = curSample/2;
 
 			curSample++;
 			if(curSample == numSamples) curSample = 0;
@@ -104,8 +104,8 @@ namespace Elev8
 			g.FillRectangle( backBrush, e.ClipRectangle );
 			if(samples == null) return;
 
-			int start = e.ClipRectangle.Left;
-			int end = e.ClipRectangle.Right;
+			int start = e.ClipRectangle.Left*2;
+			int end = e.ClipRectangle.Right*2;
 
 			if(Scrolling == false)
 			{
@@ -115,7 +115,8 @@ namespace Elev8
 					for(int j = 0; j < 3; j++)
 					{
 						int v = (samples[i][j] - CenterSample) * HalfY / Range;
-						g.DrawLine( dataPen[j], i, HalfY - v, i, HalfY - v + 1 );
+						//g.DrawLine( dataPen[j], i/2, HalfY - v, i/2, HalfY - v + 1 );
+						g.DrawRectangle( dataPen[j], (float)i * 0.5f, (float)(HalfY - v), 0.5f, 0.5f );
 					}
 				}
 			}
@@ -128,7 +129,7 @@ namespace Elev8
 					for(int j = 0; j < 3; j++)
 					{
 						int v = (s[j] - CenterSample) * HalfY / Range;
-						g.DrawLine( dataPen[j], i, HalfY - v, i, HalfY - v + 1 );
+						g.DrawLine( dataPen[j], i/2, HalfY - v, i/2, HalfY - v + 1 );
 					}
 				}
 			}
@@ -182,7 +183,7 @@ namespace Elev8
 
 		private void Graph_SizeChanged( object sender, EventArgs e )
 		{
-			SetSampleCount( ClientSize.Width );
+			SetSampleCount( ClientSize.Width*2 );
 		}
 
 	}
