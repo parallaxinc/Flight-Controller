@@ -619,8 +619,15 @@ namespace Elev8
 			{
 				currentMode = Mode.None;
 				txBuffer[0] = (byte)(currentMode);
-				comm.Write( txBuffer, 0, 1 );
-			}
+				
+				if( null != comm && comm.IsOpen == true ) {
+
+					try
+					{
+						comm.Write( txBuffer, 0, 1 );
+					}
+					catch (IOException) { }
+				}
 
 			catch(Exception)
 			{
