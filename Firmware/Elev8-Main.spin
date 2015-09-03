@@ -38,7 +38,7 @@ CON
   CS_M   = 10   '15
 
   LED_PIN = 8
-  LED_COUNT = 1
+  LED_COUNT = 2
   LED_TESTDELAY = 6_000_000
 
   BUZZER_1 = 6
