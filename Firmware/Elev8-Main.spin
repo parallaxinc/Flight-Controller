@@ -105,7 +105,7 @@ OBJ
   RC :   "RC_Receiver.spin"                             '1 cog
   Sens : "Sensors.spin"                                 '1 cog
   IMU :  "QuatIMU.spin"                                 '1 cogs (float command stream processor) 
-  ESC :  "Servo32-Highres.spin"                         '1 cog
+  ESC :  "Servo32-HighRes.spin"                         '1 cog
   
   Dbg:   "FullDuplexSerial-32.spin"                     '1 cog (32-byte buffers, instead of 16)
 
