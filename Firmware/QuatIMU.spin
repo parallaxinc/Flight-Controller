@@ -10,7 +10,7 @@ CON
   RadToDeg = 180.0 / 3.141592654                        'Degrees per Radian
   GyroToDeg = 1000.0 / 70.0                             'Gyro units per degree @ 2000 deg/sec sens = 70 mdps/bit
   AccToG = 1000.0 / 0.122                               'Accelerometer per G @ 4g sensitivity = 0.122 mg/bit 
-  UpdateRate = 400.0                                    'Updates per second                        
+  UpdateRate = 250.0                                    'Updates per second                        
   GyroScale = GyroToDeg * RadToDeg * UpdateRate
   
 VAR

@@ -8,14 +8,14 @@ CON
   '_xinfreq = 5_000_000
   _clkfreq = 80_000_000
 
-  RC_THRO = 2
-  RC_AILE = 0
-  RC_ELEV = 4
-  RC_RUDD = 5
-  RC_AUX1 = 1
-  RC_AUX2 = 3
-  RC_AUX3 = 26
-  RC_AUX4 = 27
+  RC_THRO = 0
+  RC_AILE = 1
+  RC_ELEV = 2
+  RC_RUDD = 3   'R/C input channel assignments (pin values are specified in the RC_Receiver object)
+  RC_AUX1 = 4
+  RC_AUX2 = 5
+  RC_AUX3 = 6
+  RC_AUX4 = 7 
 
   'Output pins to corresponding motors
   MOTOR_FL = 15
@@ -29,21 +29,22 @@ CON
   OUT_BR = 2
   OUT_BL = 3
 
-
+  '        V2    V1
   CS_ALT = 9    '8
   CS_AG  = 11   '11
   SDO    = 13   '12
   SDI    = 14   '13
   SCL    = 12   '14
   CS_M   = 10   '15
+  LED_PIN = 8   '19
 
-  LED_PIN = 8
   LED_COUNT = 2
   LED_TESTDELAY = 6_000_000
 
   BUZZER_1 = 6
   BUZZER_2 = 7
 
+  'Debug output modes for the Elev8-FC-Config application
   MODE_None = 0
   MODE_RadioTest = 1
   MODE_SensorTest = 2
@@ -73,34 +74,10 @@ CON
   LED_Orange  = (LED_Red & LED_Full) | (LED_Green & LED_Half)  
 
 
-  YawCircle = $2_0000
+  'Values used to when conditioning heading and desired heading to be within 180 degrees of each other 
+  YawCircle = $2_0000           'IMU Yaw output reading is from 0 to YawCircle-1 (change here and in IMU if desired)
   YawMask = YawCircle - 1
   YawCircleHalf = YawCircle >> 1
-  
-
-VAR
-  long  Thro, Aile, Elev, Rudd, Aux1, Aux2, Aux3, Aux4, iRudd
-  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltTemp
-  long  Mode, counter, NudgeMotor
-
-  long  Pitch, Roll, Yaw
-  long  DesiredRoll, DesiredPitch, DesiredYaw
-  long  PitchOut, RollOut, YawOut                       'Outputs from the PID loops
-  long  ThroMix                           
-
-  long  Motor[4]                                        'Motor output values  
-
-  long  LEDValue[LED_COUNT]
-  byte  Quat[16]
-  
-  long loopTimer
-  long SensorTime
-
-  WORD TxData[10]
-  
-  byte FlightEnabled, EnableStep
-  byte DoIntegrate
-  byte MotorIndex[4]
   
 
 OBJ
@@ -115,8 +92,44 @@ OBJ
   PitchPID  : "IntPID.spin"
   YawPID    : "IntPID.spin"
 
-  Freq      : "Synth.spin"
 
+
+VAR
+  'Receiver inputs
+  long  Thro, Aile, Elev, Rudd, Aux1, Aux2, Aux3, Aux4
+  long  iRudd         'Integrated rudder input value
+
+  'Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
+  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltTemp
+
+  'Debug output mode, working variables  
+  long  Mode, counter, NudgeMotor
+  word  TxData[10]     'Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
+  byte  Quat[16]      'Current quaternion from the IMU functions
+
+  'Current IMU values for orientation estimate
+  long  Pitch, Roll, Yaw
+
+  'Working variables - used to convert receiver inputs to desired ranges for the PIDs  
+  long  DesiredRoll, DesiredPitch, DesiredYaw
+
+  long  PitchOut, RollOut, YawOut                       'Output values from the PIDs
+  long  ThroMix                           
+
+  long  Motor[4]                                        'Motor output values  
+
+  long  LEDValue[LED_COUNT]                             'LED outputs (copied to the LEDs by the Sensors cog)
+  
+  long loopTimer                'Master flight loop counter - used to keep a steady update rate
+  long SensorTime               'How long sensors took to read (debug / optimization test value)
+
+
+  word EnableStep               'Flight arm/disarm counter  
+  byte FlightEnabled            'Flight arm/disarm flag
+
+  byte DoIntegrate              'Integration enabled in the flight PIDs              
+  byte MotorIndex[4]            'Motor index to pin index table
+  
 
 PUB Main | Cycles
 
@@ -169,7 +182,7 @@ PUB Main | Cycles
   ESC.Start
 
 
-  RollPID.Init (    1500,   0,  -12000 )               
+  RollPID.Init (    1500,  50,  -12000 )               
   PitchPID.Init(    1500,   0,  -12000 )     
   YawPID.Init  (    3000,   0,   -8000 ) 
 
@@ -180,11 +193,11 @@ PUB Main | Cycles
   RollPID.SetMaxOutput( 300*8 )
   PitchPID.SetMaxOutput( 300*8 )
 
-  RollPID.SetPIMax( 20*8 )
-  PitchPID.SetPIMax( 20*8 )
+  RollPID.SetPIMax( 40 )
+  PitchPID.SetPIMax( 40 )
   
-  RollPID.SetMaxIntegral( 40000*8 )
-  PitchPID.SetMaxIntegral( 40000*8 )
+  RollPID.SetMaxIntegral( 40000 )
+  PitchPID.SetMaxIntegral( 40000 )
 
   YawPID.SetMaxOutput( 300 )
 
@@ -250,7 +263,7 @@ PUB Main | Cycles
 
 
     ++counter
-    loopTimer += constant(_clkfreq / 320)
+    loopTimer += constant(_clkfreq / 250)
     waitcnt( loopTimer )
 
 
@@ -281,58 +294,41 @@ PUB FindGyroZero | i
 PUB UpdateFlightMode | ThroOut
 
 
+  'Test for flight mode change-----------------------------------------------
+    
   if( FlightEnabled == FALSE )
 
-      'Test for power up sequence----------------------------------------------
-      'Left stick positioned in lower left?
-    if( EnableStep == 0)
-      if( Rudd < -760  AND  Thro < -760 )
-        EnableStep := 1
-        Beep
-        All_LED( LED_Cyan & LED_Eighth )        
-        loopTimer := cnt
-         
+    'Are the sticks being pushed down and toward the center?
 
-    'Left stick positioned in lower right?
-    elseif( EnableStep == 1)
-      if( Rudd >  760  AND  Thro < -760 )
-        FlightEnabled := TRUE
-        EnableStep := 0
-        Beep2
-       
-        All_LED( LED_Red & LED_Eighth )
-        FindGyroZero
-       
-        All_LED( LED_Blue & LED_Eighth )        
-        BeepTune
-        loopTimer := cnt
-      '------------------------------------------------------------------------
-     
-      return
-
-  else  'FlightEnabled == TRUE
-
-     
-    'Test for power down sequence--------------------------------------------
-    'Left stick positioned in lower left?
-    if( EnableStep == 0)
-      if( Rudd < -760  AND  Thro < -760 )
-        EnableStep := 1
-        Beep
-        All_LED( LED_Yellow & LED_Eighth )        
-        loopTimer := cnt
-         
-     
-    'Left stick positioned in lower left?
-    elseif( EnableStep == 1 )
-      if( Rudd >  760  AND  Thro < -760 )
-        FlightEnabled := FALSE
-        EnableStep := 0
-        Beep3
-        All_LED( LED_Green & LED_Eighth )        
-        loopTimer := cnt
+    if( Rudd > 750  AND  Aile < -750  AND  Thro < -750  AND  Elev < -750 )
+      EnableStep++
+      All_LED( LED_Yellow & LED_Eighth )
+              
+      if( EnableStep == 250 )   'Hold for 1 second
+        ArmFlightMode
+      
+    else
+      EnableStep := 0
+      All_LED( LED_Green & LED_Eighth )
     '------------------------------------------------------------------------
-     
+
+  else
+
+    'Are the sticks being pushed down and away from center?
+
+    if( Rudd < -750  AND  Aile > 750  AND  Thro < -750  AND  Elev < -750 )
+      EnableStep++
+      All_LED( LED_Yellow & LED_Eighth )
+              
+      if( EnableStep == 250 )   'Hold for 1 second
+        DisarmFlightMode
+      
+    else
+      EnableStep := 0
+      All_LED( LED_Red & LED_Eighth )
+
+    '------------------------------------------------------------------------
+
      
     'Rudder is integrated (accumulated)
     iRudd += Rudd
@@ -415,6 +411,29 @@ PUB UpdateFlightMode | ThroOut
       dbg.tx( 11 )
 }       
 
+
+PUB ArmFlightMode
+
+  FlightEnabled := TRUE
+  EnableStep := 0
+  Beep2
+   
+  All_LED( LED_Red & LED_Eighth )
+  FindGyroZero
+   
+  All_LED( LED_Blue & LED_Eighth )        
+  BeepTune
+  loopTimer := cnt
+
+
+PUB DisarmFlightMode
+
+  FlightEnabled := FALSE
+  EnableStep := 0
+  Beep3
+  All_LED( LED_Green & LED_Eighth )        
+  loopTimer := cnt
+   
 
 
 PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
@@ -674,16 +693,6 @@ PUB BeepHz( Hz , Delay ) | i, loop, d, ctr
   OUTA[BUZZER_1] := 0    
   OUTA[BUZZER_2] := 0
    
-
-
-PUB BeepHz2( Hz , Delay ) | i
-
-  DIRA[BUZZER_1] := 1                                   'Enable the buzzer pin output
-  Freq.Synth("A", BUZZER_1, Hz )
-  waitcnt( Delay*constant(_clkfreq/1000) + cnt )
-  Freq.Synth( "A", BUZZER_1, 0 )
-  OUTA[BUZZER_1] := 0        
-  DIRA[BUZZER_1] := 0                                   'Disable the buzzer pin output
 
 
 PUB BeepTune
