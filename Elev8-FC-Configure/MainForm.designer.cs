@@ -1311,6 +1311,7 @@
 			this.Text = "Parallax Elev8 Flight Controller configuration";
 			this.Deactivate += new System.EventHandler( this.MainForm_Deactivate );
 			this.Activated += new System.EventHandler( this.MainForm_Activated );
+			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler( this.MainForm_FormClosed );
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler( this.MainForm_FormClosing );
 			this.tcMainTabs.ResumeLayout( false );
 			this.tpRadioTest.ResumeLayout( false );

@@ -454,7 +454,7 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
         loopTimer := cnt                                                        'Reset the loop counter or we'll be waiting forever 
 
   if( c == $ff )
-    dbg.tx($55)  'Simple ping-back to tell the application we have the right comm port
+    dbg.tx($E8)  'Simple ping-back to tell the application we have the right comm port
 
 
 

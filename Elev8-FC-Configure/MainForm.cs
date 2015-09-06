@@ -9,12 +9,16 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 
+using FTD2XX_NET;
+
 namespace Elev8
 {
     public partial class MainForm : Form
     {
-		SerialPort comm = null;
 		bool Active = false;
+
+		FTDI ftdi = null;
+
 
 		int Thro = 0;
 		int Aile = 0;
@@ -34,9 +38,9 @@ namespace Elev8
 
 
 		byte[] txBuffer = new byte[32];
-		byte[] rxBuffer = new byte[32];
+		byte[] rxBuffer = new byte[128];
 
-		const int QSize = 1024;
+		const int QSize = 4096;
 		byte[] rxQueue = new byte[QSize];
 		int QHead = 0;
 		int QTail = 0;
@@ -74,53 +78,89 @@ namespace Elev8
 			gHeading.displayScale = 0.1f;	// We're going to feed it +/- 1800 units, or 10 units per degree
 			gHeading.GaugeCircle = 1.0f;	// want this to use the full 360 degrees of the gauge, unlike a normal analog gauge
 
-			Connect();
+			ConnectFTDI();
         }
 
 
-		void Connect()
+		void ConnectFTDI()
 		{
-			string[] ports = SerialPort.GetPortNames();
-			string FoundPort = null;
+			UInt32 DeviceCount = 0;
+			FTDI.FT_STATUS ftStatus = FTDI.FT_STATUS.FT_OK;
 
-			foreach(string port in ports)
+			// Create new instance of the FTDI device class
+			ftdi = new FTDI();
+
+			// Determine the number of FTDI devices connected to the machine
+			ftStatus = ftdi.GetNumberOfDevices( ref DeviceCount );
+
+			// Check status
+			if( ftStatus != FTDI.FT_STATUS.FT_OK || DeviceCount == 0 )
+				return;
+
+			// Allocate storage for device info list
+			FTDI.FT_DEVICE_INFO_NODE[] DeviceList = new FTDI.FT_DEVICE_INFO_NODE[DeviceCount];
+
+			// Populate our device list
+			ftStatus = ftdi.GetDeviceList( DeviceList );
+
+			bool FoundElev8 = false;
+			for(int i = 0; i < DeviceCount && FoundElev8 == false; i++)
 			{
-				if(port.StartsWith( "COM" ))
+				if(DeviceList[i].Type != FTDI.FT_DEVICE.FT_DEVICE_X_SERIES) continue;
+
+				ftStatus = ftdi.OpenBySerialNumber( DeviceList[i].SerialNumber );
+				if(ftStatus == FTDI.FT_STATUS.FT_OK)
 				{
-					int index = int.Parse( port.Substring( 3 ) );
-					if(index > 4) {
-						FoundPort = port;
-						try {
-							// Open the serial port at 115200 baud, no parity, 8 bits, one stop bit
-							comm = new SerialPort( FoundPort, 115200, Parity.None, 8, StopBits.One );
-							comm.Open();
+					string portName;
+					ftdi.GetCOMPort( out portName );
+					if(portName == null || portName == "")
+					{
+						ftdi.Close();
+						continue;
+					}
 
-							txBuffer[0] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
+					ftdi.SetBaudRate( 115200 );
+					ftdi.SetDataCharacteristics( 8, 1, 0 );
+					ftdi.SetFlowControl( FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0, 0 );
 
-							for(int i = 0; i < 20 && comm.BytesToRead == 0; i++)	// Keep pinging until it replies, or we give up
-							{
-								comm.Write( txBuffer, 0, 1 );
-								System.Threading.Thread.Sleep( 50 );
-							}
 
-							if( comm.BytesToRead > 0 && comm.ReadByte() == 0x55 )	// If it comes back with 0x55 it's the one we want
-								break;
-						}
+					txBuffer[0] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
+					uint written = 0;
 
-						catch(Exception)
+					for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
+					{
+						ftdi.Write( txBuffer, 1, ref written );
+						System.Threading.Thread.Sleep( 50 );
+
+						uint bytesAvail = 0;
+						ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
+						if(bytesAvail > 0)
 						{
-							// Keep trying - this one didn't work
-							comm = null;
+							uint bytesRead = 0;
+							ftdi.Read( rxBuffer, 1, ref bytesRead );			// If it comes back with 0xE8 it's the one we want
+							if(bytesRead == 1 && rxBuffer[0] == 0xE8)
+							{
+								FoundElev8 = true;
+								break;
+							}
 						}
+					}
+					if(FoundElev8) {
+						break;
+					}
+					else {
+						ftdi.Close();
 					}
 				}
 			}
 
+
 			Active = true;
-			if( comm != null ) {
-				//currentMode = (Mode)(tcMainTabs.SelectedIndex + 1);
-				//txBuffer[0] = (byte)currentMode;
-				//comm.Write( txBuffer, 0, 1 );	// Which mode are we in?
+			if( ftdi.IsOpen ) {
+				currentMode = (Mode)(tcMainTabs.SelectedIndex + 1);
+				txBuffer[0] = (byte)currentMode;
+				uint written = 0;
+				ftdi.Write( txBuffer, 1, ref written );	// Which mode are we in?
 			}
 
 			// Start my 'tick timer' - It's set to tick every 20 milliseconds
@@ -128,31 +168,28 @@ namespace Elev8
 			tickTimer.Start();
 		}
 
+
 		private void SetActive( bool NewActive )
 		{
-			if(NewActive == true && comm == null) {
-				Connect();
+			if(NewActive == true && (ftdi == null || ftdi.IsOpen == false)) {
+				ConnectFTDI();
 			}
 
 			if(Active == NewActive) return;
 			if(NewActive == false) {
 
 				currentMode = Mode.None;
-				if(comm != null && comm.IsOpen)
+				if(ftdi != null && ftdi.IsOpen)
 				{
+					uint written = 0;
 					txBuffer[0] = OutputMode[ (byte)currentMode ];
-					comm.Write( txBuffer, 0, 1 );	// Which mode are we in?
+					ftdi.Write( txBuffer, 1, ref written );	// Which mode are we in?
 
-					comm.Close();
+					ftdi.Close();
 				}
 			}
 			else {
-				if(comm != null) {
-					comm.Open();
-				}
-				else {
-					Connect();
-				}
+				ConnectFTDI();
 			}
 
 			Active = NewActive;
@@ -203,16 +240,30 @@ namespace Elev8
 
 		private void tickTimer_Tick( object sender, EventArgs e )
 		{
-			if(Active == false || comm == null || comm.IsOpen == false ) return;
+			if(Active == false || ftdi == null) return;
+			
+			if(ftdi.IsOpen == false) {
+				ConnectFTDI();
+
+				if( ftdi.IsOpen == false ) return;
+			}
 
 			try
 			{
-				int QAvail = QSize - QHead;								// How much room is available at the end of the data queue?
-				int bytesAvail = comm.BytesToRead;						// How much data is available from the serial port?
+				uint QAvail = (uint)(QSize - QHead);							// How much room is available at the end of the data queue?
+				uint bytesAvail = 0;
+				ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
 				if(bytesAvail > QAvail) bytesAvail = QAvail;			// Pick the smaller of the two values for how much to read
 
-				if( bytesAvail > 0 ) {
-					QHead += comm.Read( rxQueue, QHead, bytesAvail );	// Read from the serial port into the data queue buffer
+				while( bytesAvail > 0 )
+				{
+					uint toRead = Math.Min( (uint)bytesAvail , (uint)rxBuffer.Length );
+					uint bytesRead = 0;
+					ftdi.Read( rxBuffer, toRead, ref bytesRead );
+					rxBuffer.CopyTo( rxQueue, QHead );
+					QHead += (int)bytesRead;
+					bytesAvail -= bytesRead;
+					//QHead += comm.Read( rxQueue, QHead, bytesAvail );	// Read from the serial port into the data queue buffer
 				}
 
 				do {
@@ -260,25 +311,26 @@ namespace Elev8
 				Mode tempMode = (Mode)(tcMainTabs.SelectedIndex+1);
 				if(tempMode != currentMode) {
 
+					uint written = 0;
 					if(currentMode == Mode.GyroCalibration) {
 						txBuffer[0] = 0x11;
-						comm.Write( txBuffer, 0, 1 );	// Reset to previous drift values
+						ftdi.Write( txBuffer, 1, ref written );	// Reset to previous drift values
 					}
 
 					currentMode = tempMode;
 					txBuffer[0] = OutputMode[ (byte)currentMode ];
-					comm.Write( txBuffer, 0, 1 );	// Which mode are we in?
+					ftdi.Write( txBuffer, 1, ref written );	// Which mode are we in?
 
 					if(currentMode == Mode.GyroCalibration) {
 						txBuffer[0] = 0x10;
-						comm.Write( txBuffer, 0, 1 );	// Zero drift calibration values
+						ftdi.Write( txBuffer, 1, ref written );	// Zero drift calibration values
 					}
 				}
 			}
 
 			catch( Exception )
 			{
-				comm = null;
+				ftdi.Close();	//  comm = null;
 			}
 		}
 
@@ -502,7 +554,7 @@ namespace Elev8
 			// I used to handle the mode switch here, but it was causing problems
 			// so I moved it into the timer-tick handler
 
-			if(comm != null) {
+			if( ftdi.IsOpen ) {
 				//currentMode = (Mode)(tcMainTabs.SelectedIndex+1);
 				//txBuffer[0] = (byte)currentMode;
 				//comm.Write( txBuffer, 0, 1 );	// Which mode are we in?
@@ -511,9 +563,10 @@ namespace Elev8
 
 		private void TestMotor( int MotorIndex )
 		{
-			if(comm != null) {
+			if( ftdi.IsOpen ) {
 				txBuffer[0] = (byte)(MotorIndex | 8);
-				comm.Write( txBuffer, 0, 1 );
+				uint written = 0;
+				ftdi.Write( txBuffer, 1, ref written );
 			}
 		}
 
@@ -573,12 +626,15 @@ namespace Elev8
 			txBuffer[11] = (byte)(offsetZ >> 8);
 			txBuffer[12] = (byte)(offsetZ >> 0);
 
-			comm.Write( txBuffer, 0, 13 );
+			uint written = 0;
+			ftdi.Write( txBuffer, 13, ref written );
+			// TODO: make sure all bytes were written
 		}
 
 
 		private void btnThrottleCalibrate_Click( object sender, EventArgs e )
 		{
+			uint written = 0;
 			switch(CalibrationCycle)
 			{
 				case 0:
@@ -591,14 +647,14 @@ namespace Elev8
 
 				case 1:
 					txBuffer[0] = (byte)0xFF;
-					comm.Write( txBuffer, 0, 1 );
+					ftdi.Write( txBuffer, 1, ref written );
 					lblCalibrateDocs.Text = "Plug in your flight battery and wait for the ESCs to beep twice, then press the Throttle Calibration button again";
 					CalibrationCycle = 2;
 					break;
 
 				case 2:
 					txBuffer[0] = (byte)Mode.MotorTest;
-					comm.Write( txBuffer, 0, 1 );
+					ftdi.Write( txBuffer, 1, ref written );
 					lblCalibrateDocs.Text = "Calibration complete";
 					lblCalibrateDocs.Update();
 					System.Threading.Thread.Sleep( 1000 * 3 );
@@ -619,20 +675,27 @@ namespace Elev8
 			{
 				currentMode = Mode.None;
 				txBuffer[0] = (byte)(currentMode);
-				
-				if( null != comm && comm.IsOpen == true ) {
 
-					try
-					{
-						comm.Write( txBuffer, 0, 1 );
-					}
-					catch (IOException) { }
+				if(null != ftdi && ftdi.IsOpen == true)
+				{
+					uint written = 0;
+					ftdi.Write( txBuffer, 1, ref written );
 				}
+			}
 
 			catch(Exception)
 			{
 			}
 		}
+
+
+		private void MainForm_FormClosed( object sender, FormClosedEventArgs e )
+		{
+			if( ftdi != null && ftdi.IsOpen) {
+				ftdi.Close();
+			}
+		}
+
 
 		private void btnMotor1_MouseDown( object sender, MouseEventArgs e )
 		{
