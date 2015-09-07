@@ -101,3 +101,38 @@ Cogs in use:
 6- FullDuplexSerial
 
 Two full cogs currently remain unused.
+
+
+Things to do / try:
+
+- Speed / position / altitude estimate
+  - Multiply the accelerometer vector with the orientation matrix to get
+     an oriented acceleration
+  - Subtract gravity
+  - Integrate the result over time to get an estimate of velocity on all
+     3 axis
+  - Integrate velocity to get estimate of position
+  - Use position estimate to attempt position hold - will be inaccurate, but
+     maybe accurate enough?
+  - Use altimeter reading to correct drift in height estimate, like accel+gyro
+  - Could give more accurate readings in short term
+
+
+- Try integrating control stick derivative into gyro value in PID inputs
+  - Might make for faster response - Currently the gyro values are being
+     submitted to PID function as "derivative", but it's not completely
+     accurate, because it's supposed to be error term derivative.  If the set
+     point moves (IE the user changes their input) the derivative should be
+     adjusted accordingly to provide a crisper response.  (this is a guess)
+
+
+- Need various flight modes
+  - Attitude hold (currently the only flight mode) - Stick position dictates
+     orientation
+
+  - Manual with auto-level - Stick position values are integrated over time,
+     but also slowly return to level.  Manual, but auto-assist.
+
+  - Full manual, no auto-level assist
+
+  - Need to be able to switch between modes instantly
