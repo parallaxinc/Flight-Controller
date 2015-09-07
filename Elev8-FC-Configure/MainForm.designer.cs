@@ -32,10 +32,10 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager( typeof( MainForm ) );
 			this.tcMainTabs = new System.Windows.Forms.TabControl();
 			this.tpRadioTest = new System.Windows.Forms.TabPage();
-			this.lblAux4 = new System.Windows.Forms.Label();
 			this.lblAux3 = new System.Windows.Forms.Label();
 			this.lblAux2 = new System.Windows.Forms.Label();
 			this.lblAux1 = new System.Windows.Forms.Label();
+			this.lblGear = new System.Windows.Forms.Label();
 			this.label36 = new System.Windows.Forms.Label();
 			this.label35 = new System.Windows.Forms.Label();
 			this.label34 = new System.Windows.Forms.Label();
@@ -140,6 +140,7 @@
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.grGyro = new Elev8.Graph();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
+			this.gAltimeter = new Elev8.Graph();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -175,10 +176,10 @@
 			// 
 			// tpRadioTest
 			// 
-			this.tpRadioTest.Controls.Add( this.lblAux4 );
 			this.tpRadioTest.Controls.Add( this.lblAux3 );
 			this.tpRadioTest.Controls.Add( this.lblAux2 );
 			this.tpRadioTest.Controls.Add( this.lblAux1 );
+			this.tpRadioTest.Controls.Add( this.lblGear );
 			this.tpRadioTest.Controls.Add( this.label36 );
 			this.tpRadioTest.Controls.Add( this.label35 );
 			this.tpRadioTest.Controls.Add( this.label34 );
@@ -198,41 +199,41 @@
 			this.tpRadioTest.Text = "Radio Test";
 			this.tpRadioTest.UseVisualStyleBackColor = true;
 			// 
-			// lblAux4
-			// 
-			this.lblAux4.Location = new System.Drawing.Point( 528, 135 );
-			this.lblAux4.Name = "lblAux4";
-			this.lblAux4.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux4.TabIndex = 22;
-			this.lblAux4.Text = "0";
-			this.lblAux4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
 			// lblAux3
 			// 
-			this.lblAux3.Location = new System.Drawing.Point( 528, 108 );
+			this.lblAux3.Location = new System.Drawing.Point( 528, 135 );
 			this.lblAux3.Name = "lblAux3";
 			this.lblAux3.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux3.TabIndex = 21;
+			this.lblAux3.TabIndex = 22;
 			this.lblAux3.Text = "0";
 			this.lblAux3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// lblAux2
 			// 
-			this.lblAux2.Location = new System.Drawing.Point( 528, 81 );
+			this.lblAux2.Location = new System.Drawing.Point( 528, 108 );
 			this.lblAux2.Name = "lblAux2";
 			this.lblAux2.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux2.TabIndex = 20;
+			this.lblAux2.TabIndex = 21;
 			this.lblAux2.Text = "0";
 			this.lblAux2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// lblAux1
 			// 
-			this.lblAux1.Location = new System.Drawing.Point( 528, 54 );
+			this.lblAux1.Location = new System.Drawing.Point( 528, 81 );
 			this.lblAux1.Name = "lblAux1";
 			this.lblAux1.Size = new System.Drawing.Size( 64, 13 );
-			this.lblAux1.TabIndex = 19;
+			this.lblAux1.TabIndex = 20;
 			this.lblAux1.Text = "0";
 			this.lblAux1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// lblGear
+			// 
+			this.lblGear.Location = new System.Drawing.Point( 528, 54 );
+			this.lblGear.Name = "lblGear";
+			this.lblGear.Size = new System.Drawing.Size( 64, 13 );
+			this.lblGear.TabIndex = 19;
+			this.lblGear.Text = "0";
+			this.lblGear.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// label36
 			// 
@@ -241,7 +242,7 @@
 			this.label36.Name = "label36";
 			this.label36.Size = new System.Drawing.Size( 34, 13 );
 			this.label36.TabIndex = 18;
-			this.label36.Text = "Aux4:";
+			this.label36.Text = "Aux3:";
 			// 
 			// label35
 			// 
@@ -250,7 +251,7 @@
 			this.label35.Name = "label35";
 			this.label35.Size = new System.Drawing.Size( 34, 13 );
 			this.label35.TabIndex = 17;
-			this.label35.Text = "Aux3:";
+			this.label35.Text = "Aux2:";
 			// 
 			// label34
 			// 
@@ -259,16 +260,16 @@
 			this.label34.Name = "label34";
 			this.label34.Size = new System.Drawing.Size( 34, 13 );
 			this.label34.TabIndex = 16;
-			this.label34.Text = "Aux2:";
+			this.label34.Text = "Aux1:";
 			// 
 			// label33
 			// 
 			this.label33.AutoSize = true;
 			this.label33.Location = new System.Drawing.Point( 491, 54 );
 			this.label33.Name = "label33";
-			this.label33.Size = new System.Drawing.Size( 34, 13 );
+			this.label33.Size = new System.Drawing.Size( 33, 13 );
 			this.label33.TabIndex = 15;
-			this.label33.Text = "Aux1:";
+			this.label33.Text = "Gear:";
 			// 
 			// textBox1
 			// 
@@ -341,6 +342,7 @@
 			// 
 			// tpSensorTest
 			// 
+			this.tpSensorTest.Controls.Add( this.gAltimeter );
 			this.tpSensorTest.Controls.Add( this.label12 );
 			this.tpSensorTest.Controls.Add( this.label19 );
 			this.tpSensorTest.Controls.Add( this.label21 );
@@ -1300,6 +1302,13 @@
 			this.tickTimer.Interval = 20;
 			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
 			// 
+			// gAltimeter
+			// 
+			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
+			this.gAltimeter.Name = "gAltimeter";
+			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
+			this.gAltimeter.TabIndex = 31;
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF( 6F, 13F );
@@ -1444,14 +1453,15 @@
 		private System.Windows.Forms.Label label31;
 		private System.Windows.Forms.Label label30;
 		private System.Windows.Forms.Label label29;
-		private System.Windows.Forms.Label lblAux4;
 		private System.Windows.Forms.Label lblAux3;
 		private System.Windows.Forms.Label lblAux2;
 		private System.Windows.Forms.Label lblAux1;
+		private System.Windows.Forms.Label lblGear;
 		private System.Windows.Forms.Label label36;
 		private System.Windows.Forms.Label label35;
 		private System.Windows.Forms.Label label34;
 		private System.Windows.Forms.Label label33;
+		private Graph gAltimeter;
 	}
 }
 

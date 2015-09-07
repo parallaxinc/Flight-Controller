@@ -12,10 +12,10 @@ CON
   RC_AILE = 1
   RC_ELEV = 2
   RC_RUDD = 3   'R/C input channel assignments (pin values are specified in the RC_Receiver object)
-  RC_AUX1 = 4
-  RC_AUX2 = 5
-  RC_AUX3 = 6
-  RC_AUX4 = 7 
+  RC_GEAR = 4
+  RC_AUX1 = 5
+  RC_AUX2 = 6
+  RC_AUX3 = 7 
 
   'Output pins to corresponding motors
   MOTOR_FL = 15
@@ -96,11 +96,12 @@ OBJ
 
 VAR
   'Receiver inputs
-  long  Thro, Aile, Elev, Rudd, Aux1, Aux2, Aux3, Aux4
+  long  Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3
   long  iRudd         'Integrated rudder input value
 
   'Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
-  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltTemp
+  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltTemp, Pressure
+  long  SensorTime    'How long sensors took to read (debug / optimization test value)
 
   'Debug output mode, working variables  
   long  Mode, counter, NudgeMotor
@@ -121,7 +122,6 @@ VAR
   long  LEDValue[LED_COUNT]                             'LED outputs (copied to the LEDs by the Sensors cog)
   
   long loopTimer                'Master flight loop counter - used to keep a steady update rate
-  long SensorTime               'How long sensors took to read (debug / optimization test value)
 
 
   word EnableStep               'Flight arm/disarm counter  
@@ -153,45 +153,45 @@ PUB Main | Cycles
   Dbg.Start( 31, 30, 0, 115200 )
   RC.Start
 
-  All_LED( LED_Red & LED_Eighth )             'LED red on startup
+  All_LED( LED_Red & LED_Half )                         'LED red on startup
     
   Sens.Start(SDI, SDO, SCL, CS_AG, CS_M, CS_ALT, LED_PIN, @LEDValue, LED_COUNT)  
   IMU.Start
 
+
+  'Debug code - Display the length of the FPU programs
   'Dbg.rx
   'Dbg.dec( IMU.GetQuatUpdateLen )
   'Dbg.tx(13)
   'Dbg.dec( IMU.GetCalcErrorLen )
   'dbg.tx( 13 )
   'dbg.rx
-  
 
 
+  'Initialize the ESC driver, specify 400Hz outputs for 4 motor pins
   ESC.Init( 400 )
   ESC.AddFastPin(MOTOR_FL)
   ESC.AddFastPin(MOTOR_FR)
   ESC.AddFastPin(MOTOR_BR)
   ESC.AddFastPin(MOTOR_BL)
 
-
   ESC.Set(MOTOR_FL, 8000) 'Throttle ranges from 8000 to 16000 - 8000 is "off"
   ESC.Set(MOTOR_FR, 8000)
   ESC.Set(MOTOR_BR, 8000)
   ESC.Set(MOTOR_BL, 8000)
-  
   ESC.Start
 
 
-  RollPID.Init (    1500,  50,  -12000 )               
+  RollPID.Init (    1500,   0,  -12000 )               
   PitchPID.Init(    1500,   0,  -12000 )     
-  YawPID.Init  (    3000,   0,   -8000 ) 
+  YawPID.Init  (    4000,   0,  -12000 )                'was 3000, 0, -8000 
 
   RollPID.SetPrecision( 13 ) 
   PitchPID.SetPrecision( 13 ) 
   YawPID.SetPrecision( 13 ) 
 
-  RollPID.SetMaxOutput( 300*8 )
-  PitchPID.SetMaxOutput( 300*8 )
+  RollPID.SetMaxOutput( 2500 )
+  PitchPID.SetMaxOutput( 2500 )
 
   RollPID.SetPIMax( 40 )
   PitchPID.SetPIMax( 40 )
@@ -199,13 +199,13 @@ PUB Main | Cycles
   RollPID.SetMaxIntegral( 40000 )
   PitchPID.SetMaxIntegral( 40000 )
 
-  YawPID.SetMaxOutput( 300 )
+  YawPID.SetMaxOutput( 2500 )
 
 
   FindGyroZero     'Get a gyro baseline - We'll re-do this on flight arming, but this helps settle the IMU
   
 
-  All_LED( LED_Green & LED_Eighth )
+  All_LED( LED_Green & LED_Half )
 
 
   counter := 0
@@ -216,21 +216,28 @@ PUB Main | Cycles
     Cycles := cnt
 
     'Read ALL inputs from the sensors into local memory, starting at Temperature
-    longmove( @Temperature, Sens.Address, 12 ) 
-
-    SensorTime := Sens.In(12) 
+    longmove( @Temperature, Sens.Address, constant(Sens#ParamsSize) ) 
 
     IMU.Update_Part1( @GyroX )        'Entire IMU takes ~92000 cycles
 
 
     Thro :=  RC.GetRC( RC_THRO )
-    Aile := -RC.GetRC( RC_AILE )
+    Aile :=  RC.GetRC( RC_AILE )
     Elev :=  RC.GetRC( RC_ELEV )
-    Rudd := -RC.GetRC( RC_RUDD )
+    Rudd :=  RC.GetRC( RC_RUDD )
+    Gear :=  RC.GetRC( RC_GEAR )
     Aux1 :=  RC.GetRC( RC_AUX1 )
-    Aux2 := -RC.GetRC( RC_AUX2 )
+    Aux2 :=  RC.GetRC( RC_AUX2 )
     Aux3 :=  RC.GetRC( RC_AUX3 )
-    Aux4 := -RC.GetRC( RC_AUX4 )
+
+
+    'RollPID.SetIGain( Aux1 ~> 5 )
+    'PitchPID.SetIGain( Aux1 ~> 5 )
+
+    'RollPID.SetMaxIntegral( 40000 + (Aux3 << 4) )
+    'PitchPID.SetMaxIntegral( 40000 + (Aux3 << 4) )
+     
+
 
     'Small dead-band around zero
     'if( ||Aile < 4 )
@@ -302,14 +309,14 @@ PUB UpdateFlightMode | ThroOut
 
     if( Rudd > 750  AND  Aile < -750  AND  Thro < -750  AND  Elev < -750 )
       EnableStep++
-      All_LED( LED_Yellow & LED_Eighth )
+      All_LED( LED_Yellow & LED_Half )
               
       if( EnableStep == 250 )   'Hold for 1 second
         ArmFlightMode
       
     else
       EnableStep := 0
-      All_LED( LED_Green & LED_Eighth )
+      All_LED( LED_Green & LED_Half )
     '------------------------------------------------------------------------
 
   else
@@ -318,14 +325,14 @@ PUB UpdateFlightMode | ThroOut
 
     if( Rudd < -750  AND  Aile > 750  AND  Thro < -750  AND  Elev < -750 )
       EnableStep++
-      All_LED( LED_Yellow & LED_Eighth )
+      All_LED( LED_Yellow & LED_Half )
               
       if( EnableStep == 250 )   'Hold for 1 second
         DisarmFlightMode
       
     else
       EnableStep := 0
-      All_LED( LED_Red & LED_Eighth )
+      All_LED( LED_Red & LED_Half )
 
     '------------------------------------------------------------------------
 
@@ -344,7 +351,8 @@ PUB UpdateFlightMode | ThroOut
     'Yaw is different because we accumulate it - It's not specified absolutely like you can
     'with pitch and roll, so scale the stick input down a bit
     DesiredYaw :=   iRudd >> 3
-     
+
+
      
     'Zero yaw target when throttle is off - makes for more stable liftoff
      
@@ -369,7 +377,7 @@ PUB UpdateFlightMode | ThroOut
     PitchOut := PitchPID.Calculate_ForceD_NoD2( DesiredPitch , Pitch , GyroX , DoIntegrate )    
     YawOut := YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , -GyroZ, DoIntegrate )    
 
-     
+
     ThroMix := (Thro + 800) ~> 3                        ' Approx 0 - 256
     ThroMix <#= 64                                      ' Above 1/4 throttle, clamp it to 64
     ThroMix #>= 0
@@ -418,10 +426,10 @@ PUB ArmFlightMode
   EnableStep := 0
   Beep2
    
-  All_LED( LED_Red & LED_Eighth )
+  All_LED( LED_Red & LED_Half )
   FindGyroZero
    
-  All_LED( LED_Blue & LED_Eighth )        
+  All_LED( LED_Blue & LED_Half )        
   BeepTune
   loopTimer := cnt
 
@@ -431,7 +439,7 @@ PUB DisarmFlightMode
   FlightEnabled := FALSE
   EnableStep := 0
   Beep3
-  All_LED( LED_Green & LED_Eighth )        
+  All_LED( LED_Green & LED_Half )        
   loopTimer := cnt
    
 
@@ -490,24 +498,16 @@ PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
       dbg.txFast( $77 )      
       dbg.txFast( MODE_RadioTest )
 
-      dbg.txFast( Thro )            'Normally I'd use ( Thro & 255, but the serial object only sends the low 8 bits, so not necessary)      
-      dbg.txFast( Thro >> 8 )      
-      dbg.txFast( Aile )      
-      dbg.txFast( Aile >> 8 )      
-      dbg.txFast( Elev )      
-      dbg.txFast( Elev >> 8 )      
-      dbg.txFast( Rudd )      
-      dbg.txFast( Rudd >> 8 )      
+      TxData[0] := Thro         'Copy the values we're interested in into a WORD array, for faster transmission                        
+      TxData[1] := Aile
+      TxData[2] := Elev
+      TxData[3] := Rudd
+      TxData[4] := Gear
+      TxData[5] := Aux1
+      TxData[6] := Aux2
+      TxData[7] := Aux3
 
-    elseif( phase == 2 )
-      dbg.txFast( Aux1 )      
-      dbg.txFast( Aux1 >> 8 )      
-      dbg.txFast( Aux2 )      
-      dbg.txFast( Aux2 >> 8 )      
-      dbg.txFast( Aux3 )      
-      dbg.txFast( Aux3 >> 8 )      
-      dbg.txFast( Aux4 )      
-      dbg.txFast( Aux4 >> 8 )      
+      dbg.txBulk( @TxData, 16 )   'Send 16 bytes of data from @TxData onward (sends 8 words worth of data)                         
 
 
   elseif( Mode == MODE_SensorTest )
@@ -738,3 +738,4 @@ DAT
                     long    LED_Quarter
                     long    LED_Eighth
                     long    LED_Dim
+          

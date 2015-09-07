@@ -19,15 +19,14 @@ namespace Elev8
 
 		FTDI ftdi = null;
 
-
 		int Thro = 0;
 		int Aile = 0;
 		int Elev = 0;
 		int Rudd = 0;
+		int Gear = 0;
 		int Aux1 = 0;
 		int Aux2 = 0;
 		int Aux3 = 0;
-		int Aux4 = 0;
 
 		int GyroTemp;
 		int GyroX, GyroY, GyroZ;
@@ -48,6 +47,8 @@ namespace Elev8
 		byte[] OutputMode = { 0, 1, 2, 3, 2, 4, 5, 6 };				// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
 		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 12+3, 3+6 };	// None=0, Radio=19, Sensors=31, Motor=0, IMU=25, IMUComp=12, VibeTest=6 (bytes)
 		int SampleCounter = 0;
+
+		int[] AltTable = new int[251];
 
 
 		enum Mode
@@ -79,6 +80,8 @@ namespace Elev8
 			gHeading.GaugeCircle = 1.0f;	// want this to use the full 360 degrees of the gauge, unlike a normal analog gauge
 
 			ConnectFTDI();
+
+			GenerateAltitudeTable();
         }
 
 
@@ -250,7 +253,7 @@ namespace Elev8
 
 			try
 			{
-				uint QAvail = (uint)(QSize - QHead);							// How much room is available at the end of the data queue?
+				uint QAvail = (uint)(QSize - QHead);					// How much room is available at the end of the data queue?
 				uint bytesAvail = 0;
 				ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
 				if(bytesAvail > QAvail) bytesAvail = QAvail;			// Pick the smaller of the two values for how much to read
@@ -347,10 +350,10 @@ namespace Elev8
 					Aile = GetCommWord();
 					Elev = GetCommWord();
 					Rudd = GetCommWord();
+					Gear = GetCommWord();
 					Aux1 = GetCommWord();
 					Aux2 = GetCommWord();
 					Aux3 = GetCommWord();
-					Aux4 = GetCommWord();
 
 					if(currentMode == Mode.RadioTest)
 					{
@@ -360,10 +363,10 @@ namespace Elev8
 						rsRight.XValue = (float)Aile;
 						rsRight.YValue = (float)Elev;
 
+						lblGear.Text = Gear.ToString();
 						lblAux1.Text = Aux1.ToString();
 						lblAux2.Text = Aux2.ToString();
 						lblAux3.Text = Aux3.ToString();
-						lblAux4.Text = Aux4.ToString();
 					}
 					//GotPacket = true;
 					break;
@@ -406,13 +409,17 @@ namespace Elev8
 						//gHeading.Value = (float)(Math.Atan2( MagX, MagY ) * 1800.0/Math.PI);
 						gHeading.Value = ComputeTiltCompensatedHeading();
 
-						double pressure = (double)Alt / 4096.0;
-
-						float altitudeFeet = (1 - (float)Math.Pow( pressure / 1013.25, 0.190284 )) * 145366.45f;
 						float altTempDegrees = 42.5f + (float)AltTemp / 480.0f;
 
-						lblAltimeter.Text = string.Format( "{0:0.00}hPa ({1:0.0} ft)", pressure, altitudeFeet );
-						lblAltimeterTemp.Text = string.Format( "{0:0.0}*C", altTempDegrees );
+						lblAltimeter.Text = string.Format( "{0:0.000} m", (float)Alt / 1000.0f );	// Altimeter output is in mm
+						lblAltimeterTemp.Text = string.Format( "{0:0.00}*C", altTempDegrees );
+
+
+						int[] sample = {Alt, Alt, Alt };
+						SampleCounter++;
+						bool DoUpdate = (SampleCounter & 15) == 15;
+						gAltimeter.AddSample( sample, true );
+						if( DoUpdate ) gAltimeter.UpdateStats();
 					}
 
 
@@ -886,5 +893,83 @@ namespace Elev8
 			//errCorrZ2 = errVect.z;
 		}
 
+
+
+		void GenerateAltitudeTable()
+		{
+			// Generate a table of pressure to altitude values for the range of pressures supported by our pressure sensor
+
+			//float altitudeFeet = (float)((1.0 - Math.Pow( pressure / 1013.25, 0.190284 )) * 145442.16);
+			//float altitudeMeters = altitudeFeet / 3.280839895f;
+
+			// Range is 260 to 1260 hPa
+			for(int HPA = 260; HPA <= 1260; HPA += 4)
+			{
+				int Index = (HPA - 260) / 4;
+
+				double hPa = HPA;
+				double alt = (Math.Pow( 10.0, Math.Log10( hPa / 1013.25 ) / 5.2558797) - 1.0) / (-6.8755856 * 0.000001);
+				double alt_mm = (alt / 3.280839895) * 1000.0;
+
+				AltTable[Index] = (int)(alt_mm + 0.5);
+
+				//un-comment the next line to output a DAT formatted table to the console output window
+				//Console.WriteLine( "	AltTable_{0:000}	long	{1}", Index, AltTable[Index] );
+			}
+
+			/*
+			// This code tests the average and maxumum error over the entire range of the altitude table
+
+			double maxErr = 0.0;
+			double avgErr = 0.0;
+			int Count = 0;
+
+			// Test over the range of values we get from the altimeter (every 8th is enough)
+			for(int i = 260 * 4096; i < 1260 * 4096; i+=8 )
+			{
+				double tabAlt = GetTableAltitude( i );
+				double compAlt = GetComputedAltitude( i );
+
+				double diff = Math.Abs(tabAlt - compAlt);
+
+				maxErr = Math.Max( maxErr, diff );
+				avgErr += diff;
+				Count++;
+			}
+
+			avgErr /= (double)Count;
+			Console.WriteLine( "Table Error : Max: {0:0.0000} ft, Avg: {1:0.0000} ft", maxErr, avgErr );
+			*/
+		}
+
+
+		// Use the lookup table to compute altitude from an altimeter pressure reading (hPa*4096)
+		float GetTableAltitude( int Alt )
+		{
+			int Index = ((Alt >> 12) - 260) / 4;
+			if(Index < 0 || Index > 250) return 0.0f;
+
+			int A1 = ((Index * 4) + 260) << 12;
+			int A2 = (((Index+1) * 4) + 260) << 12;
+			int Delta = A2 - A1;	// Always 16384
+			int Frac = Alt - A1;
+
+			int Tab1 = AltTable[Index];
+			int Tab2 = AltTable[Index+1];
+
+			int ResultMM = ((Tab2 - Tab1) * Frac + Delta/2) / Delta + Tab1;
+			float ResultFeet = (float)ResultMM / (25.4f * 12.0f);
+
+			return ResultFeet;
+		}
+
+
+		// Use double-precision math to compute altitude from an altimeter pressure reading (hPa*4096)
+		float GetComputedAltitude( int Alt )
+		{
+			double pressure = (double)Alt / 4096.0;
+			float altFeet = (float)((Math.Pow( 10.0, Math.Log10( pressure / 1013.25 ) / 5.2558797 ) - 1.0) / (-6.8755856 * 0.000001));
+			return altFeet;
+		}
 	}
 }
