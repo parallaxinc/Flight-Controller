@@ -196,4 +196,3 @@ PUB Calculate_PI( SetPoint , Measured )
   IError := -MaxIntegral #> IError <# MaxIntegral  
    
   return Output
-   

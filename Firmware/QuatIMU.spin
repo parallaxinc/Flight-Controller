@@ -498,4 +498,5 @@ PUB WaitForCompletion
   q.z = cosr * q.z + sinr * qdot.z
    
   q = q.Normalize()
-  }   
+  }
+   
