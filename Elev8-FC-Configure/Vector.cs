@@ -47,6 +47,24 @@ namespace Elev8
 			float Scale = 1.0f / Len;
 
 			return new Vector( x * Scale, y * Scale, z * Scale );
+		}	
+
+
+		public static Vector operator *( Vector v, float scale )
+		{
+			return new Vector( v.x*scale, v.y*scale, v.z*scale );
+		}
+
+
+		public static Vector operator -( Vector v1, Vector v2 )
+		{
+			return new Vector( v1.x - v2.x, v1.y - v2.y, v1.z - v2.z );
+		}
+
+
+		public static Vector operator +( Vector v1, Vector v2 )
+		{
+			return new Vector( v1.x + v2.x, v1.y + v2.y, v1.z + v2.z );
 		}
 	};
 }

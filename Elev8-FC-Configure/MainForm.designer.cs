@@ -48,6 +48,7 @@
 			this.rsRight = new Elev8.RadioJoystick();
 			this.rsLeft = new Elev8.RadioJoystick();
 			this.tpSensorTest = new System.Windows.Forms.TabPage();
+			this.gAltimeter = new Elev8.Graph();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label19 = new System.Windows.Forms.Label();
 			this.label21 = new System.Windows.Forms.Label();
@@ -140,7 +141,7 @@
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.grGyro = new Elev8.Graph();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
-			this.gAltimeter = new Elev8.Graph();
+			this.lblStatOutput = new System.Windows.Forms.Label();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -377,6 +378,13 @@
 			this.tpSensorTest.TabIndex = 1;
 			this.tpSensorTest.Text = "Sensor Test";
 			this.tpSensorTest.UseVisualStyleBackColor = true;
+			// 
+			// gAltimeter
+			// 
+			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
+			this.gAltimeter.Name = "gAltimeter";
+			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
+			this.gAltimeter.TabIndex = 31;
 			// 
 			// label12
 			// 
@@ -1039,6 +1047,7 @@
 			// 
 			// tpIMUComp
 			// 
+			this.tpIMUComp.Controls.Add( this.lblStatOutput );
 			this.tpIMUComp.Controls.Add( this.label27 );
 			this.tpIMUComp.Controls.Add( this.label25 );
 			this.tpIMUComp.Controls.Add( this.ocCompQ2 );
@@ -1302,12 +1311,14 @@
 			this.tickTimer.Interval = 20;
 			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
 			// 
-			// gAltimeter
+			// lblStatOutput
 			// 
-			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
-			this.gAltimeter.Name = "gAltimeter";
-			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
-			this.gAltimeter.TabIndex = 31;
+			this.lblStatOutput.Font = new System.Drawing.Font( "Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.lblStatOutput.Location = new System.Drawing.Point( 9, 215 );
+			this.lblStatOutput.Name = "lblStatOutput";
+			this.lblStatOutput.Size = new System.Drawing.Size( 616, 30 );
+			this.lblStatOutput.TabIndex = 4;
+			this.lblStatOutput.Text = "Test test";
 			// 
 			// MainForm
 			// 
@@ -1462,6 +1473,7 @@
 		private System.Windows.Forms.Label label34;
 		private System.Windows.Forms.Label label33;
 		private Graph gAltimeter;
+		private System.Windows.Forms.Label lblStatOutput;
 	}
 }
 

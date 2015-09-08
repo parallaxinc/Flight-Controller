@@ -45,11 +45,13 @@ namespace Elev8
 		int QTail = 0;
 
 		byte[] OutputMode = { 0, 1, 2, 3, 2, 4, 5, 6 };				// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
-		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 12+3, 3+6 };	// None=0, Radio=19, Sensors=31, Motor=0, IMU=25, IMUComp=12, VibeTest=6 (bytes)
+		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=31, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
 		int SampleCounter = 0;
 
 		int[] AltTable = new int[251];
 
+		Vector velocityEstimate = new Vector( 0.0f, 0.0f, 0.0f );
+		Vector positionEstimate = new Vector( 0.0f, 0.0f, 0.0f );
 
 		enum Mode
 		{
@@ -529,6 +531,8 @@ namespace Elev8
 					AccelY = GetCommWord();
 					AccelZ = GetCommWord();
 
+					Alt = GetCommLong();
+
 					ComputeQuaternionOrientations();
 
 					ocCompQ1.Quat = Q1;
@@ -555,6 +559,7 @@ namespace Elev8
 			float Heading = (float)(Math.Atan2( Mxh, Myh ) * 1800.0 / Math.PI);
 			return Heading;
 		}
+
 
 		private void tcMainTabs_SelectedIndexChanged( object sender, EventArgs e )
 		{
@@ -748,7 +753,7 @@ namespace Elev8
 
 		const float GyroToDeg = 1000.0f / (17.5f * 4);
 		const float RadToDeg = 180.0f / 3.141592654f;
-		const float UpdateRate = 200.0f;
+		const float UpdateRate = 250.0f / 2.0f;	// Update rate is 250 hz, but every other cycle
 		const float GyroInvScale = GyroToDeg * RadToDeg * UpdateRate;
 		const float GyroScale = 1.0f / GyroInvScale;
 
@@ -760,6 +765,7 @@ namespace Elev8
 		Quaternion qdot = new Quaternion();
 
 		Matrix m = new Matrix();
+		Matrix m2 = new Matrix();
 		Vector acc = new Vector();
 
 
@@ -784,6 +790,8 @@ namespace Elev8
 
 			ComputeQuatOriginalMethod();	// Original, as implemented on the Prop
 			ComputeQuatAlternateMethod();	// Testing alternate
+
+			ComputeAltitudeEstimate();
 		}
 
 
@@ -864,7 +872,7 @@ namespace Elev8
 			Q2 = Q2.Normalize();
 
 			// Convert to matrix form
-			m.From(Q2);
+			m2.From(Q2);
 
 			// Compute the difference between the accelerometer vector and the matrix Y (up) vector
 			acc = new Vector( -AccelX, AccelZ, AccelY );
@@ -874,9 +882,9 @@ namespace Elev8
 			float accWeight = 1.0f - Math.Min( Math.Abs( 2.0f - rMag * 2.0f ), 1.0f );
 			// accWeight *= accWeight * 4.0f;
 
-			float errDiffX = acc.y * m.m[1,2] - acc.z * m.m[1,1];
-			float errDiffY = acc.z * m.m[1,0] - acc.x * m.m[1,2];
-			float errDiffZ = acc.x * m.m[1,1] - acc.y * m.m[1,0];
+			float errDiffX = acc.y * m2.m[1,2] - acc.z * m2.m[1,1];
+			float errDiffY = acc.z * m2.m[1,0] - acc.x * m2.m[1,2];
+			float errDiffZ = acc.x * m2.m[1,1] - acc.y * m2.m[1,0];
 
 			accWeight *= 1.0f / 512.0f;
 			errCorrX2 = errDiffX * accWeight;
@@ -891,6 +899,42 @@ namespace Elev8
 			//errCorrX2 = errVect.x;
 			//errCorrY2 = errVect.y;
 			//errCorrZ2 = errVect.z;
+		}
+
+
+		private void ComputeAltitudeEstimate()
+		{
+			acc = new Vector( -AccelX, AccelZ, AccelY );
+			acc *= 1.0f * AccScale;
+
+			// Get gravity vector from orentation matrix
+			Vector gravity = new Vector( m.m[1,0], m.m[1,1], m.m[1,2] );
+
+			// Subtract from accelerometer vector to get directional forces
+			acc -= gravity;
+
+			// acc is now m/s^2
+
+			// Orient accelerometer vector (or at least just Z component)
+			Vector accOriented = m.Transpose().Mul( acc );
+
+			// Integrate to get velocity (m/sec)
+			velocityEstimate += accOriented * (1.0f / UpdateRate);
+
+			// Integrate Z velocity to get approximate height (in meters)
+			positionEstimate += velocityEstimate;
+
+			velocityEstimate *= 0.95f;	// Slowly degrade it
+
+			//TODO:
+			// Instead of slowly degrading the velocity estimate, why not use the altimeter values
+			// integrated over time.  Old alti - current alti = velocity.  Use that to correct drift in
+			// velocity estimate so it doesn't end up falling off prematurely
+
+			positionEstimate.y = (positionEstimate.y * 0.95f) + (((float)Alt / 1000.0f) * 0.05f);
+
+			lblStatOutput.Text = string.Format( "{0:0.00}   {1:0.000}", positionEstimate.y, velocityEstimate.y );
+
 		}
 
 
@@ -924,11 +968,18 @@ namespace Elev8
 			double avgErr = 0.0;
 			int Count = 0;
 
+			double minAlt = float.MaxValue;
+			double maxAlt = float.MinValue;
+
 			// Test over the range of values we get from the altimeter (every 8th is enough)
 			for(int i = 260 * 4096; i < 1260 * 4096; i+=8 )
+			//for(int i = 870 * 4096; i < 1040 * 4096; i += 8)
 			{
 				double tabAlt = GetTableAltitude( i );
 				double compAlt = GetComputedAltitude( i );
+
+				minAlt = Math.Min( minAlt, compAlt );
+				maxAlt = Math.Max( maxAlt, compAlt );
 
 				double diff = Math.Abs(tabAlt - compAlt);
 
@@ -939,7 +990,13 @@ namespace Elev8
 
 			avgErr /= (double)Count;
 			Console.WriteLine( "Table Error : Max: {0:0.0000} ft, Avg: {1:0.0000} ft", maxErr, avgErr );
-			*/
+			Console.WriteLine( "From alt: {0:0.00} ft to {1:0.00} ft", minAlt , maxAlt );
+
+			double alt1 = GetTableAltitude( 700 * 4096 );
+			double alt2 = GetTableAltitude( 700 * 4096 + 1 );
+
+			Console.WriteLine( "Resolved diff of {0:0.0000} ft", Math.Abs(alt2 - alt1) );
+			//*/
 		}
 
 
