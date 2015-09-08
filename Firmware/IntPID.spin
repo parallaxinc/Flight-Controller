@@ -116,6 +116,45 @@ PUB Calculate( SetPoint , Measured , DoIntegrate )
   return Output
 
 
+PUB Calculate_NoD2( SetPoint , Measured , DoIntegrate )
+
+  ' Proportional error is Desired - Measured
+  PError := SetPoint - Measured
+  
+  ' Derivative error is the delta PError divided by time
+  ' If loop timing is const, you can skip the divide and just make the factor smaller
+  DError := PError - LastPError
+
+  LastDError := DError
+  LastPError := PError
+
+  PClamped := PError
+  if( PMax > 0 )
+    PClamped #>= -PMax
+    PClamped <#= PMax
+
+  Output := ((Kp * PClamped) + (Kd * DError) + (Ki * IError) + RoundOffset) ~> Precision
+  
+  'Accumulate Integral error *or* Limit output. 
+  'Stop accumulating when output saturates 
+
+  Output := -MaxOutput #> Output <# MaxOutput
+     
+  if( DoIntegrate == TRUE )
+    PClamped := PError
+    if( PIMax > 0 )
+      PClamped := -PIMax #> PClamped <# PIMax
+     
+    IError += PClamped
+    IError #>= -MaxIntegral
+    IError <#= MaxIntegral  
+     
+  return Output
+
+
+
+
+
 PUB Calculate_ForceD( SetPoint , Measured , Deriv , DoIntegrate )
 
   ' Proportional error is Desired - Measured

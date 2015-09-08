@@ -3,6 +3,12 @@
 }
 
 
+OBJ
+  FLT           : "F32_1_6"
+  Const         : "Constants.spin"
+
+  'Debug         : "FullDuplexSerial"
+
 CON
   _clkmode = xtal1 + pll16x                             'Standard clock mode * crystal frequency = 80 MHz
   _xinfreq = 5_000_000
@@ -10,8 +16,8 @@ CON
   RadToDeg = 180.0 / 3.141592654                        'Degrees per Radian
   GyroToDeg = 1000.0 / 70.0                             'Gyro units per degree @ 2000 deg/sec sens = 70 mdps/bit
   AccToG = 1000.0 / 0.122                               'Accelerometer per G @ 4g sensitivity = 0.122 mg/bit 
-  UpdateRate = 250.0                                    'Updates per second                        
-  GyroScale = GyroToDeg * RadToDeg * UpdateRate
+
+  GyroScale = GyroToDeg * RadToDeg * float(Const#UpdateRate)
   
 VAR
   long Roll, Pitch, Yaw                                 'Outputs, scaled units (
@@ -50,18 +56,14 @@ VAR
 
   long UpdateCount
 
-   
-OBJ
-  FLT           : "F32_1_6"
-  'Debug         : "FullDuplexSerial"
   
 
 VAR
-  long  QuatUpdateCommands[300]
-  long  CalcErrorUpdateAngles[132]
+  long  QuatUpdateCommands[300 + 132]
+  'long  CalcErrorUpdateAngles[132]
 
   long  QuatUpdateLen   '295 longs
-  long  CalcErrorLen    '127 longs
+  'long  CalcErrorLen    '127 longs
   
 
 PUB Start
@@ -302,71 +304,71 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opSub, @const_F1, @temp, @m22 )                        'm22 = 1.0 - temp
   '7 instructions (107)
 
-  QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
+  'QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
    
 
 
-  FLT.StartStream( 1, @CalcErrorUpdateAngles )
+  'FLT.StartStream( 1, @CalcErrorUpdateAngles )
 
   'fax =  packet.ax;           // Acceleration in X (left/right)
   'fay =  packet.az;           // Acceleration in Y (up/down)
   'faz =  packet.ay;           // Acceleration in Z (toward/away)
-  FLT.AddCommand( 1, FLT#opFloat, @ax, 0, @fax )
-  FLT.AddCommand( 1, FLT#opFloat, @az, 0, @fay )
-  FLT.AddCommand( 1, FLT#opFloat, @ay, 0, @faz )
-  FLT.AddCommand( 1, FLT#opNeg, @fax, 0, @fax )
+  FLT.AddCommand( 0, FLT#opFloat, @ax, 0, @fax )
+  FLT.AddCommand( 0, FLT#opFloat, @az, 0, @fay )
+  FLT.AddCommand( 0, FLT#opFloat, @ay, 0, @faz )
+  FLT.AddCommand( 0, FLT#opNeg, @fax, 0, @fax )
 
   'rmag = facc.length
-  FLT.AddCommand( 1, FLT#opSqr, @fax, 0, @rmag )                                'rmag = fax*fax
-  FLT.AddCommand( 1, FLT#opSqr, @fay, 0, @temp )                                'temp = fay*fay
-  FLT.AddCommand( 1, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
-  FLT.AddCommand( 1, FLT#opSqr, @faz, 0, @temp )                                'temp = faz*faz
-  FLT.AddCommand( 1, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
-  FLT.AddCommand( 1, FLT#opAdd, @rmag, @const_epsilon, @rmag )                  'rmag += 0.00000001
-  FLT.AddCommand( 1, FLT#opSqrt, @rmag, 0, @rmag )                              'rmag = Sqrt(rmag)                                                  
+  FLT.AddCommand( 0, FLT#opSqr, @fax, 0, @rmag )                                'rmag = fax*fax
+  FLT.AddCommand( 0, FLT#opSqr, @fay, 0, @temp )                                'temp = fay*fay
+  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
+  FLT.AddCommand( 0, FLT#opSqr, @faz, 0, @temp )                                'temp = faz*faz
+  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
+  FLT.AddCommand( 0, FLT#opAdd, @rmag, @const_epsilon, @rmag )                  'rmag += 0.00000001
+  FLT.AddCommand( 0, FLT#opSqrt, @rmag, 0, @rmag )                              'rmag = Sqrt(rmag)                                                  
 
   'facc /= rmag
-  FLT.AddCommand( 1, FLT#opDiv, @fax, @rmag, @fax )                             'fax /= rmag 
-  FLT.AddCommand( 1, FLT#opDiv, @fay, @rmag, @fay )                             'fay /= rmag 
-  FLT.AddCommand( 1, FLT#opDiv, @faz, @rmag, @faz )                             'faz /= rmag 
+  FLT.AddCommand( 0, FLT#opDiv, @fax, @rmag, @fax )                             'fax /= rmag 
+  FLT.AddCommand( 0, FLT#opDiv, @fay, @rmag, @fay )                             'fay /= rmag 
+  FLT.AddCommand( 0, FLT#opDiv, @faz, @rmag, @faz )                             'faz /= rmag 
 
 
 
   'accWeight = 1.0 - FMin( FAbs( 2.0 - accLen * 2.0 ), 1.0 )
-  FLT.AddCommand( 1, FLT#opMul, @rmag, @const_AccScale, @rmag )                 'rmag /= accScale (accelerometer to 1G units)
-  FLT.AddCommand( 1, FLT#opShift, @rmag, @const_1, @accWeight )                 'accWeight = rmag * 2.0
-  FLT.AddCommand( 1, FLT#opSub, @const_F2, @accWeight, @accWeight )             'accWeight = 2.0 - accWeight
-  FLT.AddCommand( 1, FLT#opFAbs, @accWeight, 0, @accWeight )                    'accWeight = FAbs(accWeight)
-  FLT.AddCommand( 1, FLT#opFMin, @accWeight, @const_F1, @accWeight )            'accWeight = FMin( accWeight, 1.0 )
-  FLT.AddCommand( 1, FLT#opSub, @const_F1, @accWeight, @accWeight )             'accWeight = 1.0 - accWeight                                                
+  FLT.AddCommand( 0, FLT#opMul, @rmag, @const_AccScale, @rmag )                 'rmag /= accScale (accelerometer to 1G units)
+  FLT.AddCommand( 0, FLT#opShift, @rmag, @const_1, @accWeight )                 'accWeight = rmag * 2.0
+  FLT.AddCommand( 0, FLT#opSub, @const_F2, @accWeight, @accWeight )             'accWeight = 2.0 - accWeight
+  FLT.AddCommand( 0, FLT#opFAbs, @accWeight, 0, @accWeight )                    'accWeight = FAbs(accWeight)
+  FLT.AddCommand( 0, FLT#opFMin, @accWeight, @const_F1, @accWeight )            'accWeight = FMin( accWeight, 1.0 )
+  FLT.AddCommand( 0, FLT#opSub, @const_F1, @accWeight, @accWeight )             'accWeight = 1.0 - accWeight                                                
 
    
 
   'errDiffX = fay * m12 - faz * m11
-  FLT.AddCommand( 1, FLT#opMul, @fay, @m12, @errDiffX )
-  FLT.AddCommand( 1, FLT#opMul, @faz, @m11, @temp )
-  FLT.AddCommand( 1, FLT#opSub, @errDiffX, @temp, @errDiffX )
+  FLT.AddCommand( 0, FLT#opMul, @fay, @m12, @errDiffX )
+  FLT.AddCommand( 0, FLT#opMul, @faz, @m11, @temp )
+  FLT.AddCommand( 0, FLT#opSub, @errDiffX, @temp, @errDiffX )
 
   'errDiffY = faz * m10 - fax * m12
-  FLT.AddCommand( 1, FLT#opMul, @faz, @m10, @errDiffY )
-  FLT.AddCommand( 1, FLT#opMul, @fax, @m12, @temp )
-  FLT.AddCommand( 1, FLT#opSub, @errDiffY, @temp, @errDiffY )
+  FLT.AddCommand( 0, FLT#opMul, @faz, @m10, @errDiffY )
+  FLT.AddCommand( 0, FLT#opMul, @fax, @m12, @temp )
+  FLT.AddCommand( 0, FLT#opSub, @errDiffY, @temp, @errDiffY )
 
   'errDiffZ = fax * m11 - fay * m10
-  FLT.AddCommand( 1, FLT#opMul, @fax, @m11, @errDiffZ )
-  FLT.AddCommand( 1, FLT#opMul, @fay, @m10, @temp )
-  FLT.AddCommand( 1, FLT#opSub, @errDiffZ, @temp, @errDiffZ )
+  FLT.AddCommand( 0, FLT#opMul, @fax, @m11, @errDiffZ )
+  FLT.AddCommand( 0, FLT#opMul, @fay, @m10, @temp )
+  FLT.AddCommand( 0, FLT#opSub, @errDiffZ, @temp, @errDiffZ )
 
   'accWeight *= const_ErrScale   
-  FLT.AddCommand( 1, FLT#opMul, @const_ErrScale, @accWeight, @accWeight )
+  FLT.AddCommand( 0, FLT#opMul, @const_ErrScale, @accWeight, @accWeight )
 
 
   'Test: Does ErrCorr need to be rotated into the local frame from the world frame?
 
   'errCorr = errDiff * accWeight
-  FLT.AddCommand( 1, FLT#opMul, @errDiffX, @accWeight, @errCorrX )
-  FLT.AddCommand( 1, FLT#opMul, @errDiffY, @accWeight, @errCorrY )
-  FLT.AddCommand( 1, FLT#opMul, @errDiffZ, @accWeight, @errCorrZ )
+  FLT.AddCommand( 0, FLT#opMul, @errDiffX, @accWeight, @errCorrX )
+  FLT.AddCommand( 0, FLT#opMul, @errDiffY, @accWeight, @errCorrY )
+  FLT.AddCommand( 0, FLT#opMul, @errDiffZ, @accWeight, @errCorrZ )
   
 
     'tx := Flt.ASin( Flt.FFloatDiv28( DCM.GetM12 ) )     'Convert to float, then divide by (float)(1<<28)
@@ -383,19 +385,21 @@ PUB InitFunctions
     'YAngle := Flt.FRound( Flt.FMul( Flt.Atan2( Flt.FFloat(DCM.GetM20), Flt.FFloat(DCM.GetM22)), constant(32768.0 / PI) ) ) & 65535 
 
 
-  FLT.AddCommand( 1, FLT#opASinCos, @m12, 0, @temp )
-  FLT.AddCommand( 1, FLT#opMul, @temp, @const_outAngleScale, @temp )
-  FLT.AddCommand( 1, FLT#opTruncRound, @temp, @const_0, @Pitch )
+  FLT.AddCommand( 0, FLT#opASinCos, @m12, 0, @temp )
+  FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Pitch )
     
-  FLT.AddCommand( 1, FLT#opASinCos, @m10, 0, @temp )
-  FLT.AddCommand( 1, FLT#opMul, @temp, @const_outAngleScale, @temp )
-  FLT.AddCommand( 1, FLT#opTruncRound, @temp, @const_0, @Roll )
+  FLT.AddCommand( 0, FLT#opASinCos, @m10, 0, @temp )
+  FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Roll )
     
-  FLT.AddCommand( 1, FLT#opATan2, @m20, @m22, @temp )
-  FLT.AddCommand( 1, FLT#opMul, @temp, @const_outAngleScale, @temp )  
-  FLT.AddCommand( 1, FLT#opTruncRound, @temp, @const_0, @Yaw )
+  FLT.AddCommand( 0, FLT#opATan2, @m20, @m22, @temp )
+  FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Yaw )
 
-  CalcErrorLen := (FLT.EndStream( 1 ) - @CalcErrorUpdateAngles) / 4 
+  QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
+
+  'CalcErrorLen := (FLT.EndStream( 1 ) - @CalcErrorUpdateAngles) / 4 
   
 
 
@@ -414,8 +418,8 @@ PUB Send( v )
 PUB GetQuatUpdateLen
   return QuatUpdateLen
 
-PUB GetCalcErrorLen
-  return CalcErrorLen
+'PUB GetCalcErrorLen
+'  return CalcErrorLen
 
 
 'If the body is mostly level, use the incoming mag readings as the compass vector
@@ -442,6 +446,7 @@ PUB Update_Part1( packetAddr ) | v, t
   return t     
 
 
+{
 PUB Update_Part2 | t
 
 
@@ -452,7 +457,7 @@ PUB Update_Part2 | t
   t := cnt-t                    'Resulting t value is the number of cycles taken to execute the IMU code 
 
   return t     
-
+}
 
 PUB WaitForCompletion
   FLT.WaitStream                'Wait for the stream to complete
