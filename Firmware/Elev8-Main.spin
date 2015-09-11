@@ -80,8 +80,8 @@ CON
   YawCircleHalf = YawCircle >> 1
 
 
-  FlightMode_ManualAssist = 0
-  FlightMode_FullAssist = 1
+  FlightMode_Assisted = 0
+  FlightMode_Automatic = 1
   FlightMode_Manual = 2
 
   
@@ -145,6 +145,7 @@ VAR
   byte MotorIndex[4]            'Motor index to pin index table
 
 
+  long  RollPitch_P, RollPitch_D 
 
 
 PUB Main | Cycles
@@ -164,7 +165,7 @@ PUB Main | Cycles
   DesiredRoll := DesiredPitch := DesiredYaw := 0
   EnableStep := 0               'Counter to know which section of enable/disable sequence we're in
 
-  FlightMode := FlightMode_ManualAssist
+  FlightMode := FlightMode_Assisted
 
 
   'Configure and start all the objects
@@ -200,24 +201,27 @@ PUB Main | Cycles
   ESC.Start
 
 
+  RollPitch_P := 10000           'Set here to allow an in-flight tuning baseline
+  RollPitch_D := 30000 
 
-  RollPID.Init( 6550, 475,  9000 )                     'Was 4550, 475, 8400               
+
+  RollPID.Init( RollPitch_P, 0,  RollPitch_D )               
   RollPID.SetPrecision( 12 ) 
   RollPID.SetMaxOutput( 3000 )
   RollPID.SetPIMax( 100 )
   RollPID.SetMaxIntegral( 1900 )
 
 
-  PitchPID.Init( 6550, 475,  9000 )               
+  PitchPID.Init( RollPitch_P, 0,  RollPitch_D )               
   PitchPID.SetPrecision( 12 ) 
   PitchPID.SetMaxOutput( 3000 )
   PitchPID.SetPIMax( 100 )
   PitchPID.SetMaxIntegral( 1900 )
 
 
-  YawPID.Init(  4000,   0,  -12000 ) 
-  YawPID.SetPrecision( 13 ) 
-  YawPID.SetMaxOutput( 3000 )
+  YawPID.Init(  5000,   0,  -15000 ) 
+  YawPID.SetPrecision( 12 ) 
+  YawPID.SetMaxOutput( 5000 )
 
 
 
@@ -253,16 +257,16 @@ PUB Main | Cycles
     Aux3 :=  RC.GetRC( RC_AUX3 )
 
 
-    IMU.WaitForCompletion
-
-    Pitch := IMU.GetPitch
-    Roll  := IMU.GetRoll
-    Yaw   := IMU.GetYaw
-
-
     UpdateFlightLoop            '~82000 cycles when in flight mode
 
     'FlightModeTest
+
+
+    IMU.WaitForCompletion
+
+    Pitch := IMU.GetPitch
+    Roll  := IMU.GetRoll        'Yes, this puts these 1 cycle behind, but the flight loop gets to use current gyro values
+    Yaw   := IMU.GetYaw
 
 
     CheckDebugMode
@@ -338,6 +342,7 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
               
       if( EnableStep == 250 )   'Hold for 1 second
         DisarmFlightMode
+        return                  'Prevents the motor outputs from being un-zero'd
       
     else
       EnableStep := 0
@@ -345,17 +350,42 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
 
     '------------------------------------------------------------------------
 
+    if( Gear < -512 )
+      FlightMode := FlightMode_Assisted
+    elseif( Gear > 512 )
+      FlightMode := FlightMode_Manual
+    else
+      FlightMode := FlightMode_Automatic
+
+
      
     'Rudder is integrated (accumulated)
     iRudd += Rudd
 
 
-    'Angular output from the IMU is +/- 65536 units, or 32768 = 90 degrees
-    'Input range from the controls is +/- 1000 units.  Scale that up to about 22.5 degrees       
+    if( FlightMode == FlightMode_Manual )
+      'DesiredRoll +=  Aile / 8
+      'DesiredPitch += Elev / 8
 
-    DesiredRoll :=  Aile << 3
-    DesiredPitch := Elev << 3
+      RollDifference := Aile
+      PitchDifference := Elev
 
+
+    else    
+      'Angular output from the IMU is +/- 65536 units, or 32768 = 90 degrees
+      'Input range from the controls is +/- 1000 units.  Scale that up to about 22.5 degrees       
+       
+      DesiredRoll :=  Aile << 3
+      DesiredPitch := Elev << 3
+
+      RollDifference := (DesiredRoll - Roll) ~> 2
+      PitchDifference := (DesiredPitch - Pitch) ~> 2
+
+       
+    GyroRoll := GyroY - GyroZY
+    GyroPitch := GyroX - GyroZX
+      
+       
 
     'Yaw is different because we accumulate it - It's not specified absolutely like you can
     'with pitch and roll, so scale the stick input down a bit
@@ -366,9 +396,9 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
     'Zero yaw target when throttle is off - makes for more stable liftoff
      
     if( Thro < -700 )
-      DoIntegrate := FALSE
-      DesiredYaw := Yaw      'Desired = measured when the throttle is off
-      iRudd := Yaw << 3
+      DoIntegrate := FALSE      'Disable PID integral term until throttle is applied      
+      DesiredYaw := Yaw         'Desired = measured when the throttle is off
+      iRudd := Yaw << 3         'Make "measured yaw" match desired yaw until throttle is applied
     else
       DoIntegrate := TRUE
      
@@ -382,17 +412,10 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
         DesiredYaw := DesiredYaw + YawCircle      
 
 
-    RollDifference := (DesiredRoll - Roll) ~> 2
-    PitchDifference := (DesiredPitch - Pitch) ~> 2
-    
-    GyroRoll := GyroY - GyroZY
-    GyroPitch := GyroX - GyroZX
-
-
-    'Uncomment to allow PID tuning from the controller in flight
+    'Uncomment to allow partial PID tuning from the controller in flight
     {    
-    T1 := 4550 + Aux2<<1        'Left side control
-    T2 := 8400 + Aux3<<2        'Right side control 
+    T1 := RollPitch_P + Aux2<<1        'Left side control
+    T2 := RollPitch_D + Aux3<<2        'Right side control 
                     
     RollPID.SetPGain( T1 ) 
     RollPID.SetDGain( T2 )                                           
@@ -400,10 +423,10 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
     PitchPID.SetDGain( T2 )
     '}       
      
-    RollOut := RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate )    
+    RollOut := RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate )
     PitchOut := PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate )
+    YawOut := YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , -GyroZ, DoIntegrate )
         
-    YawOut := YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , -GyroZ, DoIntegrate )    
 
     ThroMix := (Thro + 800) ~> 3                        ' Approx 0 - 256
     ThroMix <#= 64                                      ' Above 1/4 throttle, clamp it to 64
@@ -411,6 +434,9 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
      
     'add 3000 to all Output values to make them 'servo friendly' again   (3000 is our output center)
     ThroOut := (Thro + 3000) << 2
+
+    'if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
+    '  ThroOut -= (AccelZ - 8192) ~> 2
      
     ' X configuration
     Motor[OUT_FL] := ThroOut + ((-PitchOut + RollOut + YawOut) * ThroMix) ~> 7                          
@@ -418,17 +444,22 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
     Motor[OUT_BL] := ThroOut + ((+PitchOut + RollOut - YawOut) * ThroMix) ~> 7
     Motor[OUT_BR] := ThroOut + ((+PitchOut - RollOut + YawOut) * ThroMix) ~> 7
 
+
+    'The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
+      'the ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment
+
      
-    Motor[0] := 8000 #> Motor[0] <# 16000
-    Motor[1] := 8000 #> Motor[1] <# 16000
-    Motor[2] := 8000 #> Motor[2] <# 16000
-    Motor[3] := 8000 #> Motor[3] <# 16000
+    Motor[0] := 8500 #> Motor[0] <# 16000
+    Motor[1] := 8500 #> Motor[1] <# 16000
+    Motor[2] := 8500 #> Motor[2] <# 16000
+    Motor[3] := 8500 #> Motor[3] <# 16000
      
     'Copy new Ouput array into servo values
     ESC.Set( MOTOR_FL, Motor[0] )
     ESC.Set( MOTOR_FR, Motor[1] )
     ESC.Set( MOTOR_BR, Motor[2] )
     ESC.Set( MOTOR_BL, Motor[3] )
+
 
 {
     if( (counter & 3) == 0 )
@@ -545,6 +576,11 @@ PUB ArmFlightMode
 
 
 PUB DisarmFlightMode
+
+  ESC.Set( MOTOR_FL, 8000 )
+  ESC.Set( MOTOR_FR, 8000 )
+  ESC.Set( MOTOR_BR, 8000 )
+  ESC.Set( MOTOR_BL, 8000 )
 
   FlightEnabled := FALSE
   EnableStep := 0
@@ -760,6 +796,7 @@ PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
     TxData[2] := GyroZ
      
     dbg.txBulk( @TxData, 6 )   'Send 20 bytes of data from @TxData onward (sends 10 words worth of data)                         
+
       
 
 {
@@ -817,7 +854,7 @@ PUB BeepTune
 
 
 PUB Beep
-  BeepHz( 3000 , 80 )
+  BeepHz( 4500 , 80 )
 
 
 PUB Beep2

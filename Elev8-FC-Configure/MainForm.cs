@@ -369,6 +369,17 @@ namespace Elev8
 						lblAux1.Text = Aux1.ToString();
 						lblAux2.Text = Aux2.ToString();
 						lblAux3.Text = Aux3.ToString();
+
+						if(Gear < -512) {
+							lblFlightMode.Text = "Assisted";
+						}
+						else if(Gear > 512)
+						{
+							lblFlightMode.Text = "Manual";
+						}
+						else {
+							lblFlightMode.Text = "Assisted";	// Will become auto
+						}
 					}
 					//GotPacket = true;
 					break;

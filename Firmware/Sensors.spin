@@ -221,10 +221,10 @@ main_loop
                         mov     spi_cs_mask, sgmask     'Start with the gyro/accelerometer
 
 
-                        mov     spi_reg, #$17           'Read status register
+                        mov     spi_reg, #$27           'Read status register
                         call    #SPI_ReadByte           'Read data from SPI
-                        andn    spi_data, #$07  nr, wz
-                        cmp     spi_data, #$07  wc      'Test status - lowest 3 bits
+                        andn    spi_data, #$03  nr, wz
+                        cmp     spi_data, #$03  wc      'Test status - lowest 2 bits (gyro + accel ready)
                                       
                         'loop while not data ready
               if_c      jmp     #main_loop

@@ -45,10 +45,7 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
-			this.rsRight = new Elev8.RadioJoystick();
-			this.rsLeft = new Elev8.RadioJoystick();
 			this.tpSensorTest = new System.Windows.Forms.TabPage();
-			this.gAltimeter = new Elev8.Graph();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label19 = new System.Windows.Forms.Label();
 			this.label21 = new System.Windows.Forms.Label();
@@ -65,17 +62,6 @@
 			this.label7 = new System.Windows.Forms.Label();
 			this.label6 = new System.Windows.Forms.Label();
 			this.label5 = new System.Windows.Forms.Label();
-			this.gHeading = new Elev8.Gauge();
-			this.gMagZ = new Elev8.Gauge();
-			this.gMagY = new Elev8.Gauge();
-			this.gMagX = new Elev8.Gauge();
-			this.gGyroTemp = new Elev8.Gauge();
-			this.gAccelZ = new Elev8.Gauge();
-			this.gAccelY = new Elev8.Gauge();
-			this.gAccelX = new Elev8.Gauge();
-			this.gGyroZ = new Elev8.Gauge();
-			this.gGyroY = new Elev8.Gauge();
-			this.gGyroX = new Elev8.Gauge();
 			this.tpMotorTest = new System.Windows.Forms.TabPage();
 			this.lblCalibrateDocs = new System.Windows.Forms.Label();
 			this.btnThrottleCalibrate = new System.Windows.Forms.Button();
@@ -104,21 +90,15 @@
 			this.gxOffset = new System.Windows.Forms.Label();
 			this.label28 = new System.Windows.Forms.Label();
 			this.gxScale = new System.Windows.Forms.Label();
-			this.lfGraph = new Elev8.LineFit();
 			this.tpIMUTest = new System.Windows.Forms.TabPage();
 			this.label17 = new System.Windows.Forms.Label();
 			this.label16 = new System.Windows.Forms.Label();
 			this.label14 = new System.Windows.Forms.Label();
 			this.textBox4 = new System.Windows.Forms.TextBox();
-			this.gYaw = new Elev8.Gauge();
-			this.gRoll = new Elev8.Gauge();
-			this.gPitch = new Elev8.Gauge();
-			this.ocOrientation = new Elev8.OrientationCube();
 			this.tpIMUComp = new System.Windows.Forms.TabPage();
+			this.lblStatOutput = new System.Windows.Forms.Label();
 			this.label27 = new System.Windows.Forms.Label();
 			this.label25 = new System.Windows.Forms.Label();
-			this.ocCompQ2 = new Elev8.OrientationCube();
-			this.ocCompQ1 = new Elev8.OrientationCube();
 			this.tpVibration = new System.Windows.Forms.TabPage();
 			this.label32 = new System.Windows.Forms.Label();
 			this.label31 = new System.Windows.Forms.Label();
@@ -139,9 +119,30 @@
 			this.lblGXVar = new System.Windows.Forms.Label();
 			this.lblGXMin = new System.Windows.Forms.Label();
 			this.lblGXMax = new System.Windows.Forms.Label();
-			this.grGyro = new Elev8.Graph();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
-			this.lblStatOutput = new System.Windows.Forms.Label();
+			this.rsRight = new Elev8.RadioJoystick();
+			this.rsLeft = new Elev8.RadioJoystick();
+			this.gAltimeter = new Elev8.Graph();
+			this.gHeading = new Elev8.Gauge();
+			this.gMagZ = new Elev8.Gauge();
+			this.gMagY = new Elev8.Gauge();
+			this.gMagX = new Elev8.Gauge();
+			this.gGyroTemp = new Elev8.Gauge();
+			this.gAccelZ = new Elev8.Gauge();
+			this.gAccelY = new Elev8.Gauge();
+			this.gAccelX = new Elev8.Gauge();
+			this.gGyroZ = new Elev8.Gauge();
+			this.gGyroY = new Elev8.Gauge();
+			this.gGyroX = new Elev8.Gauge();
+			this.lfGraph = new Elev8.LineFit();
+			this.gYaw = new Elev8.Gauge();
+			this.gRoll = new Elev8.Gauge();
+			this.gPitch = new Elev8.Gauge();
+			this.ocOrientation = new Elev8.OrientationCube();
+			this.ocCompQ2 = new Elev8.OrientationCube();
+			this.ocCompQ1 = new Elev8.OrientationCube();
+			this.grGyro = new Elev8.Graph();
+			this.lblFlightMode = new System.Windows.Forms.Label();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -177,6 +178,7 @@
 			// 
 			// tpRadioTest
 			// 
+			this.tpRadioTest.Controls.Add( this.lblFlightMode );
 			this.tpRadioTest.Controls.Add( this.lblAux3 );
 			this.tpRadioTest.Controls.Add( this.lblAux2 );
 			this.tpRadioTest.Controls.Add( this.lblAux1 );
@@ -202,36 +204,36 @@
 			// 
 			// lblAux3
 			// 
-			this.lblAux3.Location = new System.Drawing.Point( 528, 135 );
+			this.lblAux3.Location = new System.Drawing.Point( 512, 149 );
 			this.lblAux3.Name = "lblAux3";
-			this.lblAux3.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux3.Size = new System.Drawing.Size( 50, 13 );
 			this.lblAux3.TabIndex = 22;
 			this.lblAux3.Text = "0";
 			this.lblAux3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// lblAux2
 			// 
-			this.lblAux2.Location = new System.Drawing.Point( 528, 108 );
+			this.lblAux2.Location = new System.Drawing.Point( 512, 112 );
 			this.lblAux2.Name = "lblAux2";
-			this.lblAux2.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux2.Size = new System.Drawing.Size( 50, 13 );
 			this.lblAux2.TabIndex = 21;
 			this.lblAux2.Text = "0";
 			this.lblAux2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// lblAux1
 			// 
-			this.lblAux1.Location = new System.Drawing.Point( 528, 81 );
+			this.lblAux1.Location = new System.Drawing.Point( 512, 75 );
 			this.lblAux1.Name = "lblAux1";
-			this.lblAux1.Size = new System.Drawing.Size( 64, 13 );
+			this.lblAux1.Size = new System.Drawing.Size( 50, 13 );
 			this.lblAux1.TabIndex = 20;
 			this.lblAux1.Text = "0";
 			this.lblAux1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// lblGear
 			// 
-			this.lblGear.Location = new System.Drawing.Point( 528, 54 );
+			this.lblGear.Location = new System.Drawing.Point( 512, 38 );
 			this.lblGear.Name = "lblGear";
-			this.lblGear.Size = new System.Drawing.Size( 64, 13 );
+			this.lblGear.Size = new System.Drawing.Size( 50, 13 );
 			this.lblGear.TabIndex = 19;
 			this.lblGear.Text = "0";
 			this.lblGear.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -239,7 +241,7 @@
 			// label36
 			// 
 			this.label36.AutoSize = true;
-			this.label36.Location = new System.Drawing.Point( 491, 135 );
+			this.label36.Location = new System.Drawing.Point( 475, 149 );
 			this.label36.Name = "label36";
 			this.label36.Size = new System.Drawing.Size( 34, 13 );
 			this.label36.TabIndex = 18;
@@ -248,7 +250,7 @@
 			// label35
 			// 
 			this.label35.AutoSize = true;
-			this.label35.Location = new System.Drawing.Point( 491, 108 );
+			this.label35.Location = new System.Drawing.Point( 475, 112 );
 			this.label35.Name = "label35";
 			this.label35.Size = new System.Drawing.Size( 34, 13 );
 			this.label35.TabIndex = 17;
@@ -257,7 +259,7 @@
 			// label34
 			// 
 			this.label34.AutoSize = true;
-			this.label34.Location = new System.Drawing.Point( 491, 81 );
+			this.label34.Location = new System.Drawing.Point( 475, 75 );
 			this.label34.Name = "label34";
 			this.label34.Size = new System.Drawing.Size( 34, 13 );
 			this.label34.TabIndex = 16;
@@ -266,7 +268,7 @@
 			// label33
 			// 
 			this.label33.AutoSize = true;
-			this.label33.Location = new System.Drawing.Point( 491, 54 );
+			this.label33.Location = new System.Drawing.Point( 475, 38 );
 			this.label33.Name = "label33";
 			this.label33.Size = new System.Drawing.Size( 33, 13 );
 			this.label33.TabIndex = 15;
@@ -321,26 +323,6 @@
 			this.label1.TabIndex = 10;
 			this.label1.Text = "Throttle";
 			// 
-			// rsRight
-			// 
-			this.rsRight.Location = new System.Drawing.Point( 302, 24 );
-			this.rsRight.Name = "rsRight";
-			this.rsRight.Range = 1024F;
-			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
-			this.rsRight.TabIndex = 9;
-			this.rsRight.XValue = 0F;
-			this.rsRight.YValue = 0F;
-			// 
-			// rsLeft
-			// 
-			this.rsLeft.Location = new System.Drawing.Point( 68, 24 );
-			this.rsLeft.Name = "rsLeft";
-			this.rsLeft.Range = 1024F;
-			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
-			this.rsLeft.TabIndex = 8;
-			this.rsLeft.XValue = 0F;
-			this.rsLeft.YValue = 0F;
-			// 
 			// tpSensorTest
 			// 
 			this.tpSensorTest.Controls.Add( this.gAltimeter );
@@ -378,13 +360,6 @@
 			this.tpSensorTest.TabIndex = 1;
 			this.tpSensorTest.Text = "Sensor Test";
 			this.tpSensorTest.UseVisualStyleBackColor = true;
-			// 
-			// gAltimeter
-			// 
-			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
-			this.gAltimeter.Name = "gAltimeter";
-			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
-			this.gAltimeter.TabIndex = 31;
 			// 
 			// label12
 			// 
@@ -532,105 +507,6 @@
 			this.label5.Size = new System.Drawing.Size( 39, 13 );
 			this.label5.TabIndex = 6;
 			this.label5.Text = "Gyro X";
-			// 
-			// gHeading
-			// 
-			this.gHeading.Location = new System.Drawing.Point( 310, 219 );
-			this.gHeading.Name = "gHeading";
-			this.gHeading.Range = 1800F;
-			this.gHeading.Size = new System.Drawing.Size( 91, 89 );
-			this.gHeading.TabIndex = 29;
-			this.gHeading.Value = 0F;
-			// 
-			// gMagZ
-			// 
-			this.gMagZ.Location = new System.Drawing.Point( 203, 217 );
-			this.gMagZ.Name = "gMagZ";
-			this.gMagZ.Range = 16384F;
-			this.gMagZ.Size = new System.Drawing.Size( 91, 89 );
-			this.gMagZ.TabIndex = 25;
-			this.gMagZ.Value = 0F;
-			// 
-			// gMagY
-			// 
-			this.gMagY.Location = new System.Drawing.Point( 106, 217 );
-			this.gMagY.Name = "gMagY";
-			this.gMagY.Range = 16384F;
-			this.gMagY.Size = new System.Drawing.Size( 91, 89 );
-			this.gMagY.TabIndex = 24;
-			this.gMagY.Value = 0F;
-			// 
-			// gMagX
-			// 
-			this.gMagX.Location = new System.Drawing.Point( 9, 217 );
-			this.gMagX.Name = "gMagX";
-			this.gMagX.Range = 16384F;
-			this.gMagX.Size = new System.Drawing.Size( 91, 89 );
-			this.gMagX.TabIndex = 23;
-			this.gMagX.Value = 0F;
-			// 
-			// gGyroTemp
-			// 
-			this.gGyroTemp.Location = new System.Drawing.Point( 310, 111 );
-			this.gGyroTemp.Name = "gGyroTemp";
-			this.gGyroTemp.Range = 1000F;
-			this.gGyroTemp.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroTemp.TabIndex = 16;
-			this.gGyroTemp.Value = 0F;
-			// 
-			// gAccelZ
-			// 
-			this.gAccelZ.Location = new System.Drawing.Point( 203, 111 );
-			this.gAccelZ.Name = "gAccelZ";
-			this.gAccelZ.Range = 32768F;
-			this.gAccelZ.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelZ.TabIndex = 5;
-			this.gAccelZ.Value = 0F;
-			// 
-			// gAccelY
-			// 
-			this.gAccelY.Location = new System.Drawing.Point( 106, 111 );
-			this.gAccelY.Name = "gAccelY";
-			this.gAccelY.Range = 32768F;
-			this.gAccelY.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelY.TabIndex = 4;
-			this.gAccelY.Value = 0F;
-			// 
-			// gAccelX
-			// 
-			this.gAccelX.Location = new System.Drawing.Point( 9, 111 );
-			this.gAccelX.Name = "gAccelX";
-			this.gAccelX.Range = 32768F;
-			this.gAccelX.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelX.TabIndex = 3;
-			this.gAccelX.Value = 0F;
-			// 
-			// gGyroZ
-			// 
-			this.gGyroZ.Location = new System.Drawing.Point( 204, 5 );
-			this.gGyroZ.Name = "gGyroZ";
-			this.gGyroZ.Range = 32768F;
-			this.gGyroZ.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroZ.TabIndex = 2;
-			this.gGyroZ.Value = 0F;
-			// 
-			// gGyroY
-			// 
-			this.gGyroY.Location = new System.Drawing.Point( 106, 5 );
-			this.gGyroY.Name = "gGyroY";
-			this.gGyroY.Range = 32768F;
-			this.gGyroY.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroY.TabIndex = 1;
-			this.gGyroY.Value = 0F;
-			// 
-			// gGyroX
-			// 
-			this.gGyroX.Location = new System.Drawing.Point( 9, 5 );
-			this.gGyroX.Name = "gGyroX";
-			this.gGyroX.Range = 32768F;
-			this.gGyroX.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroX.TabIndex = 0;
-			this.gGyroX.Value = 0F;
 			// 
 			// tpMotorTest
 			// 
@@ -943,13 +819,6 @@
 			this.gxScale.Text = "0";
 			this.gxScale.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
-			// lfGraph
-			// 
-			this.lfGraph.Location = new System.Drawing.Point( 178, 3 );
-			this.lfGraph.Name = "lfGraph";
-			this.lfGraph.Size = new System.Drawing.Size( 447, 278 );
-			this.lfGraph.TabIndex = 0;
-			// 
 			// tpIMUTest
 			// 
 			this.tpIMUTest.Controls.Add( this.label17 );
@@ -1008,43 +877,6 @@
 				"our controller is level, the box\r\nshould be too.";
 			this.textBox4.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			// 
-			// gYaw
-			// 
-			this.gYaw.Location = new System.Drawing.Point( 481, 210 );
-			this.gYaw.Name = "gYaw";
-			this.gYaw.Range = 32768F;
-			this.gYaw.Size = new System.Drawing.Size( 90, 90 );
-			this.gYaw.TabIndex = 20;
-			this.gYaw.Value = 0F;
-			// 
-			// gRoll
-			// 
-			this.gRoll.Location = new System.Drawing.Point( 535, 13 );
-			this.gRoll.Name = "gRoll";
-			this.gRoll.Range = 32768F;
-			this.gRoll.Size = new System.Drawing.Size( 90, 90 );
-			this.gRoll.TabIndex = 19;
-			this.gRoll.Value = 0F;
-			// 
-			// gPitch
-			// 
-			this.gPitch.Location = new System.Drawing.Point( 429, 13 );
-			this.gPitch.Name = "gPitch";
-			this.gPitch.Range = 32768F;
-			this.gPitch.Size = new System.Drawing.Size( 90, 90 );
-			this.gPitch.TabIndex = 18;
-			this.gPitch.Value = 0F;
-			// 
-			// ocOrientation
-			// 
-			this.ocOrientation.CubeDepth = 1F;
-			this.ocOrientation.CubeHeight = 0.2F;
-			this.ocOrientation.CubeWidth = 1F;
-			this.ocOrientation.Location = new System.Drawing.Point( 4, 4 );
-			this.ocOrientation.Name = "ocOrientation";
-			this.ocOrientation.Size = new System.Drawing.Size( 414, 312 );
-			this.ocOrientation.TabIndex = 0;
-			// 
 			// tpIMUComp
 			// 
 			this.tpIMUComp.Controls.Add( this.lblStatOutput );
@@ -1058,6 +890,15 @@
 			this.tpIMUComp.TabIndex = 5;
 			this.tpIMUComp.Text = "IMU Compare";
 			this.tpIMUComp.UseVisualStyleBackColor = true;
+			// 
+			// lblStatOutput
+			// 
+			this.lblStatOutput.Font = new System.Drawing.Font( "Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.lblStatOutput.Location = new System.Drawing.Point( 9, 215 );
+			this.lblStatOutput.Name = "lblStatOutput";
+			this.lblStatOutput.Size = new System.Drawing.Size( 616, 30 );
+			this.lblStatOutput.TabIndex = 4;
+			this.lblStatOutput.Text = "Test test";
 			// 
 			// label27
 			// 
@@ -1078,26 +919,6 @@
 			this.label25.TabIndex = 2;
 			this.label25.Text = "Original method";
 			this.label25.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// ocCompQ2
-			// 
-			this.ocCompQ2.CubeDepth = 1.1F;
-			this.ocCompQ2.CubeHeight = 0.2F;
-			this.ocCompQ2.CubeWidth = 1.1F;
-			this.ocCompQ2.Location = new System.Drawing.Point( 248, 32 );
-			this.ocCompQ2.Name = "ocCompQ2";
-			this.ocCompQ2.Size = new System.Drawing.Size( 234, 140 );
-			this.ocCompQ2.TabIndex = 1;
-			// 
-			// ocCompQ1
-			// 
-			this.ocCompQ1.CubeDepth = 1.1F;
-			this.ocCompQ1.CubeHeight = 0.2F;
-			this.ocCompQ1.CubeWidth = 1.1F;
-			this.ocCompQ1.Location = new System.Drawing.Point( 8, 32 );
-			this.ocCompQ1.Name = "ocCompQ1";
-			this.ocCompQ1.Size = new System.Drawing.Size( 234, 140 );
-			this.ocCompQ1.TabIndex = 0;
 			// 
 			// tpVibration
 			// 
@@ -1299,6 +1120,201 @@
 			this.lblGXMax.Text = "0.0";
 			this.lblGXMax.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
+			// tickTimer
+			// 
+			this.tickTimer.Interval = 20;
+			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
+			// 
+			// rsRight
+			// 
+			this.rsRight.Location = new System.Drawing.Point( 302, 24 );
+			this.rsRight.Name = "rsRight";
+			this.rsRight.Range = 1024F;
+			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
+			this.rsRight.TabIndex = 9;
+			this.rsRight.XValue = 0F;
+			this.rsRight.YValue = 0F;
+			// 
+			// rsLeft
+			// 
+			this.rsLeft.Location = new System.Drawing.Point( 68, 24 );
+			this.rsLeft.Name = "rsLeft";
+			this.rsLeft.Range = 1024F;
+			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
+			this.rsLeft.TabIndex = 8;
+			this.rsLeft.XValue = 0F;
+			this.rsLeft.YValue = 0F;
+			// 
+			// gAltimeter
+			// 
+			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
+			this.gAltimeter.Name = "gAltimeter";
+			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
+			this.gAltimeter.TabIndex = 31;
+			// 
+			// gHeading
+			// 
+			this.gHeading.Location = new System.Drawing.Point( 310, 219 );
+			this.gHeading.Name = "gHeading";
+			this.gHeading.Range = 1800F;
+			this.gHeading.Size = new System.Drawing.Size( 91, 89 );
+			this.gHeading.TabIndex = 29;
+			this.gHeading.Value = 0F;
+			// 
+			// gMagZ
+			// 
+			this.gMagZ.Location = new System.Drawing.Point( 203, 217 );
+			this.gMagZ.Name = "gMagZ";
+			this.gMagZ.Range = 16384F;
+			this.gMagZ.Size = new System.Drawing.Size( 91, 89 );
+			this.gMagZ.TabIndex = 25;
+			this.gMagZ.Value = 0F;
+			// 
+			// gMagY
+			// 
+			this.gMagY.Location = new System.Drawing.Point( 106, 217 );
+			this.gMagY.Name = "gMagY";
+			this.gMagY.Range = 16384F;
+			this.gMagY.Size = new System.Drawing.Size( 91, 89 );
+			this.gMagY.TabIndex = 24;
+			this.gMagY.Value = 0F;
+			// 
+			// gMagX
+			// 
+			this.gMagX.Location = new System.Drawing.Point( 9, 217 );
+			this.gMagX.Name = "gMagX";
+			this.gMagX.Range = 16384F;
+			this.gMagX.Size = new System.Drawing.Size( 91, 89 );
+			this.gMagX.TabIndex = 23;
+			this.gMagX.Value = 0F;
+			// 
+			// gGyroTemp
+			// 
+			this.gGyroTemp.Location = new System.Drawing.Point( 310, 111 );
+			this.gGyroTemp.Name = "gGyroTemp";
+			this.gGyroTemp.Range = 1000F;
+			this.gGyroTemp.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroTemp.TabIndex = 16;
+			this.gGyroTemp.Value = 0F;
+			// 
+			// gAccelZ
+			// 
+			this.gAccelZ.Location = new System.Drawing.Point( 203, 111 );
+			this.gAccelZ.Name = "gAccelZ";
+			this.gAccelZ.Range = 32768F;
+			this.gAccelZ.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelZ.TabIndex = 5;
+			this.gAccelZ.Value = 0F;
+			// 
+			// gAccelY
+			// 
+			this.gAccelY.Location = new System.Drawing.Point( 106, 111 );
+			this.gAccelY.Name = "gAccelY";
+			this.gAccelY.Range = 32768F;
+			this.gAccelY.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelY.TabIndex = 4;
+			this.gAccelY.Value = 0F;
+			// 
+			// gAccelX
+			// 
+			this.gAccelX.Location = new System.Drawing.Point( 9, 111 );
+			this.gAccelX.Name = "gAccelX";
+			this.gAccelX.Range = 32768F;
+			this.gAccelX.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelX.TabIndex = 3;
+			this.gAccelX.Value = 0F;
+			// 
+			// gGyroZ
+			// 
+			this.gGyroZ.Location = new System.Drawing.Point( 204, 5 );
+			this.gGyroZ.Name = "gGyroZ";
+			this.gGyroZ.Range = 32768F;
+			this.gGyroZ.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroZ.TabIndex = 2;
+			this.gGyroZ.Value = 0F;
+			// 
+			// gGyroY
+			// 
+			this.gGyroY.Location = new System.Drawing.Point( 106, 5 );
+			this.gGyroY.Name = "gGyroY";
+			this.gGyroY.Range = 32768F;
+			this.gGyroY.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroY.TabIndex = 1;
+			this.gGyroY.Value = 0F;
+			// 
+			// gGyroX
+			// 
+			this.gGyroX.Location = new System.Drawing.Point( 9, 5 );
+			this.gGyroX.Name = "gGyroX";
+			this.gGyroX.Range = 32768F;
+			this.gGyroX.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroX.TabIndex = 0;
+			this.gGyroX.Value = 0F;
+			// 
+			// lfGraph
+			// 
+			this.lfGraph.Location = new System.Drawing.Point( 178, 3 );
+			this.lfGraph.Name = "lfGraph";
+			this.lfGraph.Size = new System.Drawing.Size( 447, 278 );
+			this.lfGraph.TabIndex = 0;
+			// 
+			// gYaw
+			// 
+			this.gYaw.Location = new System.Drawing.Point( 481, 210 );
+			this.gYaw.Name = "gYaw";
+			this.gYaw.Range = 32768F;
+			this.gYaw.Size = new System.Drawing.Size( 90, 90 );
+			this.gYaw.TabIndex = 20;
+			this.gYaw.Value = 0F;
+			// 
+			// gRoll
+			// 
+			this.gRoll.Location = new System.Drawing.Point( 535, 13 );
+			this.gRoll.Name = "gRoll";
+			this.gRoll.Range = 32768F;
+			this.gRoll.Size = new System.Drawing.Size( 90, 90 );
+			this.gRoll.TabIndex = 19;
+			this.gRoll.Value = 0F;
+			// 
+			// gPitch
+			// 
+			this.gPitch.Location = new System.Drawing.Point( 429, 13 );
+			this.gPitch.Name = "gPitch";
+			this.gPitch.Range = 32768F;
+			this.gPitch.Size = new System.Drawing.Size( 90, 90 );
+			this.gPitch.TabIndex = 18;
+			this.gPitch.Value = 0F;
+			// 
+			// ocOrientation
+			// 
+			this.ocOrientation.CubeDepth = 1F;
+			this.ocOrientation.CubeHeight = 0.2F;
+			this.ocOrientation.CubeWidth = 1F;
+			this.ocOrientation.Location = new System.Drawing.Point( 4, 4 );
+			this.ocOrientation.Name = "ocOrientation";
+			this.ocOrientation.Size = new System.Drawing.Size( 414, 312 );
+			this.ocOrientation.TabIndex = 0;
+			// 
+			// ocCompQ2
+			// 
+			this.ocCompQ2.CubeDepth = 1.1F;
+			this.ocCompQ2.CubeHeight = 0.2F;
+			this.ocCompQ2.CubeWidth = 1.1F;
+			this.ocCompQ2.Location = new System.Drawing.Point( 248, 32 );
+			this.ocCompQ2.Name = "ocCompQ2";
+			this.ocCompQ2.Size = new System.Drawing.Size( 234, 140 );
+			this.ocCompQ2.TabIndex = 1;
+			// 
+			// ocCompQ1
+			// 
+			this.ocCompQ1.CubeDepth = 1.1F;
+			this.ocCompQ1.CubeHeight = 0.2F;
+			this.ocCompQ1.CubeWidth = 1.1F;
+			this.ocCompQ1.Location = new System.Drawing.Point( 8, 32 );
+			this.ocCompQ1.Name = "ocCompQ1";
+			this.ocCompQ1.Size = new System.Drawing.Size( 234, 140 );
+			this.ocCompQ1.TabIndex = 0;
+			// 
 			// grGyro
 			// 
 			this.grGyro.Location = new System.Drawing.Point( 3, 144 );
@@ -1306,19 +1322,14 @@
 			this.grGyro.Size = new System.Drawing.Size( 627, 178 );
 			this.grGyro.TabIndex = 0;
 			// 
-			// tickTimer
+			// lblFlightMode
 			// 
-			this.tickTimer.Interval = 20;
-			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
-			// 
-			// lblStatOutput
-			// 
-			this.lblStatOutput.Font = new System.Drawing.Font( "Lucida Console", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.lblStatOutput.Location = new System.Drawing.Point( 9, 215 );
-			this.lblStatOutput.Name = "lblStatOutput";
-			this.lblStatOutput.Size = new System.Drawing.Size( 616, 30 );
-			this.lblStatOutput.TabIndex = 4;
-			this.lblStatOutput.Text = "Test test";
+			this.lblFlightMode.Location = new System.Drawing.Point( 503, 52 );
+			this.lblFlightMode.Name = "lblFlightMode";
+			this.lblFlightMode.Size = new System.Drawing.Size( 69, 13 );
+			this.lblFlightMode.TabIndex = 23;
+			this.lblFlightMode.Text = "Mode";
+			this.lblFlightMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// MainForm
 			// 
@@ -1474,6 +1485,7 @@
 		private System.Windows.Forms.Label label33;
 		private Graph gAltimeter;
 		private System.Windows.Forms.Label lblStatOutput;
+		private System.Windows.Forms.Label lblFlightMode;
 	}
 }
 
