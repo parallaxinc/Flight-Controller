@@ -120,6 +120,7 @@
 			this.lblGXMin = new System.Windows.Forms.Label();
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
+			this.lblFlightMode = new System.Windows.Forms.Label();
 			this.rsRight = new Elev8.RadioJoystick();
 			this.rsLeft = new Elev8.RadioJoystick();
 			this.gAltimeter = new Elev8.Graph();
@@ -142,7 +143,6 @@
 			this.ocCompQ2 = new Elev8.OrientationCube();
 			this.ocCompQ1 = new Elev8.OrientationCube();
 			this.grGyro = new Elev8.Graph();
-			this.lblFlightMode = new System.Windows.Forms.Label();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -579,7 +579,7 @@
 			// 
 			// btnMotor4
 			// 
-			this.btnMotor4.Image = global::Elev8.Properties.Resources.Icon_Clockwise;
+			this.btnMotor4.Image = global::Elev8.Properties.Resources.Icon_CounterClockwise;
 			this.btnMotor4.Location = new System.Drawing.Point( 57, 209 );
 			this.btnMotor4.Name = "btnMotor4";
 			this.btnMotor4.Size = new System.Drawing.Size( 75, 67 );
@@ -593,7 +593,7 @@
 			// 
 			// btnMotor3
 			// 
-			this.btnMotor3.Image = global::Elev8.Properties.Resources.Icon_CounterClockwise;
+			this.btnMotor3.Image = global::Elev8.Properties.Resources.Icon_Clockwise;
 			this.btnMotor3.Location = new System.Drawing.Point( 283, 209 );
 			this.btnMotor3.Name = "btnMotor3";
 			this.btnMotor3.Size = new System.Drawing.Size( 75, 67 );
@@ -607,7 +607,7 @@
 			// 
 			// btnMotor2
 			// 
-			this.btnMotor2.Image = global::Elev8.Properties.Resources.Icon_Clockwise;
+			this.btnMotor2.Image = global::Elev8.Properties.Resources.Icon_CounterClockwise;
 			this.btnMotor2.Location = new System.Drawing.Point( 283, 31 );
 			this.btnMotor2.Name = "btnMotor2";
 			this.btnMotor2.Size = new System.Drawing.Size( 75, 67 );
@@ -620,7 +620,7 @@
 			// 
 			// btnMotor1
 			// 
-			this.btnMotor1.Image = global::Elev8.Properties.Resources.Icon_CounterClockwise;
+			this.btnMotor1.Image = global::Elev8.Properties.Resources.Icon_Clockwise;
 			this.btnMotor1.Location = new System.Drawing.Point( 57, 31 );
 			this.btnMotor1.Name = "btnMotor1";
 			this.btnMotor1.Size = new System.Drawing.Size( 75, 67 );
@@ -1125,6 +1125,15 @@
 			this.tickTimer.Interval = 20;
 			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
 			// 
+			// lblFlightMode
+			// 
+			this.lblFlightMode.Location = new System.Drawing.Point( 503, 52 );
+			this.lblFlightMode.Name = "lblFlightMode";
+			this.lblFlightMode.Size = new System.Drawing.Size( 69, 13 );
+			this.lblFlightMode.TabIndex = 23;
+			this.lblFlightMode.Text = "Mode";
+			this.lblFlightMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
 			// rsRight
 			// 
 			this.rsRight.Location = new System.Drawing.Point( 302, 24 );
@@ -1321,15 +1330,6 @@
 			this.grGyro.Name = "grGyro";
 			this.grGyro.Size = new System.Drawing.Size( 627, 178 );
 			this.grGyro.TabIndex = 0;
-			// 
-			// lblFlightMode
-			// 
-			this.lblFlightMode.Location = new System.Drawing.Point( 503, 52 );
-			this.lblFlightMode.Name = "lblFlightMode";
-			this.lblFlightMode.Size = new System.Drawing.Size( 69, 13 );
-			this.lblFlightMode.TabIndex = 23;
-			this.lblFlightMode.Text = "Mode";
-			this.lblFlightMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// MainForm
 			// 

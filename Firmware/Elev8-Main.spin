@@ -438,10 +438,10 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
     '  ThroOut -= (AccelZ - 8192) ~> 2
      
     ' X configuration
-    Motor[OUT_FL] := ThroOut + ((-PitchOut + RollOut + YawOut) * ThroMix) ~> 7                          
-    Motor[OUT_FR] := ThroOut + ((-PitchOut - RollOut - YawOut) * ThroMix) ~> 7  
-    Motor[OUT_BL] := ThroOut + ((+PitchOut + RollOut - YawOut) * ThroMix) ~> 7
-    Motor[OUT_BR] := ThroOut + ((+PitchOut - RollOut + YawOut) * ThroMix) ~> 7
+    Motor[OUT_FL] := ThroOut + ((-PitchOut + RollOut - YawOut) * ThroMix) ~> 7                          
+    Motor[OUT_FR] := ThroOut + ((-PitchOut - RollOut + YawOut) * ThroMix) ~> 7  
+    Motor[OUT_BL] := ThroOut + ((+PitchOut + RollOut + YawOut) * ThroMix) ~> 7
+    Motor[OUT_BR] := ThroOut + ((+PitchOut - RollOut - YawOut) * ThroMix) ~> 7
 
 
     'The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
