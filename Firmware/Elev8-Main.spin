@@ -177,6 +177,9 @@ PUB Main | Cycles
   Sens.Start(SDI, SDO, SCL, CS_AG, CS_M, CS_ALT, LED_PIN, @LEDValue, LED_COUNT)  
   IMU.Start
 
+  DIRA[BUZZER_1] := 1           'Enable buzzer pins    
+  DIRA[BUZZER_2] := 1
+
 
   'Debug code - Display the length of the FPU programs
   'Dbg.rx
@@ -229,14 +232,10 @@ PUB Main | Cycles
 
   InitTestPID
 
-  
-
-  All_LED( LED_Green & LED_Half )
 
 
   counter := 0
   loopTimer := cnt                                      'Timekeeping value - tracks the next 400th/sec interval for IMU accuracy
-
 
   repeat
     Cycles := cnt
@@ -631,7 +630,7 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
 
 
 
-PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
+PUB DoDebugModeOutput | loop, addr, phase, i
   if( Mode == MODE_None )
     return
 
@@ -686,42 +685,41 @@ PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
     if( NudgeMotor > -1 )
 
       if( NudgeMotor < 4 )     
-        ESC.Set(MotorIndex[NudgeMotor], 1200*8)
+        ESC.Set(MotorIndex[NudgeMotor], 9000)           'Motor test - 1/8 throttle
          
         'waitcnt( cnt + 10_000_000 )
         'ESC.Set(NudgeMotor, 1000)
         
-      elseif( NudgeMotor == 4 )
-        BeepHz(2000, 50)
+      elseif( NudgeMotor == 4 )                         'Buzzer test
+        BeepHz(4500, 50)
         waitcnt( cnt + 5_000_000 )
-        BeepHz(3000, 50)
+        BeepHz(3500, 50)
         
-      elseif( NudgeMotor == 5 )
-        'repeat loop from 0 to $f0_f0_f0 step $04_04_04 
-          'All_LED( loop )
-           'waitcnt( cnt + 500_000 )
-        'repeat loop from $f0_f0_f0 to 0 step $04_04_04 
-          'All_LED( loop )
-          'waitcnt( cnt + 500_000 )
+      elseif( NudgeMotor == 5 )                         'LED test
         
-        ' RGB led will fade-up/down through 3 colors: red, green, blue  
-        repeat ledcoloridx from 0 to 2
-            repeat ledbrightidx from 0 to 8
+        ' RGB led will run a rainbow
+        repeat i from 0 to 255 step 1
+          All_LED( (255-i)<<16 + (i<<8) ) 
+          waitcnt( cnt + 160000 )
 
-                All_LED( LEDTestSeqColor[ledcoloridx] & LEDTestSeqBright[ledbrightidx] )
-                waitcnt( cnt + LED_TESTDELAY ) 
+        repeat i from 0 to 255 step 1
+          All_LED( i + ((255-i) << 8) )
+          waitcnt( cnt + 160000 )
 
-        All_LED( 0 )
+        repeat i from 0 to 255 step 1
+          All_LED( (255-i) + i<<16 )
+          waitcnt( cnt + 160000 )
 
-      elseif( NudgeMotor == 6 )
 
-        BeepHz(3000, 100)
+      elseif( NudgeMotor == 6 )                         'ESC Throttle calibration
+
+        BeepHz(4500, 100)
         waitcnt( cnt + 5_000_000 )
-        BeepHz(3000, 100)
+        BeepHz(4500, 100)
         waitcnt( cnt + 5_000_000 )
-        BeepHz(3000, 100)
+        BeepHz(4500, 100)
         waitcnt( cnt + 5_000_000 )
-        BeepHz(3000, 100)
+        BeepHz(4500, 100)
 
         if( dbg.rx == $FF )  'Safety check - Allow the user to break out by sending anything else                  
           ESC.Set(MotorIndex[0], 16000)
@@ -736,7 +734,7 @@ PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
           ESC.Set(MotorIndex[2], 8000)
           ESC.Set(MotorIndex[3], 8000)
 
-      elseif( NudgeMotor == 7 )
+      elseif( NudgeMotor == 7 )                         'Motor off (after motor test)
         ESC.Set(MotorIndex[0], 8000)
         ESC.Set(MotorIndex[1], 8000)
         ESC.Set(MotorIndex[2], 8000)
@@ -799,15 +797,6 @@ PUB DoDebugModeOutput | loop, addr, phase, ledcoloridx, ledbrightidx
 
       
 
-{
-PUB Beep(delay, count) | i
-  repeat i from 0 to count
-    OUTA[16]~~
-    waitcnt( CNT + delay )
-    OUTA[16]~
-    waitcnt( CNT + delay )
-}
-
 
 PUB All_LED( Color )
   LongFill( @LEDValue[0], Color, LED_COUNT) 
@@ -815,13 +804,10 @@ PUB All_LED( Color )
 
 PUB BeepHz( Hz , Delay ) | i, loop, d, ctr
 
-  'Note that each loop does a high and low cycle, so we use a baseline of 40_000_000 cycles instead of 80_000_000 (1/2)
+  'Note that each loop does a high and low cycle, so we divide clkfreq by 2 and 2000 instead of 1 and 1000
 
-  d := 40_000_000 / Hz          'Compute the amount of time to delay between pulses to get the right frequency
-  loop := (Delay * 40_000) / d  'How many iterations of the loop to make "Delay" milliseconds?
-
-  DIRA[BUZZER_1] := 1    
-  DIRA[BUZZER_2] := 1
+  d := constant(_clkfreq/2) / Hz                        'Compute the amount of time to delay between pulses to get the right frequency
+  loop := (Delay * constant(_clkfreq/2000)) / d         'How many iterations of the loop to make "Delay" milliseconds?
    
   ctr := cnt
     
@@ -870,20 +856,4 @@ PUB Beep3
   waitcnt( 5_000_000 + cnt ) 
   Beep
   
-  
-DAT
-
-  LEDTestSeqColor   long    LED_Red
-                    long    LED_Green
-                    long    LED_Blue
-                    
-  LEDTestSeqBright  long    LED_Dim
-                    long    LED_Eighth
-                    long    LED_Quarter
-                    long    LED_Half
-                    long    LED_Full
-                    long    LED_Half
-                    long    LED_Quarter
-                    long    LED_Eighth
-                    long    LED_Dim
           

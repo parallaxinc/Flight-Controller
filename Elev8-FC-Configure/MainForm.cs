@@ -373,8 +373,7 @@ namespace Elev8
 						if(Gear < -512) {
 							lblFlightMode.Text = "Assisted";
 						}
-						else if(Gear > 512)
-						{
+						else if(Gear > 512) {
 							lblFlightMode.Text = "Manual";
 						}
 						else {
