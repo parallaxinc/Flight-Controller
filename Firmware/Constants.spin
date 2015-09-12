@@ -12,6 +12,14 @@ CON
   UpdateRate = 250
   UpdateCycles = _clkfreq / UpdateRate
 
+
+  DriftScalePref =  32768 + 0
+  DriftOffsetPref = 32768 + 3*4
+  AccelOffsetPref = 32768 + 6*4
+  UseSBUSPref     = 32768 + 9*4 
+  SBUSCenterPref  = 32768 + 10*4 
+
+  NextPref        = 32768 + 11*4
  
 PUB Placeholder
   'This is simply to allow this object to compile

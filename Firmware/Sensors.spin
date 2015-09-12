@@ -70,6 +70,7 @@ VAR
 OBJ
 
   eeprom : "Propeller Eeprom.spin"
+  const  : "Constants.spin"
 
 
 PUB start(ipin, opin, cpin, sgpin, smpin, apin, _LEDPin, _LEDAddr, _LEDCount) : okay
@@ -89,7 +90,7 @@ PUB start(ipin, opin, cpin, sgpin, smpin, apin, _LEDPin, _LEDAddr, _LEDCount) : 
 ''   LEDCount= Number of LED values to update  
 
   'Copy these values from the variables the DAT section so the cog starts with the right settings
-  eeprom.ToRam(@DriftScale[0], @DriftScale[0] + constant(9*4), 32768 )   ' Copy from EEPROM to VAR
+  eeprom.ToRam(@DriftScale[0], @DriftScale[0] + constant(9*4), const#DriftScalePref )   ' Copy from EEPROM to VAR
 
   return startx(@ipin)
 
@@ -148,13 +149,13 @@ PUB SetDriftValues( ScaleX, ScaleY, ScaleZ, OffsetX, OffsetY, OffsetZ )
 
   longmove( @DriftScale[0], @ScaleX, 6 )
   longmove( @DriftScaleGX, @ScaleX, 6 )
-  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , 32768 )         ' Copy from VAR to EEPROM
+  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , const#DriftScalePref )         ' Copy from VAR to EEPROM
 
 
 PUB SetAccelOffsetValues( OffsetX, OffsetY, OffsetZ )
   longmove( @AccelOffset[0], @OffsetX, 3 )
   longmove( @AccelOffsetX, @OffsetX, 3 )
-  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , 32768 )         ' Copy from VAR to EEPROM
+  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , const#DriftScalePref )         ' Copy from VAR to EEPROM
    
 
 
