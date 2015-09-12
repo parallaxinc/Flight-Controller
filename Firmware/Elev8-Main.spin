@@ -88,6 +88,8 @@ CON
 
 OBJ
   RC :   "RC_Receiver.spin"                             '1 cog
+  SBUS : "SBUS-Receiver.spin"                           '   (shared cog with RC Receiver - only one runs at a time)
+  
   Sens : "Sensors.spin"                                 '1 cog
   IMU :  "QuatIMU.spin"                                 '1 cogs (float command stream processor) 
   ESC :  "Servo32-HighRes.spin"                         '1 cog
@@ -100,6 +102,8 @@ OBJ
   YawPID    : "IntPID.spin"
 
   TestPID   : "IntPID.spin"
+
+  eeprom : "Propeller Eeprom.spin"
 
 
 
@@ -145,7 +149,9 @@ VAR
   byte MotorIndex[4]            'Motor index to pin index table
 
 
-  long  RollPitch_P, RollPitch_D 
+  long RollPitch_P, RollPitch_D 
+  long UseSBUS, SBUSCenter
+  
 
 
 PUB Main | Cycles
@@ -167,10 +173,18 @@ PUB Main | Cycles
 
   FlightMode := FlightMode_Assisted
 
+  'eeprom.ToRam(@UseSBUS, @UseSBUS+8, Const#UseSBUSPref )   ' Copy from EEPROM to VAR
+  UseSBUS := 0
+  SBUSCenter := 1000
+
 
   'Configure and start all the objects
   Dbg.Start( 31, 30, 0, 115200 )
-  RC.Start
+
+  if( UseSBUS )
+    SBUS.Start( 26 , SBUSCenter )                       'SBUS input is on PIN 26 (Throttle channel)
+  else  
+    RC.Start
 
   All_LED( LED_Red & LED_Half )                         'LED red on startup
     
@@ -246,15 +260,25 @@ PUB Main | Cycles
     IMU.Update_Part1( @GyroX )        'Entire IMU takes ~92000 cycles
 
 
-    Thro :=  RC.GetRC( RC_THRO )
-    Aile :=  RC.GetRC( RC_AILE )
-    Elev :=  RC.GetRC( RC_ELEV )
-    Rudd :=  RC.GetRC( RC_RUDD )
-    Gear :=  RC.GetRC( RC_GEAR )
-    Aux1 :=  RC.GetRC( RC_AUX1 )
-    Aux2 :=  RC.GetRC( RC_AUX2 )
-    Aux3 :=  RC.GetRC( RC_AUX3 )
-
+    if( UseSBUS )
+      Thro :=  SBUS.GetRC( RC_THRO )
+      Aile :=  SBUS.GetRC( RC_AILE )
+      Elev :=  SBUS.GetRC( RC_ELEV )
+      Rudd :=  SBUS.GetRC( RC_RUDD )
+      Gear :=  SBUS.GetRC( RC_GEAR )
+      Aux1 :=  SBUS.GetRC( RC_AUX1 )
+      Aux2 :=  SBUS.GetRC( RC_AUX2 )
+      Aux3 :=  SBUS.GetRC( RC_AUX3 )
+    else
+      Thro :=  RC.GetRC( RC_THRO )
+      Aile :=  RC.GetRC( RC_AILE )
+      Elev :=  RC.GetRC( RC_ELEV )
+      Rudd :=  RC.GetRC( RC_RUDD )
+      Gear :=  RC.GetRC( RC_GEAR )
+      Aux1 :=  RC.GetRC( RC_AUX1 )
+      Aux2 :=  RC.GetRC( RC_AUX2 )
+      Aux3 :=  RC.GetRC( RC_AUX3 )
+       
 
     UpdateFlightLoop            '~82000 cycles when in flight mode
 

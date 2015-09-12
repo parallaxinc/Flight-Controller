@@ -35,7 +35,7 @@ the PID functions into F32 streams, but this works well for now.
 Propeller Eeprom.spin - I2C communication and EEPROM page read/write module.
 This object is used to handle writing variables to EEPROM, allowing the
 configuration code to persist user settings for things like gyro drift
-compensation.
+and accelerometer offset compensation.
 
 
 QuatIMU.spin - Quaternion / Matrix hybrid orientation estimation code.  This
@@ -117,7 +117,12 @@ Things to do / try:
   - Use altimeter reading to correct drift in height estimate, like accel+gyro
   - Could give more accurate readings in short term
 
+     *** currently testing in config app ***
 
+
+-----------------------------------
+*** completed ***
+-----------------------------------
 - Try integrating control stick derivative into gyro value in PID inputs
   - Might make for faster response - Currently the gyro values are being
      submitted to PID function as "derivative", but it's not completely
@@ -125,10 +130,13 @@ Things to do / try:
      point moves (IE the user changes their input) the derivative should be
      adjusted accordingly to provide a crisper response.  (this is a guess)
 
+- completed, works as expected, allows simpler switching between flight modes
+-----------------------------------
+
 
 - Need various flight modes
-  - Attitude hold (currently the only flight mode) - Stick position dictates
-     orientation
+  - Full-auto attitude hold (currently the only flight mode) - Stick position dictates
+     orientation, altitude holds automatically (alti hold not implemented)
 
   - Manual with auto-level - Stick position values are integrated over time,
      but also slowly return to level.  Manual, but auto-assist.
@@ -136,3 +144,11 @@ Things to do / try:
   - Full manual, no auto-level assist
 
   - Need to be able to switch between modes instantly
+
+  - Manual mode now working
+
+
+- Add user-config setting for SBus or PWM receiver support
+  - Stop previous receiver cog, start new one, change flag setting
+  - Persist flag setting to EEPROM
+

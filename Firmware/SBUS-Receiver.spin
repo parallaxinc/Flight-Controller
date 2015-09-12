@@ -23,19 +23,32 @@
 
 
 VAR
+  long  Cog
+
   long  InputMask
   long  BaudDelay
   word  Channels[18]  'Last two channels are digital
-        
+  word  CenterOffset
 
-PUB Start( InputPin )
+
+PUB Start( InputPin , Center )
+  CenterOffset := Center
   InputMask := 1 << InputPin
   BaudDelay := ClkFreq / 100_000                        'SBUS is 100_000 bps 
-  cognew(@SBUSStart, @InputMask)                                             
+  Cog := cognew(@SBUSStart, @InputMask) + 1                                             
 
 
-PUB Channel( i )
+PUB stop
+'' Stop driver and release cog
+  if Cog
+    cogstop(Cog~ - 1)
+
+
+PUB Get( i )
   return Channels[i] 
+
+PUB GetRC( i )
+  return Channels[i] - CenterOffset 
 
 
     
