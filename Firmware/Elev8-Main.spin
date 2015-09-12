@@ -589,7 +589,7 @@ PUB DisarmFlightMode
    
 
 
-PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
+PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz
 
   c := dbg.rxcheck
   if( c < 0 )
@@ -624,6 +624,23 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz
         goz := (dbg.rx << 8) | dbg.rx
         Sens.SetDriftValues( ~~gsx, ~~gsy, ~~gsz, ~~gox, ~~goy, ~~goz )         'Sign extend all the values from 16 bit to 32 bit
         loopTimer := cnt                                                        'Reset the loop counter or we'll be waiting forever 
+
+      elseif( c == $14 )
+        'Temporarily zero accel offset settings
+        Sens.TempZeroAccelOffsetValues
+
+      elseif( c == $15 )
+        'Reset accel offset settings
+        Sens.ResetAccelOffsetValues
+
+      elseif( c == $16 )
+        'Write new gyro drift settings - followed by 6 WORD values
+        aox := (dbg.rx << 8) | dbg.rx
+        aoy := (dbg.rx << 8) | dbg.rx
+        aoz := (dbg.rx << 8) | dbg.rx
+        Sens.SetAccelOffsetValues( ~~aox, ~~aoy, ~~aoz)                         'Sign extend all the values from 16 bit to 32 bit
+        loopTimer := cnt                                                        'Reset the loop counter or we'll be waiting forever 
+
 
   if( c == $ff )
     dbg.tx($E8)  'Simple ping-back to tell the application we have the right comm port

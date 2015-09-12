@@ -19,11 +19,16 @@ namespace Elev8
 		public float displayScale = 1.0f;
 		public string displayPostfix = "";
 
+		int avgCount = 128;
+
+		public MovingAverage movAvg = null;
+
 		//bool autoRange = false;
 
 		public Gauge()
 		{
 			InitializeComponent();
+			movAvg = new MovingAverage( avgCount );
 
 			DoubleBuffered = true;
 			ResizeRedraw = true;
@@ -35,10 +40,21 @@ namespace Elev8
 			set { this.range = value; Invalidate(); }
 		}
 
+		public int AverageCount
+		{
+			get { return avgCount; }
+			set { avgCount = value; movAvg = new MovingAverage( avgCount ); }
+		}
+		
+		public float MovingAverage
+		{
+			get { return movAvg.Value; }
+		}
+
 		public float Value
 		{
 			get { return value; }
-			set { this.value = value; Invalidate(); }
+			set { this.value = value; movAvg.AddSample( value * displayScale + displayOffset ); Invalidate(); }
 		}
 
 		private void Gauge_Paint(object sender, PaintEventArgs e)
@@ -74,7 +90,7 @@ namespace Elev8
 
 			g.DrawLine( Pens.Black, centerX, centerY, endX, endY );
 
-			RectangleF rect = new RectangleF( new PointF(0, ClientRectangle.Height-20), new SizeF( ClientRectangle.Width, 20) );
+			RectangleF rect = new RectangleF( new PointF(10, ClientRectangle.Height-20), new SizeF( ClientRectangle.Width-10, 20) );
 
 			temp = value * displayScale + displayOffset;
 			string s;
@@ -85,6 +101,17 @@ namespace Elev8
 				s = string.Format( "{0}{1}", temp, displayPostfix );
 			}
 			g.DrawString( s, this.Font, SystemBrushes.ControlText, rect);
+
+
+
+			s = movAvg.Value.ToString( "F1" );
+			SizeF strSize = g.MeasureString( s, this.Font );
+
+			float left = ClientRectangle.Width - strSize.Width - 10;
+			float width = strSize.Width + 10;
+			rect = new RectangleF( new PointF( left, ClientRectangle.Height - 20 ), new SizeF( width, 20 ) );
+
+			g.DrawString( s, this.Font, SystemBrushes.ControlText, rect );
 		}
 	}
 }

@@ -62,6 +62,7 @@ VAR
   long  ins[ParamsSize]         'Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltTemp, Timer
   long  DriftScale[3]
   long  DriftOffset[3]          'These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
+  long  AccelOffset[3]
 
   long  cog
 
@@ -88,7 +89,7 @@ PUB start(ipin, opin, cpin, sgpin, smpin, apin, _LEDPin, _LEDAddr, _LEDCount) : 
 ''   LEDCount= Number of LED values to update  
 
   'Copy these values from the variables the DAT section so the cog starts with the right settings
-  longmove( @DriftScaleGX, @DriftScale[0], 6 ) 
+  eeprom.ToRam(@DriftScale[0], @DriftScale[0] + constant(9*4), 32768 )   ' Copy from EEPROM to VAR
 
   return startx(@ipin)
 
@@ -129,17 +130,32 @@ PUB TempZeroDriftValues
   longfill( @DriftScale[0], 0, 6 )
 
 
-PUB ResetDriftValues
+PUB TempZeroAccelOffsetValues
 
+  longmove( @AccelOffsetX, @AccelOffset[0], 3 )         'Temporarily back up the values in the DAT section so we can restore them with "ResetAccelOffsetValues"
+  longfill( @AccelOffset[0], 0, 3 )
+
+
+PUB ResetDriftValues
   longmove( @DriftScale[0], @DriftScaleGX, 6 )
+
+
+PUB ResetAccelOffsetValues
+  longmove( @AccelOffset[0], @AccelOffsetX, 3 )
 
 
 PUB SetDriftValues( ScaleX, ScaleY, ScaleZ, OffsetX, OffsetY, OffsetZ )
 
   longmove( @DriftScale[0], @ScaleX, 6 )
   longmove( @DriftScaleGX, @ScaleX, 6 )
-  eeprom.VarBackup(@DriftScale[0], @DriftScale[0]+24)         ' Copy from VAR to EEPROM
+  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , 32768 )         ' Copy from VAR to EEPROM
 
+
+PUB SetAccelOffsetValues( OffsetX, OffsetY, OffsetZ )
+  longmove( @AccelOffset[0], @OffsetX, 3 )
+  longmove( @AccelOffsetX, @OffsetX, 3 )
+  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , 32768 )         ' Copy from VAR to EEPROM
+   
 
 
 DAT
@@ -854,6 +870,13 @@ ComputeDrift
                         add     t3, #4   
                         rdlong  DriftOffsetGZ, t3   
 
+                        add     t3, #4   
+                        rdlong  AccelOffsetX, t3   
+                        add     t3, #4   
+                        rdlong  AccelOffsetY, t3   
+                        add     t3, #4   
+                        rdlong  AccelOffsetZ, t3   
+
 
                         'Compute drift value for X axis                        
                         mov     divisor, DriftScaleGX
@@ -886,7 +909,10 @@ ComputeDrift
               if_nz     call    #Divide
                         mov     DriftZ, divResult
                         add     DriftZ, DriftOffsetGZ                                           
-                        
+
+                        sub     OutAX, AccelOffsetX
+                        sub     OutAY, AccelOffsetY
+                        sub     OutAZ, AccelOffsetZ
                         
 ComputeDrift_Ret        ret
 
@@ -1140,6 +1166,10 @@ DriftScaleGZ            long    0               '-20
 DriftOffsetGX           long    0               '64
 DriftOffsetGY           long    0               '445
 DriftOffsetGZ           long    0               '29
+
+AccelOffsetX            long    0
+AccelOffsetY            long    0
+AccelOffsetZ            long    0
 
 
 AccelTableIndex         long    0                       'Index into the accel values median table

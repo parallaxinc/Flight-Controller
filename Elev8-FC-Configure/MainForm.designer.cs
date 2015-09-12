@@ -32,6 +32,7 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager( typeof( MainForm ) );
 			this.tcMainTabs = new System.Windows.Forms.TabControl();
 			this.tpRadioTest = new System.Windows.Forms.TabPage();
+			this.lblFlightMode = new System.Windows.Forms.Label();
 			this.lblAux3 = new System.Windows.Forms.Label();
 			this.lblAux2 = new System.Windows.Forms.Label();
 			this.lblAux1 = new System.Windows.Forms.Label();
@@ -45,7 +46,10 @@
 			this.label3 = new System.Windows.Forms.Label();
 			this.label2 = new System.Windows.Forms.Label();
 			this.label1 = new System.Windows.Forms.Label();
+			this.rsRight = new Elev8.RadioJoystick();
+			this.rsLeft = new Elev8.RadioJoystick();
 			this.tpSensorTest = new System.Windows.Forms.TabPage();
+			this.gAltimeter = new Elev8.Graph();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label19 = new System.Windows.Forms.Label();
 			this.label21 = new System.Windows.Forms.Label();
@@ -62,6 +66,17 @@
 			this.label7 = new System.Windows.Forms.Label();
 			this.label6 = new System.Windows.Forms.Label();
 			this.label5 = new System.Windows.Forms.Label();
+			this.gHeading = new Elev8.Gauge();
+			this.gMagZ = new Elev8.Gauge();
+			this.gMagY = new Elev8.Gauge();
+			this.gMagX = new Elev8.Gauge();
+			this.gGyroTemp = new Elev8.Gauge();
+			this.gAccelZ = new Elev8.Gauge();
+			this.gAccelY = new Elev8.Gauge();
+			this.gAccelX = new Elev8.Gauge();
+			this.gGyroZ = new Elev8.Gauge();
+			this.gGyroY = new Elev8.Gauge();
+			this.gGyroX = new Elev8.Gauge();
 			this.tpMotorTest = new System.Windows.Forms.TabPage();
 			this.lblCalibrateDocs = new System.Windows.Forms.Label();
 			this.btnThrottleCalibrate = new System.Windows.Forms.Button();
@@ -73,8 +88,8 @@
 			this.btnMotor2 = new System.Windows.Forms.Button();
 			this.btnMotor1 = new System.Windows.Forms.Button();
 			this.tpGyroCalibration = new System.Windows.Forms.TabPage();
-			this.btnUploadCalibration = new System.Windows.Forms.Button();
-			this.btnResetCalib = new System.Windows.Forms.Button();
+			this.btnUploadGyroCalibration = new System.Windows.Forms.Button();
+			this.btnResetGyroCal = new System.Windows.Forms.Button();
 			this.groupBox10 = new System.Windows.Forms.GroupBox();
 			this.label18 = new System.Windows.Forms.Label();
 			this.gzOffset = new System.Windows.Forms.Label();
@@ -90,15 +105,38 @@
 			this.gxOffset = new System.Windows.Forms.Label();
 			this.label28 = new System.Windows.Forms.Label();
 			this.gxScale = new System.Windows.Forms.Label();
+			this.lfGraph = new Elev8.LineFit();
+			this.tpAccelCalibration = new System.Windows.Forms.TabPage();
+			this.lblAccelCal4 = new System.Windows.Forms.Label();
+			this.lblAccelCal3 = new System.Windows.Forms.Label();
+			this.lblAccelCal2 = new System.Windows.Forms.Label();
+			this.lblAccelCal1 = new System.Windows.Forms.Label();
+			this.btnUploadAccelCal = new System.Windows.Forms.Button();
+			this.btnAccelCal4 = new System.Windows.Forms.Button();
+			this.btnAccelCal3 = new System.Windows.Forms.Button();
+			this.btnAccelCal2 = new System.Windows.Forms.Button();
+			this.btnAccelCal1 = new System.Windows.Forms.Button();
+			this.label37 = new System.Windows.Forms.Label();
+			this.label38 = new System.Windows.Forms.Label();
+			this.label39 = new System.Windows.Forms.Label();
+			this.gAccelZCal = new Elev8.Gauge();
+			this.gAccelYCal = new Elev8.Gauge();
+			this.gAccelXCal = new Elev8.Gauge();
 			this.tpIMUTest = new System.Windows.Forms.TabPage();
 			this.label17 = new System.Windows.Forms.Label();
 			this.label16 = new System.Windows.Forms.Label();
 			this.label14 = new System.Windows.Forms.Label();
 			this.textBox4 = new System.Windows.Forms.TextBox();
+			this.gYaw = new Elev8.Gauge();
+			this.gRoll = new Elev8.Gauge();
+			this.gPitch = new Elev8.Gauge();
+			this.ocOrientation = new Elev8.OrientationCube();
 			this.tpIMUComp = new System.Windows.Forms.TabPage();
 			this.lblStatOutput = new System.Windows.Forms.Label();
 			this.label27 = new System.Windows.Forms.Label();
 			this.label25 = new System.Windows.Forms.Label();
+			this.ocCompQ2 = new Elev8.OrientationCube();
+			this.ocCompQ1 = new Elev8.OrientationCube();
 			this.tpVibration = new System.Windows.Forms.TabPage();
 			this.label32 = new System.Windows.Forms.Label();
 			this.label31 = new System.Windows.Forms.Label();
@@ -119,30 +157,9 @@
 			this.lblGXVar = new System.Windows.Forms.Label();
 			this.lblGXMin = new System.Windows.Forms.Label();
 			this.lblGXMax = new System.Windows.Forms.Label();
-			this.tickTimer = new System.Windows.Forms.Timer( this.components );
-			this.lblFlightMode = new System.Windows.Forms.Label();
-			this.rsRight = new Elev8.RadioJoystick();
-			this.rsLeft = new Elev8.RadioJoystick();
-			this.gAltimeter = new Elev8.Graph();
-			this.gHeading = new Elev8.Gauge();
-			this.gMagZ = new Elev8.Gauge();
-			this.gMagY = new Elev8.Gauge();
-			this.gMagX = new Elev8.Gauge();
-			this.gGyroTemp = new Elev8.Gauge();
-			this.gAccelZ = new Elev8.Gauge();
-			this.gAccelY = new Elev8.Gauge();
-			this.gAccelX = new Elev8.Gauge();
-			this.gGyroZ = new Elev8.Gauge();
-			this.gGyroY = new Elev8.Gauge();
-			this.gGyroX = new Elev8.Gauge();
-			this.lfGraph = new Elev8.LineFit();
-			this.gYaw = new Elev8.Gauge();
-			this.gRoll = new Elev8.Gauge();
-			this.gPitch = new Elev8.Gauge();
-			this.ocOrientation = new Elev8.OrientationCube();
-			this.ocCompQ2 = new Elev8.OrientationCube();
-			this.ocCompQ1 = new Elev8.OrientationCube();
 			this.grGyro = new Elev8.Graph();
+			this.tickTimer = new System.Windows.Forms.Timer( this.components );
+			this.lblAccelCalFinal = new System.Windows.Forms.Label();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -151,6 +168,7 @@
 			this.groupBox10.SuspendLayout();
 			this.groupBox11.SuspendLayout();
 			this.groupBox12.SuspendLayout();
+			this.tpAccelCalibration.SuspendLayout();
 			this.tpIMUTest.SuspendLayout();
 			this.tpIMUComp.SuspendLayout();
 			this.tpVibration.SuspendLayout();
@@ -165,6 +183,7 @@
 			this.tcMainTabs.Controls.Add( this.tpSensorTest );
 			this.tcMainTabs.Controls.Add( this.tpMotorTest );
 			this.tcMainTabs.Controls.Add( this.tpGyroCalibration );
+			this.tcMainTabs.Controls.Add( this.tpAccelCalibration );
 			this.tcMainTabs.Controls.Add( this.tpIMUTest );
 			this.tcMainTabs.Controls.Add( this.tpIMUComp );
 			this.tcMainTabs.Controls.Add( this.tpVibration );
@@ -201,6 +220,15 @@
 			this.tpRadioTest.TabIndex = 0;
 			this.tpRadioTest.Text = "Radio Test";
 			this.tpRadioTest.UseVisualStyleBackColor = true;
+			// 
+			// lblFlightMode
+			// 
+			this.lblFlightMode.Location = new System.Drawing.Point( 503, 52 );
+			this.lblFlightMode.Name = "lblFlightMode";
+			this.lblFlightMode.Size = new System.Drawing.Size( 69, 13 );
+			this.lblFlightMode.TabIndex = 23;
+			this.lblFlightMode.Text = "Mode";
+			this.lblFlightMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
 			// lblAux3
 			// 
@@ -323,6 +351,26 @@
 			this.label1.TabIndex = 10;
 			this.label1.Text = "Throttle";
 			// 
+			// rsRight
+			// 
+			this.rsRight.Location = new System.Drawing.Point( 302, 24 );
+			this.rsRight.Name = "rsRight";
+			this.rsRight.Range = 1024F;
+			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
+			this.rsRight.TabIndex = 9;
+			this.rsRight.XValue = 0F;
+			this.rsRight.YValue = 0F;
+			// 
+			// rsLeft
+			// 
+			this.rsLeft.Location = new System.Drawing.Point( 68, 24 );
+			this.rsLeft.Name = "rsLeft";
+			this.rsLeft.Range = 1024F;
+			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
+			this.rsLeft.TabIndex = 8;
+			this.rsLeft.XValue = 0F;
+			this.rsLeft.YValue = 0F;
+			// 
 			// tpSensorTest
 			// 
 			this.tpSensorTest.Controls.Add( this.gAltimeter );
@@ -360,6 +408,13 @@
 			this.tpSensorTest.TabIndex = 1;
 			this.tpSensorTest.Text = "Sensor Test";
 			this.tpSensorTest.UseVisualStyleBackColor = true;
+			// 
+			// gAltimeter
+			// 
+			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
+			this.gAltimeter.Name = "gAltimeter";
+			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
+			this.gAltimeter.TabIndex = 31;
 			// 
 			// label12
 			// 
@@ -508,6 +563,127 @@
 			this.label5.TabIndex = 6;
 			this.label5.Text = "Gyro X";
 			// 
+			// gHeading
+			// 
+			this.gHeading.AverageCount = 128;
+			this.gHeading.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gHeading.Location = new System.Drawing.Point( 310, 219 );
+			this.gHeading.Name = "gHeading";
+			this.gHeading.Range = 1800F;
+			this.gHeading.Size = new System.Drawing.Size( 91, 89 );
+			this.gHeading.TabIndex = 29;
+			this.gHeading.Value = 0F;
+			// 
+			// gMagZ
+			// 
+			this.gMagZ.AverageCount = 128;
+			this.gMagZ.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gMagZ.Location = new System.Drawing.Point( 203, 217 );
+			this.gMagZ.Name = "gMagZ";
+			this.gMagZ.Range = 16384F;
+			this.gMagZ.Size = new System.Drawing.Size( 91, 89 );
+			this.gMagZ.TabIndex = 25;
+			this.gMagZ.Value = 0F;
+			// 
+			// gMagY
+			// 
+			this.gMagY.AverageCount = 128;
+			this.gMagY.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gMagY.Location = new System.Drawing.Point( 106, 217 );
+			this.gMagY.Name = "gMagY";
+			this.gMagY.Range = 16384F;
+			this.gMagY.Size = new System.Drawing.Size( 91, 89 );
+			this.gMagY.TabIndex = 24;
+			this.gMagY.Value = 0F;
+			// 
+			// gMagX
+			// 
+			this.gMagX.AverageCount = 128;
+			this.gMagX.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gMagX.Location = new System.Drawing.Point( 9, 217 );
+			this.gMagX.Name = "gMagX";
+			this.gMagX.Range = 16384F;
+			this.gMagX.Size = new System.Drawing.Size( 91, 89 );
+			this.gMagX.TabIndex = 23;
+			this.gMagX.Value = 0F;
+			// 
+			// gGyroTemp
+			// 
+			this.gGyroTemp.AverageCount = 128;
+			this.gGyroTemp.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gGyroTemp.Location = new System.Drawing.Point( 310, 111 );
+			this.gGyroTemp.Name = "gGyroTemp";
+			this.gGyroTemp.Range = 1000F;
+			this.gGyroTemp.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroTemp.TabIndex = 16;
+			this.gGyroTemp.Value = 0F;
+			// 
+			// gAccelZ
+			// 
+			this.gAccelZ.AverageCount = 128;
+			this.gAccelZ.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelZ.Location = new System.Drawing.Point( 203, 111 );
+			this.gAccelZ.Name = "gAccelZ";
+			this.gAccelZ.Range = 32768F;
+			this.gAccelZ.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelZ.TabIndex = 5;
+			this.gAccelZ.Value = 0F;
+			// 
+			// gAccelY
+			// 
+			this.gAccelY.AverageCount = 128;
+			this.gAccelY.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelY.Location = new System.Drawing.Point( 106, 111 );
+			this.gAccelY.Name = "gAccelY";
+			this.gAccelY.Range = 32768F;
+			this.gAccelY.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelY.TabIndex = 4;
+			this.gAccelY.Value = 0F;
+			// 
+			// gAccelX
+			// 
+			this.gAccelX.AverageCount = 128;
+			this.gAccelX.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelX.Location = new System.Drawing.Point( 9, 111 );
+			this.gAccelX.Name = "gAccelX";
+			this.gAccelX.Range = 32768F;
+			this.gAccelX.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelX.TabIndex = 3;
+			this.gAccelX.Value = 0F;
+			// 
+			// gGyroZ
+			// 
+			this.gGyroZ.AverageCount = 128;
+			this.gGyroZ.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gGyroZ.Location = new System.Drawing.Point( 204, 5 );
+			this.gGyroZ.Name = "gGyroZ";
+			this.gGyroZ.Range = 32768F;
+			this.gGyroZ.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroZ.TabIndex = 2;
+			this.gGyroZ.Value = 0F;
+			// 
+			// gGyroY
+			// 
+			this.gGyroY.AverageCount = 128;
+			this.gGyroY.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gGyroY.Location = new System.Drawing.Point( 106, 5 );
+			this.gGyroY.Name = "gGyroY";
+			this.gGyroY.Range = 32768F;
+			this.gGyroY.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroY.TabIndex = 1;
+			this.gGyroY.Value = 0F;
+			// 
+			// gGyroX
+			// 
+			this.gGyroX.AverageCount = 128;
+			this.gGyroX.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gGyroX.Location = new System.Drawing.Point( 9, 5 );
+			this.gGyroX.Name = "gGyroX";
+			this.gGyroX.Range = 32768F;
+			this.gGyroX.Size = new System.Drawing.Size( 91, 89 );
+			this.gGyroX.TabIndex = 0;
+			this.gGyroX.Value = 0F;
+			// 
 			// tpMotorTest
 			// 
 			this.tpMotorTest.Controls.Add( this.lblCalibrateDocs );
@@ -633,8 +809,8 @@
 			// 
 			// tpGyroCalibration
 			// 
-			this.tpGyroCalibration.Controls.Add( this.btnUploadCalibration );
-			this.tpGyroCalibration.Controls.Add( this.btnResetCalib );
+			this.tpGyroCalibration.Controls.Add( this.btnUploadGyroCalibration );
+			this.tpGyroCalibration.Controls.Add( this.btnResetGyroCal );
 			this.tpGyroCalibration.Controls.Add( this.groupBox10 );
 			this.tpGyroCalibration.Controls.Add( this.groupBox11 );
 			this.tpGyroCalibration.Controls.Add( this.groupBox12 );
@@ -646,25 +822,25 @@
 			this.tpGyroCalibration.Text = "Gyro Calibration";
 			this.tpGyroCalibration.UseVisualStyleBackColor = true;
 			// 
-			// btnUploadCalibration
+			// btnUploadGyroCalibration
 			// 
-			this.btnUploadCalibration.Location = new System.Drawing.Point( 15, 212 );
-			this.btnUploadCalibration.Name = "btnUploadCalibration";
-			this.btnUploadCalibration.Size = new System.Drawing.Size( 147, 23 );
-			this.btnUploadCalibration.TabIndex = 24;
-			this.btnUploadCalibration.Text = "Upload Calibration Settings";
-			this.btnUploadCalibration.UseVisualStyleBackColor = true;
-			this.btnUploadCalibration.Click += new System.EventHandler( this.btnUploadCalibration_Click );
+			this.btnUploadGyroCalibration.Location = new System.Drawing.Point( 15, 212 );
+			this.btnUploadGyroCalibration.Name = "btnUploadGyroCalibration";
+			this.btnUploadGyroCalibration.Size = new System.Drawing.Size( 147, 23 );
+			this.btnUploadGyroCalibration.TabIndex = 24;
+			this.btnUploadGyroCalibration.Text = "Upload Calibration Settings";
+			this.btnUploadGyroCalibration.UseVisualStyleBackColor = true;
+			this.btnUploadGyroCalibration.Click += new System.EventHandler( this.btnUploadCalibration_Click );
 			// 
-			// btnResetCalib
+			// btnResetGyroCal
 			// 
-			this.btnResetCalib.Location = new System.Drawing.Point( 14, 160 );
-			this.btnResetCalib.Name = "btnResetCalib";
-			this.btnResetCalib.Size = new System.Drawing.Size( 147, 23 );
-			this.btnResetCalib.TabIndex = 23;
-			this.btnResetCalib.Text = "Restart Calibration";
-			this.btnResetCalib.UseVisualStyleBackColor = true;
-			this.btnResetCalib.Click += new System.EventHandler( this.btnResetCalib_Click );
+			this.btnResetGyroCal.Location = new System.Drawing.Point( 14, 160 );
+			this.btnResetGyroCal.Name = "btnResetGyroCal";
+			this.btnResetGyroCal.Size = new System.Drawing.Size( 147, 23 );
+			this.btnResetGyroCal.TabIndex = 23;
+			this.btnResetGyroCal.Text = "Restart Calibration";
+			this.btnResetGyroCal.UseVisualStyleBackColor = true;
+			this.btnResetGyroCal.Click += new System.EventHandler( this.btnResetCalib_Click );
 			// 
 			// groupBox10
 			// 
@@ -819,6 +995,176 @@
 			this.gxScale.Text = "0";
 			this.gxScale.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
+			// lfGraph
+			// 
+			this.lfGraph.Location = new System.Drawing.Point( 178, 3 );
+			this.lfGraph.Name = "lfGraph";
+			this.lfGraph.Size = new System.Drawing.Size( 447, 278 );
+			this.lfGraph.TabIndex = 0;
+			// 
+			// tpAccelCalibration
+			// 
+			this.tpAccelCalibration.Controls.Add( this.lblAccelCalFinal );
+			this.tpAccelCalibration.Controls.Add( this.lblAccelCal4 );
+			this.tpAccelCalibration.Controls.Add( this.lblAccelCal3 );
+			this.tpAccelCalibration.Controls.Add( this.lblAccelCal2 );
+			this.tpAccelCalibration.Controls.Add( this.lblAccelCal1 );
+			this.tpAccelCalibration.Controls.Add( this.btnUploadAccelCal );
+			this.tpAccelCalibration.Controls.Add( this.btnAccelCal4 );
+			this.tpAccelCalibration.Controls.Add( this.btnAccelCal3 );
+			this.tpAccelCalibration.Controls.Add( this.btnAccelCal2 );
+			this.tpAccelCalibration.Controls.Add( this.btnAccelCal1 );
+			this.tpAccelCalibration.Controls.Add( this.label37 );
+			this.tpAccelCalibration.Controls.Add( this.label38 );
+			this.tpAccelCalibration.Controls.Add( this.label39 );
+			this.tpAccelCalibration.Controls.Add( this.gAccelZCal );
+			this.tpAccelCalibration.Controls.Add( this.gAccelYCal );
+			this.tpAccelCalibration.Controls.Add( this.gAccelXCal );
+			this.tpAccelCalibration.Location = new System.Drawing.Point( 4, 22 );
+			this.tpAccelCalibration.Name = "tpAccelCalibration";
+			this.tpAccelCalibration.Size = new System.Drawing.Size( 633, 325 );
+			this.tpAccelCalibration.TabIndex = 7;
+			this.tpAccelCalibration.Text = "Accel Calibration";
+			this.tpAccelCalibration.UseVisualStyleBackColor = true;
+			// 
+			// lblAccelCal4
+			// 
+			this.lblAccelCal4.Location = new System.Drawing.Point( 108, 238 );
+			this.lblAccelCal4.Name = "lblAccelCal4";
+			this.lblAccelCal4.Size = new System.Drawing.Size( 147, 18 );
+			this.lblAccelCal4.TabIndex = 26;
+			// 
+			// lblAccelCal3
+			// 
+			this.lblAccelCal3.Location = new System.Drawing.Point( 108, 209 );
+			this.lblAccelCal3.Name = "lblAccelCal3";
+			this.lblAccelCal3.Size = new System.Drawing.Size( 147, 18 );
+			this.lblAccelCal3.TabIndex = 25;
+			// 
+			// lblAccelCal2
+			// 
+			this.lblAccelCal2.Location = new System.Drawing.Point( 108, 180 );
+			this.lblAccelCal2.Name = "lblAccelCal2";
+			this.lblAccelCal2.Size = new System.Drawing.Size( 147, 18 );
+			this.lblAccelCal2.TabIndex = 24;
+			// 
+			// lblAccelCal1
+			// 
+			this.lblAccelCal1.Location = new System.Drawing.Point( 108, 151 );
+			this.lblAccelCal1.Name = "lblAccelCal1";
+			this.lblAccelCal1.Size = new System.Drawing.Size( 147, 18 );
+			this.lblAccelCal1.TabIndex = 23;
+			// 
+			// btnUploadAccelCal
+			// 
+			this.btnUploadAccelCal.Location = new System.Drawing.Point( 16, 279 );
+			this.btnUploadAccelCal.Name = "btnUploadAccelCal";
+			this.btnUploadAccelCal.Size = new System.Drawing.Size( 75, 23 );
+			this.btnUploadAccelCal.TabIndex = 22;
+			this.btnUploadAccelCal.Text = "Upload";
+			this.btnUploadAccelCal.UseVisualStyleBackColor = true;
+			this.btnUploadAccelCal.Click += new System.EventHandler( this.btnUploadAccelCal_Click );
+			// 
+			// btnAccelCal4
+			// 
+			this.btnAccelCal4.Location = new System.Drawing.Point( 16, 233 );
+			this.btnAccelCal4.Name = "btnAccelCal4";
+			this.btnAccelCal4.Size = new System.Drawing.Size( 75, 23 );
+			this.btnAccelCal4.TabIndex = 21;
+			this.btnAccelCal4.Text = "Reading 4";
+			this.btnAccelCal4.UseVisualStyleBackColor = true;
+			this.btnAccelCal4.Click += new System.EventHandler( this.btnAccelCal4_Click );
+			// 
+			// btnAccelCal3
+			// 
+			this.btnAccelCal3.Location = new System.Drawing.Point( 16, 204 );
+			this.btnAccelCal3.Name = "btnAccelCal3";
+			this.btnAccelCal3.Size = new System.Drawing.Size( 75, 23 );
+			this.btnAccelCal3.TabIndex = 20;
+			this.btnAccelCal3.Text = "Reading 3";
+			this.btnAccelCal3.UseVisualStyleBackColor = true;
+			this.btnAccelCal3.Click += new System.EventHandler( this.btnAccelCal3_Click );
+			// 
+			// btnAccelCal2
+			// 
+			this.btnAccelCal2.Location = new System.Drawing.Point( 16, 175 );
+			this.btnAccelCal2.Name = "btnAccelCal2";
+			this.btnAccelCal2.Size = new System.Drawing.Size( 75, 23 );
+			this.btnAccelCal2.TabIndex = 19;
+			this.btnAccelCal2.Text = "Reading 2";
+			this.btnAccelCal2.UseVisualStyleBackColor = true;
+			this.btnAccelCal2.Click += new System.EventHandler( this.btnAccelCal2_Click );
+			// 
+			// btnAccelCal1
+			// 
+			this.btnAccelCal1.Location = new System.Drawing.Point( 16, 146 );
+			this.btnAccelCal1.Name = "btnAccelCal1";
+			this.btnAccelCal1.Size = new System.Drawing.Size( 75, 23 );
+			this.btnAccelCal1.TabIndex = 18;
+			this.btnAccelCal1.Text = "Reading 1";
+			this.btnAccelCal1.UseVisualStyleBackColor = true;
+			this.btnAccelCal1.Click += new System.EventHandler( this.btnAccelCal1_Click );
+			// 
+			// label37
+			// 
+			this.label37.AutoSize = true;
+			this.label37.Location = new System.Drawing.Point( 206, 108 );
+			this.label37.Name = "label37";
+			this.label37.Size = new System.Drawing.Size( 44, 13 );
+			this.label37.TabIndex = 17;
+			this.label37.Text = "Accel Z";
+			// 
+			// label38
+			// 
+			this.label38.AutoSize = true;
+			this.label38.Location = new System.Drawing.Point( 108, 108 );
+			this.label38.Name = "label38";
+			this.label38.Size = new System.Drawing.Size( 44, 13 );
+			this.label38.TabIndex = 16;
+			this.label38.Text = "Accel Y";
+			// 
+			// label39
+			// 
+			this.label39.AutoSize = true;
+			this.label39.Location = new System.Drawing.Point( 13, 108 );
+			this.label39.Name = "label39";
+			this.label39.Size = new System.Drawing.Size( 44, 13 );
+			this.label39.TabIndex = 15;
+			this.label39.Text = "Accel X";
+			// 
+			// gAccelZCal
+			// 
+			this.gAccelZCal.AverageCount = 325;
+			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelZCal.Location = new System.Drawing.Point( 208, 16 );
+			this.gAccelZCal.Name = "gAccelZCal";
+			this.gAccelZCal.Range = 32768F;
+			this.gAccelZCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelZCal.TabIndex = 14;
+			this.gAccelZCal.Value = 0F;
+			// 
+			// gAccelYCal
+			// 
+			this.gAccelYCal.AverageCount = 325;
+			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelYCal.Location = new System.Drawing.Point( 111, 16 );
+			this.gAccelYCal.Name = "gAccelYCal";
+			this.gAccelYCal.Range = 32768F;
+			this.gAccelYCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelYCal.TabIndex = 13;
+			this.gAccelYCal.Value = 0F;
+			// 
+			// gAccelXCal
+			// 
+			this.gAccelXCal.AverageCount = 325;
+			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelXCal.Location = new System.Drawing.Point( 14, 16 );
+			this.gAccelXCal.Name = "gAccelXCal";
+			this.gAccelXCal.Range = 32768F;
+			this.gAccelXCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelXCal.TabIndex = 12;
+			this.gAccelXCal.Value = 0F;
+			// 
 			// tpIMUTest
 			// 
 			this.tpIMUTest.Controls.Add( this.label17 );
@@ -877,6 +1223,46 @@
 				"our controller is level, the box\r\nshould be too.";
 			this.textBox4.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 			// 
+			// gYaw
+			// 
+			this.gYaw.AverageCount = 128;
+			this.gYaw.Location = new System.Drawing.Point( 481, 210 );
+			this.gYaw.Name = "gYaw";
+			this.gYaw.Range = 32768F;
+			this.gYaw.Size = new System.Drawing.Size( 90, 90 );
+			this.gYaw.TabIndex = 20;
+			this.gYaw.Value = 0F;
+			// 
+			// gRoll
+			// 
+			this.gRoll.AverageCount = 128;
+			this.gRoll.Location = new System.Drawing.Point( 535, 13 );
+			this.gRoll.Name = "gRoll";
+			this.gRoll.Range = 32768F;
+			this.gRoll.Size = new System.Drawing.Size( 90, 90 );
+			this.gRoll.TabIndex = 19;
+			this.gRoll.Value = 0F;
+			// 
+			// gPitch
+			// 
+			this.gPitch.AverageCount = 128;
+			this.gPitch.Location = new System.Drawing.Point( 429, 13 );
+			this.gPitch.Name = "gPitch";
+			this.gPitch.Range = 32768F;
+			this.gPitch.Size = new System.Drawing.Size( 90, 90 );
+			this.gPitch.TabIndex = 18;
+			this.gPitch.Value = 0F;
+			// 
+			// ocOrientation
+			// 
+			this.ocOrientation.CubeDepth = 1F;
+			this.ocOrientation.CubeHeight = 0.2F;
+			this.ocOrientation.CubeWidth = 1F;
+			this.ocOrientation.Location = new System.Drawing.Point( 4, 4 );
+			this.ocOrientation.Name = "ocOrientation";
+			this.ocOrientation.Size = new System.Drawing.Size( 414, 312 );
+			this.ocOrientation.TabIndex = 0;
+			// 
 			// tpIMUComp
 			// 
 			this.tpIMUComp.Controls.Add( this.lblStatOutput );
@@ -919,6 +1305,26 @@
 			this.label25.TabIndex = 2;
 			this.label25.Text = "Original method";
 			this.label25.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// ocCompQ2
+			// 
+			this.ocCompQ2.CubeDepth = 1.1F;
+			this.ocCompQ2.CubeHeight = 0.2F;
+			this.ocCompQ2.CubeWidth = 1.1F;
+			this.ocCompQ2.Location = new System.Drawing.Point( 248, 32 );
+			this.ocCompQ2.Name = "ocCompQ2";
+			this.ocCompQ2.Size = new System.Drawing.Size( 234, 140 );
+			this.ocCompQ2.TabIndex = 1;
+			// 
+			// ocCompQ1
+			// 
+			this.ocCompQ1.CubeDepth = 1.1F;
+			this.ocCompQ1.CubeHeight = 0.2F;
+			this.ocCompQ1.CubeWidth = 1.1F;
+			this.ocCompQ1.Location = new System.Drawing.Point( 8, 32 );
+			this.ocCompQ1.Name = "ocCompQ1";
+			this.ocCompQ1.Size = new System.Drawing.Size( 234, 140 );
+			this.ocCompQ1.TabIndex = 0;
 			// 
 			// tpVibration
 			// 
@@ -1120,216 +1526,24 @@
 			this.lblGXMax.Text = "0.0";
 			this.lblGXMax.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
-			// tickTimer
-			// 
-			this.tickTimer.Interval = 20;
-			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
-			// 
-			// lblFlightMode
-			// 
-			this.lblFlightMode.Location = new System.Drawing.Point( 503, 52 );
-			this.lblFlightMode.Name = "lblFlightMode";
-			this.lblFlightMode.Size = new System.Drawing.Size( 69, 13 );
-			this.lblFlightMode.TabIndex = 23;
-			this.lblFlightMode.Text = "Mode";
-			this.lblFlightMode.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// rsRight
-			// 
-			this.rsRight.Location = new System.Drawing.Point( 302, 24 );
-			this.rsRight.Name = "rsRight";
-			this.rsRight.Range = 1024F;
-			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
-			this.rsRight.TabIndex = 9;
-			this.rsRight.XValue = 0F;
-			this.rsRight.YValue = 0F;
-			// 
-			// rsLeft
-			// 
-			this.rsLeft.Location = new System.Drawing.Point( 68, 24 );
-			this.rsLeft.Name = "rsLeft";
-			this.rsLeft.Range = 1024F;
-			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
-			this.rsLeft.TabIndex = 8;
-			this.rsLeft.XValue = 0F;
-			this.rsLeft.YValue = 0F;
-			// 
-			// gAltimeter
-			// 
-			this.gAltimeter.Location = new System.Drawing.Point( 414, 146 );
-			this.gAltimeter.Name = "gAltimeter";
-			this.gAltimeter.Size = new System.Drawing.Size( 211, 124 );
-			this.gAltimeter.TabIndex = 31;
-			// 
-			// gHeading
-			// 
-			this.gHeading.Location = new System.Drawing.Point( 310, 219 );
-			this.gHeading.Name = "gHeading";
-			this.gHeading.Range = 1800F;
-			this.gHeading.Size = new System.Drawing.Size( 91, 89 );
-			this.gHeading.TabIndex = 29;
-			this.gHeading.Value = 0F;
-			// 
-			// gMagZ
-			// 
-			this.gMagZ.Location = new System.Drawing.Point( 203, 217 );
-			this.gMagZ.Name = "gMagZ";
-			this.gMagZ.Range = 16384F;
-			this.gMagZ.Size = new System.Drawing.Size( 91, 89 );
-			this.gMagZ.TabIndex = 25;
-			this.gMagZ.Value = 0F;
-			// 
-			// gMagY
-			// 
-			this.gMagY.Location = new System.Drawing.Point( 106, 217 );
-			this.gMagY.Name = "gMagY";
-			this.gMagY.Range = 16384F;
-			this.gMagY.Size = new System.Drawing.Size( 91, 89 );
-			this.gMagY.TabIndex = 24;
-			this.gMagY.Value = 0F;
-			// 
-			// gMagX
-			// 
-			this.gMagX.Location = new System.Drawing.Point( 9, 217 );
-			this.gMagX.Name = "gMagX";
-			this.gMagX.Range = 16384F;
-			this.gMagX.Size = new System.Drawing.Size( 91, 89 );
-			this.gMagX.TabIndex = 23;
-			this.gMagX.Value = 0F;
-			// 
-			// gGyroTemp
-			// 
-			this.gGyroTemp.Location = new System.Drawing.Point( 310, 111 );
-			this.gGyroTemp.Name = "gGyroTemp";
-			this.gGyroTemp.Range = 1000F;
-			this.gGyroTemp.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroTemp.TabIndex = 16;
-			this.gGyroTemp.Value = 0F;
-			// 
-			// gAccelZ
-			// 
-			this.gAccelZ.Location = new System.Drawing.Point( 203, 111 );
-			this.gAccelZ.Name = "gAccelZ";
-			this.gAccelZ.Range = 32768F;
-			this.gAccelZ.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelZ.TabIndex = 5;
-			this.gAccelZ.Value = 0F;
-			// 
-			// gAccelY
-			// 
-			this.gAccelY.Location = new System.Drawing.Point( 106, 111 );
-			this.gAccelY.Name = "gAccelY";
-			this.gAccelY.Range = 32768F;
-			this.gAccelY.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelY.TabIndex = 4;
-			this.gAccelY.Value = 0F;
-			// 
-			// gAccelX
-			// 
-			this.gAccelX.Location = new System.Drawing.Point( 9, 111 );
-			this.gAccelX.Name = "gAccelX";
-			this.gAccelX.Range = 32768F;
-			this.gAccelX.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelX.TabIndex = 3;
-			this.gAccelX.Value = 0F;
-			// 
-			// gGyroZ
-			// 
-			this.gGyroZ.Location = new System.Drawing.Point( 204, 5 );
-			this.gGyroZ.Name = "gGyroZ";
-			this.gGyroZ.Range = 32768F;
-			this.gGyroZ.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroZ.TabIndex = 2;
-			this.gGyroZ.Value = 0F;
-			// 
-			// gGyroY
-			// 
-			this.gGyroY.Location = new System.Drawing.Point( 106, 5 );
-			this.gGyroY.Name = "gGyroY";
-			this.gGyroY.Range = 32768F;
-			this.gGyroY.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroY.TabIndex = 1;
-			this.gGyroY.Value = 0F;
-			// 
-			// gGyroX
-			// 
-			this.gGyroX.Location = new System.Drawing.Point( 9, 5 );
-			this.gGyroX.Name = "gGyroX";
-			this.gGyroX.Range = 32768F;
-			this.gGyroX.Size = new System.Drawing.Size( 91, 89 );
-			this.gGyroX.TabIndex = 0;
-			this.gGyroX.Value = 0F;
-			// 
-			// lfGraph
-			// 
-			this.lfGraph.Location = new System.Drawing.Point( 178, 3 );
-			this.lfGraph.Name = "lfGraph";
-			this.lfGraph.Size = new System.Drawing.Size( 447, 278 );
-			this.lfGraph.TabIndex = 0;
-			// 
-			// gYaw
-			// 
-			this.gYaw.Location = new System.Drawing.Point( 481, 210 );
-			this.gYaw.Name = "gYaw";
-			this.gYaw.Range = 32768F;
-			this.gYaw.Size = new System.Drawing.Size( 90, 90 );
-			this.gYaw.TabIndex = 20;
-			this.gYaw.Value = 0F;
-			// 
-			// gRoll
-			// 
-			this.gRoll.Location = new System.Drawing.Point( 535, 13 );
-			this.gRoll.Name = "gRoll";
-			this.gRoll.Range = 32768F;
-			this.gRoll.Size = new System.Drawing.Size( 90, 90 );
-			this.gRoll.TabIndex = 19;
-			this.gRoll.Value = 0F;
-			// 
-			// gPitch
-			// 
-			this.gPitch.Location = new System.Drawing.Point( 429, 13 );
-			this.gPitch.Name = "gPitch";
-			this.gPitch.Range = 32768F;
-			this.gPitch.Size = new System.Drawing.Size( 90, 90 );
-			this.gPitch.TabIndex = 18;
-			this.gPitch.Value = 0F;
-			// 
-			// ocOrientation
-			// 
-			this.ocOrientation.CubeDepth = 1F;
-			this.ocOrientation.CubeHeight = 0.2F;
-			this.ocOrientation.CubeWidth = 1F;
-			this.ocOrientation.Location = new System.Drawing.Point( 4, 4 );
-			this.ocOrientation.Name = "ocOrientation";
-			this.ocOrientation.Size = new System.Drawing.Size( 414, 312 );
-			this.ocOrientation.TabIndex = 0;
-			// 
-			// ocCompQ2
-			// 
-			this.ocCompQ2.CubeDepth = 1.1F;
-			this.ocCompQ2.CubeHeight = 0.2F;
-			this.ocCompQ2.CubeWidth = 1.1F;
-			this.ocCompQ2.Location = new System.Drawing.Point( 248, 32 );
-			this.ocCompQ2.Name = "ocCompQ2";
-			this.ocCompQ2.Size = new System.Drawing.Size( 234, 140 );
-			this.ocCompQ2.TabIndex = 1;
-			// 
-			// ocCompQ1
-			// 
-			this.ocCompQ1.CubeDepth = 1.1F;
-			this.ocCompQ1.CubeHeight = 0.2F;
-			this.ocCompQ1.CubeWidth = 1.1F;
-			this.ocCompQ1.Location = new System.Drawing.Point( 8, 32 );
-			this.ocCompQ1.Name = "ocCompQ1";
-			this.ocCompQ1.Size = new System.Drawing.Size( 234, 140 );
-			this.ocCompQ1.TabIndex = 0;
-			// 
 			// grGyro
 			// 
 			this.grGyro.Location = new System.Drawing.Point( 3, 144 );
 			this.grGyro.Name = "grGyro";
 			this.grGyro.Size = new System.Drawing.Size( 627, 178 );
 			this.grGyro.TabIndex = 0;
+			// 
+			// tickTimer
+			// 
+			this.tickTimer.Interval = 20;
+			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
+			// 
+			// lblAccelCalFinal
+			// 
+			this.lblAccelCalFinal.Location = new System.Drawing.Point( 108, 284 );
+			this.lblAccelCalFinal.Name = "lblAccelCalFinal";
+			this.lblAccelCalFinal.Size = new System.Drawing.Size( 147, 18 );
+			this.lblAccelCalFinal.TabIndex = 27;
 			// 
 			// MainForm
 			// 
@@ -1358,6 +1572,8 @@
 			this.groupBox11.PerformLayout();
 			this.groupBox12.ResumeLayout( false );
 			this.groupBox12.PerformLayout();
+			this.tpAccelCalibration.ResumeLayout( false );
+			this.tpAccelCalibration.PerformLayout();
 			this.tpIMUTest.ResumeLayout( false );
 			this.tpIMUTest.PerformLayout();
 			this.tpIMUComp.ResumeLayout( false );
@@ -1423,10 +1639,10 @@
 		private System.Windows.Forms.Label gxOffset;
 		private System.Windows.Forms.Label label28;
 		private System.Windows.Forms.Label gxScale;
-		private System.Windows.Forms.Button btnResetCalib;
+		private System.Windows.Forms.Button btnResetGyroCal;
 		private System.Windows.Forms.Button btnLED;
 		private System.Windows.Forms.Button btnBeeper;
-		private System.Windows.Forms.Button btnUploadCalibration;
+		private System.Windows.Forms.Button btnUploadGyroCalibration;
 		private System.Windows.Forms.Label lblAltimeter;
 		private System.Windows.Forms.Label label13;
 		private System.Windows.Forms.Button btnThrottleCalibrate;
@@ -1486,6 +1702,23 @@
 		private Graph gAltimeter;
 		private System.Windows.Forms.Label lblStatOutput;
 		private System.Windows.Forms.Label lblFlightMode;
+		private System.Windows.Forms.TabPage tpAccelCalibration;
+		private System.Windows.Forms.Button btnUploadAccelCal;
+		private System.Windows.Forms.Button btnAccelCal4;
+		private System.Windows.Forms.Button btnAccelCal3;
+		private System.Windows.Forms.Button btnAccelCal2;
+		private System.Windows.Forms.Button btnAccelCal1;
+		private System.Windows.Forms.Label label37;
+		private System.Windows.Forms.Label label38;
+		private System.Windows.Forms.Label label39;
+		private Gauge gAccelZCal;
+		private Gauge gAccelYCal;
+		private Gauge gAccelXCal;
+		private System.Windows.Forms.Label lblAccelCal4;
+		private System.Windows.Forms.Label lblAccelCal3;
+		private System.Windows.Forms.Label lblAccelCal2;
+		private System.Windows.Forms.Label lblAccelCal1;
+		private System.Windows.Forms.Label lblAccelCalFinal;
 	}
 }
 

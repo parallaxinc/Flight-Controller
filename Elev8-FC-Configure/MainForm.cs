@@ -35,6 +35,10 @@ namespace Elev8
 		int Alt, AltTemp;
 		int Pitch, Roll, Yaw;
 
+		float[] accXCal = new float[4];
+		float[] accYCal = new float[4];
+		float[] accZCal = new float[4];
+
 
 		byte[] txBuffer = new byte[32];
 		byte[] rxBuffer = new byte[128];
@@ -44,7 +48,7 @@ namespace Elev8
 		int QHead = 0;
 		int QTail = 0;
 
-		byte[] OutputMode = { 0, 1, 2, 3, 2, 4, 5, 6 };				// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
+		byte[] OutputMode = { 0, 1, 2, 3, 2, 2, 4, 5, 6 };			// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
 		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=31, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
 		int SampleCounter = 0;
 
@@ -60,6 +64,7 @@ namespace Elev8
 			SensorTest,
 			MotorTest,
 			GyroCalibration,
+			AccelCalibration,
 			IMUTest,
 			IMUCompare,
 			VibrationTest,
@@ -321,6 +326,11 @@ namespace Elev8
 						txBuffer[0] = 0x11;
 						ftdi.Write( txBuffer, 1, ref written );	// Reset to previous drift values
 					}
+					else if(currentMode == Mode.AccelCalibration)
+					{
+						txBuffer[0] = 0x15;
+						ftdi.Write( txBuffer, 1, ref written );	// Reset to previous offset values
+					}
 
 					currentMode = tempMode;
 					txBuffer[0] = OutputMode[ (byte)currentMode ];
@@ -329,6 +339,11 @@ namespace Elev8
 					if(currentMode == Mode.GyroCalibration) {
 						txBuffer[0] = 0x10;
 						ftdi.Write( txBuffer, 1, ref written );	// Zero drift calibration values
+					}
+					else if(currentMode == Mode.AccelCalibration)
+					{
+						txBuffer[0] = 0x14;
+						ftdi.Write( txBuffer, 1, ref written );	// Zero offset calibration values
 					}
 				}
 			}
@@ -474,6 +489,14 @@ namespace Elev8
 						gxOffset.Text = offsetX.ToString();
 						gyOffset.Text = offsetY.ToString();
 						gzOffset.Text = offsetZ.ToString();
+					}
+
+
+					if(currentMode == Mode.AccelCalibration)
+					{
+						gAccelXCal.Value = (float)AccelX;
+						gAccelYCal.Value = (float)AccelY;
+						gAccelZCal.Value = (float)AccelZ;
 					}
 					break;
 
@@ -924,6 +947,7 @@ namespace Elev8
 			acc -= gravity;
 
 			// acc is now m/s^2
+			acc *= 9.8f;
 
 			// Orient accelerometer vector (or at least just Z component)
 			Vector accOriented = m.Transpose().Mul( acc );
@@ -944,7 +968,6 @@ namespace Elev8
 			positionEstimate.y = (positionEstimate.y * 0.95f) + (((float)Alt / 1000.0f) * 0.05f);
 
 			lblStatOutput.Text = string.Format( "{0:0.00}   {1:0.000}", positionEstimate.y, velocityEstimate.y );
-
 		}
 
 
@@ -1037,6 +1060,72 @@ namespace Elev8
 			double pressure = (double)Alt / 4096.0;
 			float altFeet = (float)((Math.Pow( 10.0, Math.Log10( pressure / 1013.25 ) / 5.2558797 ) - 1.0) / (-6.8755856 * 0.000001));
 			return altFeet;
+		}
+
+
+		private void GetAccelAvgSample( int i )
+		{
+			Label[] labels = { lblAccelCal1, lblAccelCal2, lblAccelCal3, lblAccelCal4 };
+
+			accXCal[i] = gAccelXCal.MovingAverage;
+			accYCal[i] = gAccelYCal.MovingAverage;
+			accZCal[i] = gAccelZCal.MovingAverage;
+
+			labels[i].Text = string.Format( "{0}, {1}, {2}", accXCal[i].ToString( "F1" ), accYCal[i].ToString( "F1" ), accZCal[i].ToString( "F1" ) );
+		}
+
+
+		private void btnAccelCal1_Click( object sender, EventArgs e )
+		{
+			GetAccelAvgSample( 0 );
+		}
+
+		private void btnAccelCal2_Click( object sender, EventArgs e )
+		{
+			GetAccelAvgSample( 1 );
+		}
+
+		private void btnAccelCal3_Click( object sender, EventArgs e )
+		{
+			GetAccelAvgSample( 2 );
+		}
+
+		private void btnAccelCal4_Click( object sender, EventArgs e )
+		{
+			GetAccelAvgSample( 3 );
+		}
+
+		private void btnUploadAccelCal_Click( object sender, EventArgs e )
+		{
+			float fx = 0.0f, fy = 0.0f, fz = 0.0f;
+			for(int i = 0; i < 4; i++)
+			{
+				fx += accXCal[i] * 0.25f;
+				fy += accYCal[i] * 0.25f;
+				fz += accZCal[i] * 0.25f;
+			}
+
+			int ax = (int)Math.Round( fx );
+			int ay = (int)Math.Round( fy );
+			int az = (int)Math.Round( fz );
+
+			lblAccelCalFinal.Text = string.Format( "{0}, {1}, {2}", ax, ay, az );
+
+			az -= 8192;
+
+			// Upload calibration data
+			txBuffer[0] = 0x16;
+
+			txBuffer[1] = (byte)(ax >> 8);
+			txBuffer[2] = (byte)(ax >> 0);
+			txBuffer[3] = (byte)(ay >> 8);
+			txBuffer[4] = (byte)(ay >> 0);
+			txBuffer[5] = (byte)(az >> 8);
+			txBuffer[6] = (byte)(az >> 0);
+
+			uint written = 0;
+			ftdi.Write( txBuffer, 7, ref written );
+			// TODO: make sure all bytes were written
 		}
 	}
 }
