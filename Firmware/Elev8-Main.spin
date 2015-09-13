@@ -115,7 +115,8 @@ VAR
   'Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
   long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltTemp, Pressure
   long  SensorTime    'How long sensors took to read (debug / optimization test value)
-  long GyroZX, GyroZY, GyroZZ
+  long  GyroZX, GyroZY, GyroZZ
+  long  AccelZSmooth
 
   'Debug output mode, working variables  
   long  Mode, counter, NudgeMotor
@@ -259,6 +260,8 @@ PUB Main | Cycles
 
     IMU.Update_Part1( @GyroX )        'Entire IMU takes ~92000 cycles
 
+    AccelZSmooth += (AccelZ - AccelZSmooth) / 16    
+
 
     if( UseSBUS )
       Thro :=  SBUS.GetRC( RC_THRO )
@@ -283,7 +286,6 @@ PUB Main | Cycles
     UpdateFlightLoop            '~82000 cycles when in flight mode
 
     'FlightModeTest
-
 
     IMU.WaitForCompletion
 
@@ -334,7 +336,7 @@ PUB FindGyroZero | i
 
 
 
-PUB UpdateFlightLoop | ThroOut, T1, T2
+PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul
 
 
   'Test for flight mode change-----------------------------------------------
@@ -458,8 +460,19 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
     'add 3000 to all Output values to make them 'servo friendly' again   (3000 is our output center)
     ThroOut := (Thro + 3000) << 2
 
-    'if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
-    '  ThroOut -= (AccelZ - 8192) ~> 2
+
+    '-------------------------------------------
+    if( FlightMode <> FlightMode_Manual )
+
+      'Accelerometer assist    
+      if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
+        ThroOut -= (AccelZSmooth - 8192) ~> 2
+
+      'Tilt compensated thrust assist      
+      ThrustMul := 256 #> IMU.GetThrustFactor <# 384    'Limit the effect of the thrust modifier 
+      ThroOut := (ThroOut * ThrustMul) ~> 8
+    '-------------------------------------------
+
      
     ' X configuration
     Motor[OUT_FL] := ThroOut + ((-PitchOut + RollOut - YawOut) * ThroMix) ~> 7                          
@@ -470,7 +483,6 @@ PUB UpdateFlightLoop | ThroOut, T1, T2
 
     'The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
       'the ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment
-
      
     Motor[0] := 8500 #> Motor[0] <# 16000
     Motor[1] := 8500 #> Motor[1] <# 16000

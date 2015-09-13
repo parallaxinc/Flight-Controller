@@ -20,7 +20,7 @@ CON
   GyroScale = GyroToDeg * RadToDeg * float(Const#UpdateRate)
   
 VAR
-  long Roll, Pitch, Yaw                                 'Outputs, scaled units (
+  long Roll, Pitch, Yaw, ThrustFactor                   'Outputs, scaled units
 
   'Inputs
   long zx, zy, zz                                       'Gyro zero readings
@@ -52,14 +52,14 @@ VAR
   long const_GyroScale, const_NegGyroScale, const_InvGyroScale
   long const_0, const_1, const_F1, const_F2
   long const_epsilon, const_half, const_neghalf
-  long const_neg1, const_ErrScale, const_AccScale, const_outAngleScale
+  long const_neg1, const_ErrScale, const_AccScale, const_outAngleScale, const_ThrustScale
 
   long UpdateCount
 
   
 
 VAR
-  long  QuatUpdateCommands[300 + 132]
+  long  QuatUpdateCommands[300 + 140]
   'long  CalcErrorUpdateAngles[132]
 
   long  QuatUpdateLen   '295 longs
@@ -90,6 +90,7 @@ PUB Start
   const_ErrScale := constant(1.0/512.0)                 'How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   const_AccScale := constant(1.0/AccToG)                'Conversion factor from accel units to G's
   const_outAngleScale := constant(-65536.0 / PI)               
+  const_ThrustScale := constant(256.0)
   InitFunctions
 
 
@@ -102,6 +103,8 @@ PUB GetRoll
 PUB GetYaw
   return Yaw
 
+PUB GetThrustFactor
+  return ThrustFactor
 
 PUB GetSensors
   return @gx
@@ -396,6 +399,11 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opATan2, @m20, @m22, @temp )
   FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )  
   FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Yaw )
+
+
+  FLT.AddCommand( 0, FLT#opDiv, @const_F1, @m11, @temp )                        '1.0/m11 = scale factor for thrust   
+  FLT.AddCommand( 0, FLT#opMul, @temp, @const_ThrustScale, @temp )              '*= 256.0  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @ThrustFactor )
 
   QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
 
