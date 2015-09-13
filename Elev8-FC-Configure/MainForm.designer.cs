@@ -88,6 +88,9 @@
 			this.btnMotor2 = new System.Windows.Forms.Button();
 			this.btnMotor1 = new System.Windows.Forms.Button();
 			this.tpGyroCalibration = new System.Windows.Forms.TabPage();
+			this.gCalibZ = new Elev8.Gauge();
+			this.gCalibY = new Elev8.Gauge();
+			this.gCalibX = new Elev8.Gauge();
 			this.btnUploadGyroCalibration = new System.Windows.Forms.Button();
 			this.btnResetGyroCal = new System.Windows.Forms.Button();
 			this.groupBox10 = new System.Windows.Forms.GroupBox();
@@ -107,6 +110,7 @@
 			this.gxScale = new System.Windows.Forms.Label();
 			this.lfGraph = new Elev8.LineFit();
 			this.tpAccelCalibration = new System.Windows.Forms.TabPage();
+			this.lblAccelCalFinal = new System.Windows.Forms.Label();
 			this.lblAccelCal4 = new System.Windows.Forms.Label();
 			this.lblAccelCal3 = new System.Windows.Forms.Label();
 			this.lblAccelCal2 = new System.Windows.Forms.Label();
@@ -159,7 +163,7 @@
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.grGyro = new Elev8.Graph();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
-			this.lblAccelCalFinal = new System.Windows.Forms.Label();
+			this.gCalibTemp = new Elev8.Gauge();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -809,6 +813,10 @@
 			// 
 			// tpGyroCalibration
 			// 
+			this.tpGyroCalibration.Controls.Add( this.gCalibTemp );
+			this.tpGyroCalibration.Controls.Add( this.gCalibZ );
+			this.tpGyroCalibration.Controls.Add( this.gCalibY );
+			this.tpGyroCalibration.Controls.Add( this.gCalibX );
 			this.tpGyroCalibration.Controls.Add( this.btnUploadGyroCalibration );
 			this.tpGyroCalibration.Controls.Add( this.btnResetGyroCal );
 			this.tpGyroCalibration.Controls.Add( this.groupBox10 );
@@ -821,6 +829,36 @@
 			this.tpGyroCalibration.TabIndex = 3;
 			this.tpGyroCalibration.Text = "Gyro Calibration";
 			this.tpGyroCalibration.UseVisualStyleBackColor = true;
+			// 
+			// gCalibZ
+			// 
+			this.gCalibZ.AverageCount = 128;
+			this.gCalibZ.Location = new System.Drawing.Point( 514, 238 );
+			this.gCalibZ.Name = "gCalibZ";
+			this.gCalibZ.Range = 8192F;
+			this.gCalibZ.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibZ.TabIndex = 27;
+			this.gCalibZ.Value = 0F;
+			// 
+			// gCalibY
+			// 
+			this.gCalibY.AverageCount = 128;
+			this.gCalibY.Location = new System.Drawing.Point( 420, 238 );
+			this.gCalibY.Name = "gCalibY";
+			this.gCalibY.Range = 8192F;
+			this.gCalibY.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibY.TabIndex = 26;
+			this.gCalibY.Value = 0F;
+			// 
+			// gCalibX
+			// 
+			this.gCalibX.AverageCount = 128;
+			this.gCalibX.Location = new System.Drawing.Point( 326, 238 );
+			this.gCalibX.Name = "gCalibX";
+			this.gCalibX.Range = 8192F;
+			this.gCalibX.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibX.TabIndex = 25;
+			this.gCalibX.Value = 0F;
 			// 
 			// btnUploadGyroCalibration
 			// 
@@ -999,7 +1037,7 @@
 			// 
 			this.lfGraph.Location = new System.Drawing.Point( 178, 3 );
 			this.lfGraph.Name = "lfGraph";
-			this.lfGraph.Size = new System.Drawing.Size( 447, 278 );
+			this.lfGraph.Size = new System.Drawing.Size( 447, 232 );
 			this.lfGraph.TabIndex = 0;
 			// 
 			// tpAccelCalibration
@@ -1026,6 +1064,13 @@
 			this.tpAccelCalibration.TabIndex = 7;
 			this.tpAccelCalibration.Text = "Accel Calibration";
 			this.tpAccelCalibration.UseVisualStyleBackColor = true;
+			// 
+			// lblAccelCalFinal
+			// 
+			this.lblAccelCalFinal.Location = new System.Drawing.Point( 108, 284 );
+			this.lblAccelCalFinal.Name = "lblAccelCalFinal";
+			this.lblAccelCalFinal.Size = new System.Drawing.Size( 147, 18 );
+			this.lblAccelCalFinal.TabIndex = 27;
 			// 
 			// lblAccelCal4
 			// 
@@ -1538,12 +1583,15 @@
 			this.tickTimer.Interval = 20;
 			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
 			// 
-			// lblAccelCalFinal
+			// gCalibTemp
 			// 
-			this.lblAccelCalFinal.Location = new System.Drawing.Point( 108, 284 );
-			this.lblAccelCalFinal.Name = "lblAccelCalFinal";
-			this.lblAccelCalFinal.Size = new System.Drawing.Size( 147, 18 );
-			this.lblAccelCalFinal.TabIndex = 27;
+			this.gCalibTemp.AverageCount = 128;
+			this.gCalibTemp.Location = new System.Drawing.Point( 205, 238 );
+			this.gCalibTemp.Name = "gCalibTemp";
+			this.gCalibTemp.Range = 8192F;
+			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibTemp.TabIndex = 28;
+			this.gCalibTemp.Value = 0F;
 			// 
 			// MainForm
 			// 
@@ -1719,6 +1767,10 @@
 		private System.Windows.Forms.Label lblAccelCal2;
 		private System.Windows.Forms.Label lblAccelCal1;
 		private System.Windows.Forms.Label lblAccelCalFinal;
+		private Gauge gCalibZ;
+		private Gauge gCalibY;
+		private Gauge gCalibX;
+		private Gauge gCalibTemp;
 	}
 }
 

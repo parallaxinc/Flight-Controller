@@ -137,8 +137,17 @@ namespace Elev8
 			SampleD s = new SampleD();
 			SampleD st = new SampleD();
 
+			Sample minS = new Sample();
+			Sample maxS = new Sample();
+
 			//xMin = yMin = 1000000.0f;
 			//xMax = yMax = -1000000.0f;
+
+			if(Samples.Count > 0) {
+				minS = Samples[0];
+				maxS = Samples[0];
+			}
+
 
 			s.x = s.y = s.z = s.t = 0.0;
 			st.t = st.x = st.y = st.z = 1.0;
@@ -150,6 +159,9 @@ namespace Elev8
 				s.x += Samples[i].x;
 				s.y += Samples[i].y;
 				s.z += Samples[i].z;
+
+				if(Samples[i].t < minS.t) minS = Samples[i];
+				if(Samples[i].t > maxS.t) maxS = Samples[i];
 
 				/*
 				xMin = Math.Min( xMin, Samples[i].t );

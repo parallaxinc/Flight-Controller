@@ -460,35 +460,53 @@ namespace Elev8
 						lfSample.z = GyroZ;
 						SampleCounter++;
 
-						bool DoRedraw = (tcMainTabs.SelectedIndex == 3) & ((SampleCounter & 7) == 7);
+						bool DoRedraw = (tcMainTabs.SelectedIndex == 3) && ((SampleCounter & 7) == 7);
 
 						lfGraph.AddSample( lfSample, DoRedraw );
 
-						int scaleX = (int)(1.0 / lfGraph.dSlope.x + 0.5);
-						int scaleY = (int)(1.0 / lfGraph.dSlope.y + 0.5);
-						int scaleZ = (int)(1.0 / lfGraph.dSlope.z + 0.5);
-						int offsetX = (int)(lfGraph.dIntercept.x + 0.5);
-						int offsetY = (int)(lfGraph.dIntercept.y + 0.5);
-						int offsetZ = (int)(lfGraph.dIntercept.z + 0.5);
+						if( DoRedraw == false )
+						{
+							gCalibTemp.Value = (float)GyroTemp;
+							gCalibX.Value = (float)GyroX;
+							gCalibY.Value = (float)GyroY;
+							gCalibZ.Value = (float)GyroZ;
 
-						if(Math.Abs( scaleX ) < 1024.0f)
-							gxScale.Text = scaleX.ToString();
-						else
-							gxScale.Text = "0";
+							int scaleX = 0;
+							int scaleY = 0;
+							int scaleZ = 0;
 
-						if(Math.Abs( scaleY ) < 1024.0f)
-							gyScale.Text = scaleY.ToString();
-						else
-							gyScale.Text = "0";
+							if( Math.Abs( lfGraph.dSlope.x) > 0.00001)
+								scaleX = (int)Math.Round( 1.0 / lfGraph.dSlope.x );
 
-						if(Math.Abs( scaleZ ) < 1024.0f)
-							gzScale.Text = scaleZ.ToString();
-						else
-							gzScale.Text = "0";
+							if( Math.Abs( lfGraph.dSlope.y) > 0.00001)
+								scaleY = (int)Math.Round( 1.0 / lfGraph.dSlope.y );
 
-						gxOffset.Text = offsetX.ToString();
-						gyOffset.Text = offsetY.ToString();
-						gzOffset.Text = offsetZ.ToString();
+							if( Math.Abs( lfGraph.dSlope.z) > 0.00001)
+								scaleZ = (int)Math.Round(1.0 / lfGraph.dSlope.z);
+
+							int offsetX = (int)Math.Round( lfGraph.dIntercept.x );
+							int offsetY = (int)Math.Round( lfGraph.dIntercept.y );
+							int offsetZ = (int)Math.Round( lfGraph.dIntercept.z );
+
+							if(Math.Abs( scaleX ) < 1024.0f)
+								gxScale.Text = scaleX.ToString();
+							else
+								gxScale.Text = "0";
+
+							if(Math.Abs( scaleY ) < 1024.0f)
+								gyScale.Text = scaleY.ToString();
+							else
+								gyScale.Text = "0";
+
+							if(Math.Abs( scaleZ ) < 1024.0f)
+								gzScale.Text = scaleZ.ToString();
+							else
+								gzScale.Text = "0";
+
+							gxOffset.Text = offsetX.ToString();
+							gyOffset.Text = offsetY.ToString();
+							gzOffset.Text = offsetZ.ToString();
+						}
 					}
 
 
@@ -651,12 +669,12 @@ namespace Elev8
 			// Upload calibration data
 			txBuffer[0] = 0x12;
 
-			int scaleX = (int)(1.0 / lfGraph.dSlope.x + 0.5);
-			int scaleY = (int)(1.0 / lfGraph.dSlope.y + 0.5);
-			int scaleZ = (int)(1.0 / lfGraph.dSlope.z + 0.5);
-			int offsetX = (int)(lfGraph.dIntercept.x + 0.5);
-			int offsetY = (int)(lfGraph.dIntercept.y + 0.5);
-			int offsetZ = (int)(lfGraph.dIntercept.z + 0.5);
+			int scaleX = (int)Math.Round( 1.0 / lfGraph.dSlope.x );
+			int scaleY = (int)Math.Round( 1.0 / lfGraph.dSlope.y );
+			int scaleZ = (int)Math.Round( 1.0 / lfGraph.dSlope.z );
+			int offsetX = (int)Math.Round( lfGraph.dIntercept.x);
+			int offsetY = (int)Math.Round( lfGraph.dIntercept.y);
+			int offsetZ = (int)Math.Round( lfGraph.dIntercept.z);
 
 			txBuffer[1] = (byte)(scaleX >> 8);
 			txBuffer[2] = (byte)(scaleX >> 0);
