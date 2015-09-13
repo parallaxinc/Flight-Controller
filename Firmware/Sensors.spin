@@ -926,25 +926,18 @@ Divide
                         xor     signbit, divisor        'Figure out the sign of the result
                         shr     signbit, #31
 
-                        
                         abs     dividend, dividend
                         abs     divisor, divisor
 
-                        mov     divCounter, #20         ' This ONLY works for divisions of up to 1024
-                        shl     divisor, divCounter
-                        mov     resultShifted, #1
-                        shl     resultShifted, divCounter
+                        shl     divisor, #15      
+                        mov     divCounter, #16
+                        mov     divResult, dividend     'Copy the source value into the result
 
-                        add     divCounter, #1
-                        mov     divResult, #0
-
-:divLoop                        
-                        cmp     dividend, divisor   wc
-              if_nc     add     divResult, resultShifted
-              if_nc     sub     dividend, divisor
-                        shr     resultShifted, #1
-                        shr     divisor, #1     
+:divLoop                cmpsub  divResult, divisor  wc  'if y =< x then subtract it, quotient bit into c
+                        rcl     divResult,#1            'rotate c into quotient, shift dividend
                         djnz    divCounter, #:divLoop
+
+                        and     divResult, word_mask    'mask off the remainder (don't need it)
 
                         cmp     signbit, #0     wc, wz
                         negnz   divResult, divResult
@@ -1155,6 +1148,7 @@ d_field                 long    $200
 
 bit_15                  long    $8000                   'Sign bit of a 16-bit value
 sign_extend             long    $FFFF_0000              'Bits to mask in for 16 to 32 bit sign extension
+word_mask               long    $0000_FFFF              'lower 16 bits mask
 
 LED_RESET               long    5000                    'minimum of 50 * ONE_uS = 4000 @ 80MHz
 ALT_ROUND               long    (16384-1)               'Difference in pressure between two sequential table entries, minus one
