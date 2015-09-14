@@ -15,7 +15,7 @@ CON
 
   RadToDeg = 180.0 / 3.141592654                        'Degrees per Radian
   GyroToDeg = 1000.0 / 70.0                             'Gyro units per degree @ 2000 deg/sec sens = 70 mdps/bit
-  AccToG = 1000.0 / 0.122                               'Accelerometer per G @ 4g sensitivity = 0.122 mg/bit 
+  AccToG = float(Const#OneG)                            'Accelerometer per G @ 8g sensitivity = ~0.24414 mg/bit 
 
   GyroScale = GyroToDeg * RadToDeg * float(Const#UpdateRate)
   
@@ -24,7 +24,7 @@ VAR
 
   'Inputs
   long zx, zy, zz                                       'Gyro zero readings
-  long gx, gy, gz, ax, ay, az, mx, my, mz               'Sensor inputs 
+  long gx, gy, gz, ax, ay, az, mx, my, mz, alt, altRate 'Sensor inputs
 
   'Internal orientation storage
   long  qx, qy, qz, qw                                  'Body orientation quaternion
@@ -41,29 +41,38 @@ VAR
 
   long rx, ry, rz                                       'Float versions of rotation components
   long fax, fay, faz                                    'Float version of accelerometer vector
+  long faxn, fayn, fazn                                 'Float version of accelerometer vector (normalized)
   long rmag, cosr, sinr                                 'magnitude, cos, sin values
   long errDiffX, errDiffY, errDiffZ                     'holds difference vector between target and measured orientation
   long errCorrX, errCorrY, errCorrZ                     'computed rotation correction factor
   long temp                                             'temp value for use in equations                        
   long accWeight
 
+  'Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
+  long velocityEstimate, altitudeVelocity 
+  long altitudeEstimate
+  long AltitudeEstMM, VelocityEstMM
+  long forceX, forceY, forceZ                           'Current forces acting on craft, excluding gravity
+  long forceWX, forceWY, forceWZ                        'Current forces acting on craft, excluding gravity, in world frame
+
+
   'Various constants used by the float math engine - Every command in the instruction stream reads two
   'arguments from memory using memory addresses, so the values actually need to exist somewhere
   long const_GyroScale, const_NegGyroScale, const_InvGyroScale
-  long const_0, const_1, const_F1, const_F2
+  long const_0, const_1, const_Neg12, const_F1, const_F2
   long const_epsilon, const_half, const_neghalf
   long const_neg1, const_ErrScale, const_AccScale, const_outAngleScale, const_ThrustScale
+  long const_GMetersPerSec, const_AltiVelScale, const_UpdateScale
+  long const_velAccScale, const_velAltiScale, const_m_to_mm
+  long const_velAccTrust, const_velAltiTrust
 
   long UpdateCount
 
   
 
 VAR
-  long  QuatUpdateCommands[300 + 140]
-  'long  CalcErrorUpdateAngles[132]
-
-  long  QuatUpdateLen   '295 longs
-  'long  CalcErrorLen    '127 longs
+  long  QuatUpdateCommands[300 + 284 + 250]
+  long  QuatUpdateLen
   
 
 PUB Start
@@ -76,11 +85,15 @@ PUB Start
   qz := 0.0
   qw := 1.0
 
+  velocityEstimate := 0.0
+  altitudeEstimate := 0.0
+
   const_GyroScale := constant(1.0 / GyroScale)
   const_NegGyroScale := constant(-1.0 / GyroScale) 
   const_0 := 0
   const_1 := 1
   const_neg1 := -1
+  const_neg12 := -12            'Used to subtract from acc exponent, equivalent to /= 4096.0
   
   const_F1 := 1.0
   const_F2 := 2.0
@@ -91,6 +104,16 @@ PUB Start
   const_AccScale := constant(1.0/AccToG)                'Conversion factor from accel units to G's
   const_outAngleScale := constant(-65536.0 / PI)               
   const_ThrustScale := constant(256.0)
+  const_GMetersPerSec := 9.8
+  const_AltiVelScale := constant(1.0/1000.0)            'Convert mm/sec to m/sec
+  const_UpdateScale := constant(1.0 / float(Const#UpdateRate)) 'Convert units/sec to units/update
+  const_m_to_mm := 1000.0
+
+  const_velAccScale := 0.9995
+  const_velAltiScale := 0.0005
+
+  const_velAccTrust := 0.999
+  const_velAltiTrust := 0.001  
   InitFunctions
 
 
@@ -113,7 +136,16 @@ PUB GetMatrix
   return @m00
 
 PUB GetQuaternion
-  return @qx  
+  return @qx
+
+PUB GetVerticalVelocityEstimate
+  return VelocityEstMM
+
+PUB GetAltitudeEstimate
+  return AltitudeEstMM    
+
+PUB SetInitialAltitudeGuess( altiMM )
+  altitudeEstimate := FLT.FDiv( FLT.FFloat(altiMM) , const_m_to_mm )
 
 
 PUB InitFunctions
@@ -307,11 +339,7 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opSub, @const_F1, @temp, @m22 )                        'm22 = 1.0 - temp
   '7 instructions (107)
 
-  'QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
-   
 
-
-  'FLT.StartStream( 1, @CalcErrorUpdateAngles )
 
   'fax =  packet.ax;           // Acceleration in X (left/right)
   'fay =  packet.az;           // Acceleration in Y (up/down)
@@ -331,9 +359,9 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opSqrt, @rmag, 0, @rmag )                              'rmag = Sqrt(rmag)                                                  
 
   'facc /= rmag
-  FLT.AddCommand( 0, FLT#opDiv, @fax, @rmag, @fax )                             'fax /= rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @fay, @rmag, @fay )                             'fay /= rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @faz, @rmag, @faz )                             'faz /= rmag 
+  FLT.AddCommand( 0, FLT#opDiv, @fax, @rmag, @faxn )                            'faxn = fax / rmag 
+  FLT.AddCommand( 0, FLT#opDiv, @fay, @rmag, @fayn )                            'fayn = fay / rmag 
+  FLT.AddCommand( 0, FLT#opDiv, @faz, @rmag, @fazn )                            'fazn = faz / rmag 
 
 
 
@@ -347,19 +375,19 @@ PUB InitFunctions
 
    
 
-  'errDiffX = fay * m12 - faz * m11
-  FLT.AddCommand( 0, FLT#opMul, @fay, @m12, @errDiffX )
-  FLT.AddCommand( 0, FLT#opMul, @faz, @m11, @temp )
+  'errDiffX = fayn * m12 - fazn * m11
+  FLT.AddCommand( 0, FLT#opMul, @fayn, @m12, @errDiffX )
+  FLT.AddCommand( 0, FLT#opMul, @fazn, @m11, @temp )
   FLT.AddCommand( 0, FLT#opSub, @errDiffX, @temp, @errDiffX )
 
-  'errDiffY = faz * m10 - fax * m12
-  FLT.AddCommand( 0, FLT#opMul, @faz, @m10, @errDiffY )
-  FLT.AddCommand( 0, FLT#opMul, @fax, @m12, @temp )
+  'errDiffY = fazn * m10 - faxn * m12
+  FLT.AddCommand( 0, FLT#opMul, @fazn, @m10, @errDiffY )
+  FLT.AddCommand( 0, FLT#opMul, @faxn, @m12, @temp )
   FLT.AddCommand( 0, FLT#opSub, @errDiffY, @temp, @errDiffY )
 
-  'errDiffZ = fax * m11 - fay * m10
-  FLT.AddCommand( 0, FLT#opMul, @fax, @m11, @errDiffZ )
-  FLT.AddCommand( 0, FLT#opMul, @fay, @m10, @temp )
+  'errDiffZ = faxn * m11 - fayn * m10
+  FLT.AddCommand( 0, FLT#opMul, @faxn, @m11, @errDiffZ )
+  FLT.AddCommand( 0, FLT#opMul, @fayn, @m10, @temp )
   FLT.AddCommand( 0, FLT#opSub, @errDiffZ, @temp, @errDiffZ )
 
   'accWeight *= const_ErrScale   
@@ -405,9 +433,70 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opMul, @temp, @const_ThrustScale, @temp )              '*= 256.0  
   FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @ThrustFactor )
 
-  QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
 
-  'CalcErrorLen := (FLT.EndStream( 1 ) - @CalcErrorUpdateAngles) / 4 
+
+  'Compute the running height estimate
+
+  'force := acc / 4096.0
+  FLT.AddCommand( 0, FLT#opShift, @fax, @const_neg12, @forceX )  
+  FLT.AddCommand( 0, FLT#opShift, @fay, @const_neg12, @forceY )  
+  FLT.AddCommand( 0, FLT#opShift, @faz, @const_neg12, @forceZ )  
+
+  'force -= m[1,0], m[1,1], m[1,2]  - Subtract gravity (1G, straight down)
+  FLT.AddCommand( 0, FLT#opSub, @forceX, @m10, @forceX )  
+  FLT.AddCommand( 0, FLT#opSub, @forceY, @m11, @forceY )  
+  FLT.AddCommand( 0, FLT#opSub, @forceZ, @m12, @forceZ )  
+
+  'forceWY := M.Transpose().Mul(Force).y                 'Orient force vector into world frame
+  'forceWY = m01*forceX + m11*forceY + m21*forceZ
+
+  FLT.AddCommand( 0, FLT#opMul, @forceX, @m01, @forceWY )
+   
+  FLT.AddCommand( 0, FLT#opMul, @forceY, @m11, @temp )
+  FLT.AddCommand( 0, FLT#opAdd, @forceWY, @temp, @forceWY )
+
+  FLT.AddCommand( 0, FLT#opMul, @forceZ, @m21, @temp )
+  FLT.AddCommand( 0, FLT#opAdd, @forceWY, @temp, @forceWY )
+
+  'forceWY *= 9.8                                       'Convert to M/sec^2
+  Flt.AddCommand( 0, FLT#opMul, @forceWY, @const_GMetersPerSec, @forceWY )
+
+
+
+  Flt.AddCommand( 0, FLT#opMul, @forceWY, @const_UpdateScale, @temp )           'temp := forceWY / UpdateRate
+  Flt.AddCommand( 0, FLT#opAdd, @velocityEstimate, @temp, @velocityEstimate )   'velEstimate += forceWY / UpdateRate
+
+  
+  Flt.AddCommand( 0, FLT#opFloat, @altRate, 0, @altitudeVelocity )              'AltVelocity = float(altRate)
+  Flt.AddCommand( 0, FLT#opMul, @altitudeVelocity, @const_AltiVelScale, @altitudeVelocity ) 'Convert from mm/sec to m/sec   
+
+
+  'VelocityEstimate := (VelocityEstimate * 0.9950) + (altVelocity * 0.0050)
+  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_velAccScale, @velocityEstimate )
+  Flt.AddCommand( 0, FLT#opMul, @altitudeVelocity, @const_velAltiScale, @temp )
+  Flt.AddCommand( 0, Flt#opAdd, @velocityEstimate, @temp, @velocityEstimate ) 
+
+  'altitudeEstimate += velocityEstimate / UpdateRate
+  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_UpdateScale, @temp )
+  Flt.AddCommand( 0, FLT#opAdd, @altitudeEstimate, @temp, @altitudeEstimate ) 
+
+  'altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
+  Flt.AddCommand( 0, FLT#opMul, @altitudeEstimate, @const_velAccTrust, @altitudeEstimate )
+
+  Flt.AddCommand( 0, FLT#opFloat, @alt, 0, @temp )                              'temp := float(alt)
+  Flt.AddCommand( 0, FLT#opDiv, @temp, @const_m_to_mm, @temp )                  'temp /= 1000.0    (alt now in m)
+  Flt.AddCommand( 0, FLT#opMul, @temp, @const_velAltiTrust, @temp )             'temp *= 0.0050
+  Flt.AddCommand( 0, FLT#opAdd, @altitudeEstimate, @temp, @altitudeEstimate )   'altEstimate += temp 
+
+
+  Flt.AddCommand( 0, FLT#opMul, @altitudeEstimate, @const_m_to_mm, @temp )      'temp = altEst * 1000.0    (temp now in mm)
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @AltitudeEstMM )
+
+  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_m_to_mm, @temp )      'temp = velEst * 1000.0    (temp now in mm)
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @VelocityEstMM )
+
+
+  QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
   
 
 
@@ -438,7 +527,7 @@ PUB GetQuatUpdateLen
 PUB Update_Part1( packetAddr ) | v, t
 
 
-  LongMove( @gx, packetAddr, 9 )
+  LongMove( @gx, packetAddr, 11 )
 
   'Subtract gyro bias.  Probably better to do this in the sensor code, and ditto for accelerometer offset
 

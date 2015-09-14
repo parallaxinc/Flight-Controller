@@ -100,6 +100,7 @@ OBJ
   RollPID   : "IntPID.spin"
   PitchPID  : "IntPID.spin"
   YawPID    : "IntPID.spin"
+  AltPID    : "IntPID.spin"
 
   TestPID   : "IntPID.spin"
 
@@ -113,7 +114,7 @@ VAR
   long  iRudd         'Integrated rudder input value
 
   'Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
-  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltTemp, Pressure
+  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltRate, AltTemp, Pressure
   long  SensorTime    'How long sensors took to read (debug / optimization test value)
   long  GyroZX, GyroZY, GyroZZ
   long  AccelZSmooth
@@ -124,7 +125,7 @@ VAR
   byte  Quat[16]      'Current quaternion from the IMU functions
 
   'Current IMU values for orientation estimate
-  long  Pitch, Roll, Yaw
+  long  Pitch, Roll, Yaw, AltiEst, AscentEst
 
   'Working variables - used to convert receiver inputs to desired ranges for the PIDs  
   long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredAltitude
@@ -242,11 +243,24 @@ PUB Main | Cycles
   YawPID.SetMaxOutput( 5000 )
 
 
+  'Altitude hold PID object
+  AltPID.Init( 100, 0, 0 )
+  AltPID.SetPrecision( 12 ) 
+  AltPID.SetMaxOutput( 2000 )
+  AltPID.SetPIMax( 100 )
+  AltPID.SetMaxIntegral( 3000 )
+
 
   FindGyroZero     'Get a gyro baseline - We'll re-do this on flight arming, but this helps settle the IMU
 
   InitTestPID
 
+  
+  'Grab the first set of sensor readings (should be ready by now)
+  longmove( @Temperature, Sens.Address, constant(Sens#ParamsSize) ) 
+
+  'Set a reasonable starting point for the altitude computation
+  IMU.SetInitialAltitudeGuess( Alt )
 
 
   counter := 0
@@ -292,10 +306,17 @@ PUB Main | Cycles
     Pitch := IMU.GetPitch
     Roll  := IMU.GetRoll        'Yes, this puts these 1 cycle behind, but the flight loop gets to use current gyro values
     Yaw   := IMU.GetYaw
-
+    AltiEst := IMU.GetAltitudeEstimate
+    AscentEst := IMU.GetVerticalVelocityEstimate 
 
     CheckDebugMode
     DoDebugModeOutput
+
+    'dbg.dec( AltiEst )
+    'dbg.tx( 32 )
+    'dbg.dec( AscentEst )
+    'dbg.tx( 13 )
+
 
     Cycles := cnt - Cycles
     'dbg.tx(1)
@@ -314,8 +335,8 @@ PUB FindGyroZero | i
   GyroZX := 0
   GyroZY := 0
   GyroZZ := 0
-
   waitcnt( cnt + constant(_clkfreq / 4) )
+  
   repeat i from 0 to 255
     GyroZX += Sens.In(1)
     GyroZY += Sens.In(2)
@@ -336,7 +357,7 @@ PUB FindGyroZero | i
 
 
 
-PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul
+PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
 
   'Test for flight mode change-----------------------------------------------
@@ -389,8 +410,6 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul
 
 
     if( FlightMode == FlightMode_Manual )
-      'DesiredRoll +=  Aile / 8
-      'DesiredPitch += Elev / 8
 
       RollDifference := Aile
       PitchDifference := Elev
@@ -453,8 +472,8 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul
     YawOut := YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , -GyroZ, DoIntegrate )
         
 
-    ThroMix := (Thro + 800) ~> 3                        ' Approx 0 - 256
-    ThroMix <#= 64                                      ' Above 1/4 throttle, clamp it to 64
+    ThroMix := (Thro + 1024) ~> 2                       ' Approx 0 - 512
+    ThroMix <#= 64                                      ' Above 1/8 throttle, clamp it to 64
     ThroMix #>= 0
      
     'add 3000 to all Output values to make them 'servo friendly' again   (3000 is our output center)
@@ -464,9 +483,19 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul
     '-------------------------------------------
     if( FlightMode <> FlightMode_Manual )
 
-      'Accelerometer assist    
-      if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
-        ThroOut -= (AccelZSmooth - 8192) ~> 2
+      {
+      if( FlightMode == FlightMode_Automatic )
+        if( ||Thro > 100 )
+          DesiredAltitude += Thro ~> 4 
+      
+        AltiThrust := AltPID.Calculate_NoD2( DesiredAltitude , AltiEst , DoIntegrate )
+        ThroOut := 12000 + AltiThrust
+
+      else
+      }
+        'Accelerometer assist    
+        if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
+          ThroOut -= (AccelZSmooth - Const#OneG) ~> 1
 
       'Tilt compensated thrust assist      
       ThrustMul := 256 #> IMU.GetThrustFactor <# 384    'Limit the effect of the thrust modifier 
@@ -605,7 +634,7 @@ PUB ArmFlightMode
   All_LED( LED_Blue & LED_Half )        
   BeepTune
 
-  DesiredAltitude := Alt
+  DesiredAltitude := AltiEst
   
   loopTimer := cnt
 
@@ -729,7 +758,8 @@ PUB DoDebugModeOutput | loop, addr, phase, i
       
     elseif( phase == 2 )
     
-      dbg.txBulk( @Alt, 8 )       'Send 8 bytes of data from @Alt onward (2 longs worth of data, Alt and AltTemp)
+      dbg.txBulk( @Alt, 4 )       'Send 4 bytes of data for @Alt
+      dbg.txBulk( @AltTemp, 4 )   'Send 8 bytes of data for @AltTemp
        
 
   elseif( Mode == MODE_MotorTest )

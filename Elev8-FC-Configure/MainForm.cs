@@ -15,6 +15,8 @@ namespace Elev8
 {
     public partial class MainForm : Form
     {
+		const int OneG = 4096;
+
 		bool Active = false;
 
 		FTDI ftdi = null;
@@ -32,7 +34,7 @@ namespace Elev8
 		int GyroX, GyroY, GyroZ;
 		int AccelX, AccelY, AccelZ;
 		int MagX, MagY, MagZ;
-		int Alt, AltTemp;
+		int Alt, AltTemp, prevAlt = 0;
 		int Pitch, Roll, Yaw;
 
 		float[] accXCal = new float[4];
@@ -56,6 +58,7 @@ namespace Elev8
 
 		Vector velocityEstimate = new Vector( 0.0f, 0.0f, 0.0f );
 		Vector positionEstimate = new Vector( 0.0f, 0.0f, 0.0f );
+		float altVelocity = 0.0f;
 
 		enum Mode
 		{
@@ -110,8 +113,14 @@ namespace Elev8
 			// Allocate storage for device info list
 			FTDI.FT_DEVICE_INFO_NODE[] DeviceList = new FTDI.FT_DEVICE_INFO_NODE[DeviceCount];
 
-			// Populate our device list
-			ftStatus = ftdi.GetDeviceList( DeviceList );
+			try {
+				// Populate our device list
+				ftStatus = ftdi.GetDeviceList( DeviceList );
+			}
+
+			catch(Exception) {
+				return;
+			}
 
 			bool FoundElev8 = false;
 			for(int i = 0; i < DeviceCount && FoundElev8 == false; i++)
@@ -413,6 +422,7 @@ namespace Elev8
 					MagY = GetCommWord();
 					MagZ = GetCommWord();
 
+					prevAlt = Alt;
 					Alt = GetCommLong();
 					AltTemp = GetCommLong();
 
@@ -582,6 +592,7 @@ namespace Elev8
 					AccelY = GetCommWord();
 					AccelZ = GetCommWord();
 
+					prevAlt = Alt;
 					Alt = GetCommLong();
 
 					ComputeQuaternionOrientations();
@@ -808,8 +819,7 @@ namespace Elev8
 		const float GyroInvScale = GyroToDeg * RadToDeg * UpdateRate;
 		const float GyroScale = 1.0f / GyroInvScale;
 
-		const float AccToG = 1000.0f / 0.122f;					// Accelerometer per G @ 4g sensitivity = 0.122 mg/bit 
-		const float AccScale = 1.0f / AccToG;
+		const float AccScale = 1.0f / OneG;
 
 		Quaternion Q1 = new Quaternion( 1, 0, 0, 0 );
 		Quaternion Q2 = new Quaternion( 1, 0, 0, 0 );
@@ -968,22 +978,23 @@ namespace Elev8
 			acc *= 9.8f;
 
 			// Orient accelerometer vector (or at least just Z component)
-			Vector accOriented = m.Transpose().Mul( acc );
+			Vector forceW = m.Transpose().Mul( acc );
 
-			// Integrate to get velocity (m/sec)
-			velocityEstimate += accOriented * (1.0f / UpdateRate);
+			// Compute the vertical velocity from the altimeter
+			altVelocity = ((float)(Alt - prevAlt) / 1000.0f) * UpdateRate;	// Now in M/s
+
+			// Integrate accelerometer vector to get velocity (m/sec)
+			velocityEstimate += forceW * (1.0f / UpdateRate);
+
+			// Use the altimeter velocity estimate to drift correct the computed velocity
+			velocityEstimate.y = velocityEstimate.y * 0.998f + altVelocity * 0.002f;
+
 
 			// Integrate Z velocity to get approximate height (in meters)
-			positionEstimate += velocityEstimate;
+			positionEstimate += velocityEstimate * (1.0f / UpdateRate);
 
-			velocityEstimate *= 0.95f;	// Slowly degrade it
-
-			//TODO:
-			// Instead of slowly degrading the velocity estimate, why not use the altimeter values
-			// integrated over time.  Old alti - current alti = velocity.  Use that to correct drift in
-			// velocity estimate so it doesn't end up falling off prematurely
-
-			positionEstimate.y = (positionEstimate.y * 0.95f) + (((float)Alt / 1000.0f) * 0.05f);
+			// Slowly un-drift the Y position estimate with the altimeter over time
+			positionEstimate.y = (positionEstimate.y * 0.998f) + (((float)Alt / 1000.0f) * 0.002f);
 
 			lblStatOutput.Text = string.Format( "{0:0.00}   {1:0.000}", positionEstimate.y, velocityEstimate.y );
 		}
@@ -1129,7 +1140,7 @@ namespace Elev8
 
 			lblAccelCalFinal.Text = string.Format( "{0}, {1}, {2}", ax, ay, az );
 
-			az -= 8192;
+			az -= OneG;
 
 			// Upload calibration data
 			txBuffer[0] = 0x16;

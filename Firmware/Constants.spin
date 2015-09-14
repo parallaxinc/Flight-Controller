@@ -12,6 +12,9 @@ CON
   UpdateRate = 250
   UpdateCycles = _clkfreq / UpdateRate
 
+  OneG = 4096                   'Must match the scale of the accelerometer
+  Alti_UpdateRate = 25          'Must match the update rate of the device  
+
 
   DriftScalePref =  32768 + 0
   DriftOffsetPref = 32768 + 3*4

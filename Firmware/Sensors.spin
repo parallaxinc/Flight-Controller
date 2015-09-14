@@ -51,15 +51,16 @@ CON
   MagY = 8
   MagZ = 9
   Alt = 10
-  AltTemp = 11
-  Pressure = 12
-  Timer = 13
-  ParamsSize = 14
+  AltRate = 11
+  AltTemp = 12
+  Pressure = 13
+  Timer = 14
+  ParamsSize = 15
     
 
 VAR
 
-  long  ins[ParamsSize]         'Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltTemp, Timer
+  long  ins[ParamsSize]         'Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
   long  DriftScale[3]
   long  DriftOffset[3]          'These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
   long  AccelOffset[3]
@@ -224,7 +225,6 @@ entry                   mov     t1,par                  'read parameters
 
 
                         call    #Config_GryoAccelMag    'Configure the gyro and accelerometer registers                        
-
                         call    #Config_Altimeter       'Configure the altimeter registers                        
 
 
@@ -336,13 +336,13 @@ main_loop
                         '---- Altimeter ----------------
                         mov     spi_cs_mask, amask      'Finally, read the altimeter
 
-'                        mov     spi_reg, #$27           'Read the Altimeter status register to see if data is ready
-'                        call    #SPI_ReadByte
+                        mov     spi_reg, #$27           'Read the Altimeter status register to see if data is ready
+                        call    #SPI_ReadByte
 
-'                        mov     t3, spi_data            'Store to temp register t3            
+                        mov     t3, spi_data            'Store to temp register t3            
 
-'                        test    t3, #1          wc      'Temperature data available?
-'        if_nc           jmp     #:SkipAltTemperature                                   
+                        test    t3, #1          wc      'Temperature data available?
+        if_nc           jmp     #:SkipAltTemperature                                   
 
 :ReadAltTemperature
                         mov     spi_reg, #$6B           'Read the temperature register (| $40 = continuous read mode
@@ -350,8 +350,8 @@ main_loop
                         mov     OutAltTemp, spi_data
 
 :SkipAltTemperature
-'                        test    t3, #2          wc      'Pressure data available?
-'        if_nc           jmp     #:SkipAltPressure                                   
+                        test    t3, #2          wc      'Pressure data available?
+        if_nc           jmp     #:SkipAltPressure                                   
 
 
 :ReadAltPressure
@@ -369,7 +369,7 @@ main_loop
                         shl     spi_data, #16
                         or      OutAltPressure, spi_data
 
-                        call    #ComputeAltitude
+                        call    #ComputeAltitude        'Computes altitude and difference from previous
 
 :SkipAltPressure
 
@@ -384,7 +384,7 @@ main_loop
                         '---- Write Hub Outputs --------
                         mov     outAddr, par
                         movd    :OutHubAddr, #OutTemp   'Put the COG address to read from in the D field of the :OutHubAddr instruction
-                        mov     t1, #13                 '13 parameters to copy from COG to HUB
+                        mov     t1, #14                 '14 parameters to copy from COG to HUB
 
 :HubWriteLoop                                                        
 
@@ -469,12 +469,12 @@ Config_GryoAccelMag
                         'ODR_XL[2..0]__FS_XL[1..0]__BW_SCAL_ODR__BW_XL[1..0]
                         
                         'ODR_XL[2..0] := %101   'Output data rate = 476hz
-                        'FS_XL[1..0] := %10     'Accel scale = +/- 4g  (00=2g, 10=4g, 11=8g, 01=16g)
+                        'FS_XL[1..0] := %11     'Accel scale = +/- 8g  (00=2g, 10=4g, 11=8g, 01=16g)
                         'BW_SCAL_ODR := 0       'Scale bandwidth according to sample rate = 0  (1 = use BW_XL)
                         'BW_XL[1..0] := %00     'filter bandwidth (00=408hz, 01=211hz, 10=105hz, 11=50hz), only used if BW_SCAL == 1
 
                         mov     spi_reg, #$20
-                        mov     spi_data, #%110_10_0_00                        
+                        mov     spi_data, #%110_11_0_00                        
                         call    #SPI_Write
                                                 
 
@@ -859,61 +859,59 @@ WriteLEDs_ret           ret
 ComputeDrift
 
                         mov     t3, driftHubAddr        'Pull the current drift values out of the HUB (allows for dynamic config)
-                        rdlong  DriftScaleGX, t3
+                        add     t3, #12                 'Skip Scale values for the moment
+                        rdlong  DriftX, t3              'Read the DriftOffset values into DriftX, Y, Z   
                         add     t3, #4   
-                        rdlong  DriftScaleGY, t3   
+                        rdlong  DriftY, t3   
                         add     t3, #4   
-                        rdlong  DriftScaleGZ, t3   
-                        add     t3, #4   
-                        rdlong  DriftOffsetGX, t3   
-                        add     t3, #4   
-                        rdlong  DriftOffsetGY, t3   
-                        add     t3, #4   
-                        rdlong  DriftOffsetGZ, t3   
+                        rdlong  DriftZ, t3   
 
-                        add     t3, #4   
-                        rdlong  AccelOffsetX, t3   
-                        add     t3, #4   
-                        rdlong  AccelOffsetY, t3   
-                        add     t3, #4   
-                        rdlong  AccelOffsetZ, t3   
+                        mov     t3, driftHubAddr        'Rewind t3 back to DriftScaleGX
 
-
-                        'Compute drift value for X axis                        
-                        mov     divisor, DriftScaleGX
+                        'Compute drift value for X axis
+                        rdlong  divisor, t3             'DriftScaleGX
+                        add     t3, #4                                                
                         mov     dividend, OutTemp
                         mov     divResult, #0
 
                         cmp     divisor, #0     wz, wc
               if_nz     call    #Divide
-                        mov     DriftX, divResult
-                        add     DriftX, DriftOffsetGX                                           
+                        add     DriftX, divResult
 
 
                         'Compute drift value for Y axis                        
-                        mov     divisor, DriftScaleGY
+                        rdlong  divisor, t3             'DriftScaleGY
+                        add     t3, #4                                                
                         mov     dividend, OutTemp
                         mov     divResult, #0
 
                         cmp     divisor, #0     wz, wc
               if_nz     call    #Divide
-                        mov     DriftY, divResult
-                        add     DriftY, DriftOffsetGY                                           
+                        add     DriftY, divResult
 
 
                         'Compute drift value for Z axis                        
-                        mov     divisor, DriftScaleGZ
+                        rdlong  divisor, t3             'DriftScaleGZ
+                        add     t3, #4                                                
                         mov     dividend, OutTemp
                         mov     divResult, #0
 
                         cmp     divisor, #0     wz, wc
               if_nz     call    #Divide
-                        mov     DriftZ, divResult
-                        add     DriftZ, DriftOffsetGZ                                           
+                        add     DriftZ, divResult
 
-                        sub     OutAX, AccelOffsetX
-                        sub     OutAY, AccelOffsetY
-                        sub     OutAZ, AccelOffsetZ
+
+                        add     t3, #12   
+                        rdlong  t2, t3          'AccelOffsetX
+                        sub     OutAX, t2
+                           
+                        add     t3, #4   
+                        rdlong  t2, t3          'AccelOffsetY
+                        sub     OutAY, t2
+                           
+                        add     t3, #4   
+                        rdlong  t2, t3   
+                        sub     OutAZ, t2       'AccelOffsetZ
                         
 ComputeDrift_Ret        ret
 
@@ -1085,6 +1083,9 @@ ComputeAltitude
         'int diff = Tab2 - Tab1
          
         'int ResultMM = (Diff * Frac + Alt_Round) / Delta + Tab1;
+
+                        'Cache the previous altitude value, negated        
+                        neg     OutAltRate, OutAlt 
          
                         mov     t1, OutAltPressure
                         shr     t1, #14
@@ -1112,30 +1113,35 @@ ComputeAltitude
                         adds    alt_A1, #260
                         shl     alt_A1, #12
 
-                        mov     alt_frac, OutAltPressure'Compute the difference between the first table pressure and our reading
-                        subs    alt_frac, alt_A1
+                        mov     mul_y, OutAltPressure'Compute the difference between the first table pressure and our reading
+                        subs    mul_y, alt_A1
 
-                        mov     alt_diff, t3            'Compute the difference between the two sequential table entries
-                        subs    alt_diff, t2                        
+                        mov     mul_x, t3            'Compute the difference between the two sequential table entries
+                        subs    mul_x, t2                        
 
-                        mov     mul_x, alt_diff
-                        mov     mul_y, alt_frac
+                        'mov     mul_x, alt_diff
+                        'mov     mul_y, alt_frac
                         call    #multiply               '(Diff * Frac)
 
                         adds    mul_x, ALT_ROUND        ' + Alt_Round
                         sar     mul_x, #14              ' / Delta
 
                         adds    mul_x, t2               ' + Tab1
-                        mov     OutAlt, mul_x                                                                                                
+                        mov     OutAlt, mul_x
 
+                        adds    mul_x, OutAltRate       'Equivalent to AltDifference = Alt - prevAlt
+                        
+                        mov     mul_y, #(Const#Alti_UpdateRate)
+                        call    #multiply
+                        mov     OutAltRate, mul_x       'AltRate is now in mm/sec
+                        
+                          
 :EarlyExit
 
 ComputeAltitude_ret     ret
 
 
-        alt_frac        long    0
         alt_A1          long    0
-        alt_diff        long    0        
 
 '------------------------------------------------------------------------------
 
@@ -1152,19 +1158,6 @@ word_mask               long    $0000_FFFF              'lower 16 bits mask
 
 LED_RESET               long    5000                    'minimum of 50 * ONE_uS = 4000 @ 80MHz
 ALT_ROUND               long    (16384-1)               'Difference in pressure between two sequential table entries, minus one
-
-
-DriftScaleGX            long    0               '9                
-DriftScaleGY            long    0               '2                
-DriftScaleGZ            long    0               '-20
-                
-DriftOffsetGX           long    0               '64
-DriftOffsetGY           long    0               '445
-DriftOffsetGZ           long    0               '29
-
-AccelOffsetX            long    0
-AccelOffsetY            long    0
-AccelOffsetZ            long    0
 
 
 AccelTableIndex         long    0                       'Index into the accel values median table
@@ -1242,11 +1235,12 @@ OutMY                   res     1                       'Output magnetometer fie
 OutMZ                   res     1
 
 OutAlt                  res     1                       'Output computed altitude from pressure value
+OutAltRate              res     1                       'When there's a new altitude, compute this from the differences between readings
+
 OutAltTemp              res     1                       'Output altimeter temperature and pressure values
 OutAltPressure          res     1
 
 altTableAddr            res     1                       'HUB ram location of altimeter pressure-to-altitude table
-
 
 LoopTime                res     1                       'Register used to measure how much time a single loop actually takes
 
@@ -1258,6 +1252,19 @@ FIT 496       'Make sure all of the above fits into the cog (from the org statem
 
 
 DAT
+
+        DriftScaleGX            long    0                
+        DriftScaleGY            long    0                
+        DriftScaleGZ            long    0
+                        
+        DriftOffsetGX           long    0
+        DriftOffsetGY           long    0
+        DriftOffsetGZ           long    0
+         
+        AccelOffsetX            long    0
+        AccelOffsetY            long    0
+        AccelOffsetZ            long    0
+         
         'Table used to convert pressure to altitude.  The Pressure to Altitude conversion is complex,
         'and requires Log and Pow functions, which take a considerable length of CPU time.  A table lookup
         'is a suitable alternative.  I use linear interpolation, but the table has enough points to give an
