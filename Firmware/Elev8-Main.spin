@@ -61,6 +61,7 @@ CON
   LED_Yellow = LED_Red + LED_Green
   LED_Violet = LED_Red + LED_Blue
   LED_Cyan =   LED_Blue + LED_Green
+  LED_DimCyan =((LED_Blue + LED_Green) & $FEFEFE) >> 1
   LED_White   = $ff_ff_ff
 
   'LED Brightness values - AND with color values to dim them
@@ -153,6 +154,7 @@ VAR
 
   long RollPitch_P, RollPitch_D 
   long UseSBUS, SBUSCenter
+  long LEDModeColor
   
 
 
@@ -297,7 +299,17 @@ PUB Main | Cycles
       Aux3 :=  RC.GetRC( RC_AUX3 )
        
 
+    if( Gear < -512 )
+      FlightMode := FlightMode_Assisted
+    elseif( Gear > 512 )
+      FlightMode := FlightMode_Manual
+    else
+      FlightMode := FlightMode_Automatic
+
+
     UpdateFlightLoop            '~82000 cycles when in flight mode
+
+    All_LED( LEDModeColor )
 
     'FlightModeTest
 
@@ -359,6 +371,7 @@ PUB FindGyroZero | i
 
 PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
+  UpdateFlightLEDColor
 
   'Test for flight mode change-----------------------------------------------
     
@@ -368,14 +381,15 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
     if( Rudd > 750  AND  Aile < -750  AND  Thro < -750  AND  Elev < -750 )
       EnableStep++
-      All_LED( LED_Yellow & LED_Half )
+      'All_LED( LED_Yellow & LED_Half )
+      LEDModeColor := LED_Yellow & LED_Half 
               
       if( EnableStep == 250 )   'Hold for 1 second
         ArmFlightMode
       
     else
       EnableStep := 0
-      All_LED( LED_Green & LED_Half )
+      'All_LED( LED_Green & LED_Half )
     '------------------------------------------------------------------------
 
   else
@@ -384,7 +398,8 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
     if( Rudd < -750  AND  Aile > 750  AND  Thro < -750  AND  Elev < -750 )
       EnableStep++
-      All_LED( LED_Yellow & LED_Half )
+      'All_LED( LED_Yellow & LED_Half )
+      LEDModeColor := LED_Yellow & LED_Half
               
       if( EnableStep == 250 )   'Hold for 1 second
         DisarmFlightMode
@@ -392,17 +407,9 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
       
     else
       EnableStep := 0
-      All_LED( LED_Red & LED_Half )
+      'All_LED( LED_Red & LED_Half )
 
     '------------------------------------------------------------------------
-
-    if( Gear < -512 )
-      FlightMode := FlightMode_Assisted
-    elseif( Gear > 512 )
-      FlightMode := FlightMode_Manual
-    else
-      FlightMode := FlightMode_Automatic
-
 
      
     'Rudder is integrated (accumulated)
@@ -541,6 +548,15 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
       dbg.tx( 11 )
 }       
 
+PUB UpdateFlightLEDColor | index, color
+
+  index := (counter >> 4) & 15
+  if( index == 0 )
+    LEDModeColor := (long[@LEDColorTable][FlightMode] & $FE_FE_FE) >> 1 
+  else
+    LEDModeColor := (long[@LEDArmDisarm][FlightEnabled & 1] & $FE_FE_FE) >> 1
+
+
 
 PUB InitTestPID
 
@@ -635,7 +651,6 @@ PUB ArmFlightMode
   BeepTune
 
   DesiredAltitude := AltiEst
-  
   loopTimer := cnt
 
 
@@ -939,4 +954,14 @@ PUB Beep3
   waitcnt( 5_000_000 + cnt ) 
   Beep
   
-          
+
+DAT
+LEDColorTable
+        LED_Assisted    long    LED_DimCyan
+        LED_Automatic   long    LED_Green
+        LED_Manual      long    LED_Yellow
+
+LEDArmDisarm
+        LED_Disarmed    long    LED_Green
+        LED_Armed       long    LED_Red
+                                       
