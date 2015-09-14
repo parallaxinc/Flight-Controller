@@ -50,6 +50,16 @@ Cosine Matrix mathod described by William Premerlani and Paul Bizard.  This
 code relies entirely on the F32 module for computation - it is entirely Spin
 and does not take a COG itself.
 
+QuatIMU.spin also now does altitude estimation by fusing accelerometer and
+altimeter readings.  Gravity is subtracted from the current accelerometer
+vector, the vector is rotated into world-space, and a velocity estimate is
+updated with it.  Another velocity estimate is computed from the rate of
+change of the pressure-altitude reading.  The accelerometer-based value is
+filtered using the altimeter value, and the result is integrated into an
+altitude estimate.  The altitude estimate is then itself filtered using the
+pressure-altitude value.
+
+
 
 RC_Receiver.spin - Remote Control Receiever code.  This module converts the
 incoming pulse width modulated signals from a standard radio control receiver
@@ -117,7 +127,7 @@ Things to do / try:
   - Use altimeter reading to correct drift in height estimate, like accel+gyro
   - Could give more accurate readings in short term
 
-     *** currently testing in config app ***
+     *** currently testing in config app and in Firmware ***
 
 
 -----------------------------------
