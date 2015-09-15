@@ -21,6 +21,14 @@ namespace Elev8
 
 		FTDI ftdi = null;
 
+		enum CommStatus
+		{
+			Initializing,
+			NoDevices,
+			NoElev8,
+			Connected,
+		}
+
 		int Thro = 0;
 		int Aile = 0;
 		int Elev = 0;
@@ -60,6 +68,10 @@ namespace Elev8
 		Vector positionEstimate = new Vector( 0.0f, 0.0f, 0.0f );
 		float altVelocity = 0.0f;
 
+		CommStatus commStat = CommStatus.NoDevices;
+		CommStatus lastStat = CommStatus.Initializing;
+
+
 		enum Mode
 		{
 			None,
@@ -95,6 +107,46 @@ namespace Elev8
         }
 
 
+		void UpdateCommStatus()
+		{
+			if(commStat != lastStat)
+			{
+				string msg = null;
+
+				lastStat = commStat;
+				switch(commStat)
+				{
+					case CommStatus.Initializing:
+						msg = "Initializing";
+						break;
+
+					case CommStatus.NoDevices:
+						msg = "No FTDI devices found";
+						break;
+
+					case CommStatus.NoElev8:
+						msg = "Looking for Elev8-FC";
+						break;
+
+					case CommStatus.Connected:
+						msg = "Connected";
+						break;
+				}
+
+				tsStatLabel.Text = msg;
+
+				if(commStat == CommStatus.Connected)
+				{
+					tickTimer.Interval = 20;
+				}
+				else
+				{
+					tickTimer.Interval = 100;
+				}
+			}
+		}
+
+
 		void ConnectFTDI()
 		{
 			UInt32 DeviceCount = 0;
@@ -107,70 +159,78 @@ namespace Elev8
 			ftStatus = ftdi.GetNumberOfDevices( ref DeviceCount );
 
 			// Check status
-			if( ftStatus != FTDI.FT_STATUS.FT_OK || DeviceCount == 0 )
+			if(ftStatus != FTDI.FT_STATUS.FT_OK || DeviceCount == 0) {
+				commStat = CommStatus.NoDevices;
 				return;
+			}
+
+			commStat = CommStatus.NoElev8;
 
 			// Allocate storage for device info list
 			FTDI.FT_DEVICE_INFO_NODE[] DeviceList = new FTDI.FT_DEVICE_INFO_NODE[DeviceCount];
 
-			try {
+			try
+			{
 				// Populate our device list
 				ftStatus = ftdi.GetDeviceList( DeviceList );
+
+				bool FoundElev8 = false;
+				for(int i = 0; i < DeviceCount && FoundElev8 == false; i++)
+				{
+					if(DeviceList[i].Type != FTDI.FT_DEVICE.FT_DEVICE_X_SERIES) continue;
+
+					ftStatus = ftdi.OpenBySerialNumber( DeviceList[i].SerialNumber );
+					if(ftStatus == FTDI.FT_STATUS.FT_OK)
+					{
+						string portName;
+						ftdi.GetCOMPort( out portName );
+						if(portName == null || portName == "")
+						{
+							ftdi.Close();
+							continue;
+						}
+
+						ftdi.SetBaudRate( 115200 );
+						ftdi.SetDataCharacteristics( 8, 1, 0 );
+						ftdi.SetFlowControl( FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0, 0 );
+
+
+						txBuffer[0] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
+						uint written = 0;
+
+						for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
+						{
+							ftdi.Write( txBuffer, 1, ref written );
+							System.Threading.Thread.Sleep( 50 );
+
+							uint bytesAvail = 0;
+							ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
+							if(bytesAvail > 0)
+							{
+								uint bytesRead = 0;
+								ftdi.Read( rxBuffer, 1, ref bytesRead );			// If it comes back with 0xE8 it's the one we want
+								if(bytesRead == 1 && rxBuffer[0] == 0xE8)
+								{
+									FoundElev8 = true;
+									commStat = CommStatus.Connected;
+									break;
+								}
+							}
+						}
+						if(FoundElev8)
+						{
+							break;
+						}
+						else
+						{
+							ftdi.Close();
+						}
+					}
+				}
 			}
 
 			catch(Exception) {
 				return;
-			}
-
-			bool FoundElev8 = false;
-			for(int i = 0; i < DeviceCount && FoundElev8 == false; i++)
-			{
-				if(DeviceList[i].Type != FTDI.FT_DEVICE.FT_DEVICE_X_SERIES) continue;
-
-				ftStatus = ftdi.OpenBySerialNumber( DeviceList[i].SerialNumber );
-				if(ftStatus == FTDI.FT_STATUS.FT_OK)
-				{
-					string portName;
-					ftdi.GetCOMPort( out portName );
-					if(portName == null || portName == "")
-					{
-						ftdi.Close();
-						continue;
-					}
-
-					ftdi.SetBaudRate( 115200 );
-					ftdi.SetDataCharacteristics( 8, 1, 0 );
-					ftdi.SetFlowControl( FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0, 0 );
-
-
-					txBuffer[0] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
-					uint written = 0;
-
-					for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
-					{
-						ftdi.Write( txBuffer, 1, ref written );
-						System.Threading.Thread.Sleep( 50 );
-
-						uint bytesAvail = 0;
-						ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
-						if(bytesAvail > 0)
-						{
-							uint bytesRead = 0;
-							ftdi.Read( rxBuffer, 1, ref bytesRead );			// If it comes back with 0xE8 it's the one we want
-							if(bytesRead == 1 && rxBuffer[0] == 0xE8)
-							{
-								FoundElev8 = true;
-								break;
-							}
-						}
-					}
-					if(FoundElev8) {
-						break;
-					}
-					else {
-						ftdi.Close();
-					}
-				}
 			}
 
 
@@ -184,7 +244,7 @@ namespace Elev8
 
 			// Start my 'tick timer' - It's set to tick every 20 milliseconds
 			// (used to check the comm port periodically instead of using a thread)
-			tickTimer.Start();
+			//tickTimer.Start();
 		}
 
 
@@ -259,8 +319,9 @@ namespace Elev8
 
 		private void tickTimer_Tick( object sender, EventArgs e )
 		{
+			UpdateCommStatus();
 			if(Active == false || ftdi == null) return;
-			
+
 			if(ftdi.IsOpen == false) {
 				ConnectFTDI();
 
@@ -271,10 +332,16 @@ namespace Elev8
 			{
 				uint QAvail = (uint)(QSize - QHead);					// How much room is available at the end of the data queue?
 				uint bytesAvail = 0;
-				ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
+				FTDI.FT_STATUS stat = ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
+				if(stat == FTDI.FT_STATUS.FT_IO_ERROR) {
+					// If we got an error, the port has likely been closed / unplugged - go back to waiting
+					ftdi.Close();
+					return;
+				}
+
 				if(bytesAvail > QAvail) bytesAvail = QAvail;			// Pick the smaller of the two values for how much to read
 
-				while( bytesAvail > 0 )
+				while( bytesAvail > 0 && QHead < (rxQueue.Length - rxBuffer.Length) )
 				{
 					uint toRead = Math.Min( (uint)bytesAvail , (uint)rxBuffer.Length );
 					uint bytesRead = 0;

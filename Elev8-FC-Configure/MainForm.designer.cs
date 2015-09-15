@@ -88,6 +88,7 @@
 			this.btnMotor2 = new System.Windows.Forms.Button();
 			this.btnMotor1 = new System.Windows.Forms.Button();
 			this.tpGyroCalibration = new System.Windows.Forms.TabPage();
+			this.gCalibTemp = new Elev8.Gauge();
 			this.gCalibZ = new Elev8.Gauge();
 			this.gCalibY = new Elev8.Gauge();
 			this.gCalibX = new Elev8.Gauge();
@@ -163,7 +164,8 @@
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.grGyro = new Elev8.Graph();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
-			this.gCalibTemp = new Elev8.Gauge();
+			this.stStatus = new System.Windows.Forms.StatusStrip();
+			this.tsStatLabel = new System.Windows.Forms.ToolStripStatusLabel();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
@@ -179,10 +181,14 @@
 			this.groupBox3.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
+			this.stStatus.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// tcMainTabs
 			// 
+			this.tcMainTabs.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+						| System.Windows.Forms.AnchorStyles.Left)
+						| System.Windows.Forms.AnchorStyles.Right)));
 			this.tcMainTabs.Controls.Add( this.tpRadioTest );
 			this.tcMainTabs.Controls.Add( this.tpSensorTest );
 			this.tcMainTabs.Controls.Add( this.tpMotorTest );
@@ -191,12 +197,11 @@
 			this.tcMainTabs.Controls.Add( this.tpIMUTest );
 			this.tcMainTabs.Controls.Add( this.tpIMUComp );
 			this.tcMainTabs.Controls.Add( this.tpVibration );
-			this.tcMainTabs.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.tcMainTabs.Location = new System.Drawing.Point( 0, 0 );
 			this.tcMainTabs.Name = "tcMainTabs";
 			this.tcMainTabs.SelectedIndex = 0;
-			this.tcMainTabs.Size = new System.Drawing.Size( 641, 351 );
-			this.tcMainTabs.TabIndex = 0;
+			this.tcMainTabs.Size = new System.Drawing.Size( 641, 356 );
+			this.tcMainTabs.TabIndex = 1;
 			this.tcMainTabs.SelectedIndexChanged += new System.EventHandler( this.tcMainTabs_SelectedIndexChanged );
 			// 
 			// tpRadioTest
@@ -220,7 +225,7 @@
 			this.tpRadioTest.Location = new System.Drawing.Point( 4, 22 );
 			this.tpRadioTest.Name = "tpRadioTest";
 			this.tpRadioTest.Padding = new System.Windows.Forms.Padding( 3 );
-			this.tpRadioTest.Size = new System.Drawing.Size( 633, 325 );
+			this.tpRadioTest.Size = new System.Drawing.Size( 633, 330 );
 			this.tpRadioTest.TabIndex = 0;
 			this.tpRadioTest.Text = "Radio Test";
 			this.tpRadioTest.UseVisualStyleBackColor = true;
@@ -408,7 +413,7 @@
 			this.tpSensorTest.Location = new System.Drawing.Point( 4, 22 );
 			this.tpSensorTest.Name = "tpSensorTest";
 			this.tpSensorTest.Padding = new System.Windows.Forms.Padding( 3 );
-			this.tpSensorTest.Size = new System.Drawing.Size( 633, 325 );
+			this.tpSensorTest.Size = new System.Drawing.Size( 633, 330 );
 			this.tpSensorTest.TabIndex = 1;
 			this.tpSensorTest.Text = "Sensor Test";
 			this.tpSensorTest.UseVisualStyleBackColor = true;
@@ -701,7 +706,7 @@
 			this.tpMotorTest.Controls.Add( this.btnMotor1 );
 			this.tpMotorTest.Location = new System.Drawing.Point( 4, 22 );
 			this.tpMotorTest.Name = "tpMotorTest";
-			this.tpMotorTest.Size = new System.Drawing.Size( 633, 325 );
+			this.tpMotorTest.Size = new System.Drawing.Size( 633, 330 );
 			this.tpMotorTest.TabIndex = 2;
 			this.tpMotorTest.Text = "Motor Test";
 			this.tpMotorTest.UseVisualStyleBackColor = true;
@@ -825,10 +830,20 @@
 			this.tpGyroCalibration.Controls.Add( this.lfGraph );
 			this.tpGyroCalibration.Location = new System.Drawing.Point( 4, 22 );
 			this.tpGyroCalibration.Name = "tpGyroCalibration";
-			this.tpGyroCalibration.Size = new System.Drawing.Size( 633, 325 );
+			this.tpGyroCalibration.Size = new System.Drawing.Size( 633, 330 );
 			this.tpGyroCalibration.TabIndex = 3;
 			this.tpGyroCalibration.Text = "Gyro Calibration";
 			this.tpGyroCalibration.UseVisualStyleBackColor = true;
+			// 
+			// gCalibTemp
+			// 
+			this.gCalibTemp.AverageCount = 128;
+			this.gCalibTemp.Location = new System.Drawing.Point( 205, 238 );
+			this.gCalibTemp.Name = "gCalibTemp";
+			this.gCalibTemp.Range = 8192F;
+			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibTemp.TabIndex = 28;
+			this.gCalibTemp.Value = 0F;
 			// 
 			// gCalibZ
 			// 
@@ -1060,7 +1075,7 @@
 			this.tpAccelCalibration.Controls.Add( this.gAccelXCal );
 			this.tpAccelCalibration.Location = new System.Drawing.Point( 4, 22 );
 			this.tpAccelCalibration.Name = "tpAccelCalibration";
-			this.tpAccelCalibration.Size = new System.Drawing.Size( 633, 325 );
+			this.tpAccelCalibration.Size = new System.Drawing.Size( 633, 330 );
 			this.tpAccelCalibration.TabIndex = 7;
 			this.tpAccelCalibration.Text = "Accel Calibration";
 			this.tpAccelCalibration.UseVisualStyleBackColor = true;
@@ -1222,7 +1237,7 @@
 			this.tpIMUTest.Controls.Add( this.ocOrientation );
 			this.tpIMUTest.Location = new System.Drawing.Point( 4, 22 );
 			this.tpIMUTest.Name = "tpIMUTest";
-			this.tpIMUTest.Size = new System.Drawing.Size( 633, 325 );
+			this.tpIMUTest.Size = new System.Drawing.Size( 633, 330 );
 			this.tpIMUTest.TabIndex = 4;
 			this.tpIMUTest.Text = "IMU Test";
 			this.tpIMUTest.UseVisualStyleBackColor = true;
@@ -1317,7 +1332,7 @@
 			this.tpIMUComp.Controls.Add( this.ocCompQ1 );
 			this.tpIMUComp.Location = new System.Drawing.Point( 4, 22 );
 			this.tpIMUComp.Name = "tpIMUComp";
-			this.tpIMUComp.Size = new System.Drawing.Size( 633, 325 );
+			this.tpIMUComp.Size = new System.Drawing.Size( 633, 330 );
 			this.tpIMUComp.TabIndex = 5;
 			this.tpIMUComp.Text = "IMU Compare";
 			this.tpIMUComp.UseVisualStyleBackColor = true;
@@ -1383,7 +1398,7 @@
 			this.tpVibration.Controls.Add( this.grGyro );
 			this.tpVibration.Location = new System.Drawing.Point( 4, 22 );
 			this.tpVibration.Name = "tpVibration";
-			this.tpVibration.Size = new System.Drawing.Size( 633, 325 );
+			this.tpVibration.Size = new System.Drawing.Size( 633, 330 );
 			this.tpVibration.TabIndex = 6;
 			this.tpVibration.Text = "Vibration Test";
 			this.tpVibration.UseVisualStyleBackColor = true;
@@ -1580,24 +1595,33 @@
 			// 
 			// tickTimer
 			// 
+			this.tickTimer.Enabled = true;
 			this.tickTimer.Interval = 20;
 			this.tickTimer.Tick += new System.EventHandler( this.tickTimer_Tick );
 			// 
-			// gCalibTemp
+			// stStatus
 			// 
-			this.gCalibTemp.AverageCount = 128;
-			this.gCalibTemp.Location = new System.Drawing.Point( 205, 238 );
-			this.gCalibTemp.Name = "gCalibTemp";
-			this.gCalibTemp.Range = 8192F;
-			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibTemp.TabIndex = 28;
-			this.gCalibTemp.Value = 0F;
+			this.stStatus.Items.AddRange( new System.Windows.Forms.ToolStripItem[] {
+            this.tsStatLabel} );
+			this.stStatus.Location = new System.Drawing.Point( 0, 359 );
+			this.stStatus.Name = "stStatus";
+			this.stStatus.Size = new System.Drawing.Size( 641, 22 );
+			this.stStatus.TabIndex = 0;
+			this.stStatus.Text = "statusStrip1";
+			// 
+			// tsStatLabel
+			// 
+			this.tsStatLabel.AutoSize = false;
+			this.tsStatLabel.Name = "tsStatLabel";
+			this.tsStatLabel.Size = new System.Drawing.Size( 150, 17 );
+			this.tsStatLabel.Text = "Finding Elev8-FC";
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF( 6F, 13F );
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size( 641, 351 );
+			this.ClientSize = new System.Drawing.Size( 641, 381 );
+			this.Controls.Add( this.stStatus );
 			this.Controls.Add( this.tcMainTabs );
 			this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
 			this.Name = "MainForm";
@@ -1631,7 +1655,10 @@
 			this.groupBox3.ResumeLayout( false );
 			this.groupBox2.ResumeLayout( false );
 			this.groupBox1.ResumeLayout( false );
+			this.stStatus.ResumeLayout( false );
+			this.stStatus.PerformLayout();
 			this.ResumeLayout( false );
+			this.PerformLayout();
 
 		}
 
@@ -1771,6 +1798,8 @@
 		private Gauge gCalibY;
 		private Gauge gCalibX;
 		private Gauge gCalibTemp;
+		private System.Windows.Forms.StatusStrip stStatus;
+		private System.Windows.Forms.ToolStripStatusLabel tsStatLabel;
 	}
 }
 
