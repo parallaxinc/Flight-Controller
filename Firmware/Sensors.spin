@@ -128,7 +128,7 @@ PUB Address
 
 PUB TempZeroDriftValues
 
-  longmove( @DriftScaleGX, @DriftScale[0], 6 )         'Temporarily back up the values in the DAT section so we can restore them with "ResetDriftValues"
+  longmove( @DriftScaleGX, @DriftScale[0], 6 )          'Temporarily back up the values in the DAT section so we can restore them with "ResetDriftValues"
   longfill( @DriftScale[0], 0, 6 )
 
 
@@ -167,32 +167,20 @@ DAT
 '*********************************************
 
                         org
-'
-'
-' Entry
-'
+
 entry                   mov     t1,par                  'read parameters
 
-                        call    #param                  'setup DIN pin
-                        mov     imask,t2
+                        'First 7 params are pin masks - read them from HUB and output to COG registers in order
 
-                        call    #param                  'setup DOUT pin
-                        mov     omask,t2
-
-                        call    #param                  'setup CLK pin
-                        mov     cmask,t2
-
-                        call    #param                  'setup CS_AG pin
-                        mov     sgmask,t2
-
-                        call    #param                  'setup CS_M pin
-                        mov     smmask,t2
-
-                        call    #param                  'setup CS altimeter pin
-                        mov     amask,t2
-
-                        call    #param                  'setup LED pin
-                        mov     ledMask,t2
+                        movd    :writeMask, #imask      'first hub register to write to 
+                        mov     counter, #7             '7 parameters (masks) to transfer          
+  :paramLoop
+                        call    #param                  'read the param (t2 becomes mask, t3 is value)
+  :writeMask            mov     imask,t2                'output the mask to our current hub register                
+                        add     :writeMask, d_field     'increment the hub register address
+                        or      dira, t2                'set the pin as an output - this works for all but one, which we fix below 
+                        djnz    counter, #:paramLoop    'loop until done
+                              
 
                         call    #param                  'setup LED Address
                         mov     ledAddress, t3
@@ -209,14 +197,18 @@ entry                   mov     t1,par                  'read parameters
                         mov     driftHubAddr, par
                         add     driftHubAddr, #ParamsSize*4     'Drift array starts (ParamsSize) longs from the beginning of the output params array                        
 
-'Set pin directions
-                        or      dira,cmask              'output CLK
-                        or      dira,sgmask             'output CS_AG
-                        or      dira,smmask             'output CS_M
-                        or      dira,amask              'output CS altimeter
-                        or      dira,imask              'output SDI
 
-                        or      dira,ledMask            'output LED pin
+                        'Fix the one incorrect pin direction set by the param loop above
+                        andn    dira,omask              'SDO pin is an input
+
+                        'All of these were handled by the param loop above
+                        'or      dira,imask              'output SDI
+                        'or      dira,cmask              'output CLK
+                        'or      dira,sgmask             'output CS_AG
+                        'or      dira,smmask             'output CS_M
+                        'or      dira,amask              'output CS altimeter
+                        'or      dira,ledMask            'output LED pin
+                        
                         or      outa,ledMask            'bring LED pin high
 
                         or      outa, sgmask            'bring CS pins high
@@ -224,12 +216,8 @@ entry                   mov     t1,par                  'read parameters
                         or      outa, amask
 
 
-                        call    #Config_GryoAccelMag    'Configure the gyro and accelerometer registers                        
-                        call    #Config_Altimeter       'Configure the altimeter registers                        
-
-
-                        mov     counter, CNT            'Grab the value of the counter
-                        add     counter, loopdelay      'Add the master loop delay
+                        call    #Config_Sensors         'Configure the gyro, accelerometer, mag, altimeter
+                                                
 
 
 'Main sensor read loop
@@ -355,19 +343,19 @@ main_loop
 
 
 :ReadAltPressure
-                        mov     spi_reg, #$28           'Read the pressure register (| $40 = continuous read mode)
-                        call    #SPI_ReadByte
+                        mov     spi_reg, #$68           'Read the pressure register (| $40 = continuous read mode)
+                        call    #SPI_StartRead
                         mov     OutAltPressure, spi_data
 
-                        mov     spi_reg, #$29           'Read the pressure register (| $40 = continuous read mode)
-                        call    #SPI_ReadByte
+                        call    #SPI_ContinueRead
                         shl     spi_data, #8
                         or      OutAltPressure, spi_data
 
-                        mov     spi_reg, #$2A           'Read the pressure register (| $40 = continuous read mode)
-                        call    #SPI_ReadByte
+                        call    #SPI_ContinueRead
                         shl     spi_data, #16
                         or      OutAltPressure, spi_data
+
+                        or      outa, spi_cs_mask       'Set CS high
 
                         call    #ComputeAltitude        'Computes altitude and difference from previous
 
@@ -403,10 +391,7 @@ main_loop
                         add     outAddr, #4
                         wrlong  LoopTime, outAddr                                                
                         
-                        
-                                
 
-                        'waitcnt counter, loopdelay      'Wait for the main loop delay
                         jmp     #main_loop              'Repeat forever
 
 
@@ -430,7 +415,7 @@ param_ret               ret
 ''------------------------------------------------------------------------------
 '' Configure the settings of the LSM-9DS1
 ''------------------------------------------------------------------------------
-Config_GryoAccelMag
+Config_Sensors
                         mov     spi_cs_mask, sgmask     'Set the enable pin for the gyro/accelerometer
 
                         'Ctrl_REG1_G (10h)
@@ -543,14 +528,9 @@ Config_GryoAccelMag
                         call    #SPI_Write
                                       
                                                                        
-
-Config_GryoAccelMag_ret ret
-
-
 ''------------------------------------------------------------------------------
 '' Configure the altimeter settings of the LPS25H
 ''------------------------------------------------------------------------------
-Config_Altimeter
                         mov     spi_cs_mask, amask      'Set the enable pin for the altimeter
 
                         'CTRL_REG1 (20h)
@@ -614,7 +594,7 @@ Config_Altimeter
                         'Remaining registers are left at startup defaults
                                                                        
 
-Config_Altimeter_ret    ret
+Config_Sensors_ret      ret
 
 
 
@@ -625,23 +605,46 @@ Config_Altimeter_ret    ret
 '' spi_data - the resulting 8-bit value read from the device 
 ''------------------------------------------------------------------------------
 SPI_ReadByte
+                        call    #SPI_StartRead          'Sets CS low, sends address byte, reads first result
+                        or      outa, spi_cs_mask       'Set CS high
+SPI_ReadByte_ret        ret
+''------------------------------------------------------------------------------
+
+
+''------------------------------------------------------------------------------
+'' SPI_StartRead - Initiate a read from an SPI device, reads first result byte,
+'' but leaves the CS line held low to allow additional sequential byte reads by
+'' calling SPI_ContinueRead
+''
+'' spi_reg  - the register to read from
+'' spi_data - the resulting 8-bit value read from the device 
+''------------------------------------------------------------------------------
+SPI_StartRead
                         mov     spi_bits, spi_reg       'Copy the address value into the output bit rack
                         or      spi_bits, #$80          'Set the read bit on the output address value
                         mov     spi_bitcount, #8        '8 bits to send
 
                         andn    outa, spi_cs_mask       'Set CS low
+                        call    #SPI_SendBits           'Send the bits currently in the spi_bits register
+                        call    #SPI_ContinueRead       'Reads a result from device
+                         
+SPI_StartRead_ret       ret
+''------------------------------------------------------------------------------
 
-                        call    #SPI_SendBits           'Send the bits currently in the spi_bits register 
 
+''------------------------------------------------------------------------------
+'' SPI_ContinueRead - Continue reading from an SPI device, assuming sequential
+'' address mode is enabled on the device
+''
+'' spi_data - the resulting 8-bit value read from the device 
+''------------------------------------------------------------------------------
+SPI_ContinueRead
                         mov     spi_data, #0            'Zero the input register
                         mov     spi_bitcount, #8        '8 bits to receive
-                        
                         call    #SPI_RecvBits
-                        
-                        or      outa, spi_cs_mask       'Set CS high
-                        
-SPI_ReadByte_ret        ret
 
+SPI_ContinueRead_ret    ret
+''------------------------------------------------------------------------------
 
 
 ''------------------------------------------------------------------------------
@@ -651,18 +654,8 @@ SPI_ReadByte_ret        ret
 '' spi_data - the resulting 16-bit value read from the device 
 ''------------------------------------------------------------------------------
 SPI_ReadWord
-                        mov     spi_bits, spi_reg       'Copy the address value into the output bit rack
-                        or      spi_bits, #$80          'Set the read bit on the output address value
-                        mov     spi_bitcount, #8        '8 bits to send
-
-                        andn    outa, spi_cs_mask       'Set CS low
-                        
-                        call    #SPI_SendBits           'Send the bits currently in the spi_bits register 
-
-                        mov     spi_data, #0            'Zero the input register
-                        mov     spi_bitcount, #8        '8 bits to receive
-                        
-                        call    #SPI_RecvBits
+                        call    #SPI_StartRead
+                        'call    #SPI_ContinueRead
 
                         'The chip will auto-increment registers, so we can just keep reading bits without telling it to stop
 
@@ -681,56 +674,8 @@ SPI_ReadWord
                         test    spi_data, bit_15   wc   'Test the sign bit of the result
                         muxc    spi_data, sign_extend   'Replicate the sign bit to the upper-16 bits of the long
 
-
 SPI_ReadWord_ret        ret
 
-
-
-''------------------------------------------------------------------------------
-'' SPI ReadTriple - read a three-byte value in low-high order from a device
-''
-'' spi_reg  - the register of the low-byte to read.  Highest byte is (spi_reg+2)
-'' spi_data - the resulting 24-bit value read from the device 
-''------------------------------------------------------------------------------
-SPI_ReadTriple
-                        mov     spi_bits, spi_reg       'Copy the address value into the output bit rack
-                        or      spi_bits, #$80          'Set the read bit on the output address value
-                        mov     spi_bitcount, #8        '8 bits to send
-
-                        andn    outa, spi_cs_mask       'Set CS low
-                        
-                        call    #SPI_SendBits           'Send the bits currently in the spi_bits register 
-
-                        mov     spi_data, #0            'Zero the input register
-                        mov     spi_bitcount, #8        '8 bits to receive
-                        
-                        call    #SPI_RecvBits
-
-                        'The chip will auto-increment registers, so we can just keep reading bits without telling it to stop
-
-                        'Since the low-byte is first, rotate it around, so the register looks like this: 0_L_0_0  (each char is 8 bits)
-                        ror     spi_data, #16
-                        mov     spi_bitcount, #8        '8 more bits to receive
-
-                        call    #SPI_RecvBits
-                        
-                        'The next byte was just read into the lowest 8-bits, so it now looks like this: L_0_0_H
-
-                        'Rotate it around, so the register looks like this: 0_H_L_0  (each char is 8 bits)
-                        ror     spi_data, #16
-                        mov     spi_bitcount, #8        '8 more bits to receive (call this "Upper")
-
-                        call    #SPI_RecvBits
-
-                        'The upper byte was just read into the lowest 8-bits, so it now looks like this: H_L_0_U
-                        'Rotate the bits to the left by 16, to move them like this: 0_U_H_L 
-
-                        rol     spi_data, #16
-
-                        or      outa, spi_cs_mask       'Set CS high
-                        
-
-SPI_ReadTriple_ret      ret
 
 
 ''------------------------------------------------------------------------------
@@ -809,15 +754,14 @@ SPI_RecvBits_ret        ret
 ''------------------------------------------------------------------------------
 WriteLEDs
                         andn    outa, ledMask           'Drive the LED line low to reset
-                        or      dira, ledMask           'Enable the LED pin as an output
 
                         mov     t3, ledCount
                         mov     t1, ledAddress               
                         
-                        mov     spi_delay, cnt
-                        add     spi_delay, LED_RESET    'wait for the reset time
+                        mov     ledDelay, cnt
+                        add     ledDelay, LED_RESET     'wait for the reset time
 
-                        waitcnt spi_delay, #0
+                        waitcnt ledDelay, #0
 
 :ledLoop
 
@@ -829,23 +773,21 @@ WriteLEDs
 :bitLoop
                         rcl     spi_bits, #1    wc
 
-        if_nc           mov     spi_delay, #LED_0_HI  
-        if_c            mov     spi_delay, #LED_1_HI                
+        if_nc           mov     ledDelay, #LED_0_HI  
+        if_c            mov     ledDelay, #LED_1_HI                
 
                         or      outa, ledMask
-                        add     spi_delay, cnt          'sync the timer to the bit-delay time
+                        add     ledDelay, cnt           'sync the timer to the bit-delay time
                           
-        if_nc           waitcnt spi_delay, #LED_0_LO
-        if_c            waitcnt spi_delay, #LED_1_LO                
+        if_nc           waitcnt ledDelay, #LED_0_LO
+        if_c            waitcnt ledDelay, #LED_1_LO                
          
                         andn    outa, ledMask           'pull the LED pin low             
-                        waitcnt spi_delay, #0           'hold for the bit duration
+                        waitcnt ledDelay, #0            'hold for the bit duration
 
                         djnz    spi_bitcount, #:bitLoop
 
                         djnz    t3, #:ledLoop
-
-                        andn    dira, ledMask           'Set the LED pin as an input again (high-z / floating)
                         
 WriteLEDs_ret           ret
 
@@ -868,37 +810,23 @@ ComputeDrift
 
                         mov     t3, driftHubAddr        'Rewind t3 back to DriftScaleGX
 
+                        mov     t1, #3
+                        movd    :addDrift, #DriftX
+  :driftLoop                                                       
+
                         'Compute drift value for X axis
-                        rdlong  divisor, t3             'DriftScaleGX
+                        rdlong  divisor, t3             'DriftScaleGX, GY, GZ
                         add     t3, #4                                                
                         mov     dividend, OutTemp
                         mov     divResult, #0
 
                         cmp     divisor, #0     wz, wc
               if_nz     call    #Divide
-                        add     DriftX, divResult
+              
+  :addDrift             add     DriftX, divResult
+                        add     :addDrift, d_field      'Increment the register to output
 
-
-                        'Compute drift value for Y axis                        
-                        rdlong  divisor, t3             'DriftScaleGY
-                        add     t3, #4                                                
-                        mov     dividend, OutTemp
-                        mov     divResult, #0
-
-                        cmp     divisor, #0     wz, wc
-              if_nz     call    #Divide
-                        add     DriftY, divResult
-
-
-                        'Compute drift value for Z axis                        
-                        rdlong  divisor, t3             'DriftScaleGZ
-                        add     t3, #4                                                
-                        mov     dividend, OutTemp
-                        mov     divResult, #0
-
-                        cmp     divisor, #0     wz, wc
-              if_nz     call    #Divide
-                        add     DriftZ, divResult
+                        djnz    t1, #:driftLoop
 
 
                         add     t3, #12   
@@ -974,11 +902,7 @@ multiply
 multiply_ret            ret
                              
 
-'mul_x                   long                    $0                              ' should typically equal 0
-'mul_y                   long                    $0
-'mul_n                   long                    $0
 mul_t1                  long                    $0
-'mulCounter              long                    $0
 
 
 '------------------------------------------------------------------------------
@@ -1173,15 +1097,14 @@ spi_data                res     1                       'SPI value to output, or
 
 spi_bits                res     1                       'SPI bits to output in SPI_SendBits function
 spi_bitcount            res     1                       'Number of bits to send / receive
-spi_delay               res     1                       'Next counter value to wait for when sending / receiving
 spi_cs_mask             res     1                       'Set prior to read - The CS pin mask to enable
 
 t1                      res     1                       '
 t2                      res     1                       'internal temporary registers
 t3                      res     1                       '
 
-omask                   res     1                       'Device output pin mask (Prop input)
 imask                   res     1                       'Device input pin mask (Prop output) 
+omask                   res     1                       'Device output pin mask (Prop input)
 cmask                   res     1                       'Clock pin mask
 sgmask                  res     1                       'Select Gyro pin mask
 smmask                  res     1                       'Select Magnetometer pin mask
@@ -1190,10 +1113,11 @@ amask                   res     1                       'Select Altimeter pin ma
 ledmask                 res     1                       'LED pin mask
 ledAddress              res     1                       'HUB Address of LED values
 ledCount                res     1
+ledDelay                res     1                       'Next counter value to wait for when sending / receiving
 
 outAddr                 res     1                       'Output hub address        
 
-counter                 res     1                       'Master loop time counter
+counter                 res     1                       'generic counter value
 driftHubAddr            res     1                       'Hub address of the drift values (for dynamic configuration)
 
 mul_x         'Shared to save space
