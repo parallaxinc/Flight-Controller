@@ -938,7 +938,7 @@ PUB BeepTune
 
 
 PUB Beep
-  BeepHz( 4500 , 80 )
+  BeepHz( 5000 , 80 )
 
 
 PUB Beep2
