@@ -32,6 +32,10 @@ VAR
   long  m00, m01, m02                                   'Body orientation as a 3x3 matrix
   long  m10, m11, m12
   long  m20, m21, m22
+
+  long  fm00, fm01, fm02                                'Body orientation as a 3x3 matrix in fixed integer form (+/- 65536 == +/- 1.0)
+  long  fm10, fm11, fm12
+  long  fm20, fm21, fm22
   
   'Internal working variables - It isn't strictly necessary to break all of these out like this,
   'but it makes the code much more readable than having a bunch of temp variables
@@ -59,7 +63,7 @@ VAR
   'Various constants used by the float math engine - Every command in the instruction stream reads two
   'arguments from memory using memory addresses, so the values actually need to exist somewhere
   long const_GyroScale, const_NegGyroScale, const_InvGyroScale
-  long const_0, const_1, const_Neg12, const_F1, const_F2
+  long const_0, const_1, const_Neg12, const_16, const_F1, const_F2
   long const_epsilon, const_half, const_neghalf
   long const_neg1, const_ErrScale, const_AccScale, const_outAngleScale, const_ThrustScale
   long const_GMetersPerSec, const_AltiVelScale, const_UpdateScale
@@ -71,7 +75,7 @@ VAR
   
 
 VAR
-  long  QuatUpdateCommands[300 + 284 + 250]
+  long  QuatUpdateCommands[300 + 284 + 310]
   long  QuatUpdateLen
   
 
@@ -94,6 +98,7 @@ PUB Start
   const_1 := 1
   const_neg1 := -1
   const_neg12 := -12            'Used to subtract from acc exponent, equivalent to /= 4096.0
+  const_16 := 16                'Used to add to exponents, equivalent to *= 65536.0 
   
   const_F1 := 1.0
   const_F2 := 2.0
@@ -134,6 +139,9 @@ PUB GetSensors
 
 PUB GetMatrix
   return @m00
+
+PUB GetFixedMatrix
+  return @fm00
 
 PUB GetQuaternion
   return @qx
@@ -429,7 +437,7 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Yaw )
 
 
-  FLT.AddCommand( 0, FLT#opDiv, @const_F1, @m11, @temp )                        '1.0/m11 = scale factor for thrust   
+  FLT.AddCommand( 0, FLT#opDiv, @const_F1, @m11, @temp )                        '1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
   FLT.AddCommand( 0, FLT#opMul, @temp, @const_ThrustScale, @temp )              '*= 256.0  
   FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @ThrustFactor )
 
@@ -492,8 +500,31 @@ PUB InitFunctions
   Flt.AddCommand( 0, FLT#opMul, @altitudeEstimate, @const_m_to_mm, @temp )      'temp = altEst * 1000.0    (temp now in mm)
   FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @AltitudeEstMM )
 
-  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_m_to_mm, @temp )      'temp = velEst * 1000.0    (temp now in mm)
+  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_m_to_mm, @temp )      'temp = velEst * 1000.0    (temp now in mm/sec)
   FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @VelocityEstMM )
+
+
+  'Create a fixed point version of the orientation matrix
+  FLT.AddCommand( 0, FLT#opShift, @m00, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm00 )
+  FLT.AddCommand( 0, FLT#opShift, @m01, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm01 )
+  FLT.AddCommand( 0, FLT#opShift, @m02, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm02 )
+
+  FLT.AddCommand( 0, FLT#opShift, @m10, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm10 )
+  FLT.AddCommand( 0, FLT#opShift, @m11, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm11 )
+  FLT.AddCommand( 0, FLT#opShift, @m12, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm12 )
+
+  FLT.AddCommand( 0, FLT#opShift, @m20, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm20 )
+  FLT.AddCommand( 0, FLT#opShift, @m21, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm21 )
+  FLT.AddCommand( 0, FLT#opShift, @m22, @const_16, @temp )  
+  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm22 )
 
 
   QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
