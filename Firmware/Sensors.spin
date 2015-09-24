@@ -64,6 +64,7 @@ VAR
   long  DriftScale[3]
   long  DriftOffset[3]          'These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
   long  AccelOffset[3]
+  long  MagOffsetX, MagScaleX, MagOffsetY, MagScaleY, MagOffsetZ, MagScaleZ
 
   long  cog
 
@@ -91,7 +92,7 @@ PUB start(ipin, opin, cpin, sgpin, smpin, apin, _LEDPin, _LEDAddr, _LEDCount) : 
 ''   LEDCount= Number of LED values to update  
 
   'Copy these values from the variables the DAT section so the cog starts with the right settings
-  eeprom.ToRam(@DriftScale[0], @DriftScale[0] + constant(9*4), const#DriftScalePref )   ' Copy from EEPROM to VAR
+  eeprom.ToRam(@DriftScale[0], @DriftScale[0] + constant(15*4), const#DriftScalePref )   ' Copy from EEPROM to VAR
 
   return startx(@ipin)
 
@@ -157,6 +158,16 @@ PUB SetAccelOffsetValues( OffsetX, OffsetY, OffsetZ )
   longmove( @AccelOffset[0], @OffsetX, 3 )
   longmove( @AccelOffsetX, @OffsetX, 3 )
   eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , const#DriftScalePref )         ' Copy from VAR to EEPROM
+
+
+PUB ZeroMagnetometerScaleOffsets
+  longfill( @MagOffsetX, 0, 6 )
+  eeprom.FromRam(@MagOffsetX, @MagOffsetX + constant(6*4) , const#MagScaleOfsPref )              ' Copy from VAR to EEPROM
+
+
+PUB SetMagnetometerScaleOffsets( xo, xs, yo, ys, zo, zs )
+  longmove( @MagOffsetX, @xo, 6 )
+  eeprom.FromRam(@MagOffsetX, @MagOffsetX + constant(6*4) , const#MagScaleOfsPref )              ' Copy from VAR to EEPROM
    
 
 
@@ -840,7 +851,38 @@ ComputeDrift
                         add     t3, #4   
                         rdlong  t2, t3   
                         sub     OutAZ, t2       'AccelOffsetZ
+
+
+                        'Apply the magnetometer scale and offset values
+
+  :magScale
+                        add     t3, #4                  't3 now points at MagOffsetX
+                        mov     t1, #3                  'loop counter
                         
+                        movs    :readMag, #OutMX
+                        movd    :writeMag, #OutMX
+  :magLoop                                                       
+                        rdlong  t2, t3                  'Read the MagOffset from the hub
+                        add     t3, #4                  'Increment the hub source address
+                                                
+  :readMag              mov     mul_x, OutMX
+                        subs    mul_x, t2               'Subtract the MagOffset value
+
+                        rdlong  mul_y, t3       wz      'Read the MagScale into mul_y
+                        add     t3, #4                  'Increment the hub source address
+                        
+              if_z      jmp     #:skipMul
+                        call    #multiply               'Multiply the two values together (if the scale is non-zero)
+                        sar     mul_x, #11              '/= 2048
+
+  :skipMul                        
+  :writeMag             mov     OutMX, mul_x
+                        add     :writeMag, d_field
+                        add     :readMag, #1
+  
+                        djnz    t1, #:magLoop
+
+
 ComputeDrift_Ret        ret
 
 

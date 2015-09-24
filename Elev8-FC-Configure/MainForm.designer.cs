@@ -589,7 +589,7 @@
 			this.gMagZ.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
 			this.gMagZ.Location = new System.Drawing.Point( 203, 217 );
 			this.gMagZ.Name = "gMagZ";
-			this.gMagZ.Range = 16384F;
+			this.gMagZ.Range = 4096F;
 			this.gMagZ.Size = new System.Drawing.Size( 91, 89 );
 			this.gMagZ.TabIndex = 25;
 			this.gMagZ.Value = 0F;
@@ -600,7 +600,7 @@
 			this.gMagY.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
 			this.gMagY.Location = new System.Drawing.Point( 106, 217 );
 			this.gMagY.Name = "gMagY";
-			this.gMagY.Range = 16384F;
+			this.gMagY.Range = 4096F;
 			this.gMagY.Size = new System.Drawing.Size( 91, 89 );
 			this.gMagY.TabIndex = 24;
 			this.gMagY.Value = 0F;
@@ -611,7 +611,7 @@
 			this.gMagX.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
 			this.gMagX.Location = new System.Drawing.Point( 9, 217 );
 			this.gMagX.Name = "gMagX";
-			this.gMagX.Range = 16384F;
+			this.gMagX.Range = 4096F;
 			this.gMagX.Size = new System.Drawing.Size( 91, 89 );
 			this.gMagX.TabIndex = 23;
 			this.gMagX.Value = 0F;

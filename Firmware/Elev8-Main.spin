@@ -84,6 +84,7 @@ CON
   FlightMode_Assisted = 0
   FlightMode_Automatic = 1
   FlightMode_Manual = 2
+  FlightMode_CalibrateCompass = 3
 
   
 
@@ -101,7 +102,7 @@ OBJ
   RollPID   : "IntPID.spin"
   PitchPID  : "IntPID.spin"
   YawPID    : "IntPID.spin"
-  AltPID    : "IntPID.spin"
+  AscentPID : "IntPID.spin"
 
   TestPID   : "IntPID.spin"
 
@@ -129,7 +130,7 @@ VAR
   long  Pitch, Roll, Yaw, AltiEst, AscentEst
 
   'Working variables - used to convert receiver inputs to desired ranges for the PIDs  
-  long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredAltitude
+  long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredVerticalSpeed
 
   long  RollDifference, PitchDifference                 'Delta between current measured roll/pitch and desired roll/pitch                         
   long  GyroRoll, GyroPitch                             'Raw gyro values altered by desired pitch & roll targets   
@@ -144,7 +145,9 @@ VAR
   long loopTimer                'Master flight loop counter - used to keep a steady update rate
 
 
-  word EnableStep               'Flight arm/disarm counter  
+  word FlightEnableStep         'Flight arm/disarm counter
+  word CompassConfigStep        'Compass configure mode counter
+    
   byte FlightEnabled            'Flight arm/disarm flag
   byte FlightMode
 
@@ -155,7 +158,13 @@ VAR
   long RollPitch_P, RollPitch_D 
   long UseSBUS, SBUSCenter
   long LEDModeColor
-  
+
+
+  byte calib_startQuadrant
+  byte calib_Quadrants
+  byte calib_step
+  long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax
+
 
 
 PUB Main | Cycles
@@ -173,7 +182,8 @@ PUB Main | Cycles
   FlightEnabled := FALSE 
 
   DesiredRoll := DesiredPitch := DesiredYaw := 0
-  EnableStep := 0               'Counter to know which section of enable/disable sequence we're in
+  FlightEnableStep := 0               'Counter to know which section of enable/disable sequence we're in
+  CompassConfigStep := 0
 
   FlightMode := FlightMode_Assisted
 
@@ -223,34 +233,38 @@ PUB Main | Cycles
 
 
   RollPitch_P := 10000           'Set here to allow an in-flight tuning baseline
-  RollPitch_D := 30000 
+  RollPitch_D := 30000 * 250 
 
 
-  RollPID.Init( RollPitch_P, 0,  RollPitch_D )               
+  RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const#UpdateRate )               
   RollPID.SetPrecision( 12 ) 
   RollPID.SetMaxOutput( 3000 )
   RollPID.SetPIMax( 100 )
   RollPID.SetMaxIntegral( 1900 )
+  RollPID.SetDervativeFilter( 96 ) 
 
 
-  PitchPID.Init( RollPitch_P, 0,  RollPitch_D )               
+  PitchPID.Init( RollPitch_P, 0,  RollPitch_D , Const#UpdateRate )               
   PitchPID.SetPrecision( 12 ) 
   PitchPID.SetMaxOutput( 3000 )
   PitchPID.SetPIMax( 100 )
   PitchPID.SetMaxIntegral( 1900 )
+  PitchPID.SetDervativeFilter( 96 ) 
 
 
-  YawPID.Init(  5000,   0,  -15000 ) 
+  YawPID.Init(  5000,   0,  -3750000 , Const#UpdateRate ) 
   YawPID.SetPrecision( 12 ) 
   YawPID.SetMaxOutput( 5000 )
+  YawPID.SetDervativeFilter( 96 ) 
 
 
   'Altitude hold PID object
-  AltPID.Init( 100, 0, 0 )
-  AltPID.SetPrecision( 12 ) 
-  AltPID.SetMaxOutput( 2000 )
-  AltPID.SetPIMax( 100 )
-  AltPID.SetMaxIntegral( 3000 )
+  AscentPID.Init( 1000, 250000, 250000 , Const#UpdateRate )
+  AscentPID.SetPrecision( 12 ) 
+  AscentPID.SetMaxOutput( 4000 )
+  AscentPID.SetPIMax( 100 )
+  AscentPID.SetMaxIntegral( 3000 )
+  AscentPID.SetDervativeFilter( 96 ) 
 
 
   FindGyroZero     'Get a gyro baseline - We'll re-do this on flight arming, but this helps settle the IMU
@@ -297,17 +311,25 @@ PUB Main | Cycles
       Aux1 :=  RC.GetRC( RC_AUX1 )
       Aux2 :=  RC.GetRC( RC_AUX2 )
       Aux3 :=  RC.GetRC( RC_AUX3 )
-       
 
-    if( Gear < -512 )
-      FlightMode := FlightMode_Assisted
-    elseif( Gear > 512 )
-      FlightMode := FlightMode_Manual
+
+      '-------------------------------------------------
+    if( FlightMode == FlightMode_CalibrateCompass )
+
+      DoCompassCalibrate
+
+      '-------------------------------------------------
     else
-      FlightMode := FlightMode_Automatic
+      '-------------------------------------------------
+      if( Gear < -512 )
+        FlightMode := FlightMode_Assisted
+      elseif( Gear > 512 )
+        FlightMode := FlightMode_Manual
+      else
+        FlightMode := FlightMode_Automatic
 
-
-    UpdateFlightLoop            '~82000 cycles when in flight mode
+      UpdateFlightLoop            '~82000 cycles when in flight mode
+      '-------------------------------------------------
 
     All_LED( LEDModeColor )
 
@@ -379,36 +401,48 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
     'Are the sticks being pushed down and toward the center?
 
-    if( Rudd > 750  AND  Aile < -750  AND  Thro < -750  AND  Elev < -750 )
-      EnableStep++
-      'All_LED( LED_Yellow & LED_Half )
-      LEDModeColor := LED_Yellow & LED_Half 
-              
-      if( EnableStep == 250 )   'Hold for 1 second
-        ArmFlightMode
-      
-    else
-      EnableStep := 0
-      'All_LED( LED_Green & LED_Half )
-    '------------------------------------------------------------------------
+    if( Thro < -750  AND  Elev < -750 )
 
+      if( Rudd > 750  AND  Aile < -750 )
+        FlightEnableStep++
+        CompassConfigStep := 0
+        LEDModeColor := LED_Yellow & LED_Half 
+                
+        if( FlightEnableStep == 250 )   'Hold for 1 second
+          ArmFlightMode
+        
+      elseif( Rudd > 750  AND  Aile > 750 )
+        CompassConfigStep++
+        FlightEnableStep := 0
+
+        LEDModeColor := (LED_Blue | LED_Red) & LED_Half 
+                
+        if( CompassConfigStep == 250 )   'Hold for 1 second
+          StartCompassCalibrate
+
+      else  
+        CompassConfigStep := 0
+        FlightEnableStep := 0
+        
+    else
+      CompassConfigStep := 0
+      FlightEnableStep := 0
+    '------------------------------------------------------------------------
+       
   else
 
     'Are the sticks being pushed down and away from center?
 
     if( Rudd < -750  AND  Aile > 750  AND  Thro < -750  AND  Elev < -750 )
-      EnableStep++
-      'All_LED( LED_Yellow & LED_Half )
+      FlightEnableStep++
       LEDModeColor := LED_Yellow & LED_Half
               
-      if( EnableStep == 250 )   'Hold for 1 second
+      if( FlightEnableStep == 250 )   'Hold for 1 second
         DisarmFlightMode
         return                  'Prevents the motor outputs from being un-zero'd
       
     else
-      EnableStep := 0
-      'All_LED( LED_Red & LED_Half )
-
+      FlightEnableStep := 0
     '------------------------------------------------------------------------
 
      
@@ -483,26 +517,26 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
     ThroMix <#= 64                                      ' Above 1/8 throttle, clamp it to 64
     ThroMix #>= 0
      
-    'add 3000 to all Output values to make them 'servo friendly' again   (3000 is our output center)
-    ThroOut := (Thro + 3000) << 2
+    'add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
+    ThroOut := (Thro << 2) + 12000
 
 
     '-------------------------------------------
     if( FlightMode <> FlightMode_Manual )
 
-      {
+
       if( FlightMode == FlightMode_Automatic )
         if( ||Thro > 100 )
-          DesiredAltitude += Thro ~> 4 
+          DesiredVerticalSpeed := Thro << 2             'Thro becomes desired speed in mm/sec, -1024 to +1024 becomes +/- 4 m/sec 
       
-        AltiThrust := AltPID.Calculate_NoD2( DesiredAltitude , AltiEst , DoIntegrate )
-        ThroOut := 12000 + AltiThrust
+        AltiThrust := AscentPID.Calculate_NoD2( DesiredVerticalSpeed , AscentEst , DoIntegrate )
+        ThroOut := 12000 + (Thro << 1) + AltiThrust
 
       else
-      }
+
         'Accelerometer assist    
-        if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
-          ThroOut -= (AccelZSmooth - Const#OneG) ~> 1
+        'if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
+        '  ThroOut -= (AccelZSmooth - Const#OneG) ~> 1
 
       'Tilt compensated thrust assist      
       ThrustMul := 256 #> IMU.GetThrustFactor <# 384    'Limit the effect of the thrust modifier 
@@ -560,7 +594,7 @@ PUB UpdateFlightLEDColor | index, color
 
 PUB InitTestPID
 
-  TestPID.Init(  4550, 475,  8400 )               
+  TestPID.Init(  4550, 475*250,  8400*250 , Const#UpdateRate )               
   TestPID.SetPrecision( 12 ) 
   TestPID.SetMaxOutput( 3000 )
   TestPID.SetPIMax( 110 )
@@ -641,7 +675,8 @@ PUB FlightModeTest | ThroOut, CurrentRoll, T1, T2, T3
 PUB ArmFlightMode
 
   FlightEnabled := TRUE
-  EnableStep := 0
+  FlightEnableStep := 0
+  CompassConfigStep := 0
   Beep2
    
   All_LED( LED_Red & LED_Half )
@@ -650,7 +685,7 @@ PUB ArmFlightMode
   All_LED( LED_Blue & LED_Half )        
   BeepTune
 
-  DesiredAltitude := AltiEst
+  DesiredVerticalSpeed := 0
   loopTimer := cnt
 
 
@@ -662,11 +697,181 @@ PUB DisarmFlightMode
   ESC.Set( MOTOR_BL, 8000 )
 
   FlightEnabled := FALSE
-  EnableStep := 0
+  FlightEnableStep := 0
+  CompassConfigStep := 0
   Beep3
+  
   All_LED( LED_Green & LED_Half )        
   loopTimer := cnt
-   
+
+
+
+PUB StartCompassCalibrate
+
+  ESC.Set( MOTOR_FL, 8000 )
+  ESC.Set( MOTOR_FR, 8000 )
+  ESC.Set( MOTOR_BR, 8000 )
+  ESC.Set( MOTOR_BL, 8000 )
+
+  FlightEnabled := FALSE
+  FlightMode := FlightMode_CalibrateCompass
+
+  Beep
+  waitcnt( 10_000_000 + cnt )  
+  Beep2
+  waitcnt( 10_000_000 + cnt )  
+  Beep
+
+  calib_Step := 0  
+  calib_quadrants := 0
+  calib_startQuadrant := $ff
+  
+  c_xmin := c_ymin := c_zmin :=  10000
+  c_xmax := c_ymax := c_zmax := -10000
+
+  Sens.ZeroMagnetometerScaleOffsets
+
+  loopTimer := cnt
+
+
+
+PUB DoCompassCalibrate | q, xc, yc, zc, xs, ys, zs, xr, yr, zr, mr
+
+  if( calib_Step == 0 )
+    'First cycle requires the quad to be level, and spun 360 degrees
+
+    'Check the roll & pitch to make sure they're within some tolerance of level
+    if( ||Roll > 3000  OR  ||Pitch > 3000 )
+      LEDModeColor := LED_Yellow & Led_Half
+
+    else
+      LEDModeColor := LED_Violet & Led_Half
+      if( ((Counter >> 5) & 3 ) == 0 )
+        LEDModeColor := LED_Green & Led_Half      
+
+      'Monitor yaw to see which quadrant we're in, keep going until we're in the same one we started, and have touched all four
+      q := Calib_ComputeQuadrant( long[IMU.GetFixedMatrix][6], long[IMU.GetFixedMatrix][8] ) 
+
+      if( calib_startQuadrant == $ff )
+        calib_startQuadrant := q
+
+      if( ( |<q | calib_quadrants) <> calib_quadrants )
+        BeepHz( 5000, 10 )
+        loopTimer := cnt
+        calib_quadrants |= |<q   
+
+      c_xmin := magx <# c_xmin
+      c_xmax := magx #> c_xmax 
+      c_ymin := magy <# c_ymin
+      c_ymax := magy #> c_ymax 
+      c_zmin := magz <# c_zmin
+      c_zmax := magz #> c_zmax 
+
+      if( calib_quadrants == %1111  AND  q == calib_StartQuadrant )
+        calib_Step := 1
+        Beep3
+
+        'Reset these for the next phase
+        calib_quadrants := 0                                
+        calib_startQuadrant := $ff
+        
+        loopTimer := cnt        'Keep the outer counter happy - the beep has a delay, which messes it up
+        return
+
+
+  if( calib_Step == 1 )
+
+    'Check to make sure the craft is vertical along the PITCH axis, nose up
+    if( ||Pitch < 29_000 )
+      LEDModeColor := LED_Yellow & Led_Half
+
+    else
+      LEDModeColor := LED_Violet & Led_Half
+      if( ((Counter >> 5) & 3 ) == 0 )
+        LEDModeColor := LED_Green & Led_Half      
+
+
+      'Monitor rotation around the Z axis to see which quadrant we're in, otherwise same as above
+      q := Calib_ComputeQuadrant( long[IMU.GetFixedMatrix][0], long[IMU.GetFixedMatrix][1] ) 
+
+
+      if( calib_startQuadrant == $ff )
+        calib_startQuadrant := q
+
+
+      if( ( |<q | calib_quadrants) <> calib_quadrants )
+        BeepHz( 5000, 10 )
+        loopTimer := cnt
+        calib_quadrants |= |<q   
+
+      c_xmin := magx <# c_xmin
+      c_xmax := magx #> c_xmax 
+      c_ymin := magy <# c_ymin
+      c_ymax := magy #> c_ymax 
+      c_zmin := magz <# c_zmin
+      c_zmax := magz #> c_zmax 
+
+      if( calib_quadrants == %1111  AND  q == calib_StartQuadrant )
+        calib_Step := 2
+        loopTimer := cnt        'Keep the outer counter happy - the beep has a delay, which messes it up
+        return
+
+
+  if( calib_Step == 2 )
+    'Yay!  We're done! 
+
+
+    'Compute the necessary scales and offsets
+    'xr = x_range
+    'xc = x center
+    'mr = maximum range of all 3 components
+    'xs = x scale, IE a multiplier that such that (x * mult) / 2048 will normalize readings relative to each other
+
+    xr := c_xmax - c_xmin
+    yr := c_ymax - c_ymin
+    zr := c_zmax - c_zmin
+
+    mr := xr #> yr #> zr
+
+    xc := (c_xmin + c_xmax) / 2
+    yc := (c_ymin + c_ymax) / 2
+    zc := (c_zmin + c_zmax) / 2
+
+    xs := (mr * 2048) / xr    
+    ys := (mr * 2048) / yr    
+    zs := (mr * 2048) / zr    
+
+
+    'Write the resulting scales / offsets to EEPROM for the Sensors cog
+    Sens.SetMagnetometerScaleOffsets( xc, xs, yc, ys, zc, zs )
+
+
+    FlightMode := FlightMode_Assisted
+     
+    Beep2
+    waitcnt( 10_000_000 + cnt )  
+    Beep2
+    waitcnt( 10_000_000 + cnt )  
+    Beep2
+
+    loopTimer := cnt        'Keep the outer counter happy - the beep has a delay, which messes it up
+     
+
+
+
+PUB Calib_ComputeQuadrant( x, y )
+ 
+  result := 0
+  if( x < 0 )
+    if( y < 0 )
+      result := 2
+    else
+      result := 3
+  else
+    if( y < 0 )
+      result := 1
+    else
+      result := 0
 
 
 PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz
@@ -960,6 +1165,7 @@ LEDColorTable
         LED_Assisted    long    LED_DimCyan
         LED_Automatic   long    LED_Green
         LED_Manual      long    LED_Yellow
+        LED_CompCalib   long    LED_Violet
 
 LEDArmDisarm
         LED_Disarmed    long    LED_Green

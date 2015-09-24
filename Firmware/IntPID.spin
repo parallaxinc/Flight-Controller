@@ -18,15 +18,19 @@ VAR
   long LastDError     'Previous Error
   long MaxIntegral, PIMax  
   long MaxOutput
+  long DerivFilter
+  long SampleRate
 
    
-PUB Init( PGain, IGain, DGain )
+PUB Init( PGain, IGain, DGain, _SampleRate )
+  SampleRate := _SampleRate
   Kp := PGain
-  Ki := IGain
-  Kd := DGain
+  Ki := IGain / SampleRate
+  Kd := DGain / SampleRate
   Kd2 := 0
   PMax := 0
   PIMax := 0
+  DerivFilter := 0
   
   LastPError := 0
   IError := 0
@@ -40,19 +44,17 @@ PUB SetPrecision( prec )
   Precision := prec
   RoundOffset := 1 << (Precision-1)
 
-
-
 PUB SetPGain( Value )
   Kp := Value  
 
 PUB SetIGain( Value )
-  Ki := Value  
+  Ki := Value / SampleRate  
 
 PUB SetDGain( Value )
-  Kd := Value
+  Kd := Value / SampleRate
 
 PUB SetD2Gain( Value )
-  Kd2 := Value
+  Kd2 := Value / SampleRate
   
 
 PUB SetPMax( Value )
@@ -68,8 +70,20 @@ PUB SetMaxOutput( Value )
   MaxOutput := Value
 
 
+
+PUB SetDervativeFilter( Filter )
+
+  {Derivative is normally used "raw", but if the set point or measurement change quickly
+  it can lead to "derivative kick".  The filter value is applied as a fraction over 256.
+  So a filter value of 128 allows 1/2 of the actual change in derivative to feed through
+  in each iteration.  Smaller numbers are a stronger filter.}
+  
+  DerivFilter := Filter
+
+
 PUB ResetIntegralError
   IError := 0
+
 
 PUB GetVarAddress
   return @Output
@@ -79,14 +93,19 @@ PUB GetIError
   return IError
     
 
-PUB Calculate( SetPoint , Measured , DoIntegrate )
+PUB Calculate( SetPoint , Measured , DoIntegrate ) | RawDeriv
 
   ' Proportional error is Desired - Measured
   PError := SetPoint - Measured
   
   ' Derivative error is the delta PError divided by time
   ' If loop timing is const, you can skip the divide and just make the factor smaller
-  DError := PError - LastPError
+  if( DerivFilter == 0 )
+    DError := PError - LastPError 
+  else
+    RawDeriv := PError - LastPError
+    DError += ((RawDeriv - DError) * DerivFilter) ~> 8  'Filter the derivative error term so it's not completely nuts
+
   D2Error := DError - LastDError  
 
   LastDError := DError
@@ -116,14 +135,18 @@ PUB Calculate( SetPoint , Measured , DoIntegrate )
   return Output
 
 
-PUB Calculate_NoD2( SetPoint , Measured , DoIntegrate )
+PUB Calculate_NoD2( SetPoint , Measured , DoIntegrate ) | RawDeriv
 
   ' Proportional error is Desired - Measured
   PError := SetPoint - Measured
   
   ' Derivative error is the delta PError divided by time
   ' If loop timing is const, you can skip the divide and just make the factor smaller
-  DError := PError - LastPError
+  if( DerivFilter == 0 )
+    DError := PError - LastPError 
+  else
+    RawDeriv := PError - LastPError
+    DError += ((RawDeriv - DError) * DerivFilter) ~> 8  'Filter the derivative error term so it's not completely nuts
 
   LastDError := DError
   LastPError := PError

@@ -16,13 +16,15 @@ CON
   Alti_UpdateRate = 25          'Must match the update rate of the device  
 
 
-  DriftScalePref =  32768 + 0
-  DriftOffsetPref = 32768 + 3*4
-  AccelOffsetPref = 32768 + 6*4
-  UseSBUSPref     = 32768 + 9*4 
-  SBUSCenterPref  = 32768 + 10*4 
+  DriftScalePref =  32768 + 0     '3 longs
+  DriftOffsetPref = 32768 + 3*4   '3 longs 
+  AccelOffsetPref = 32768 + 6*4   '3 longs
+  MagScaleOfsPref = 32768 + 9*4   '6 longs
 
-  NextPref        = 32768 + 11*4
+  UseSBUSPref     = 32768 + 13*4  '1 long                       
+  SBUSCenterPref  = 32768 + 14*4  '1 long 
+
+  NextPref        = 32768 + 15*4
  
 PUB Placeholder
   'This is simply to allow this object to compile
