@@ -18,60 +18,122 @@ CON
   AccToG = float(Const#OneG)                            'Accelerometer per G @ 8g sensitivity = ~0.24414 mg/bit 
 
   GyroScale = GyroToDeg * RadToDeg * float(Const#UpdateRate)
+
   
-VAR
-  long Roll, Pitch, Yaw, ThrustFactor                   'Outputs, scaled units
+DAT
+ 'These would normally be declared in a VAR section, but there will only ever be one IMU object, and
+ 'the way the FPU instruction stream is built at compile time requires DAT variables so the memory addresses
+ 'can be resolved at compile time too.
+
+  Roll                  long    0
+  Pitch                 long    0
+  Yaw                   long    0
+  ThrustFactor          long    0                       'Outputs, scaled units
 
   'Inputs
-  long zx, zy, zz                                       'Gyro zero readings
-  long gx, gy, gz, ax, ay, az, mx, my, mz, alt, altRate 'Sensor inputs
+  zx                    long    0
+  zy                    long    0
+  zz                    long    0                       'Gyro zero readings
+  gx                    long    0
+  gy                    long    0
+  gz                    long    0
+  ax                    long    0
+  ay                    long    0
+  az                    long    0
+  mx                    long    0
+  my                    long    0
+  mz                    long    0
+  alt                   long    0
+  altRate               long    0                       'Sensor inputs
 
   'Internal orientation storage
-  long  qx, qy, qz, qw                                  'Body orientation quaternion
+  qx                    long    0
+  qy                    long    0
+  qz                    long    0
+  qw                    long    0                       'Body orientation quaternion
+  
+                        long    0
+  m00                   long    0
+  m01                   long    0
+  m02                   long    0                       'Body orientation as a 3x3 matrix
+  m10                   long    0
+  m11                   long    0
+  m12                   long    0
+  m20                   long    0
+  m21                   long    0
+  m22
 
-  long  m00, m01, m02                                   'Body orientation as a 3x3 matrix
-  long  m10, m11, m12
-  long  m20, m21, m22
-
-  long  fm00, fm01, fm02                                'Body orientation as a 3x3 matrix in fixed integer form (+/- 65536 == +/- 1.0)
-  long  fm10, fm11, fm12
-  long  fm20, fm21, fm22
+  fm00                  long    0
+  fm01                  long    0
+  fm02                  long    0                       'Body orientation as a 3x3 matrix in fixed integer form (+/- 65536 == +/- 1.0)
+  fm10                  long    0
+  fm11                  long    0
+  fm12                  long    0
+  fm20                  long    0
+  fm21                  long    0
+  fm22                  long    0
   
   'Internal working variables - It isn't strictly necessary to break all of these out like this,
   'but it makes the code much more readable than having a bunch of temp variables
   
-  long  qdx, qdy, qdz, qdw                              'Incremental rotation quaternion
-  long  fx2, fy2, fz2, fwx, fwy, fwz, fxy, fxz, fyz     'Quaternion to matrix temp coefficients
+  qdx                   long    0
+  qdy                   long    0
+  qdz                   long    0
+  qdw                   long    0                       'Incremental rotation quaternion
+  fx2                   long    0
+  fy2                   long    0
+  fz2                   long    0
+  fwx                   long    0
+  fwy                   long    0
+  fwz                   long    0
+  fxy                   long    0
+  fxz                   long    0
+  fyz                   long    0                       'Quaternion to matrix temp coefficients
 
-  long rx, ry, rz                                       'Float versions of rotation components
-  long fax, fay, faz                                    'Float version of accelerometer vector
-  long faxn, fayn, fazn                                 'Float version of accelerometer vector (normalized)
-  long rmag, cosr, sinr                                 'magnitude, cos, sin values
-  long errDiffX, errDiffY, errDiffZ                     'holds difference vector between target and measured orientation
-  long errCorrX, errCorrY, errCorrZ                     'computed rotation correction factor
-  long temp                                             'temp value for use in equations                        
-  long accWeight
+  rx                    long    0
+  ry                    long    0
+  rz                    long    0                       'Float versions of rotation components
+
+  fax                   long    0
+  fay                   long    0
+  faz                   long    0                       'Float version of accelerometer vector
+
+  faxn                  long    0
+  fayn                  long    0
+  fazn                  long    0                       'Float version of accelerometer vector (normalized)
+  
+  rmag                  long    0
+  cosr                  long    0
+  sinr                  long    0                       'magnitude, cos, sin values
+  
+  errDiffX              long    0
+  errDiffY              long    0
+  errDiffZ              long    0                       'holds difference vector between target and measured orientation
+  
+  errCorrX              long    0
+  errCorrY              long    0
+  errCorrZ              long    0                       'computed rotation correction factor
+  
+  temp                  long    0                       'temp value for use in equations                        
+  accWeight             long    0
+  
 
   'Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
-  long velocityEstimate, altitudeVelocity 
-  long altitudeEstimate
-  long AltitudeEstMM, VelocityEstMM
-  long forceX, forceY, forceZ                           'Current forces acting on craft, excluding gravity
-  long forceWX, forceWY, forceWZ                        'Current forces acting on craft, excluding gravity, in world frame
+  velocityEstimate      long    0
+  altitudeVelocity      long    0 
+  altitudeEstimate      long    0
+  AltitudeEstMM         long    0
+  VelocityEstMM         long    0
+  
+  forceX                long    0
+  forceY                long    0
+  forceZ                long    0                       'Current forces acting on craft, excluding gravity
 
+  forceWX               long    0
+  forceWY               long    0
+  forceWZ               long    0                       'Current forces acting on craft, excluding gravity, in world frame
 
-  'Various constants used by the float math engine - Every command in the instruction stream reads two
-  'arguments from memory using memory addresses, so the values actually need to exist somewhere
-  long const_GyroScale, const_NegGyroScale, const_InvGyroScale
-  long const_0, const_1, const_Neg12, const_16, const_F1, const_F2
-  long const_epsilon, const_half, const_neghalf
-  long const_neg1, const_ErrScale, const_AccScale, const_outAngleScale, const_ThrustScale
-  long const_GMetersPerSec, const_AltiVelScale, const_UpdateScale
-  long const_velAccScale, const_velAltiScale, const_m_to_mm
-  long const_velAccTrust, const_velAltiTrust
-
-  long UpdateCount
-
+  UpdateCount           long    0
   
 
 VAR
@@ -92,33 +154,6 @@ PUB Start
   velocityEstimate := 0.0
   altitudeEstimate := 0.0
 
-  const_GyroScale := constant(1.0 / GyroScale)
-  const_NegGyroScale := constant(-1.0 / GyroScale) 
-  const_0 := 0
-  const_1 := 1
-  const_neg1 := -1
-  const_neg12 := -12            'Used to subtract from acc exponent, equivalent to /= 4096.0
-  const_16 := 16                'Used to add to exponents, equivalent to *= 65536.0 
-  
-  const_F1 := 1.0
-  const_F2 := 2.0
-  const_epsilon := 0.0000000001
-  const_half := 0.5
-  const_neghalf := -0.5
-  const_ErrScale := constant(1.0/512.0)                 'How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
-  const_AccScale := constant(1.0/AccToG)                'Conversion factor from accel units to G's
-  const_outAngleScale := constant(-65536.0 / PI)               
-  const_ThrustScale := constant(256.0)
-  const_GMetersPerSec := 9.8
-  const_AltiVelScale := constant(1.0/1000.0)            'Convert mm/sec to m/sec
-  const_UpdateScale := constant(1.0 / float(Const#UpdateRate)) 'Convert units/sec to units/update
-  const_m_to_mm := 1000.0
-
-  const_velAccScale := 0.9995
-  const_velAltiScale := 0.0005
-
-  const_velAccTrust := 0.999
-  const_velAltiTrust := 0.001  
   InitFunctions
 
 
@@ -347,6 +382,8 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opSub, @const_F1, @temp, @m22 )                        'm22 = 1.0 - temp
   '7 instructions (107)
 
+
+  'Continue from here ------
 
 
   'fax =  packet.ax;           // Acceleration in X (left/right)
@@ -632,4 +669,233 @@ PUB WaitForCompletion
    
   q = q.Normalize()
   }
+
+DAT
+
+'Various constants used by the float math engine - Every command in the instruction stream reads two
+'arguments from memory using memory addresses, so the values actually need to exist somewhere
+
+const_GyroScale         long    1.0 / GyroScale    
+const_NegGyroScale      long   -1.0 / GyroScale
+
+const_0                 long    0
+const_1                 long    1
+const_neg1              long   -1
+const_Neg12             long   -12              'Used to subtract from acc exponent, equivalent to /= 4096.0
+const_16                long    16              'Used to add to exponents, equivalent to *= 65536.0
+const_F1                long    1.0
+const_F2                long    2.0
+
+const_epsilon           long    0.0000000001    'Added to vector length value before inverting (1/X) to insure no divide-by-zero problems
+const_half              long    0.5
+const_neghalf           long   -0.5
+
+
+const_ErrScale          long    1.0/512.0       'How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
+const_AccScale          long    1.0/AccToG      'Conversion factor from accel units to G's
+const_outAngleScale     long    -65536.0 / PI               
+const_ThrustScale       long    256.0
+const_GMetersPerSec     long    9.80665
+const_AltiVelScale      long    1.0/1000.0      'Convert mm to m
+const_UpdateScale       long    1.0 / float(Const#UpdateRate) 'Convert units/sec to units/update
+const_m_to_mm           long    1000.0
+
+const_velAccScale       long    0.9995
+const_velAltiScale      long    0.0005
+ 
+const_velAccTrust       long    0.999
+const_velAltiTrust      long    0.001  
+
+
+
+'To do this, I'll need to move ALL variables into the DAT section, then write a routine to convert the relative pointers to absolute
+'It'll be a pain, but it'll save a huge chunk of program space and RAM
+
+'SEE:  http://forums.parallax.com/discussion/148580/fyi-using-the-operator-in-a-dat-section
+
+
+'cmdStream_RelToAbs      long    @cmdStream_RelToAbs
+
+{
+  'fgx = gx / GyroScale + errCorrX
+cmdStream_0   long      FLT#opFloat, @gx | (0<<16), @rx                         'rx = float(gx)
+              long      FLT#opMul, @rx | (@const_GyroScale<<16), @rx            'rx /= GyroScale
+              long      FLT#opAdd, @rx | (@errCorrX<<16), @rx                   'rx += errCorrX
+
+  'fgy = gy / GyroScale + errCorrY
+              long      FLT#opFloat, @gz | (0<<16), @ry                         'ry = float(gz)
+              long      FLT#opMul, @ry | (@const_NegGyroScale<<16), @ry         'ry /= GyroScale
+              long      FLT#opAdd, @ry | (@errCorrY<<16), @ry                   'ry += errCorrY
+
+  'fgz = gz / GyroScale + errCorrZ
+              long      FLT#opFloat, @gy | (0<<16), @rz                         'rz = float(gy)
+              long      FLT#opMul, @rz | (@const_NegGyroScale<<16), @rz         'rz /= GyroScale
+              long      FLT#opAdd, @rz | (@errCorrZ<<16), @rz                   'rz += errCorrZ
+
+  'rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5 
+                long      FLT#opSqr, @rx | (0<<16), @rmag                                  'rmag = fgx*fgx
+                long      FLT#opSqr, @ry | (0<<16), @temp                                  'temp = fgy*fgy
+                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp
+                long      FLT#opSqr, @rz | (0<<16), @temp                                  'temp = fgz*fgz
+                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp
+                long      FLT#opAdd, @rmag | (@const_epsilon<<16), @rmag                   'rmag += 0.00000001
+                long      FLT#opSqrt, @rmag | (0<<16), @rmag                               'rmag = Sqrt(rmag)                                                  
+                long      FLT#opShift, @rmag | (@const_neg1<<16), @rmag                    'rmag *= 0.5                                                  
+  '8 instructions  (17)
+
+  'cosr = Cos(rMag)
+  'sinr = Sin(rMag) / rMag
+                long      FLT#opSinCos, @rmag | (@sinr<<16), @cosr                         'sinr = Sin(rmag), cosr = Cos(rmag)  
+                long      FLT#opDiv, @sinr | (@rmag<<16), @sinr                            'sinr /= rmag                                                  
+  '3 instructions  (20)
+
+  'qdot.w =  (r.x*x + r.y*y + r.z*z) * -0.5
+                long      FLT#opMul, @rx | (@qx<<16), @qdw                                 'qdw = rx*qx 
+                long      FLT#opMul, @ry | (@qy<<16), @temp                                'temp = ry*qy
+                long      FLT#opAdd, @qdw | (@temp<<16), @qdw                              'qdw += temp
+                long      FLT#opMul, @rz | (@qz<<16), @temp                                'temp = rz*qz
+                long      FLT#opAdd, @qdw | (@temp<<16), @qdw                              'qdw += temp
+                long      FLT#opMul, @qdw | (@const_neghalf<<16), @qdw                     'qdw *= -0.5
+  '8 instructions  (28)
+
+  'qdot.x =  (r.x*w + r.z*y - r.y*z) * 0.5
+                long      FLT#opMul, @rx | (@qw<<16), @qdx                                 'qdx = rx*qw 
+                long      FLT#opMul, @rz | (@qy<<16), @temp                                'temp = rz*qy
+                long      FLT#opAdd, @qdx | (@temp<<16), @qdx                              'qdx += temp
+                long      FLT#opMul, @ry | (@qz<<16), @temp                                'temp = ry*qz
+                long      FLT#opSub, @qdx | (@temp<<16), @qdx                              'qdx -= temp
+                long      FLT#opShift, @qdx | (@const_neg1<<16), @qdx                      'qdx *= 0.5
+  '8 instructions  (36)
+
+  'qdot.y =  (r.y*w - r.z*x + r.x*z) * 0.5
+                long      FLT#opMul, @ry | (@qw<<16), @qdy                                 'qdy = ry*qw 
+                long      FLT#opMul, @rz | (@qx<<16), @temp                                'temp = rz*qx
+                long      FLT#opSub, @qdy | (@temp<<16), @qdy                              'qdy -= temp
+                long      FLT#opMul, @rx | (@qz<<16), @temp                                'temp = rx*qz
+                long      FLT#opAdd, @qdy | (@temp<<16), @qdy                              'qdy += temp
+                long      FLT#opShift, @qdy | (@const_neg1<<16), @qdy                      'qdy *= 0.5
+  '8 instructions  (44)
+
+  'qdot.z =  (r.z*w + r.y*x - r.x*y) * 0.5
+                long      FLT#opMul, @rz | (@qw<<16), @qdz                                 'qdz = rz*qw 
+                long      FLT#opMul, @ry | (@qx<<16), @temp                                'temp = ry*qx
+                long      FLT#opAdd, @qdz | (@temp<<16), @qdz                              'qdz += temp
+                long      FLT#opMul, @rx | (@qy<<16), @temp                                'temp = rx*qy
+                long      FLT#opSub, @qdz | (@temp<<16), @qdz                              'qdz -= temp
+                long      FLT#opShift, @qdz | (@const_neg1<<16), @qdz                      'qdz *= 0.5
+  '8 instructions  (52)
    
+  'q.w = cosr * q.w + sinr * qdot.w
+                long      FLT#opMul, @cosr | (@qw<<16), @qw                                'qw = cosr*qw 
+                long      FLT#opMul, @sinr | (@qdw<<16), @temp                             'temp = sinr*qdw
+                long      FLT#opAdd, @qw | (@temp<<16), @qw                                'qw += temp
+
+  'q.x = cosr * q.x + sinr * qdot.x
+                long      FLT#opMul, @cosr | (@qx<<16), @qx                                'qx = cosr*qx 
+                long      FLT#opMul, @sinr | (@qdx<<16), @temp                             'temp = sinr*qdx
+                long      FLT#opAdd, @qx | (@temp<<16), @qx                                'qx += temp
+
+  'q.y = cosr * q.y + sinr * qdot.y
+                long      FLT#opMul, @cosr | (@qy<<16), @qy                                'qy = cosr*qy 
+                long      FLT#opMul, @sinr | (@qdy<<16), @temp                             'temp = sinr*qdy
+                long      FLT#opAdd, @qy | (@temp<<16), @qy                                'qy += temp
+
+  'q.z = cosr * q.z + sinr * qdot.z
+                long      FLT#opMul, @cosr | (@qz<<16), @qz                                'qz = cosr*qz 
+                long      FLT#opMul, @sinr | (@qdz<<16), @temp                             'temp = sinr*qdz
+                long      FLT#opAdd, @qz | (@temp<<16), @qz                                'qz += temp
+  '12 instructions  (64)
+
+  'q = q.Normalize()
+  'rmag = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w + 0.0000001)
+                long      FLT#opSqr, @qx | (0<<16), @rmag                                  'rmag = qx*qx 
+                long      FLT#opSqr, @qy | (0<<16), @temp                                  'temp = qy*qy 
+                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp 
+                long      FLT#opSqr, @qz | (0<<16), @temp                                  'temp = qz*qz 
+                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp 
+                long      FLT#opSqr, @qw | (0<<16), @temp                                  'temp = qw*qw 
+                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp 
+                long      FLT#opAdd, @rmag | (@const_epsilon<<16), @rmag                   'rmag += 0.0000001 
+                long      FLT#opSqrt, @rmag | (0<<16), @rmag                               'sqrt(rmag) 
+  '9 instructions (73)
+
+  'q /= rmag   
+                long      FLT#opDiv, @qw | (@rmag<<16), @qw                                'qw /= rmag 
+                long      FLT#opDiv, @qx | (@rmag<<16), @qx                                'qx /= rmag 
+                long      FLT#opDiv, @qy | (@rmag<<16), @qy                                'qy /= rmag 
+                long      FLT#opDiv, @qz | (@rmag<<16), @qz                                'qz /= rmag 
+  '4 instructions (77)
+
+
+  'Now convert the updated quaternion to a rotation matrix 
+
+  'fx2 = qx * qx;
+  'fy2 = qy * qy;
+  'fz2 = qz * qz;
+                long    FLT#opSqr, @qx | (0<<16), @fx2                                   'fx2 = qx *qx
+                long    FLT#opSqr, @qy | (0<<16), @fy2                                   'fy2 = qy *qy
+                long    FLT#opSqr, @qz | (0<<16), @fz2                                   'fz2 = qz *qz
+  '3 instructions (80)
+
+  'fwx = qw * qx;
+  'fwy = qw * qy;
+  'fwz = qw * qz;
+                long    FLT#opMul, @qw | (@qx<<16), @fwx                                 'fwx = qw *qx
+                long    FLT#opMul, @qw | (@qy<<16), @fwy                                 'fwy = qw *qy
+                long    FLT#opMul, @qw | (@qz<<16), @fwz                                 'fwz = qw *qz
+  '3 instructions (83)
+
+  'fxy = qx * qy;
+  'fxz = qx * qz;
+  'fyz = qy * qz;
+                long    FLT#opMul, @qx | (@qy<<16), @fxy                                 'fxy = qx *qy
+                long    FLT#opMul, @qx | (@qz<<16), @fxz                                 'fxz = qx *qz
+                long    FLT#opMul, @qy | (@qz<<16), @fyz                                 'fyz = qy *qz
+  '3 instructions (86)
+
+   
+  'm00 = 1.0f - 2.0f * (y2 + z2)
+                long    FLT#opAdd, @fy2 | (@fz2<<16), @temp                              'temp = fy2+fz2
+                long    FLT#opShift, @temp | (@const_1<<16), @temp                       'temp *= 2.0
+                long    FLT#opSub, @const_F1 | (@temp<<16), @m00                         'm00 = 1.0 - temp
+     
+  'm01 =        2.0f * (fxy - fwz)
+                long    FLT#opSub, @fxy | (@fwz<<16), @temp                              'temp = fxy-fwz
+                long    FLT#opShift, @temp | (@const_1<<16), @m01                        'm01 = 2.0 * temp
+
+  'm02 =        2.0f * (fxz + fwy)
+                long    FLT#opAdd, @fxz | (@fwy<<16), @temp                              'temp = fxz+fwy
+                long    FLT#opShift, @temp | (@const_1<<16), @m02                        'm02 = 2.0 * temp
+  '7 instructions (93)
+
+   
+  'm10 =        2.0f * (fxy + fwz)
+                long    FLT#opAdd, @fxy | (@fwz<<16), @temp                              'temp = fxy-fwz
+                long    FLT#opShift, @temp | (@const_1<<16), @m10                        'm10 = 2.0 * temp
+
+  'm11 = 1.0f - 2.0f * (x2 + z2)
+                long    FLT#opAdd, @fx2 | (@fz2<<16), @temp                              'temp = fx2+fz2
+                long    FLT#opShift, @temp | (@const_1<<16), @temp                       'temp *= 2.0
+                long    FLT#opSub, @const_F1 | (@temp<<16), @m11                         'm11 = 1.0 - temp
+
+  'm12 =        2.0f * (fyz - fwx)
+                long    FLT#opSub, @fyz | (@fwx<<16), @temp                              'temp = fyz-fwx
+                long    FLT#opShift, @temp | (@const_1<<16), @m12                        'm12 = 2.0 * temp
+  '7 instructions (100)
+
+   
+  'm20 =        2.0f * (fxz - fwy)
+                long    FLT#opSub, @fxz | (@fwy<<16), @temp                              'temp = fxz-fwz
+                long    FLT#opShift, @temp | (@const_1<<16), @m20                        'm20 = 2.0 * temp
+
+  'm21 =        2.0f * (fyz + fwx)
+                long    FLT#opAdd, @fyz | (@fwx<<16), @temp                              'temp = fyz+fwx
+                long    FLT#opShift, @temp | (@const_1<<16), @m21                        'm21 = 2.0 * temp
+
+  'm22 = 1.0f - 2.0f * (x2 + y2)
+                long    FLT#opAdd, @fx2 | (@fy2<<16), @temp                              'temp = fx2+fy2
+                long    FLT#opShift, @temp | (@const_1<<16), @temp                       'temp *= 2.0
+                long    FLT#opSub, @const_F1 | (@temp<<16), @m22                         'm22 = 1.0 - temp
+  '7 instructions (107)
+
+}
