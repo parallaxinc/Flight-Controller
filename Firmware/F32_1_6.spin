@@ -116,7 +116,10 @@ PUB EndStream( index ) | addr
   CommandAddr[index] += 4
 
   return CommandAddr[index]     'Allows the caller to figure out how much space this actually took
-    
+
+PUB GetCommandInstruction( fp_op )
+  return cmdCallTable[fp_op]
+      
 
 PUB RunStream( a )
   'Can't use the stack for these, because they might be different by the time the COG gets to them

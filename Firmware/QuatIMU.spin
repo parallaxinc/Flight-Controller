@@ -137,8 +137,8 @@ DAT
   
 
 VAR
-  long  QuatUpdateCommands[300 + 284 + 310]
-  long  QuatUpdateLen
+  'long  QuatUpdateCommands[300 + 284 + 310]
+  'long  QuatUpdateLen
   
 
 PUB Start
@@ -153,7 +153,7 @@ PUB Start
 
   velocityEstimate := 0.0
   altitudeEstimate := 0.0
-
+  
   InitFunctions
 
 
@@ -193,6 +193,9 @@ PUB SetInitialAltitudeGuess( altiMM )
 
 PUB InitFunctions
 
+  AdjustStreamPointers( @commandStream_0 ) 
+
+  {
   FLT.StartStream( 0, @QuatUpdateCommands )
 
   'rx = rotation around X axis (pitch, + == forward)
@@ -383,8 +386,6 @@ PUB InitFunctions
   '7 instructions (107)
 
 
-  'Continue from here ------
-
 
   'fax =  packet.ax;           // Acceleration in X (left/right)
   'fay =  packet.az;           // Acceleration in Y (up/down)
@@ -439,6 +440,8 @@ PUB InitFunctions
   FLT.AddCommand( 0, FLT#opMul, @const_ErrScale, @accWeight, @accWeight )
 
 
+  'Continue from here ------
+  
   'Test: Does ErrCorr need to be rotated into the local frame from the world frame?
 
   'errCorr = errDiff * accWeight
@@ -565,7 +568,8 @@ PUB InitFunctions
 
 
   QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
-  
+  '}
+    
 
 
 PUB SetGyroZero( _x, _y, _z )
@@ -580,8 +584,8 @@ PUB Send( v )
 
 
 
-PUB GetQuatUpdateLen
-  return QuatUpdateLen
+'PUB GetQuatUpdateLen
+'  return QuatUpdateLen
 
 'PUB GetCalcErrorLen
 '  return CalcErrorLen
@@ -670,6 +674,27 @@ PUB WaitForCompletion
   q = q.Normalize()
   }
 
+
+PRI AdjustStreamPointers( p ) | diff
+  ' Make sure the subroutine doesn't get called for the same table twice
+  ' The first pointer in the table points to itself, let's see if it's already correct
+  if long[p] == p
+    return
+
+  diff := @@long[p] - long[p]
+  long[p] += diff             'fix the table startup pointer
+  p += 4                      'advance to the first instruction in the stream                                    
+   
+  repeat until long[p+4] == 0                           'A pointer to 0 indicates the end of the table
+    long[p] := FLT.GetCommandInstruction( long[p] )     'Replace the instruction index with the actual JMPRET instruction
+    p += 4                                              'Advance to the first set of arguments
+    long[p] += diff | (diff << 16)                      'Replace the two relative pointers (words) with absolute pointers
+    p += 4                                              'Advance to the last argument (a single long)
+    long[p] += diff                                     'Replace the relative pointer (long) with an absolute pointer
+    p += 4                                              'advance to the next instruction in the list      
+   
+   
+
 DAT
 
 'Various constants used by the float math engine - Every command in the instruction stream reads two
@@ -716,9 +741,14 @@ const_velAltiTrust      long    0.001
 
 'cmdStream_RelToAbs      long    @cmdStream_RelToAbs
 
-{
+'{
   'fgx = gx / GyroScale + errCorrX
-cmdStream_0   long      FLT#opFloat, @gx | (0<<16), @rx                         'rx = float(gx)
+
+commandStream_0
+              long      @commandStream_0                'this value is used to determine the offset to add to subsequent instructions                                                
+              
+QuatUpdateCommands
+              long      FLT#opFloat, @gx | (0<<16), @rx                         'rx = float(gx)
               long      FLT#opMul, @rx | (@const_GyroScale<<16), @rx            'rx /= GyroScale
               long      FLT#opAdd, @rx | (@errCorrX<<16), @rx                   'rx += errCorrX
 
@@ -898,4 +928,183 @@ cmdStream_0   long      FLT#opFloat, @gx | (0<<16), @rx                         
                 long    FLT#opSub, @const_F1 | (@temp<<16), @m22                         'm22 = 1.0 - temp
   '7 instructions (107)
 
-}
+
+
+  'fax =  packet.ax;           // Acceleration in X (left/right)
+  'fay =  packet.az;           // Acceleration in Y (up/down)
+  'faz =  packet.ay;           // Acceleration in Z (toward/away)
+               long     FLT#opFloat, @ax | (0<<16), @fax  
+               long     FLT#opFloat, @az | (0<<16), @fay  
+               long     FLT#opFloat, @ay | (0<<16), @faz  
+               long     FLT#opNeg, @fax | (0<<16), @fax  
+
+  'rmag = facc.length
+               long     FLT#opSqr, @fax | (0<<16), @rmag                                  'rmag = fax*fax
+               long     FLT#opSqr, @fay | (0<<16), @temp                                  'temp = fay*fay
+               long     FLT#opAdd, @rmag | (@temp<<16), @rmag                             'rmag += temp
+               long     FLT#opSqr, @faz | (0<<16), @temp                                  'temp = faz*faz
+               long     FLT#opAdd, @rmag | (@temp<<16), @rmag                             'rmag += temp
+               long     FLT#opAdd, @rmag | (@const_epsilon<<16), @rmag                    'rmag += 0.00000001
+               long     FLT#opSqrt, @rmag | (0<<16), @rmag                                'rmag = Sqrt(rmag)                                                  
+
+  'facc /= rmag
+               long     FLT#opDiv, @fax | (@rmag<<16), @faxn                              'faxn = fax / rmag 
+               long     FLT#opDiv, @fay | (@rmag<<16), @fayn                              'fayn = fay / rmag 
+               long     FLT#opDiv, @faz | (@rmag<<16), @fazn                              'fazn = faz / rmag 
+
+
+
+  'accWeight = 1.0 - FMin( FAbs( 2.0 - accLen * 2.0 ), 1.0 )
+               long     FLT#opMul, @rmag | (@const_AccScale<<16), @rmag                   'rmag /= accScale (accelerometer to 1G units)
+               long     FLT#opShift, @rmag | (@const_1<<16), @accWeight                   'accWeight = rmag * 2.0
+               long     FLT#opSub, @const_F2 | (@accWeight<<16), @accWeight               'accWeight = 2.0 - accWeight
+               long     FLT#opFAbs, @accWeight | (0<<16), @accWeight                      'accWeight = FAbs(accWeight)
+               long     FLT#opFMin, @accWeight | (@const_F1<<16), @accWeight              'accWeight = FMin( accWeight, 1.0 )
+               long     FLT#opSub, @const_F1 | (@accWeight<<16), @accWeight               'accWeight = 1.0 - accWeight                                                
+
+   
+
+  'errDiffX = fayn * m12 - fazn * m11
+               long     FLT#opMul, @fayn | (@m12<<16), @errDiffX 
+               long     FLT#opMul, @fazn | (@m11<<16), @temp 
+               long     FLT#opSub, @errDiffX | (@temp<<16), @errDiffX 
+
+  'errDiffY = fazn * m10 - faxn * m12
+               long     FLT#opMul, @fazn | (@m10<<16), @errDiffY 
+               long     FLT#opMul, @faxn | (@m12<<16), @temp 
+               long     FLT#opSub, @errDiffY | (@temp<<16), @errDiffY 
+
+  'errDiffZ = faxn * m11 - fayn * m10
+               long     FLT#opMul, @faxn | (@m11<<16), @errDiffZ 
+               long     FLT#opMul, @fayn | (@m10<<16), @temp 
+               long     FLT#opSub, @errDiffZ | (@temp<<16), @errDiffZ 
+
+  'accWeight *= const_ErrScale   
+               long     FLT#opMul, @const_ErrScale | (@accWeight<<16), @accWeight
+
+  'Test: Does ErrCorr need to be rotated into the local frame from the world frame?
+
+
+  'errCorr = errDiff * accWeight
+               long      FLT#opMul, @errDiffX | (@accWeight<<16), @errCorrX  
+               long      FLT#opMul, @errDiffY | (@accWeight<<16), @errCorrY  
+               long      FLT#opMul, @errDiffZ | (@accWeight<<16), @errCorrZ  
+
+
+    'tx := Flt.ASin( Flt.FFloatDiv28( DCM.GetM12 ) )     'Convert to float, then divide by (float)(1<<28)
+    'tz := Flt.ASin( Flt.FFloatDiv28( DCM.GetM10 ) )     'Convert to float, then divide by (float)(1<<28) 
+
+    'XAngle := Flt.FRound( Flt.FMul( tx , constant( 320000.0 / (PI / 2.0)) ) ) 
+    'ZAngle := Flt.FRound( Flt.FMul( tz , constant(-320000.0 / (PI / 2.0)) ) )
+
+    'if( DCM.GetMatrixvalue(4) < 0 )                     'If the Y value of the Y axis is negative, we're upside down
+    '  if( ||ZAngle > ||XAngle ) 
+    '    ZAngle := ZAngle 
+
+    'For heading, I want an actual angular value, so this returns me an int between 0 & 65535, where 0 is forward
+    'YAngle := Flt.FRound( Flt.FMul( Flt.Atan2( Flt.FFloat(DCM.GetM20), Flt.FFloat(DCM.GetM22)), constant(32768.0 / PI) ) ) & 65535 
+
+
+               long      FLT#opASinCos, @m12 | (0<<16), @temp  
+               long      FLT#opMul, @temp | (@const_outAngleScale<<16), @temp  
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @Pitch  
+    
+               long      FLT#opASinCos, @m10 | (0<<16), @temp  
+               long      FLT#opMul, @temp | (@const_outAngleScale<<16), @temp  
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @Roll  
+    
+               long      FLT#opATan2, @m20 | (@m22<<16), @temp  
+               long      FLT#opMul, @temp | (@const_outAngleScale<<16), @temp    
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @Yaw  
+
+
+               long      FLT#opDiv, @const_F1 | (@m11<<16), @temp                          '1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
+               long      FLT#opMul, @temp | (@const_ThrustScale<<16), @temp                '*= 256.0  
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @ThrustFactor  
+
+
+
+  'Compute the running height estimate
+
+  'force := acc / 4096.0
+               long      FLT#opShift, @fax | (@const_neg12<<16), @forceX    
+               long      FLT#opShift, @fay | (@const_neg12<<16), @forceY    
+               long      FLT#opShift, @faz | (@const_neg12<<16), @forceZ    
+
+  'force -= m[1,0], m[1,1], m[1,2]  - Subtract gravity (1G, straight down)
+               long      FLT#opSub, @forceX | (@m10<<16), @forceX    
+               long      FLT#opSub, @forceY | (@m11<<16), @forceY    
+               long      FLT#opSub, @forceZ | (@m12<<16), @forceZ    
+
+  'forceWY := M.Transpose().Mul(Force).y                 'Orient force vector into world frame
+  'forceWY = m01*forceX + m11*forceY + m21*forceZ
+
+               long      FLT#opMul, @forceX | (@m01<<16), @forceWY  
+   
+               long      FLT#opMul, @forceY | (@m11<<16), @temp  
+               long      FLT#opAdd, @forceWY | (@temp<<16), @forceWY  
+
+               long      FLT#opMul, @forceZ | (@m21<<16), @temp  
+               long      FLT#opAdd, @forceWY | (@temp<<16), @forceWY  
+
+  'forceWY *= 9.8                                       'Convert to M/sec^2
+               long      FLT#opMul, @forceWY | (@const_GMetersPerSec<<16), @forceWY  
+
+
+
+               long      FLT#opMul, @forceWY | (@const_UpdateScale<<16), @temp             'temp := forceWY / UpdateRate
+               long      FLT#opAdd, @velocityEstimate | (@temp<<16), @velocityEstimate     'velEstimate += forceWY / UpdateRate
+
+  
+               long      FLT#opFloat, @altRate | (0<<16), @altitudeVelocity                'AltVelocity = float(altRate)
+               long      FLT#opMul, @altitudeVelocity | (@const_AltiVelScale<<16), @altitudeVelocity   'Convert from mm/sec to m/sec   
+
+
+  'VelocityEstimate := (VelocityEstimate * 0.9950) + (altVelocity * 0.0050)
+               long      FLT#opMul, @velocityEstimate | (@const_velAccScale<<16), @velocityEstimate 
+               long      FLT#opMul, @altitudeVelocity | (@const_velAltiScale<<16), @temp  
+               long      Flt#opAdd, @velocityEstimate | (@temp<<16), @velocityEstimate   
+
+  'altitudeEstimate += velocityEstimate / UpdateRate
+               long      FLT#opMul, @velocityEstimate | (@const_UpdateScale<<16), @temp  
+               long      FLT#opAdd, @altitudeEstimate | (@temp<<16), @altitudeEstimate   
+
+  'altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
+               long      FLT#opMul, @altitudeEstimate | (@const_velAccTrust<<16), @altitudeEstimate 
+
+               long      FLT#opFloat, @alt | (0<<16), @temp                               'temp := float(alt)
+               long      FLT#opDiv, @temp | (@const_m_to_mm<<16), @temp                   'temp /= 1000.0    (alt now in m)
+               long      FLT#opMul, @temp | (@const_velAltiTrust<<16), @temp              'temp *= 0.0050
+               long      FLT#opAdd, @altitudeEstimate | (@temp<<16), @altitudeEstimate    'altEstimate += temp 
+
+
+               long      FLT#opMul, @altitudeEstimate | (@const_m_to_mm<<16), @temp       'temp = altEst * 1000.0    (temp now in mm)
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @AltitudeEstMM 
+
+               long      FLT#opMul, @velocityEstimate | (@const_m_to_mm<<16), @temp       'temp = velEst * 1000.0    (temp now in mm/sec)
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @VelocityEstMM 
+
+
+  'Create a fixed point version of the orientation matrix
+               long      FLT#opShift, @m00 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm00 
+               long      FLT#opShift, @m01 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm01 
+               long      FLT#opShift, @m02 | (@const_16<<16), @temp     
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm02 
+
+               long      FLT#opShift, @m10 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm10 
+               long      FLT#opShift, @m11 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm11 
+               long      FLT#opShift, @m12 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm12 
+
+               long      FLT#opShift, @m20 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm20 
+               long      FLT#opShift, @m21 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm21 
+               long      FLT#opShift, @m22 | (@const_16<<16), @temp   
+               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm22
+               long      0, 0, 0 
+'}
