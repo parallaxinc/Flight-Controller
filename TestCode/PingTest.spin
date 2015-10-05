@@ -13,7 +13,7 @@ VAR
     
 OBJ
 
-  LCD  : "fullduplexserial-32.spin"
+  LCD  : "fullduplexserial.spin"
   ping : "ping"
 
   
@@ -23,6 +23,7 @@ PUB Start
 
   repeat
     ping.fire(PING_Pin)
+    waitcnt(2_000_000 + cnt )
     range := ping.Millimeters(PING_Pin)                 ' Get Range In Millimeters
     LCD.dec( range )
     lcd.tx( 13 )

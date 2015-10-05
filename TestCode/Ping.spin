@@ -1,4 +1,6 @@
 CON
+  _clkmode = xtal1 + pll16x
+  _clkfreq = 80_000_000
 
   TO_IN = 73_746                                                                ' Inches
   TO_CM = 29_034                                                                ' Centimeters
@@ -26,7 +28,7 @@ PUB Ticks(pin) : Microseconds | len
   'waitpeq(0, |< Pin, 0)                                                         ' Wait For Pin To Go LOW 
   'cnt2 := cnt                                                                   ' Store New Counter Value
   len := PHSA
-  Microseconds := (len / (clkfreq / 1_000_000)) >> 1                             ' Return Time in µs
+  Microseconds := len / constant(_clkfreq / 500_000)                            ' Return Time in µs
   
 
 PUB Inches(Pin) : Distance
