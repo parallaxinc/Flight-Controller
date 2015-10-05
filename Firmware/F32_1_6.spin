@@ -1576,6 +1576,14 @@ _FltAbs_ret             ret
 
 
 '------------------------------------------------------------------------------
+' _FMov fnumA = fNumA (just a mov operation to move values from one reg to another
+' Actually does nothing in the function itself
+'------------------------------------------------------------------------------
+_FMov
+_FMov_ret               ret
+
+
+'------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
 _RunCommandStream
@@ -1681,6 +1689,7 @@ cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
 cmdFrac                 call    #_Frac
+cmdMov                  call    #_FMov
 
                    
 cmdRunCommandStream     call    #_RunCommandStream
@@ -1712,7 +1721,8 @@ CON     'Instruction stream operand indices
   opSinCos              = 19
   opFAbs                = 20
   opFMin                = 21   
-  opFrac                = 22   
+  opFrac                = 22
+  opMov                 = 23   
 
 
 {{

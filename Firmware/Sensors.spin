@@ -71,8 +71,8 @@ VAR
 
 OBJ
 
-  eeprom : "Propeller Eeprom.spin"
   const  : "Constants.spin"
+  settings : "Settings.spin"
 
 
 PUB start(ipin, opin, cpin, sgpin, smpin, apin, _LEDPin, _LEDAddr, _LEDCount) : okay
@@ -90,9 +90,6 @@ PUB start(ipin, opin, cpin, sgpin, smpin, apin, _LEDPin, _LEDAddr, _LEDCount) : 
 ''   LEDPin  = pin connected to WS2812B LED array
 ''   LEDAddr = HUB address of RGB values for LED array (updated constantly)
 ''   LEDCount= Number of LED values to update  
-
-  'Copy these values from the variables the DAT section so the cog starts with the right settings
-  eeprom.ToRam(@DriftScale[0], @DriftScale[0] + constant(15*4), const#DriftScalePref )   ' Copy from EEPROM to VAR
 
   return startx(@ipin)
 
@@ -132,42 +129,38 @@ PUB TempZeroDriftValues
   longmove( @DriftScaleGX, @DriftScale[0], 6 )          'Temporarily back up the values in the DAT section so we can restore them with "ResetDriftValues"
   longfill( @DriftScale[0], 0, 6 )
 
+PUB ResetDriftValues
+  longmove( @DriftScale[0], @DriftScaleGX, 6 )
+
+
 
 PUB TempZeroAccelOffsetValues
 
   longmove( @AccelOffsetX, @AccelOffset[0], 3 )         'Temporarily back up the values in the DAT section so we can restore them with "ResetAccelOffsetValues"
   longfill( @AccelOffset[0], 0, 3 )
 
-
-PUB ResetDriftValues
-  longmove( @DriftScale[0], @DriftScaleGX, 6 )
-
-
 PUB ResetAccelOffsetValues
   longmove( @AccelOffset[0], @AccelOffsetX, 3 )
 
 
-PUB SetDriftValues( ScaleX, ScaleY, ScaleZ, OffsetX, OffsetY, OffsetZ )
 
-  longmove( @DriftScale[0], @ScaleX, 6 )
-  longmove( @DriftScaleGX, @ScaleX, 6 )
-  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , const#DriftScalePref )         ' Copy from VAR to EEPROM
+PUB SetDriftValues( ScaleAndOffsetsAddr )
+
+  longmove( @DriftScale[0], ScaleAndOffsetsAddr, 6 )
+  longmove( @DriftScaleGX, ScaleAndOffsetsAddr, 6 )
 
 
-PUB SetAccelOffsetValues( OffsetX, OffsetY, OffsetZ )
-  longmove( @AccelOffset[0], @OffsetX, 3 )
-  longmove( @AccelOffsetX, @OffsetX, 3 )
-  eeprom.FromRam(@DriftScale[0], @DriftScale[0] + constant(9*4) , const#DriftScalePref )         ' Copy from VAR to EEPROM
+PUB SetAccelOffsetValues( OffsetsAddr )
+  longmove( @AccelOffset[0], OffsetsAddr, 3 )
+  longmove( @AccelOffsetX, OffsetsAddr, 3 )
 
 
 PUB ZeroMagnetometerScaleOffsets
   longfill( @MagOffsetX, 0, 6 )
-  eeprom.FromRam(@MagOffsetX, @MagOffsetX + constant(6*4) , const#MagScaleOfsPref )              ' Copy from VAR to EEPROM
 
 
-PUB SetMagnetometerScaleOffsets( xo, xs, yo, ys, zo, zs )
-  longmove( @MagOffsetX, @xo, 6 )
-  eeprom.FromRam(@MagOffsetX, @MagOffsetX + constant(6*4) , const#MagScaleOfsPref )              ' Copy from VAR to EEPROM
+PUB SetMagnetometerScaleOffsets( MagOffsetsAndScalesAddr )
+  longmove( @MagOffsetX, MagOffsetsAndScalesAddr, 6 )
    
 
 

@@ -114,9 +114,16 @@ DAT
   errCorrY              long    0
   errCorrZ              long    0                       'computed rotation correction factor
   
-  temp                  long    0                       'temp value for use in equations                        
+  temp                  long    0                       'temp value for use in equations
+  axRot                 long    0                                
+  ayRot                 long    0                                
+  azRot                 long    0                                
   accWeight             long    0
-  
+
+  accRollCorrSin        long    0.0                     'used to correct the accelerometer vector angle offset
+  accRollCorrCos        long    1.0
+  accPitchCorrSin       long    0.0
+  accPitchCorrCos       long    1.0  
 
   'Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
   velocityEstimate      long    0
@@ -189,6 +196,17 @@ PUB GetAltitudeEstimate
 
 PUB SetInitialAltitudeGuess( altiMM )
   altitudeEstimate := FLT.FDiv( FLT.FFloat(altiMM) , const_m_to_mm )
+
+
+PUB SetRollCorrection( addr )
+
+  accRollCorrSin := long[addr][0]                   
+  accRollCorrCos := long[addr][1]                   
+
+PUB SetPitchCorrection( addr )
+
+  accPitchCorrSin := long[addr][0]                   
+  accPitchCorrCos := long[addr][1]                   
 
 
 PUB InitFunctions
@@ -936,7 +954,46 @@ QuatUpdateCommands
                long     FLT#opFloat, @ax | (0<<16), @fax  
                long     FLT#opFloat, @az | (0<<16), @fay  
                long     FLT#opFloat, @ay | (0<<16), @faz  
-               long     FLT#opNeg, @fax | (0<<16), @fax  
+               long     FLT#opNeg, @fax | (0<<16), @fax
+
+
+'Rotation correction of the accelerometer vector - rotate around the pitch and roll axes by the specified amounts
+
+  'axRot = (fax * accRollCorrCos) - (fay * accRollCorrSin)
+              long  FLT#opMul, @fax | (@accRollCorrCos<<16), @axRot                           
+              long  FLT#opMul, @fay | (@accRollCorrSin<<16), @temp
+              long  FLT#opSub, @axRot | (@temp<<16), @axRot 
+
+  'ayRot = (fax * accRollCorrSin) + (fay * accRollCorrCos)
+              long  FLT#opMul, @fax | (@accRollCorrSin<<16), @ayRot                           
+              long  FLT#opMul, @fay | (@accRollCorrCos<<16), @temp
+              long  FLT#opAdd, @ayRot | (@temp<<16), @ayRot
+
+  'fax = axRot         
+  'fay = ayRot
+              long  FLT#opMov, @axRot | (0<<16), @fax          
+              long  FLT#opMov, @ayRot | (0<<16), @fay          
+
+
+
+  'axRot = (faz * accPitchCorrCos) - (fay * accPitchCorrSin)
+              long  FLT#opMul, @faz | (@accPitchCorrCos<<16), @axRot
+              long  FLT#opMul, @fay | (@accPitchCorrSin<<16), @temp
+              long  FLT#opSub, @axRot | (@temp<<16), @axRot 
+
+  'ayRot = (fax * accPitchCorrSin) + (fay * accPitchCorrCos)
+              long  FLT#opMul, @faz | (@accPitchCorrSin<<16), @ayRot                           
+              long  FLT#opMul, @fay | (@accPitchCorrCos<<16), @temp
+              long  FLT#opAdd, @ayRot | (@temp<<16), @ayRot
+
+  'faz = axRot         
+  'fay = ayRot
+              long  FLT#opMov, @axRot | (0<<16), @faz          
+              long  FLT#opMov, @ayRot | (0<<16), @fay          
+
+
+
+'Compute length of the accelerometer vector to decide weighting                                   
 
   'rmag = facc.length
                long     FLT#opSqr, @fax | (0<<16), @rmag                                  'rmag = fax*fax

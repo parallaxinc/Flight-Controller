@@ -32,6 +32,10 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager( typeof( MainForm ) );
 			this.tcMainTabs = new System.Windows.Forms.TabControl();
 			this.tpRadioTest = new System.Windows.Forms.TabPage();
+			this.groupBox4 = new System.Windows.Forms.GroupBox();
+			this.label40 = new System.Windows.Forms.Label();
+			this.btnRecPWM = new System.Windows.Forms.RadioButton();
+			this.btnRecSBUS = new System.Windows.Forms.RadioButton();
 			this.lblFlightMode = new System.Windows.Forms.Label();
 			this.lblAux3 = new System.Windows.Forms.Label();
 			this.lblAux2 = new System.Windows.Forms.Label();
@@ -166,8 +170,16 @@
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
 			this.stStatus = new System.Windows.Forms.StatusStrip();
 			this.tsStatLabel = new System.Windows.Forms.ToolStripStatusLabel();
+			this.udRollCorrection = new System.Windows.Forms.NumericUpDown();
+			this.label41 = new System.Windows.Forms.Label();
+			this.label42 = new System.Windows.Forms.Label();
+			this.udPitchCorrection = new System.Windows.Forms.NumericUpDown();
+			this.btnUploadAngleCorrection = new System.Windows.Forms.Button();
+			this.groupBox5 = new System.Windows.Forms.GroupBox();
+			this.groupBox6 = new System.Windows.Forms.GroupBox();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
+			this.groupBox4.SuspendLayout();
 			this.tpSensorTest.SuspendLayout();
 			this.tpMotorTest.SuspendLayout();
 			this.tpGyroCalibration.SuspendLayout();
@@ -182,6 +194,10 @@
 			this.groupBox2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
 			this.stStatus.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udRollCorrection)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udPitchCorrection)).BeginInit();
+			this.groupBox5.SuspendLayout();
+			this.groupBox6.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// tcMainTabs
@@ -206,6 +222,7 @@
 			// 
 			// tpRadioTest
 			// 
+			this.tpRadioTest.Controls.Add( this.groupBox4 );
 			this.tpRadioTest.Controls.Add( this.lblFlightMode );
 			this.tpRadioTest.Controls.Add( this.lblAux3 );
 			this.tpRadioTest.Controls.Add( this.lblAux2 );
@@ -229,6 +246,51 @@
 			this.tpRadioTest.TabIndex = 0;
 			this.tpRadioTest.Text = "Radio Test";
 			this.tpRadioTest.UseVisualStyleBackColor = true;
+			// 
+			// groupBox4
+			// 
+			this.groupBox4.Controls.Add( this.label40 );
+			this.groupBox4.Controls.Add( this.btnRecPWM );
+			this.groupBox4.Controls.Add( this.btnRecSBUS );
+			this.groupBox4.Location = new System.Drawing.Point( 459, 206 );
+			this.groupBox4.Name = "groupBox4";
+			this.groupBox4.Size = new System.Drawing.Size( 166, 110 );
+			this.groupBox4.TabIndex = 26;
+			this.groupBox4.TabStop = false;
+			this.groupBox4.Text = "Receiver Type";
+			// 
+			// label40
+			// 
+			this.label40.AutoSize = true;
+			this.label40.Location = new System.Drawing.Point( 6, 64 );
+			this.label40.Name = "label40";
+			this.label40.Size = new System.Drawing.Size( 135, 39 );
+			this.label40.TabIndex = 26;
+			this.label40.Text = "Note: Changing receiver\r\ntype requires power-cycling\r\nthe flight controller.";
+			// 
+			// btnRecPWM
+			// 
+			this.btnRecPWM.AutoSize = true;
+			this.btnRecPWM.Location = new System.Drawing.Point( 10, 20 );
+			this.btnRecPWM.Name = "btnRecPWM";
+			this.btnRecPWM.Size = new System.Drawing.Size( 102, 17 );
+			this.btnRecPWM.TabIndex = 24;
+			this.btnRecPWM.TabStop = true;
+			this.btnRecPWM.Text = "PWM (standard)";
+			this.btnRecPWM.UseVisualStyleBackColor = true;
+			this.btnRecPWM.CheckedChanged += new System.EventHandler( this.btnRecPWM_CheckedChanged );
+			// 
+			// btnRecSBUS
+			// 
+			this.btnRecSBUS.AutoSize = true;
+			this.btnRecSBUS.Location = new System.Drawing.Point( 10, 38 );
+			this.btnRecSBUS.Name = "btnRecSBUS";
+			this.btnRecSBUS.Size = new System.Drawing.Size( 57, 17 );
+			this.btnRecSBUS.TabIndex = 25;
+			this.btnRecSBUS.TabStop = true;
+			this.btnRecSBUS.Text = "S-BUS";
+			this.btnRecSBUS.UseVisualStyleBackColor = true;
+			this.btnRecSBUS.CheckedChanged += new System.EventHandler( this.btnRecSBUS_CheckedChanged );
 			// 
 			// lblFlightMode
 			// 
@@ -1057,22 +1119,8 @@
 			// 
 			// tpAccelCalibration
 			// 
-			this.tpAccelCalibration.Controls.Add( this.lblAccelCalFinal );
-			this.tpAccelCalibration.Controls.Add( this.lblAccelCal4 );
-			this.tpAccelCalibration.Controls.Add( this.lblAccelCal3 );
-			this.tpAccelCalibration.Controls.Add( this.lblAccelCal2 );
-			this.tpAccelCalibration.Controls.Add( this.lblAccelCal1 );
-			this.tpAccelCalibration.Controls.Add( this.btnUploadAccelCal );
-			this.tpAccelCalibration.Controls.Add( this.btnAccelCal4 );
-			this.tpAccelCalibration.Controls.Add( this.btnAccelCal3 );
-			this.tpAccelCalibration.Controls.Add( this.btnAccelCal2 );
-			this.tpAccelCalibration.Controls.Add( this.btnAccelCal1 );
-			this.tpAccelCalibration.Controls.Add( this.label37 );
-			this.tpAccelCalibration.Controls.Add( this.label38 );
-			this.tpAccelCalibration.Controls.Add( this.label39 );
-			this.tpAccelCalibration.Controls.Add( this.gAccelZCal );
-			this.tpAccelCalibration.Controls.Add( this.gAccelYCal );
-			this.tpAccelCalibration.Controls.Add( this.gAccelXCal );
+			this.tpAccelCalibration.Controls.Add( this.groupBox6 );
+			this.tpAccelCalibration.Controls.Add( this.groupBox5 );
 			this.tpAccelCalibration.Location = new System.Drawing.Point( 4, 22 );
 			this.tpAccelCalibration.Name = "tpAccelCalibration";
 			this.tpAccelCalibration.Size = new System.Drawing.Size( 633, 330 );
@@ -1082,42 +1130,42 @@
 			// 
 			// lblAccelCalFinal
 			// 
-			this.lblAccelCalFinal.Location = new System.Drawing.Point( 108, 284 );
+			this.lblAccelCalFinal.Location = new System.Drawing.Point( 100, 278 );
 			this.lblAccelCalFinal.Name = "lblAccelCalFinal";
 			this.lblAccelCalFinal.Size = new System.Drawing.Size( 147, 18 );
 			this.lblAccelCalFinal.TabIndex = 27;
 			// 
 			// lblAccelCal4
 			// 
-			this.lblAccelCal4.Location = new System.Drawing.Point( 108, 238 );
+			this.lblAccelCal4.Location = new System.Drawing.Point( 100, 241 );
 			this.lblAccelCal4.Name = "lblAccelCal4";
 			this.lblAccelCal4.Size = new System.Drawing.Size( 147, 18 );
 			this.lblAccelCal4.TabIndex = 26;
 			// 
 			// lblAccelCal3
 			// 
-			this.lblAccelCal3.Location = new System.Drawing.Point( 108, 209 );
+			this.lblAccelCal3.Location = new System.Drawing.Point( 100, 212 );
 			this.lblAccelCal3.Name = "lblAccelCal3";
 			this.lblAccelCal3.Size = new System.Drawing.Size( 147, 18 );
 			this.lblAccelCal3.TabIndex = 25;
 			// 
 			// lblAccelCal2
 			// 
-			this.lblAccelCal2.Location = new System.Drawing.Point( 108, 180 );
+			this.lblAccelCal2.Location = new System.Drawing.Point( 100, 183 );
 			this.lblAccelCal2.Name = "lblAccelCal2";
 			this.lblAccelCal2.Size = new System.Drawing.Size( 147, 18 );
 			this.lblAccelCal2.TabIndex = 24;
 			// 
 			// lblAccelCal1
 			// 
-			this.lblAccelCal1.Location = new System.Drawing.Point( 108, 151 );
+			this.lblAccelCal1.Location = new System.Drawing.Point( 100, 154 );
 			this.lblAccelCal1.Name = "lblAccelCal1";
 			this.lblAccelCal1.Size = new System.Drawing.Size( 147, 18 );
 			this.lblAccelCal1.TabIndex = 23;
 			// 
 			// btnUploadAccelCal
 			// 
-			this.btnUploadAccelCal.Location = new System.Drawing.Point( 16, 279 );
+			this.btnUploadAccelCal.Location = new System.Drawing.Point( 8, 273 );
 			this.btnUploadAccelCal.Name = "btnUploadAccelCal";
 			this.btnUploadAccelCal.Size = new System.Drawing.Size( 75, 23 );
 			this.btnUploadAccelCal.TabIndex = 22;
@@ -1127,7 +1175,7 @@
 			// 
 			// btnAccelCal4
 			// 
-			this.btnAccelCal4.Location = new System.Drawing.Point( 16, 233 );
+			this.btnAccelCal4.Location = new System.Drawing.Point( 8, 236 );
 			this.btnAccelCal4.Name = "btnAccelCal4";
 			this.btnAccelCal4.Size = new System.Drawing.Size( 75, 23 );
 			this.btnAccelCal4.TabIndex = 21;
@@ -1137,7 +1185,7 @@
 			// 
 			// btnAccelCal3
 			// 
-			this.btnAccelCal3.Location = new System.Drawing.Point( 16, 204 );
+			this.btnAccelCal3.Location = new System.Drawing.Point( 8, 207 );
 			this.btnAccelCal3.Name = "btnAccelCal3";
 			this.btnAccelCal3.Size = new System.Drawing.Size( 75, 23 );
 			this.btnAccelCal3.TabIndex = 20;
@@ -1147,7 +1195,7 @@
 			// 
 			// btnAccelCal2
 			// 
-			this.btnAccelCal2.Location = new System.Drawing.Point( 16, 175 );
+			this.btnAccelCal2.Location = new System.Drawing.Point( 8, 178 );
 			this.btnAccelCal2.Name = "btnAccelCal2";
 			this.btnAccelCal2.Size = new System.Drawing.Size( 75, 23 );
 			this.btnAccelCal2.TabIndex = 19;
@@ -1157,7 +1205,7 @@
 			// 
 			// btnAccelCal1
 			// 
-			this.btnAccelCal1.Location = new System.Drawing.Point( 16, 146 );
+			this.btnAccelCal1.Location = new System.Drawing.Point( 8, 149 );
 			this.btnAccelCal1.Name = "btnAccelCal1";
 			this.btnAccelCal1.Size = new System.Drawing.Size( 75, 23 );
 			this.btnAccelCal1.TabIndex = 18;
@@ -1168,7 +1216,7 @@
 			// label37
 			// 
 			this.label37.AutoSize = true;
-			this.label37.Location = new System.Drawing.Point( 206, 108 );
+			this.label37.Location = new System.Drawing.Point( 198, 111 );
 			this.label37.Name = "label37";
 			this.label37.Size = new System.Drawing.Size( 44, 13 );
 			this.label37.TabIndex = 17;
@@ -1177,7 +1225,7 @@
 			// label38
 			// 
 			this.label38.AutoSize = true;
-			this.label38.Location = new System.Drawing.Point( 108, 108 );
+			this.label38.Location = new System.Drawing.Point( 100, 111 );
 			this.label38.Name = "label38";
 			this.label38.Size = new System.Drawing.Size( 44, 13 );
 			this.label38.TabIndex = 16;
@@ -1186,7 +1234,7 @@
 			// label39
 			// 
 			this.label39.AutoSize = true;
-			this.label39.Location = new System.Drawing.Point( 13, 108 );
+			this.label39.Location = new System.Drawing.Point( 5, 111 );
 			this.label39.Name = "label39";
 			this.label39.Size = new System.Drawing.Size( 44, 13 );
 			this.label39.TabIndex = 15;
@@ -1196,7 +1244,7 @@
 			// 
 			this.gAccelZCal.AverageCount = 325;
 			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelZCal.Location = new System.Drawing.Point( 208, 16 );
+			this.gAccelZCal.Location = new System.Drawing.Point( 200, 19 );
 			this.gAccelZCal.Name = "gAccelZCal";
 			this.gAccelZCal.Range = 32768F;
 			this.gAccelZCal.Size = new System.Drawing.Size( 91, 89 );
@@ -1207,7 +1255,7 @@
 			// 
 			this.gAccelYCal.AverageCount = 325;
 			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelYCal.Location = new System.Drawing.Point( 111, 16 );
+			this.gAccelYCal.Location = new System.Drawing.Point( 103, 19 );
 			this.gAccelYCal.Name = "gAccelYCal";
 			this.gAccelYCal.Range = 32768F;
 			this.gAccelYCal.Size = new System.Drawing.Size( 91, 89 );
@@ -1218,7 +1266,7 @@
 			// 
 			this.gAccelXCal.AverageCount = 325;
 			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelXCal.Location = new System.Drawing.Point( 14, 16 );
+			this.gAccelXCal.Location = new System.Drawing.Point( 6, 19 );
 			this.gAccelXCal.Name = "gAccelXCal";
 			this.gAccelXCal.Range = 32768F;
 			this.gAccelXCal.Size = new System.Drawing.Size( 91, 89 );
@@ -1616,6 +1664,119 @@
 			this.tsStatLabel.Size = new System.Drawing.Size( 150, 17 );
 			this.tsStatLabel.Text = "Finding Elev8-FC";
 			// 
+			// udRollCorrection
+			// 
+			this.udRollCorrection.DecimalPlaces = 2;
+			this.udRollCorrection.Increment = new decimal( new int[] {
+            1,
+            0,
+            0,
+            65536} );
+			this.udRollCorrection.Location = new System.Drawing.Point( 165, 30 );
+			this.udRollCorrection.Maximum = new decimal( new int[] {
+            30,
+            0,
+            0,
+            0} );
+			this.udRollCorrection.Minimum = new decimal( new int[] {
+            30,
+            0,
+            0,
+            -2147483648} );
+			this.udRollCorrection.Name = "udRollCorrection";
+			this.udRollCorrection.Size = new System.Drawing.Size( 76, 20 );
+			this.udRollCorrection.TabIndex = 28;
+			// 
+			// label41
+			// 
+			this.label41.AutoSize = true;
+			this.label41.Location = new System.Drawing.Point( 47, 32 );
+			this.label41.Name = "label41";
+			this.label41.Size = new System.Drawing.Size( 106, 13 );
+			this.label41.TabIndex = 29;
+			this.label41.Text = "Roll Angle Correction";
+			// 
+			// label42
+			// 
+			this.label42.AutoSize = true;
+			this.label42.Location = new System.Drawing.Point( 47, 63 );
+			this.label42.Name = "label42";
+			this.label42.Size = new System.Drawing.Size( 112, 13 );
+			this.label42.TabIndex = 31;
+			this.label42.Text = "Pitch Angle Correction";
+			// 
+			// udPitchCorrection
+			// 
+			this.udPitchCorrection.DecimalPlaces = 2;
+			this.udPitchCorrection.Increment = new decimal( new int[] {
+            1,
+            0,
+            0,
+            65536} );
+			this.udPitchCorrection.Location = new System.Drawing.Point( 165, 61 );
+			this.udPitchCorrection.Maximum = new decimal( new int[] {
+            30,
+            0,
+            0,
+            0} );
+			this.udPitchCorrection.Minimum = new decimal( new int[] {
+            30,
+            0,
+            0,
+            -2147483648} );
+			this.udPitchCorrection.Name = "udPitchCorrection";
+			this.udPitchCorrection.Size = new System.Drawing.Size( 76, 20 );
+			this.udPitchCorrection.TabIndex = 30;
+			// 
+			// btnUploadAngleCorrection
+			// 
+			this.btnUploadAngleCorrection.Location = new System.Drawing.Point( 114, 102 );
+			this.btnUploadAngleCorrection.Name = "btnUploadAngleCorrection";
+			this.btnUploadAngleCorrection.Size = new System.Drawing.Size( 75, 23 );
+			this.btnUploadAngleCorrection.TabIndex = 32;
+			this.btnUploadAngleCorrection.Text = "Upload";
+			this.btnUploadAngleCorrection.UseVisualStyleBackColor = true;
+			this.btnUploadAngleCorrection.Click += new System.EventHandler( this.btnUploadAngleCorrection_Click );
+			// 
+			// groupBox5
+			// 
+			this.groupBox5.Controls.Add( this.gAccelXCal );
+			this.groupBox5.Controls.Add( this.gAccelYCal );
+			this.groupBox5.Controls.Add( this.gAccelZCal );
+			this.groupBox5.Controls.Add( this.label39 );
+			this.groupBox5.Controls.Add( this.label38 );
+			this.groupBox5.Controls.Add( this.label37 );
+			this.groupBox5.Controls.Add( this.lblAccelCalFinal );
+			this.groupBox5.Controls.Add( this.btnAccelCal1 );
+			this.groupBox5.Controls.Add( this.lblAccelCal4 );
+			this.groupBox5.Controls.Add( this.btnAccelCal2 );
+			this.groupBox5.Controls.Add( this.lblAccelCal3 );
+			this.groupBox5.Controls.Add( this.btnAccelCal3 );
+			this.groupBox5.Controls.Add( this.lblAccelCal2 );
+			this.groupBox5.Controls.Add( this.btnAccelCal4 );
+			this.groupBox5.Controls.Add( this.lblAccelCal1 );
+			this.groupBox5.Controls.Add( this.btnUploadAccelCal );
+			this.groupBox5.Location = new System.Drawing.Point( 3, 3 );
+			this.groupBox5.Name = "groupBox5";
+			this.groupBox5.Size = new System.Drawing.Size( 303, 310 );
+			this.groupBox5.TabIndex = 33;
+			this.groupBox5.TabStop = false;
+			this.groupBox5.Text = "Fixed offset compensation";
+			// 
+			// groupBox6
+			// 
+			this.groupBox6.Controls.Add( this.btnUploadAngleCorrection );
+			this.groupBox6.Controls.Add( this.udRollCorrection );
+			this.groupBox6.Controls.Add( this.label41 );
+			this.groupBox6.Controls.Add( this.label42 );
+			this.groupBox6.Controls.Add( this.udPitchCorrection );
+			this.groupBox6.Location = new System.Drawing.Point( 312, 3 );
+			this.groupBox6.Name = "groupBox6";
+			this.groupBox6.Size = new System.Drawing.Size( 313, 137 );
+			this.groupBox6.TabIndex = 34;
+			this.groupBox6.TabStop = false;
+			this.groupBox6.Text = "Angular offset correction";
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF( 6F, 13F );
@@ -1633,6 +1794,8 @@
 			this.tcMainTabs.ResumeLayout( false );
 			this.tpRadioTest.ResumeLayout( false );
 			this.tpRadioTest.PerformLayout();
+			this.groupBox4.ResumeLayout( false );
+			this.groupBox4.PerformLayout();
 			this.tpSensorTest.ResumeLayout( false );
 			this.tpSensorTest.PerformLayout();
 			this.tpMotorTest.ResumeLayout( false );
@@ -1645,7 +1808,6 @@
 			this.groupBox12.ResumeLayout( false );
 			this.groupBox12.PerformLayout();
 			this.tpAccelCalibration.ResumeLayout( false );
-			this.tpAccelCalibration.PerformLayout();
 			this.tpIMUTest.ResumeLayout( false );
 			this.tpIMUTest.PerformLayout();
 			this.tpIMUComp.ResumeLayout( false );
@@ -1657,6 +1819,12 @@
 			this.groupBox1.ResumeLayout( false );
 			this.stStatus.ResumeLayout( false );
 			this.stStatus.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udRollCorrection)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udPitchCorrection)).EndInit();
+			this.groupBox5.ResumeLayout( false );
+			this.groupBox5.PerformLayout();
+			this.groupBox6.ResumeLayout( false );
+			this.groupBox6.PerformLayout();
 			this.ResumeLayout( false );
 			this.PerformLayout();
 
@@ -1800,6 +1968,17 @@
 		private Gauge gCalibTemp;
 		private System.Windows.Forms.StatusStrip stStatus;
 		private System.Windows.Forms.ToolStripStatusLabel tsStatLabel;
+		private System.Windows.Forms.GroupBox groupBox4;
+		private System.Windows.Forms.RadioButton btnRecPWM;
+		private System.Windows.Forms.RadioButton btnRecSBUS;
+		private System.Windows.Forms.Label label40;
+		private System.Windows.Forms.GroupBox groupBox6;
+		private System.Windows.Forms.Button btnUploadAngleCorrection;
+		private System.Windows.Forms.NumericUpDown udRollCorrection;
+		private System.Windows.Forms.Label label41;
+		private System.Windows.Forms.Label label42;
+		private System.Windows.Forms.NumericUpDown udPitchCorrection;
+		private System.Windows.Forms.GroupBox groupBox5;
 	}
 }
 

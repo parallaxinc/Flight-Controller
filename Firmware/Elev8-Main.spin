@@ -17,6 +17,8 @@ CON
   RC_AUX2 = 6
   RC_AUX3 = 7 
 
+  PING_PIN = 5  'Same pin as RC_Aux3
+
   'Output pins to corresponding motors
   MOTOR_FL = 15
   MOTOR_FR = 16
@@ -105,7 +107,9 @@ OBJ
   AscentPID : "IntPID.spin"
 
   TestPID   : "IntPID.spin"
+  Ping      : "Ping.spin"
 
+  Settings : "Settings.spin"
   eeprom : "Propeller Eeprom.spin"
 
 
@@ -144,6 +148,7 @@ VAR
   
   long loopTimer                'Master flight loop counter - used to keep a steady update rate
 
+  long PingZero, PingHeight
 
   word FlightEnableStep         'Flight arm/disarm counter
   word CompassConfigStep        'Compass configure mode counter
@@ -151,7 +156,8 @@ VAR
   byte FlightEnabled            'Flight arm/disarm flag
   byte FlightMode
 
-  byte DoIntegrate              'Integration enabled in the flight PIDs              
+  byte DoIntegrate              'Integration enabled in the flight PIDs
+  byte UsePing              
   byte MotorIndex[4]            'Motor index to pin index table
 
 
@@ -167,7 +173,7 @@ VAR
 
 
 
-PUB Main | Cycles
+PUB Main | Cycles, PingCycle
 
   'Initialize everything - First reset all variables to known states
 
@@ -184,13 +190,11 @@ PUB Main | Cycles
   DesiredRoll := DesiredPitch := DesiredYaw := 0
   FlightEnableStep := 0               'Counter to know which section of enable/disable sequence we're in
   CompassConfigStep := 0
-
   FlightMode := FlightMode_Assisted
+  
 
-  'eeprom.ToRam(@UseSBUS, @UseSBUS+8, Const#UseSBUSPref )   ' Copy from EEPROM to VAR
-  UseSBUS := 0
-  SBUSCenter := 1000
-
+  InitializeSettings
+  
 
   'Configure and start all the objects
   Dbg.Start( 31, 30, 0, 115200 )
@@ -266,10 +270,16 @@ PUB Main | Cycles
   AscentPID.SetMaxIntegral( 3000 )
   AscentPID.SetDervativeFilter( 96 ) 
 
+  if( UsePing )
+    Ping.Fire(PING_PIN)
+
 
   FindGyroZero     'Get a gyro baseline - We'll re-do this on flight arming, but this helps settle the IMU
 
   InitTestPID
+
+  if( UsePing )
+    PingZero := Ping.Millimeters(PING_PIN)
 
   
   'Grab the first set of sensor readings (should be ready by now)
@@ -312,6 +322,14 @@ PUB Main | Cycles
       Aux2 :=  RC.GetRC( RC_AUX2 )
       Aux3 :=  RC.GetRC( RC_AUX3 )
 
+
+    if( UsePing )
+      PingCycle := counter & 15
+      if( PingCycle == 0 )
+        Ping.Fire( PING_PIN )
+      elseif( PingCycle == 15 )
+        PingHeight := Ping.Millimeters( PING_PIN ) - PingZero 
+       
 
       '-------------------------------------------------
     if( FlightMode == FlightMode_CalibrateCompass )
@@ -361,6 +379,29 @@ PUB Main | Cycles
     ++counter
     loopTimer += Const#UpdateCycles
     waitcnt( loopTimer )
+
+
+
+PUB InitializeSettings
+  ''Load user settings from EEPROM and apply
+
+  Settings.Load
+  ApplySettings
+
+
+PUB ApplySettings
+  ''Apply the settings from the settings object to all the objects that need the values
+
+  Sens.SetDriftValues( Settings.GetAddress(Settings#DriftScalePref) )
+  Sens.SetAccelOffsetValues( Settings.GetAddress(Settings#AccelOffsetPref) )
+  Sens.SetMagnetometerScaleOffsets( Settings.GetAddress(Settings#MagScaleOfsPref) )
+
+  IMU.SetRollCorrection( Settings.GetAddress(Settings#RollCorrectPref) )
+  IMU.SetPitchCorrection( Settings.GetAddress(Settings#PitchCorrectPref) )
+
+  UseSBUS := Settings.GetValue(Settings#UseSBUSPref)
+  SBUSCenter := Settings.GetValue(Settings#SBUSCenterPref)
+  UsePing := Settings.GetValue(Settings#UsePingPref)
 
 
 
@@ -535,8 +576,8 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
       else
 
         'Accelerometer assist    
-        'if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
-        '  ThroOut -= (AccelZSmooth - Const#OneG) ~> 1
+        if( ||Aile < 300 AND ||Elev < 300 AND ThroMix > 32) 'Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
+          ThroOut -= (AccelZSmooth - Const#OneG) ~> 1
 
       'Tilt compensated thrust assist      
       ThrustMul := 256 #> IMU.GetThrustFactor <# 384    'Limit the effect of the thrust modifier 
@@ -735,7 +776,7 @@ PUB StartCompassCalibrate
 
 
 
-PUB DoCompassCalibrate | q, xc, yc, zc, xs, ys, zs, xr, yr, zr, mr
+PUB DoCompassCalibrate | q, xc, xs, yc, ys, zc, zs, xr, yr, zr, mr
 
   if( calib_Step == 0 )
     'First cycle requires the quad to be level, and spun 360 degrees
@@ -842,8 +883,9 @@ PUB DoCompassCalibrate | q, xc, yc, zc, xs, ys, zs, xr, yr, zr, mr
     zs := (mr * 2048) / zr    
 
 
-    'Write the resulting scales / offsets to EEPROM for the Sensors cog
-    Sens.SetMagnetometerScaleOffsets( xc, xs, yc, ys, zc, zs )
+    longmove( Settings.GetAddress(Settings#MagScaleOfsPref) , @xc , 6 )
+    ApplySettings
+    Settings.Save
 
 
     FlightMode := FlightMode_Assisted
@@ -874,7 +916,7 @@ PUB Calib_ComputeQuadrant( x, y )
       result := 0
 
 
-PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz
+PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz, i, rollOfsSin, rollOfsCos, pitchOfsSin, pitchOfsCos
 
   c := dbg.rxcheck
   if( c < 0 )
@@ -889,7 +931,7 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz
     if( Mode == MODE_MotorTest )
       NudgeMotor := c & 7  'Nudge the motor selected by the configuration app
 
-  if( (c & $F8) == $10 )  'Zero, Reset, or set gyro calibration
+  if( (c & $F8) == $10 )  'Zero, Reset, or set gyro or accelerometer calibration
     if( Mode == MODE_SensorTest )
       if( c == $10 )
         'Temporarily zero gyro drift settings
@@ -907,8 +949,21 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz
         gox := (dbg.rx << 8) | dbg.rx
         goy := (dbg.rx << 8) | dbg.rx
         goz := (dbg.rx << 8) | dbg.rx
-        Sens.SetDriftValues( ~~gsx, ~~gsy, ~~gsz, ~~gox, ~~goy, ~~goz )         'Sign extend all the values from 16 bit to 32 bit
-        loopTimer := cnt                                                        'Reset the loop counter or we'll be waiting forever 
+
+        'Sign extend all the values from 16 bit to 32 bit
+        ~~gsx
+        ~~gsy
+        ~~gsz
+        ~~gox
+        ~~goy
+        ~~goz
+
+        'Copy the values into the settings object
+        longmove( Settings.GetAddress(Settings#DriftScalePref), @gsx, 6 )
+        
+        ApplySettings                                                           'Apply the settings changes
+        Settings.Save
+        loopTimer := cnt                                                        'Reset the loop counter in case we took too long 
 
       elseif( c == $14 )
         'Temporarily zero accel offset settings
@@ -919,13 +974,44 @@ PUB CheckDebugMode | c, gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz
         Sens.ResetAccelOffsetValues
 
       elseif( c == $16 )
-        'Write new gyro drift settings - followed by 6 WORD values
+        'Write new accelerometer offset settings - followed by 3 WORD values
         aox := (dbg.rx << 8) | dbg.rx
         aoy := (dbg.rx << 8) | dbg.rx
         aoz := (dbg.rx << 8) | dbg.rx
-        Sens.SetAccelOffsetValues( ~~aox, ~~aoy, ~~aoz)                         'Sign extend all the values from 16 bit to 32 bit
-        loopTimer := cnt                                                        'Reset the loop counter or we'll be waiting forever 
 
+        'Sign extend the values from 16 to 32 bit
+        ~~aox
+        ~~aoy
+        ~~aoz        
+
+        'Copy the values into the settings object
+        longmove( Settings.GetAddress(Settings#AccelOffsetPref), @aox, 3 )
+        
+        ApplySettings                                                           'Apply the settings changes
+        Settings.Save
+        loopTimer := cnt                                                        'Reset the loop counter in case we took too long 
+
+
+      elseif( c == $17 )
+        'Write new accelerometer rotation settings - followed by 4 FLOAT values (Sin.Cos, Sin,Cos)
+        repeat i from 0 to 15 
+          byte[@rollOfsSin][i] := dbg.rx
+
+        'Copy the values into the settings object
+        longmove( Settings.GetAddress(Settings#RollCorrectPref), @rollOfsSin, 4 )
+        
+        ApplySettings                                                           'Apply the settings changes
+        Settings.Save
+        loopTimer := cnt                                                        'Reset the loop counter in case we took too long 
+
+
+
+
+  if( (c & $f8) == $18 )        'Modify a flag setting, like PWM/SBUS, Ping, etc  
+    if( c == $18 )              'Receiver type (PWM / SBUS)
+      Settings.SetValue( Settings#UseSBUSPref , dbg.rx )
+      Settings.Save
+      loopTimer := cnt                                                          'Reset the loop counter in case we took too long 
 
   if( c == $ff )
     dbg.tx($E8)  'Simple ping-back to tell the application we have the right comm port

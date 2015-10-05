@@ -1223,5 +1223,54 @@ namespace Elev8
 			ftdi.Write( txBuffer, 7, ref written );
 			// TODO: make sure all bytes were written
 		}
+
+
+		private void btnUploadAngleCorrection_Click( object sender, EventArgs e )
+		{
+			// Upload calibration data
+			txBuffer[0] = 0x17;
+
+			double rollOffset = (float)((double)udRollCorrection.Value * Math.PI / 180.0);
+			double pitchOffset = (float)((double)udPitchCorrection.Value * Math.PI / 180.0);
+
+			byte[] rollSinBytes = BitConverter.GetBytes( (float)Math.Sin(rollOffset) );
+			byte[] rollCosBytes = BitConverter.GetBytes( (float)Math.Cos(rollOffset) );
+			byte[] pitchSinBytes = BitConverter.GetBytes( (float)Math.Sin(pitchOffset) );
+			byte[] pitchCosBytes = BitConverter.GetBytes( (float)Math.Cos(pitchOffset) );
+
+			rollSinBytes.CopyTo( txBuffer, 1 );
+			rollCosBytes.CopyTo( txBuffer, 5 );
+			pitchSinBytes.CopyTo( txBuffer, 9 );
+			pitchCosBytes.CopyTo( txBuffer, 13 );
+
+			uint written = 0;
+			ftdi.Write( txBuffer, 17, ref written );
+			// TODO: make sure all bytes were written
+		}
+
+
+		private void btnRecPWM_CheckedChanged( object sender, EventArgs e )
+		{
+			if(btnRecPWM.Checked)
+			{
+				txBuffer[0] = 0x18;	// Set receiver type
+				txBuffer[1] = 0;	// PWM
+
+				uint written = 0;
+				ftdi.Write( txBuffer, 2, ref written );
+			}
+		}
+
+		private void btnRecSBUS_CheckedChanged( object sender, EventArgs e )
+		{
+			if(btnRecSBUS.Checked)
+			{
+				txBuffer[0] = 0x18;	// Set receiver type
+				txBuffer[1] = 1;	// SBUS
+
+				uint written = 0;
+				ftdi.Write( txBuffer, 2, ref written );
+			}
+		}
 	}
 }
