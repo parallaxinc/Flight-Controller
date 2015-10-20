@@ -17,34 +17,14 @@ CON
   RC_AUX2 = 6
   RC_AUX3 = 7 
 
-  PING_PIN = 5  'Same pin as RC_Aux3
-
-  'Output pins to corresponding motors
-  MOTOR_FL = 15
-  MOTOR_FR = 16
-  MOTOR_BR = 17
-  MOTOR_BL = 18
-
   'ESC output array indices for corresponding motors
   OUT_FL = 0
   OUT_FR = 1
   OUT_BR = 2
   OUT_BL = 3
 
-  '        V2    V1
-  CS_ALT = 9    '8
-  CS_AG  = 11   '11
-  SDO    = 13   '12
-  SDI    = 14   '13
-  SCL    = 12   '14
-  CS_M   = 10   '15
-  LED_PIN = 8   '19
-
   LED_COUNT = 2
-  LED_TESTDELAY = 6_000_000
 
-  BUZZER_1 = 6
-  BUZZER_2 = 7
 
   'Debug output modes for the Elev8-FC-Config application
   MODE_None = 0
@@ -91,6 +71,8 @@ CON
   
 
 OBJ
+  PIN  : "Pins-V3.spin"
+
   RC :   "RC_Receiver.spin"                             '1 cog
   SBUS : "SBUS-Receiver.spin"                           '   (shared cog with RC Receiver - only one runs at a time)
   
@@ -134,10 +116,14 @@ VAR
   long  Pitch, Roll, Yaw, AltiEst, AscentEst
 
   'Working variables - used to convert receiver inputs to desired ranges for the PIDs  
-  long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredVerticalSpeed
+  long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredAltitude, DesiredAltitudeFractional
 
   long  RollDifference, PitchDifference                 'Delta between current measured roll/pitch and desired roll/pitch                         
-  long  GyroRoll, GyroPitch                             'Raw gyro values altered by desired pitch & roll targets   
+  long  GyroRoll, GyroPitch                             'Raw gyro values altered by desired pitch & roll targets
+  long  GyroYaw   
+
+  long  GyroRPFilter
+  long  GyroYawFilter
 
 
   long  PitchOut, RollOut, YawOut                       'Output values from the PIDs
@@ -155,6 +141,7 @@ VAR
     
   byte FlightEnabled            'Flight arm/disarm flag
   byte FlightMode
+  byte NewFlightMode
 
   byte DoIntegrate              'Integration enabled in the flight PIDs
   byte UsePing              
@@ -177,10 +164,10 @@ PUB Main | Cycles, PingCycle
 
   'Initialize everything - First reset all variables to known states
 
-  MotorIndex[0] := MOTOR_FL
-  MotorIndex[1] := MOTOR_FR
-  MotorIndex[2] := MOTOR_BR
-  MotorIndex[3] := MOTOR_BL
+  MotorIndex[0] := PIN#MOTOR_FL
+  MotorIndex[1] := PIN#MOTOR_FR
+  MotorIndex[2] := PIN#MOTOR_BR
+  MotorIndex[3] := PIN#MOTOR_BL
 
 
   Mode := MODE_None
@@ -188,9 +175,11 @@ PUB Main | Cycles, PingCycle
   FlightEnabled := FALSE 
 
   DesiredRoll := DesiredPitch := DesiredYaw := 0
-  FlightEnableStep := 0               'Counter to know which section of enable/disable sequence we're in
+  FlightEnableStep := 0                                 'Counter to know which section of enable/disable sequence we're in
   CompassConfigStep := 0
   FlightMode := FlightMode_Assisted
+  GyroRPFilter := 192                                   'Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
+  GyroYawFilter := 192
   
 
   InitializeSettings
@@ -198,19 +187,20 @@ PUB Main | Cycles, PingCycle
 
   'Configure and start all the objects
   Dbg.Start( 31, 30, 0, 115200 )
+  'Dbg.Start( 24, 25, 0, 115200 )
 
   if( UseSBUS )
-    SBUS.Start( 26 , SBUSCenter )                       'SBUS input is on PIN 26 (Throttle channel)
+    SBUS.Start( PIN#RC_0 , SBUSCenter )                 'SBUS input is on RC_0 input (Throttle channel)
   else  
     RC.Start
 
   All_LED( LED_Red & LED_Half )                         'LED red on startup
     
-  Sens.Start(SDI, SDO, SCL, CS_AG, CS_M, CS_ALT, LED_PIN, @LEDValue, LED_COUNT)  
+  Sens.Start(PIN#SDI, PIN#SDO, PIN#SCL, PIN#CS_AG, PIN#CS_M, PIN#CS_ALT, PIN#LED_PIN, @LEDValue, LED_COUNT)  
   IMU.Start
 
-  DIRA[BUZZER_1] := 1           'Enable buzzer pins    
-  DIRA[BUZZER_2] := 1
+  DIRA[PIN#BUZZER_1] := 1           'Enable buzzer pins    
+  DIRA[PIN#BUZZER_2] := 1
 
 
   'Debug code - Display the length of the FPU programs
@@ -224,15 +214,15 @@ PUB Main | Cycles, PingCycle
 
   'Initialize the ESC driver, specify 400Hz outputs for 4 motor pins
   ESC.Init( 400 )
-  ESC.AddFastPin(MOTOR_FL)
-  ESC.AddFastPin(MOTOR_FR)
-  ESC.AddFastPin(MOTOR_BR)
-  ESC.AddFastPin(MOTOR_BL)
+  ESC.AddFastPin(PIN#MOTOR_FL)
+  ESC.AddFastPin(PIN#MOTOR_FR)
+  ESC.AddFastPin(PIN#MOTOR_BR)
+  ESC.AddFastPin(PIN#MOTOR_BL)
 
-  ESC.Set(MOTOR_FL, 8000) 'Throttle ranges from 8000 to 16000 - 8000 is "off"
-  ESC.Set(MOTOR_FR, 8000)
-  ESC.Set(MOTOR_BR, 8000)
-  ESC.Set(MOTOR_BL, 8000)
+  ESC.Set(PIN#MOTOR_FL, 8000) 'Throttle ranges from 8000 to 16000 - 8000 is "off"
+  ESC.Set(PIN#MOTOR_FR, 8000)
+  ESC.Set(PIN#MOTOR_BR, 8000)
+  ESC.Set(PIN#MOTOR_BL, 8000)
   ESC.Start
 
 
@@ -263,7 +253,7 @@ PUB Main | Cycles, PingCycle
 
 
   'Altitude hold PID object
-  AscentPID.Init( 1000, 250000, 250000 , Const#UpdateRate )
+  AscentPID.Init( 1000, 0, 250000 , Const#UpdateRate )
   AscentPID.SetPrecision( 12 ) 
   AscentPID.SetMaxOutput( 4000 )
   AscentPID.SetPIMax( 100 )
@@ -271,7 +261,7 @@ PUB Main | Cycles, PingCycle
   AscentPID.SetDervativeFilter( 96 ) 
 
   if( UsePing )
-    Ping.Fire(PING_PIN)
+    Ping.Fire(PIN#PING)
 
 
   FindGyroZero     'Get a gyro baseline - We'll re-do this on flight arming, but this helps settle the IMU
@@ -279,7 +269,7 @@ PUB Main | Cycles, PingCycle
   InitTestPID
 
   if( UsePing )
-    PingZero := Ping.Millimeters(PING_PIN)
+    PingZero := Ping.Millimeters(PIN#PING)
 
   
   'Grab the first set of sensor readings (should be ready by now)
@@ -326,9 +316,9 @@ PUB Main | Cycles, PingCycle
     if( UsePing )
       PingCycle := counter & 15
       if( PingCycle == 0 )
-        Ping.Fire( PING_PIN )
+        Ping.Fire( PIN#PING )
       elseif( PingCycle == 15 )
-        PingHeight := Ping.Millimeters( PING_PIN ) - PingZero 
+        PingHeight := Ping.Millimeters( PIN#PING ) - PingZero 
        
 
       '-------------------------------------------------
@@ -340,11 +330,20 @@ PUB Main | Cycles, PingCycle
     else
       '-------------------------------------------------
       if( Gear < -512 )
-        FlightMode := FlightMode_Assisted
+        NewFlightMode := FlightMode_Assisted
       elseif( Gear > 512 )
-        FlightMode := FlightMode_Manual
+        NewFlightMode := FlightMode_Manual
       else
-        FlightMode := FlightMode_Automatic
+        NewFlightMode := FlightMode_Automatic
+
+
+      if( NewFlightMode <> FlightMode )
+
+        if( NewFlightMode == FlightMode_Automatic )
+          DesiredAltitude := AltiEst                     
+
+        FlightMode := NewFlightMode
+        
 
       UpdateFlightLoop            '~82000 cycles when in flight mode
       '-------------------------------------------------
@@ -407,9 +406,9 @@ PUB ApplySettings
 
 PUB FindGyroZero | i
 
-  GyroZX := 0
-  GyroZY := 0
-  GyroZZ := 0
+  GyroZX := 128
+  GyroZY := 128
+  GyroZZ := 128
   waitcnt( cnt + constant(_clkfreq / 4) )
   
   repeat i from 0 to 255
@@ -432,7 +431,7 @@ PUB FindGyroZero | i
 
 
 
-PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
+PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust, v, gr, gp, gy
 
   UpdateFlightLEDColor
 
@@ -494,7 +493,7 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
     if( FlightMode == FlightMode_Manual )
 
       RollDifference := Aile
-      PitchDifference := Elev
+      PitchDifference := -Elev
 
 
     else    
@@ -502,20 +501,24 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
       'Input range from the controls is +/- 1000 units.  Scale that up to about 22.5 degrees       
        
       DesiredRoll :=  Aile << 3
-      DesiredPitch := Elev << 3
+      DesiredPitch := -Elev << 3
 
       RollDifference := (DesiredRoll - Roll) ~> 2
       PitchDifference := (DesiredPitch - Pitch) ~> 2
 
-       
-    GyroRoll := GyroY - GyroZY
-    GyroPitch := GyroX - GyroZX
-      
+
+    gr := GyroY - GyroZY
+    gp := -(GyroX - GyroZX)
+    gy := -(GyroZ - GyroZZ)
+
+    GyroRoll += ((gr - GyroRoll) * GyroRPFilter) ~> 8      
+    GyroPitch += ((gp - GyroPitch) * GyroRPFilter) ~> 8      
+    GyroYaw += ((gy - GyroYaw) * GyroYawFilter) ~> 8 
        
 
     'Yaw is different because we accumulate it - It's not specified absolutely like you can
     'with pitch and roll, so scale the stick input down a bit
-    DesiredYaw :=   iRudd >> 3
+    DesiredYaw := iRudd >> 3
 
 
      
@@ -551,7 +554,7 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
      
     RollOut := RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate )
     PitchOut := PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate )
-    YawOut := YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , -GyroZ, DoIntegrate )
+    YawOut := YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , GyroYaw, DoIntegrate )
         
 
     ThroMix := (Thro + 1024) ~> 2                       ' Approx 0 - 512
@@ -568,10 +571,20 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
       if( FlightMode == FlightMode_Automatic )
         if( ||Thro > 100 )
-          DesiredVerticalSpeed := Thro << 2             'Thro becomes desired speed in mm/sec, -1024 to +1024 becomes +/- 4 m/sec 
+          DesiredAltitudeFractional += Thro ~> 1
+          DesiredAltitude += (DesiredAltitudeFractional ~> 8)
+          DesiredAltitudeFractional -= (DesiredAltitudeFractional & $FFFFFF00)   
+
+
+        T1 := (Aux2 + 1024) << 1        'Left side control
+        T2 := (Aux3 + 1024) << 8        'Right side control 
+         
+        AscentPID.SetPGain( T1 )
+        AscentPID.SetDGain( T2 )
+
       
-        AltiThrust := AscentPID.Calculate_NoD2( DesiredVerticalSpeed , AscentEst , DoIntegrate )
-        ThroOut := 12000 + (Thro << 1) + AltiThrust
+        AltiThrust := AscentPID.Calculate_NoD2( DesiredAltitude , AltiEst , DoIntegrate )
+        ThroOut := 12000 + Thro + AltiThrust
 
       else
 
@@ -581,15 +594,15 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
 
       'Tilt compensated thrust assist      
       ThrustMul := 256 #> IMU.GetThrustFactor <# 384    'Limit the effect of the thrust modifier 
-      ThroOut := (ThroOut * ThrustMul) ~> 8
+      ThroOut := 8000 + (((ThroOut-8000) * ThrustMul) ~> 8)
     '-------------------------------------------
 
      
     ' X configuration
-    Motor[OUT_FL] := ThroOut + ((-PitchOut + RollOut - YawOut) * ThroMix) ~> 7                          
-    Motor[OUT_FR] := ThroOut + ((-PitchOut - RollOut + YawOut) * ThroMix) ~> 7  
-    Motor[OUT_BL] := ThroOut + ((+PitchOut + RollOut + YawOut) * ThroMix) ~> 7
-    Motor[OUT_BR] := ThroOut + ((+PitchOut - RollOut - YawOut) * ThroMix) ~> 7
+    Motor[OUT_FL] := ThroOut + ((+PitchOut + RollOut - YawOut) * ThroMix) ~> 7                          
+    Motor[OUT_FR] := ThroOut + ((+PitchOut - RollOut + YawOut) * ThroMix) ~> 7  
+    Motor[OUT_BL] := ThroOut + ((-PitchOut + RollOut + YawOut) * ThroMix) ~> 7
+    Motor[OUT_BR] := ThroOut + ((-PitchOut - RollOut - YawOut) * ThroMix) ~> 7
 
 
     'The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
@@ -601,10 +614,10 @@ PUB UpdateFlightLoop | ThroOut, T1, T2, ThrustMul, AltiThrust
     Motor[3] := 8500 #> Motor[3] <# 16000
      
     'Copy new Ouput array into servo values
-    ESC.Set( MOTOR_FL, Motor[0] )
-    ESC.Set( MOTOR_FR, Motor[1] )
-    ESC.Set( MOTOR_BR, Motor[2] )
-    ESC.Set( MOTOR_BL, Motor[3] )
+    ESC.Set( PIN#MOTOR_FL, Motor[0] )
+    ESC.Set( PIN#MOTOR_FR, Motor[1] )
+    ESC.Set( PIN#MOTOR_BR, Motor[2] )
+    ESC.Set( PIN#MOTOR_BL, Motor[3] )
 
 
 {
@@ -693,10 +706,10 @@ PUB FlightModeTest | ThroOut, CurrentRoll, T1, T2, T3
     ThroOut := (Thro + 3000) << 2
      
     ' X configuration
-    Motor[OUT_FL] := ThroOut + ((-PitchOut + RollOut + YawOut) * ThroMix) ~> 7                          
-    Motor[OUT_FR] := ThroOut + ((-PitchOut - RollOut - YawOut) * ThroMix) ~> 7  
-    Motor[OUT_BL] := ThroOut + ((+PitchOut + RollOut - YawOut) * ThroMix) ~> 7
-    Motor[OUT_BR] := ThroOut + ((+PitchOut - RollOut + YawOut) * ThroMix) ~> 7
+    Motor[OUT_FL] := ThroOut + ((+PitchOut + RollOut + YawOut) * ThroMix) ~> 7                          
+    Motor[OUT_FR] := ThroOut + ((+PitchOut - RollOut - YawOut) * ThroMix) ~> 7  
+    Motor[OUT_BL] := ThroOut + ((-PitchOut + RollOut - YawOut) * ThroMix) ~> 7
+    Motor[OUT_BR] := ThroOut + ((-PitchOut - RollOut + YawOut) * ThroMix) ~> 7
 
      
     Motor[0] := 8000 #> Motor[0] <# 16000
@@ -705,10 +718,10 @@ PUB FlightModeTest | ThroOut, CurrentRoll, T1, T2, T3
     Motor[3] := 8000 #> Motor[3] <# 16000
      
     'Copy new Ouput array into servo values
-    ESC.Set( MOTOR_FL, Motor[0] )
-    ESC.Set( MOTOR_FR, Motor[1] )
-    ESC.Set( MOTOR_BR, Motor[2] )
-    ESC.Set( MOTOR_BL, Motor[3] )
+    ESC.Set( PIN#MOTOR_FL, Motor[0] )
+    ESC.Set( PIN#MOTOR_FR, Motor[1] )
+    ESC.Set( PIN#MOTOR_BR, Motor[2] )
+    ESC.Set( PIN#MOTOR_BL, Motor[3] )
 
 
 
@@ -726,16 +739,17 @@ PUB ArmFlightMode
   All_LED( LED_Blue & LED_Half )        
   BeepTune
 
-  DesiredVerticalSpeed := 0
+  'DesiredVerticalSpeed := 0
+  DesiredAltitude := AltiEst
   loopTimer := cnt
 
 
 PUB DisarmFlightMode
 
-  ESC.Set( MOTOR_FL, 8000 )
-  ESC.Set( MOTOR_FR, 8000 )
-  ESC.Set( MOTOR_BR, 8000 )
-  ESC.Set( MOTOR_BL, 8000 )
+  ESC.Set( PIN#MOTOR_FL, 8000 )
+  ESC.Set( PIN#MOTOR_FR, 8000 )
+  ESC.Set( PIN#MOTOR_BR, 8000 )
+  ESC.Set( PIN#MOTOR_BL, 8000 )
 
   FlightEnabled := FALSE
   FlightEnableStep := 0
@@ -749,10 +763,10 @@ PUB DisarmFlightMode
 
 PUB StartCompassCalibrate
 
-  ESC.Set( MOTOR_FL, 8000 )
-  ESC.Set( MOTOR_FR, 8000 )
-  ESC.Set( MOTOR_BR, 8000 )
-  ESC.Set( MOTOR_BL, 8000 )
+  ESC.Set( PIN#MOTOR_FL, 8000 )
+  ESC.Set( PIN#MOTOR_FR, 8000 )
+  ESC.Set( PIN#MOTOR_BR, 8000 )
+  ESC.Set( PIN#MOTOR_BL, 8000 )
 
   FlightEnabled := FALSE
   FlightMode := FlightMode_CalibrateCompass
@@ -1065,7 +1079,8 @@ PUB DoDebugModeOutput | loop, addr, phase, i
     elseif( phase == 2 )
     
       dbg.txBulk( @Alt, 4 )       'Send 4 bytes of data for @Alt
-      dbg.txBulk( @AltTemp, 4 )   'Send 8 bytes of data for @AltTemp
+      dbg.txBulk( @AltTemp, 4 )   'Send 4 bytes of data for @AltTemp
+      dbg.txBulk( @AltiEst, 4 )   'Send 4 bytes for altitude estimate 
        
 
   elseif( Mode == MODE_MotorTest )
@@ -1197,25 +1212,45 @@ PUB BeepHz( Hz , Delay ) | i, loop, d, ctr
 
   d := constant(_clkfreq/2) / Hz                        'Compute the amount of time to delay between pulses to get the right frequency
   loop := (Delay * constant(_clkfreq/2000)) / d         'How many iterations of the loop to make "Delay" milliseconds?
+
    
-  ctr := cnt
-    
-  repeat i from 0 to loop
-    OUTA[BUZZER_1] := 1    
-    OUTA[BUZZER_2] := 0
+  if( PIN#BUZZER_1 == PIN#BUZZER_2 )
 
-    ctr += d
-    waitcnt( ctr )    
+    'Revision 3 firmware has one buzzer pin  
 
-    OUTA[BUZZER_1] := 0    
-    OUTA[BUZZER_2] := 1
+    ctr := cnt
+    repeat i from 0 to loop
+      OUTA[PIN#BUZZER_1] := 1    
+     
+      ctr += d
+      waitcnt( ctr )    
+     
+      OUTA[PIN#BUZZER_1] := 0    
+     
+      ctr += d
+      waitcnt( ctr )    
 
-    ctr += d
-    waitcnt( ctr )    
+  else
 
-  OUTA[BUZZER_1] := 0    
-  OUTA[BUZZER_2] := 0
-   
+    'Revision 2 firmware has two buzzer pins  
+
+    ctr := cnt
+    repeat i from 0 to loop
+      OUTA[PIN#BUZZER_1] := 1    
+      OUTA[PIN#BUZZER_2] := 0
+     
+      ctr += d
+      waitcnt( ctr )    
+     
+      OUTA[PIN#BUZZER_1] := 0    
+      OUTA[PIN#BUZZER_2] := 1
+     
+      ctr += d
+      waitcnt( ctr )    
+     
+    OUTA[PIN#BUZZER_1] := 0    
+    OUTA[PIN#BUZZER_2] := 0
+     
 
 
 PUB BeepTune

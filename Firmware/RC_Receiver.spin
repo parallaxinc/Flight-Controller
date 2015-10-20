@@ -23,11 +23,14 @@ VAR
   long  Pins[8]
   long  PinMask                                          
 
+OBJ
+  PIN   : "Pins-V3.spin"
+
 
 PUB start : status
 
   'Input pins are P0,1,2,3,4,5,26,27                       
-  PinMask := %00001100_00000000_00000000_00111111       'Elev8-FC pins are non-contiguous 
+  PinMask := PIN#RC_MASK       'Elev8-FC pins are non-contiguous 
 
 '' Start driver (1 Cog)  
 '' - Note: Call setpins() before start
@@ -191,14 +194,14 @@ pe6     long  0
 pe7     long  0
 
 
-pin_mask_0    long      %00000100_00000000_00000000_00000000         'Pin 26
-pin_mask_1    long      %00001000_00000000_00000000_00000000         'Pin 27 
-pin_mask_2    long      %00000000_00000000_00000000_00000001         'Pin 0
-pin_mask_3    long      %00000000_00000000_00000000_00000010         'Pin 1
-pin_mask_4    long      %00000000_00000000_00000000_00000100         'Pin 2
-pin_mask_5    long      %00000000_00000000_00000000_00001000         'Pin 3
-pin_mask_6    long      %00000000_00000000_00000000_00010000         'Pin 4
-pin_mask_7    long      %00000000_00000000_00000000_00100000         'Pin 5
+pin_mask_0    long      PIN#RC_0_MASK
+pin_mask_1    long      PIN#RC_1_MASK 
+pin_mask_2    long      PIN#RC_2_MASK
+pin_mask_3    long      PIN#RC_3_MASK          'Pin masks come from the PINS Spin file, allowing for easier code changes
+pin_mask_4    long      PIN#RC_4_MASK
+pin_mask_5    long      PIN#RC_5_MASK
+pin_mask_6    long      PIN#RC_6_MASK
+pin_mask_7    long      PIN#RC_7_MASK
 
 
         FIT   496
