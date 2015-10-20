@@ -1,0 +1,1 @@
+set PATH="C:\Program Files (x86)\SimpleIDE\propeller-gcc\bin";%path%

@@ -1,0 +1,1 @@
+propeller-load cmm\Elev8-Main.elf -r
