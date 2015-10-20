@@ -103,22 +103,24 @@ PUB StartStream( index, baseAddr )
 PUB AddCommand( index, fp_op, a_addr, b_addr, out_addr ) | addr
 
   addr := CommandAddr[index]
-  long[addr][0] := cmdCallTable[fp_op]        'This is an actual JMPRET instruction, so it has to be a full 32 bit value
-  long[addr][1] := a_addr | (b_addr << 16)    'Prop memory addresses are only 16 bit, so pack these two together to save some ram
-  long[addr][2] := out_addr                   'store this one as a long to keep 32-bit alignment on the first instruction
+  word[addr][0] := (fp_op << 2) + @cmdCallTable         'This is a pointer into the JMPRET instruction table
+  word[addr][1] := a_addr
+  word[addr][2] := b_addr                               'Prop memory addresses are only 16 bit
+  word[addr][3] := out_addr
 
-  CommandAddr[index] := addr + 12
+  CommandAddr[index] := addr + 8
 
 
 PUB EndStream( index ) | addr
   addr := CommandAddr[index]
-  long[addr][0] := 0
-  CommandAddr[index] += 4
+  word[addr][0] := $0           'Use zero to indicate end-of-stream 
+  CommandAddr[index] += 2
 
   return CommandAddr[index]     'Allows the caller to figure out how much space this actually took
 
-PUB GetCommandInstruction( fp_op )
-  return cmdCallTable[fp_op]
+
+PUB GetCommandPtr( fp_op )
+  return (fp_op << 2) + @cmdCallTable
       
 
 PUB RunStream( a )
@@ -132,18 +134,19 @@ PUB WaitStream
   while f32_Cmd
 
 
-
 PUB Cmd_ptr
 {{
   return the Hub address of f32_Cmd, so other code can call F32 functions directly
 }}
   return @f32_Cmd
 
+
 PUB Call_ptr
 {{
   return the Hub address of the dispatch table, so other code can call F32 functions directly
 }}
   return @cmdCallTable
+
 
 PUB atof( strptr ) : f | int, sign, dmag, mag, get_exp, b
   ' get all the digits as if this is an integer (but track the exponent)
@@ -1575,12 +1578,6 @@ _FltAbs
 _FltAbs_ret             ret
 
 
-'------------------------------------------------------------------------------
-' _FMov fnumA = fNumA (just a mov operation to move values from one reg to another
-' Actually does nothing in the function itself
-'------------------------------------------------------------------------------
-_FMov
-_FMov_ret               ret
 
 
 '------------------------------------------------------------------------------
@@ -1591,10 +1588,10 @@ _RunCommandStream
 
                         mov     cmdAddr, fnumA 
 :LoadVariables
-                        rdlong  :execute, cmdAddr wz    ' store the jump pointer to the command to execute
-              if_z      jmp #:FinishedStream
-              
-                        add     cmdAddr, #4
+                        rdword  t1, cmdAddr     wz
+              if_z      jmp     #:FinishedStream
+                        rdlong  :execute, t1   
+                        add     cmdAddr, #2
 
                         rdword  t1, cmdAddr             ' fnumA addr is the next word
                         add     cmdAddr, #2
@@ -1607,8 +1604,8 @@ _RunCommandStream
 
 :execute                nop                             ' execute command, which was replaced by getCommand
 
-                        rdlong  t1, cmdAddr             ' Get address to write the destination
-                        add     cmdAddr, #4                        
+                        rdword  t1, cmdAddr             ' Get address to write the destination
+                        add     cmdAddr, #2                        
                         wrlong  fnumA, t1               ' store the result
                         
                         jmp     #:LoadVariables                        
@@ -1661,6 +1658,7 @@ fit 496 ' A cog has 496 longs available, the last 16 (to make it up to 512) are 
 ' command dispatch table: must be compiled along with PASM code in
 ' Cog RAM to know the addresses, but does not need to fit in it.
 cmdCallTable
+cmdNOP                  nop
 cmdFAdd                 call    #_FAdd
 cmdFSub                 call    #_FSub
 cmdFMul                 call    #_FMul
@@ -1689,41 +1687,40 @@ cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
 cmdFrac                 call    #_Frac
-cmdMov                  call    #_FMov
+cmdMov                  nop
 
                    
 cmdRunCommandStream     call    #_RunCommandStream
 
 
 CON     'Instruction stream operand indices
-  opAdd                 = 0
-  opSub                 = 1
-  opMul                 = 2
-  opDiv                 = 3
-  opFloat               = 4
-  opTruncRound          = 5
-  opSqrt                = 6
-  opCmp                 = 7
-  opSin                 = 8
-  opCos                 = 9
-  opTan                 = 10
-  opLog2                = 11
-  opExp2                = 12
-  opPow                 = 13
+  opAdd                 = 1
+  opSub                 = 2
+  opMul                 = 3
+  opDiv                 = 4
+  opFloat               = 5
+  opTruncRound          = 6
+  opSqrt                = 7
+  opCmp                 = 8
+  opSin                 = 9
+  opCos                 = 10
+  opTan                 = 11
+  opLog2                = 12
+  opExp2                = 13
+  opPow                 = 14
   'opFMod                = 12
-  opASinCos             = 14
-  opATan2               = 15
+  opASinCos             = 15
+  opATan2               = 16
   'opCeil                = 15
   'opFloor               = 16
-  opShift               = 16
-  opNeg                 = 17
-  opSqr                 = 18
-  opSinCos              = 19
-  opFAbs                = 20
-  opFMin                = 21   
-  opFrac                = 22
-  opMov                 = 23   
-
+  opShift               = 17
+  opNeg                 = 18
+  opSqr                 = 19
+  opSinCos              = 20
+  opFAbs                = 21
+  opFMin                = 22   
+  opFrac                = 23
+  opMov                 = 24   
 
 {{
 
