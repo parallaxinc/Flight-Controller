@@ -213,382 +213,6 @@ PUB InitFunctions
 
   AdjustStreamPointers( @commandStream_0 ) 
 
-  {
-  FLT.StartStream( 0, @QuatUpdateCommands )
-
-  'rx = rotation around X axis (pitch, + == forward)
-  'ry = rotation around Y axis (yaw, + == clockwise from top) 
-  'rz = rotation around Z axis (roll, + == rolling left) 
-
-  'fgx = gx / GyroScale + errCorrX
-  FLT.AddCommand( 0, FLT#opFloat, @gx, 0, @rx )                                 'rx = float(gx)
-  FLT.AddCommand( 0, FLT#opMul, @rx, @const_GyroScale, @rx )                    'rx /= GyroScale
-  FLT.AddCommand( 0, FLT#opAdd, @rx, @errCorrX, @rx )                           'rx += errCorrX
-
-  'fgy = gy / GyroScale + errCorrY
-  FLT.AddCommand( 0, FLT#opFloat, @gz, 0, @ry )                                 'ry = float(gz)
-  FLT.AddCommand( 0, FLT#opMul, @ry, @const_NegGyroScale, @ry )                 'ry /= GyroScale
-  FLT.AddCommand( 0, FLT#opAdd, @ry, @errCorrY, @ry )                           'ry += errCorrY
-
-  'fgz = gz / GyroScale + errCorrZ
-  FLT.AddCommand( 0, FLT#opFloat, @gy, 0, @rz )                                 'rz = float(gy)
-  FLT.AddCommand( 0, FLT#opMul, @rz, @const_NegGyroScale, @rz )                 'rz /= GyroScale
-  FLT.AddCommand( 0, FLT#opAdd, @rz, @errCorrZ, @rz )                           'rz += errCorrZ
-  '9 instructions
-
-  'rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5 
-  FLT.AddCommand( 0, FLT#opSqr, @rx, 0, @rmag )                                 'rmag = fgx*fgx
-  FLT.AddCommand( 0, FLT#opSqr, @ry, 0, @temp )                                 'temp = fgy*fgy
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
-  FLT.AddCommand( 0, FLT#opSqr, @rz, 0, @temp )                                 'temp = fgz*fgz
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @const_epsilon, @rmag )                  'rmag += 0.00000001
-  FLT.AddCommand( 0, FLT#opSqrt, @rmag, 0, @rmag )                              'rmag = Sqrt(rmag)                                                  
-  FLT.AddCommand( 0, FLT#opShift, @rmag, @const_neg1, @rmag )                   'rmag *= 0.5                                                  
-  '8 instructions  (17)
-
-  'cosr = Cos(rMag)
-  'sinr = Sin(rMag) / rMag
-  FLT.AddCommand( 0, FLT#opSinCos, @rmag, @sinr, @cosr )                        'sinr = Sin(rmag), cosr = Cos(rmag)  
-  FLT.AddCommand( 0, FLT#opDiv, @sinr, @rmag, @sinr )                           'sinr /= rmag                                                  
-  '3 instructions  (20)
-
-  'qdot.w =  (r.x*x + r.y*y + r.z*z) * -0.5
-  FLT.AddCommand( 0, FLT#opMul, @rx, @qx, @qdw )                                'qdw = rx*qx 
-  FLT.AddCommand( 0, FLT#opMul, @ry, @qy, @temp )                               'temp = ry*qy
-  FLT.AddCommand( 0, FLT#opAdd, @qdw, @temp, @qdw )                             'qdw += temp
-  FLT.AddCommand( 0, FLT#opMul, @rz, @qz, @temp )                               'temp = rz*qz
-  FLT.AddCommand( 0, FLT#opAdd, @qdw, @temp, @qdw )                             'qdw += temp
-  FLT.AddCommand( 0, FLT#opMul, @qdw, @const_neghalf, @qdw )                    'qdw *= -0.5
-  '8 instructions  (28)
-
-  'qdot.x =  (r.x*w + r.z*y - r.y*z) * 0.5
-  FLT.AddCommand( 0, FLT#opMul, @rx, @qw, @qdx )                                'qdx = rx*qw 
-  FLT.AddCommand( 0, FLT#opMul, @rz, @qy, @temp )                               'temp = rz*qy
-  FLT.AddCommand( 0, FLT#opAdd, @qdx, @temp, @qdx )                             'qdx += temp
-  FLT.AddCommand( 0, FLT#opMul, @ry, @qz, @temp )                               'temp = ry*qz
-  FLT.AddCommand( 0, FLT#opSub, @qdx, @temp, @qdx )                             'qdx -= temp
-  FLT.AddCommand( 0, FLT#opShift, @qdx, @const_neg1, @qdx )                     'qdx *= 0.5
-  '8 instructions  (36)
-
-  'qdot.y =  (r.y*w - r.z*x + r.x*z) * 0.5
-  FLT.AddCommand( 0, FLT#opMul, @ry, @qw, @qdy )                                'qdy = ry*qw 
-  FLT.AddCommand( 0, FLT#opMul, @rz, @qx, @temp )                               'temp = rz*qx
-  FLT.AddCommand( 0, FLT#opSub, @qdy, @temp, @qdy )                             'qdy -= temp
-  FLT.AddCommand( 0, FLT#opMul, @rx, @qz, @temp )                               'temp = rx*qz
-  FLT.AddCommand( 0, FLT#opAdd, @qdy, @temp, @qdy )                             'qdy += temp
-  FLT.AddCommand( 0, FLT#opShift, @qdy, @const_neg1, @qdy )                     'qdy *= 0.5
-  '8 instructions  (44)
-
-  'qdot.z =  (r.z*w + r.y*x - r.x*y) * 0.5
-  FLT.AddCommand( 0, FLT#opMul, @rz, @qw, @qdz )                                'qdz = rz*qw 
-  FLT.AddCommand( 0, FLT#opMul, @ry, @qx, @temp )                               'temp = ry*qx
-  FLT.AddCommand( 0, FLT#opAdd, @qdz, @temp, @qdz )                             'qdz += temp
-  FLT.AddCommand( 0, FLT#opMul, @rx, @qy, @temp )                               'temp = rx*qy
-  FLT.AddCommand( 0, FLT#opSub, @qdz, @temp, @qdz )                             'qdz -= temp
-  FLT.AddCommand( 0, FLT#opShift, @qdz, @const_neg1, @qdz )                     'qdz *= 0.5
-  '8 instructions  (52)
-   
-  'q.w = cosr * q.w + sinr * qdot.w
-  FLT.AddCommand( 0, FLT#opMul, @cosr, @qw, @qw )                               'qw = cosr*qw 
-  FLT.AddCommand( 0, FLT#opMul, @sinr, @qdw, @temp )                            'temp = sinr*qdw
-  FLT.AddCommand( 0, FLT#opAdd, @qw, @temp, @qw )                               'qw += temp
-
-  'q.x = cosr * q.x + sinr * qdot.x
-  FLT.AddCommand( 0, FLT#opMul, @cosr, @qx, @qx )                               'qx = cosr*qx 
-  FLT.AddCommand( 0, FLT#opMul, @sinr, @qdx, @temp )                            'temp = sinr*qdx
-  FLT.AddCommand( 0, FLT#opAdd, @qx, @temp, @qx )                               'qx += temp
-
-  'q.y = cosr * q.y + sinr * qdot.y
-  FLT.AddCommand( 0, FLT#opMul, @cosr, @qy, @qy )                               'qy = cosr*qy 
-  FLT.AddCommand( 0, FLT#opMul, @sinr, @qdy, @temp )                            'temp = sinr*qdy
-  FLT.AddCommand( 0, FLT#opAdd, @qy, @temp, @qy )                               'qy += temp
-
-  'q.z = cosr * q.z + sinr * qdot.z
-  FLT.AddCommand( 0, FLT#opMul, @cosr, @qz, @qz )                               'qz = cosr*qz 
-  FLT.AddCommand( 0, FLT#opMul, @sinr, @qdz, @temp )                            'temp = sinr*qdz
-  FLT.AddCommand( 0, FLT#opAdd, @qz, @temp, @qz )                               'qz += temp
-  '12 instructions  (64)
-
-  
-  'q = q.Normalize()
-  'rmag = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w + 0.0000001)
-  FLT.AddCommand( 0, FLT#opSqr, @qx, 0, @rmag )                                 'rmag = qx*qx 
-  FLT.AddCommand( 0, FLT#opSqr, @qy, 0, @temp )                                 'temp = qy*qy 
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp 
-  FLT.AddCommand( 0, FLT#opSqr, @qz, 0, @temp )                                 'temp = qz*qz 
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp 
-  FLT.AddCommand( 0, FLT#opSqr, @qw, 0, @temp )                                 'temp = qw*qw 
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp 
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @const_epsilon, @rmag )                  'rmag += 0.0000001 
-  FLT.AddCommand( 0, FLT#opSqrt, @rmag, 0, @rmag )                              'sqrt(rmag) 
-  '9 instructions (73)
-
-  'q /= rmag   
-  FLT.AddCommand( 0, FLT#opDiv, @qw, @rmag, @qw )                               'qw /= rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @qx, @rmag, @qx )                               'qx /= rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @qy, @rmag, @qy )                               'qy /= rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @qz, @rmag, @qz )                               'qz /= rmag 
-  '4 instructions (77)
-
-
-  'Now convert the updated quaternion to a rotation matrix 
-
-  'fx2 = qx * qx;
-  'fy2 = qy * qy;
-  'fz2 = qz * qz;
-  FLT.AddCommand( 0, FLT#opSqr, @qx, 0, @fx2 )                                  'fx2 = qx *qx
-  FLT.AddCommand( 0, FLT#opSqr, @qy, 0, @fy2 )                                  'fy2 = qy *qy
-  FLT.AddCommand( 0, FLT#opSqr, @qz, 0, @fz2 )                                  'fz2 = qz *qz
-  '3 instructions (80)
-
-  'fwx = qw * qx;
-  'fwy = qw * qy;
-  'fwz = qw * qz;
-  FLT.AddCommand( 0, FLT#opMul, @qw, @qx, @fwx )                                'fwx = qw *qx
-  FLT.AddCommand( 0, FLT#opMul, @qw, @qy, @fwy )                                'fwy = qw *qy
-  FLT.AddCommand( 0, FLT#opMul, @qw, @qz, @fwz )                                'fwz = qw *qz
-  '3 instructions (83)
-
-  'fxy = qx * qy;
-  'fxz = qx * qz;
-  'fyz = qy * qz;
-  FLT.AddCommand( 0, FLT#opMul, @qx, @qy, @fxy )                                'fxy = qx *qy
-  FLT.AddCommand( 0, FLT#opMul, @qx, @qz, @fxz )                                'fxz = qx *qz
-  FLT.AddCommand( 0, FLT#opMul, @qy, @qz, @fyz )                                'fyz = qy *qz
-  '3 instructions (86)
-
-   
-  'm00 = 1.0f - 2.0f * (y2 + z2)
-  FLT.AddCommand( 0, FLT#opAdd, @fy2, @fz2, @temp )                             'temp = fy2+fz2
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @temp )                      'temp *= 2.0
-  FLT.AddCommand( 0, FLT#opSub, @const_F1, @temp, @m00 )                        'm00 = 1.0 - temp
-     
-  'm01 =        2.0f * (fxy - fwz)
-  FLT.AddCommand( 0, FLT#opSub, @fxy, @fwz, @temp )                             'temp = fxy-fwz
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @m01 )                       'm01 = 2.0 * temp
-
-  'm02 =        2.0f * (fxz + fwy)
-  FLT.AddCommand( 0, FLT#opAdd, @fxz, @fwy, @temp )                             'temp = fxz+fwy
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @m02 )                       'm02 = 2.0 * temp
-  '7 instructions (93)
-
-   
-  'm10 =        2.0f * (fxy + fwz)
-  FLT.AddCommand( 0, FLT#opAdd, @fxy, @fwz, @temp )                             'temp = fxy-fwz
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @m10 )                       'm10 = 2.0 * temp
-
-  'm11 = 1.0f - 2.0f * (x2 + z2)
-  FLT.AddCommand( 0, FLT#opAdd, @fx2, @fz2, @temp )                             'temp = fx2+fz2
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @temp )                      'temp *= 2.0
-  FLT.AddCommand( 0, FLT#opSub, @const_F1, @temp, @m11 )                        'm11 = 1.0 - temp
-
-  'm12 =        2.0f * (fyz - fwx)
-  FLT.AddCommand( 0, FLT#opSub, @fyz, @fwx, @temp )                             'temp = fyz-fwx
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @m12 )                       'm12 = 2.0 * temp
-  '7 instructions (100)
-
-   
-  'm20 =        2.0f * (fxz - fwy)
-  FLT.AddCommand( 0, FLT#opSub, @fxz, @fwy, @temp )                             'temp = fxz-fwz
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @m20 )                       'm20 = 2.0 * temp
-
-  'm21 =        2.0f * (fyz + fwx)
-  FLT.AddCommand( 0, FLT#opAdd, @fyz, @fwx, @temp )                             'temp = fyz+fwx
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @m21 )                       'm21 = 2.0 * temp
-
-  'm22 = 1.0f - 2.0f * (x2 + y2)
-  FLT.AddCommand( 0, FLT#opAdd, @fx2, @fy2, @temp )                             'temp = fx2+fy2
-  FLT.AddCommand( 0, FLT#opShift, @temp, @const_1, @temp )                      'temp *= 2.0
-  FLT.AddCommand( 0, FLT#opSub, @const_F1, @temp, @m22 )                        'm22 = 1.0 - temp
-  '7 instructions (107)
-
-
-
-  'fax =  packet.ax;           // Acceleration in X (left/right)
-  'fay =  packet.az;           // Acceleration in Y (up/down)
-  'faz =  packet.ay;           // Acceleration in Z (toward/away)
-  FLT.AddCommand( 0, FLT#opFloat, @ax, 0, @fax )
-  FLT.AddCommand( 0, FLT#opFloat, @az, 0, @fay )
-  FLT.AddCommand( 0, FLT#opFloat, @ay, 0, @faz )
-  FLT.AddCommand( 0, FLT#opNeg, @fax, 0, @fax )
-
-  'rmag = facc.length
-  FLT.AddCommand( 0, FLT#opSqr, @fax, 0, @rmag )                                'rmag = fax*fax
-  FLT.AddCommand( 0, FLT#opSqr, @fay, 0, @temp )                                'temp = fay*fay
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
-  FLT.AddCommand( 0, FLT#opSqr, @faz, 0, @temp )                                'temp = faz*faz
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @temp, @rmag )                           'rmag += temp
-  FLT.AddCommand( 0, FLT#opAdd, @rmag, @const_epsilon, @rmag )                  'rmag += 0.00000001
-  FLT.AddCommand( 0, FLT#opSqrt, @rmag, 0, @rmag )                              'rmag = Sqrt(rmag)                                                  
-
-  'facc /= rmag
-  FLT.AddCommand( 0, FLT#opDiv, @fax, @rmag, @faxn )                            'faxn = fax / rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @fay, @rmag, @fayn )                            'fayn = fay / rmag 
-  FLT.AddCommand( 0, FLT#opDiv, @faz, @rmag, @fazn )                            'fazn = faz / rmag 
-
-
-
-  'accWeight = 1.0 - FMin( FAbs( 2.0 - accLen * 2.0 ), 1.0 )
-  FLT.AddCommand( 0, FLT#opMul, @rmag, @const_AccScale, @rmag )                 'rmag /= accScale (accelerometer to 1G units)
-  FLT.AddCommand( 0, FLT#opShift, @rmag, @const_1, @accWeight )                 'accWeight = rmag * 2.0
-  FLT.AddCommand( 0, FLT#opSub, @const_F2, @accWeight, @accWeight )             'accWeight = 2.0 - accWeight
-  FLT.AddCommand( 0, FLT#opFAbs, @accWeight, 0, @accWeight )                    'accWeight = FAbs(accWeight)
-  FLT.AddCommand( 0, FLT#opFMin, @accWeight, @const_F1, @accWeight )            'accWeight = FMin( accWeight, 1.0 )
-  FLT.AddCommand( 0, FLT#opSub, @const_F1, @accWeight, @accWeight )             'accWeight = 1.0 - accWeight                                                
-
-   
-
-  'errDiffX = fayn * m12 - fazn * m11
-  FLT.AddCommand( 0, FLT#opMul, @fayn, @m12, @errDiffX )
-  FLT.AddCommand( 0, FLT#opMul, @fazn, @m11, @temp )
-  FLT.AddCommand( 0, FLT#opSub, @errDiffX, @temp, @errDiffX )
-
-  'errDiffY = fazn * m10 - faxn * m12
-  FLT.AddCommand( 0, FLT#opMul, @fazn, @m10, @errDiffY )
-  FLT.AddCommand( 0, FLT#opMul, @faxn, @m12, @temp )
-  FLT.AddCommand( 0, FLT#opSub, @errDiffY, @temp, @errDiffY )
-
-  'errDiffZ = faxn * m11 - fayn * m10
-  FLT.AddCommand( 0, FLT#opMul, @faxn, @m11, @errDiffZ )
-  FLT.AddCommand( 0, FLT#opMul, @fayn, @m10, @temp )
-  FLT.AddCommand( 0, FLT#opSub, @errDiffZ, @temp, @errDiffZ )
-
-  'accWeight *= const_ErrScale   
-  FLT.AddCommand( 0, FLT#opMul, @const_ErrScale, @accWeight, @accWeight )
-
-
-  'Continue from here ------
-  
-  'Test: Does ErrCorr need to be rotated into the local frame from the world frame?
-
-  'errCorr = errDiff * accWeight
-  FLT.AddCommand( 0, FLT#opMul, @errDiffX, @accWeight, @errCorrX )
-  FLT.AddCommand( 0, FLT#opMul, @errDiffY, @accWeight, @errCorrY )
-  FLT.AddCommand( 0, FLT#opMul, @errDiffZ, @accWeight, @errCorrZ )
-  
-
-    'tx := Flt.ASin( Flt.FFloatDiv28( DCM.GetM12 ) )     'Convert to float, then divide by (float)(1<<28)
-    'tz := Flt.ASin( Flt.FFloatDiv28( DCM.GetM10 ) )     'Convert to float, then divide by (float)(1<<28) 
-
-    'XAngle := Flt.FRound( Flt.FMul( tx , constant( 320000.0 / (PI / 2.0)) ) ) 
-    'ZAngle := Flt.FRound( Flt.FMul( tz , constant(-320000.0 / (PI / 2.0)) ) )
-
-    'if( DCM.GetMatrixvalue(4) < 0 )                     'If the Y value of the Y axis is negative, we're upside down
-    '  if( ||ZAngle > ||XAngle ) 
-    '    ZAngle := ZAngle 
-
-    'For heading, I want an actual angular value, so this returns me an int between 0 & 65535, where 0 is forward
-    'YAngle := Flt.FRound( Flt.FMul( Flt.Atan2( Flt.FFloat(DCM.GetM20), Flt.FFloat(DCM.GetM22)), constant(32768.0 / PI) ) ) & 65535 
-
-
-  FLT.AddCommand( 0, FLT#opASinCos, @m12, 0, @temp )
-  FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Pitch )
-    
-  FLT.AddCommand( 0, FLT#opASinCos, @m10, 0, @temp )
-  FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Roll )
-    
-  FLT.AddCommand( 0, FLT#opATan2, @m20, @m22, @temp )
-  FLT.AddCommand( 0, FLT#opMul, @temp, @const_outAngleScale, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @Yaw )
-
-
-  FLT.AddCommand( 0, FLT#opDiv, @const_F1, @m11, @temp )                        '1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
-  FLT.AddCommand( 0, FLT#opMul, @temp, @const_ThrustScale, @temp )              '*= 256.0  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @ThrustFactor )
-
-
-
-  'Compute the running height estimate
-
-  'force := acc / 4096.0
-  FLT.AddCommand( 0, FLT#opShift, @fax, @const_neg12, @forceX )  
-  FLT.AddCommand( 0, FLT#opShift, @fay, @const_neg12, @forceY )  
-  FLT.AddCommand( 0, FLT#opShift, @faz, @const_neg12, @forceZ )  
-
-  'force -= m[1,0], m[1,1], m[1,2]  - Subtract gravity (1G, straight down)
-  FLT.AddCommand( 0, FLT#opSub, @forceX, @m10, @forceX )  
-  FLT.AddCommand( 0, FLT#opSub, @forceY, @m11, @forceY )  
-  FLT.AddCommand( 0, FLT#opSub, @forceZ, @m12, @forceZ )  
-
-  'forceWY := M.Transpose().Mul(Force).y                 'Orient force vector into world frame
-  'forceWY = m01*forceX + m11*forceY + m21*forceZ
-
-  FLT.AddCommand( 0, FLT#opMul, @forceX, @m01, @forceWY )
-   
-  FLT.AddCommand( 0, FLT#opMul, @forceY, @m11, @temp )
-  FLT.AddCommand( 0, FLT#opAdd, @forceWY, @temp, @forceWY )
-
-  FLT.AddCommand( 0, FLT#opMul, @forceZ, @m21, @temp )
-  FLT.AddCommand( 0, FLT#opAdd, @forceWY, @temp, @forceWY )
-
-  'forceWY *= 9.8                                       'Convert to M/sec^2
-  Flt.AddCommand( 0, FLT#opMul, @forceWY, @const_GMetersPerSec, @forceWY )
-
-
-
-  Flt.AddCommand( 0, FLT#opMul, @forceWY, @const_UpdateScale, @temp )           'temp := forceWY / UpdateRate
-  Flt.AddCommand( 0, FLT#opAdd, @velocityEstimate, @temp, @velocityEstimate )   'velEstimate += forceWY / UpdateRate
-
-  
-  Flt.AddCommand( 0, FLT#opFloat, @altRate, 0, @altitudeVelocity )              'AltVelocity = float(altRate)
-  Flt.AddCommand( 0, FLT#opMul, @altitudeVelocity, @const_AltiVelScale, @altitudeVelocity ) 'Convert from mm/sec to m/sec   
-
-
-  'VelocityEstimate := (VelocityEstimate * 0.9950) + (altVelocity * 0.0050)
-  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_velAccScale, @velocityEstimate )
-  Flt.AddCommand( 0, FLT#opMul, @altitudeVelocity, @const_velAltiScale, @temp )
-  Flt.AddCommand( 0, Flt#opAdd, @velocityEstimate, @temp, @velocityEstimate ) 
-
-  'altitudeEstimate += velocityEstimate / UpdateRate
-  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_UpdateScale, @temp )
-  Flt.AddCommand( 0, FLT#opAdd, @altitudeEstimate, @temp, @altitudeEstimate ) 
-
-  'altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
-  Flt.AddCommand( 0, FLT#opMul, @altitudeEstimate, @const_velAccTrust, @altitudeEstimate )
-
-  Flt.AddCommand( 0, FLT#opFloat, @alt, 0, @temp )                              'temp := float(alt)
-  Flt.AddCommand( 0, FLT#opDiv, @temp, @const_m_to_mm, @temp )                  'temp /= 1000.0    (alt now in m)
-  Flt.AddCommand( 0, FLT#opMul, @temp, @const_velAltiTrust, @temp )             'temp *= 0.0050
-  Flt.AddCommand( 0, FLT#opAdd, @altitudeEstimate, @temp, @altitudeEstimate )   'altEstimate += temp 
-
-
-  Flt.AddCommand( 0, FLT#opMul, @altitudeEstimate, @const_m_to_mm, @temp )      'temp = altEst * 1000.0    (temp now in mm)
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @AltitudeEstMM )
-
-  Flt.AddCommand( 0, FLT#opMul, @velocityEstimate, @const_m_to_mm, @temp )      'temp = velEst * 1000.0    (temp now in mm/sec)
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @VelocityEstMM )
-
-
-  'Create a fixed point version of the orientation matrix
-  FLT.AddCommand( 0, FLT#opShift, @m00, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm00 )
-  FLT.AddCommand( 0, FLT#opShift, @m01, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm01 )
-  FLT.AddCommand( 0, FLT#opShift, @m02, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm02 )
-
-  FLT.AddCommand( 0, FLT#opShift, @m10, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm10 )
-  FLT.AddCommand( 0, FLT#opShift, @m11, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm11 )
-  FLT.AddCommand( 0, FLT#opShift, @m12, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm12 )
-
-  FLT.AddCommand( 0, FLT#opShift, @m20, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm20 )
-  FLT.AddCommand( 0, FLT#opShift, @m21, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm21 )
-  FLT.AddCommand( 0, FLT#opShift, @m22, @const_16, @temp )  
-  FLT.AddCommand( 0, FLT#opTruncRound, @temp, @const_0, @fm22 )
-
-
-  QuatUpdateLen := (FLT.EndStream( 0 ) - @QuatUpdateCommands) / 4 
-  '}
-    
-
 
 PUB SetGyroZero( _x, _y, _z )
   zx := _x
@@ -600,13 +224,6 @@ PUB Send( v )
   'Debug.tx(v >> 8)
   'Debug.tx(v & 255)
 
-
-
-'PUB GetQuatUpdateLen
-'  return QuatUpdateLen
-
-'PUB GetCalcErrorLen
-'  return CalcErrorLen
 
 
 'If the body is mostly level, use the incoming mag readings as the compass vector
@@ -633,18 +250,6 @@ PUB Update_Part1( packetAddr ) | v, t
   return t     
 
 
-{
-PUB Update_Part2 | t
-
-
-  t := cnt
-  FLT.WaitStream                'Wait for the previous stream to complete
-  
-  FLT.RunStream( @CalcErrorUpdateAngles )
-  t := cnt-t                    'Resulting t value is the number of cycles taken to execute the IMU code 
-
-  return t     
-}
 
 PUB WaitForCompletion
   FLT.WaitStream                'Wait for the stream to complete
@@ -703,13 +308,15 @@ PRI AdjustStreamPointers( p ) | diff
   long[p] += diff             'fix the table startup pointer
   p += 4                      'advance to the first instruction in the stream                                    
    
-  repeat until long[p+4] == 0                           'A pointer to 0 indicates the end of the table
-    long[p] := FLT.GetCommandInstruction( long[p] )     'Replace the instruction index with the actual JMPRET instruction
-    p += 4                                              'Advance to the first set of arguments
-    long[p] += diff | (diff << 16)                      'Replace the two relative pointers (words) with absolute pointers
-    p += 4                                              'Advance to the last argument (a single long)
-    long[p] += diff                                     'Replace the relative pointer (long) with an absolute pointer
-    p += 4                                              'advance to the next instruction in the list      
+  repeat until word[p] == 0                             'Zero indicates end-of-stream
+    word[p] := FLT.GetCommandPtr( word[p] )             'Turn this into a memory address into the JMPRET instruction table in the FPU
+    p += 2                                              'Advance to the first set of arguments
+    word[p] += diff                                     'Replace the relative pointer (word) with an absolute pointer
+    p += 2                                              'advance to the next instruction in the list      
+    word[p] += diff                                     'Replace the relative pointer (word) with an absolute pointer
+    p += 2                                              'advance to the next instruction in the list      
+    word[p] += diff                                     'Replace the relative pointer (word) with an absolute pointer
+    p += 2                                              'advance to the next instruction in the list      
    
    
 
@@ -736,7 +343,8 @@ const_neghalf           long   -0.5
 
 const_ErrScale          long    1.0/512.0       'How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
 const_AccScale          long    1.0/AccToG      'Conversion factor from accel units to G's
-const_outAngleScale     long    -65536.0 / PI               
+const_outAngleScale     long    65536.0 / PI               
+const_outNegAngleScale  long    -65536.0 / PI               
 const_ThrustScale       long    256.0
 const_GMetersPerSec     long    9.80665
 const_AltiVelScale      long    1.0/1000.0      'Convert mm to m
@@ -751,127 +359,121 @@ const_velAltiTrust      long    0.001
 
 
 
-'To do this, I'll need to move ALL variables into the DAT section, then write a routine to convert the relative pointers to absolute
-'It'll be a pain, but it'll save a huge chunk of program space and RAM
-
-'SEE:  http://forums.parallax.com/discussion/148580/fyi-using-the-operator-in-a-dat-section
-
-
-'cmdStream_RelToAbs      long    @cmdStream_RelToAbs
 
 '{
-  'fgx = gx / GyroScale + errCorrX
 
 commandStream_0
-              long      @commandStream_0                'this value is used to determine the offset to add to subsequent instructions                                                
+        long  @commandStream_0                'this value is used to determine the offset to add to subsequent instructions                                                
+                                                        'SEE:  http://forums.parallax.com/discussion/148580/fyi-using-the-operator-in-a-dat-section
+  'fgx = gx / GyroScale + errCorrX
               
 QuatUpdateCommands
-              long      FLT#opFloat, @gx | (0<<16), @rx                         'rx = float(gx)
-              long      FLT#opMul, @rx | (@const_GyroScale<<16), @rx            'rx /= GyroScale
-              long      FLT#opAdd, @rx | (@errCorrX<<16), @rx                   'rx += errCorrX
+        word  FLT#opFloat, @gx, 0, @rx                         'rx = float(gx)
+        word  FLT#opMul, @rx, @const_GyroScale, @rx            'rx /= GyroScale
+        word  FLT#opAdd, @rx, @errCorrX, @rx                   'rx += errCorrX
 
   'fgy = gy / GyroScale + errCorrY
-              long      FLT#opFloat, @gz | (0<<16), @ry                         'ry = float(gz)
-              long      FLT#opMul, @ry | (@const_NegGyroScale<<16), @ry         'ry /= GyroScale
-              long      FLT#opAdd, @ry | (@errCorrY<<16), @ry                   'ry += errCorrY
+        word  FLT#opFloat, @gz,  0, @ry                         'ry = float(gz)
+        word  FLT#opMul, @ry, @const_NegGyroScale, @ry         'ry /= GyroScale
+        word  FLT#opAdd, @ry, @errCorrY, @ry                   'ry += errCorrY
 
   'fgz = gz / GyroScale + errCorrZ
-              long      FLT#opFloat, @gy | (0<<16), @rz                         'rz = float(gy)
-              long      FLT#opMul, @rz | (@const_NegGyroScale<<16), @rz         'rz /= GyroScale
-              long      FLT#opAdd, @rz | (@errCorrZ<<16), @rz                   'rz += errCorrZ
+        word  FLT#opFloat, @gy, 0, @rz                         'rz = float(gy)
+        word  FLT#opMul, @rz, @const_NegGyroScale, @rz         'rz /= GyroScale
+        word  FLT#opAdd, @rz, @errCorrZ, @rz                   'rz += errCorrZ
 
-  'rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5 
-                long      FLT#opSqr, @rx | (0<<16), @rmag                                  'rmag = fgx*fgx
-                long      FLT#opSqr, @ry | (0<<16), @temp                                  'temp = fgy*fgy
-                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp
-                long      FLT#opSqr, @rz | (0<<16), @temp                                  'temp = fgz*fgz
-                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp
-                long      FLT#opAdd, @rmag | (@const_epsilon<<16), @rmag                   'rmag += 0.00000001
-                long      FLT#opSqrt, @rmag | (0<<16), @rmag                               'rmag = Sqrt(rmag)                                                  
-                long      FLT#opShift, @rmag | (@const_neg1<<16), @rmag                    'rmag *= 0.5                                                  
+  'rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5
+        word  FLT#opSqr, @rx, 0, @rmag                                  'rmag = fgx*fgx
+        word  FLT#opSqr, @ry, 0, @temp                                  'temp = fgy*fgy
+        word  FLT#opAdd, @rmag, @temp, @rmag                            'rmag += temp
+        word  FLT#opSqr, @rz, 0, @temp                                  'temp = fgz*fgz
+        word  FLT#opAdd, @rmag, @temp, @rmag                            'rmag += temp
+        word  FLT#opAdd, @rmag, @const_epsilon, @rmag                   'rmag += 0.00000001
+        word  FLT#opSqrt, @rmag, 0, @rmag                               'rmag = Sqrt(rmag)                                                  
+        word  FLT#opShift, @rmag, @const_neg1, @rmag                    'rmag *= 0.5                                                  
   '8 instructions  (17)
 
   'cosr = Cos(rMag)
   'sinr = Sin(rMag) / rMag
-                long      FLT#opSinCos, @rmag | (@sinr<<16), @cosr                         'sinr = Sin(rmag), cosr = Cos(rmag)  
-                long      FLT#opDiv, @sinr | (@rmag<<16), @sinr                            'sinr /= rmag                                                  
+        word  FLT#opSinCos, @rmag,  @sinr, @cosr                         'sinr = Sin(rmag), cosr = Cos(rmag)  
+        word  FLT#opDiv, @sinr,  @rmag, @sinr                            'sinr /= rmag                                                  
   '3 instructions  (20)
 
   'qdot.w =  (r.x*x + r.y*y + r.z*z) * -0.5
-                long      FLT#opMul, @rx | (@qx<<16), @qdw                                 'qdw = rx*qx 
-                long      FLT#opMul, @ry | (@qy<<16), @temp                                'temp = ry*qy
-                long      FLT#opAdd, @qdw | (@temp<<16), @qdw                              'qdw += temp
-                long      FLT#opMul, @rz | (@qz<<16), @temp                                'temp = rz*qz
-                long      FLT#opAdd, @qdw | (@temp<<16), @qdw                              'qdw += temp
-                long      FLT#opMul, @qdw | (@const_neghalf<<16), @qdw                     'qdw *= -0.5
+        word  FLT#opMul, @rx,  @qx, @qdw                                 'qdw = rx*qx 
+        word  FLT#opMul, @ry,  @qy, @temp                                'temp = ry*qy
+        word  FLT#opAdd, @qdw,  @temp, @qdw                              'qdw += temp
+        word  FLT#opMul, @rz,  @qz, @temp                                'temp = rz*qz
+        word  FLT#opAdd, @qdw,  @temp, @qdw                              'qdw += temp
+        word  FLT#opMul, @qdw,  @const_neghalf, @qdw                     'qdw *= -0.5
   '8 instructions  (28)
 
   'qdot.x =  (r.x*w + r.z*y - r.y*z) * 0.5
-                long      FLT#opMul, @rx | (@qw<<16), @qdx                                 'qdx = rx*qw 
-                long      FLT#opMul, @rz | (@qy<<16), @temp                                'temp = rz*qy
-                long      FLT#opAdd, @qdx | (@temp<<16), @qdx                              'qdx += temp
-                long      FLT#opMul, @ry | (@qz<<16), @temp                                'temp = ry*qz
-                long      FLT#opSub, @qdx | (@temp<<16), @qdx                              'qdx -= temp
-                long      FLT#opShift, @qdx | (@const_neg1<<16), @qdx                      'qdx *= 0.5
+        word  FLT#opMul, @rx,  @qw, @qdx                                 'qdx = rx*qw 
+        word  FLT#opMul, @rz,  @qy, @temp                                'temp = rz*qy
+        word  FLT#opAdd, @qdx,  @temp, @qdx                              'qdx += temp
+        word  FLT#opMul, @ry,  @qz, @temp                                'temp = ry*qz
+        word  FLT#opSub, @qdx,  @temp, @qdx                              'qdx -= temp
+        word  FLT#opShift, @qdx,  @const_neg1, @qdx                      'qdx *= 0.5
   '8 instructions  (36)
 
   'qdot.y =  (r.y*w - r.z*x + r.x*z) * 0.5
-                long      FLT#opMul, @ry | (@qw<<16), @qdy                                 'qdy = ry*qw 
-                long      FLT#opMul, @rz | (@qx<<16), @temp                                'temp = rz*qx
-                long      FLT#opSub, @qdy | (@temp<<16), @qdy                              'qdy -= temp
-                long      FLT#opMul, @rx | (@qz<<16), @temp                                'temp = rx*qz
-                long      FLT#opAdd, @qdy | (@temp<<16), @qdy                              'qdy += temp
-                long      FLT#opShift, @qdy | (@const_neg1<<16), @qdy                      'qdy *= 0.5
+        word  FLT#opMul, @ry,  @qw, @qdy                                 'qdy = ry*qw 
+        word  FLT#opMul, @rz,  @qx, @temp                                'temp = rz*qx
+        word  FLT#opSub, @qdy,  @temp, @qdy                              'qdy -= temp
+        word  FLT#opMul, @rx,  @qz, @temp                                'temp = rx*qz
+        word  FLT#opAdd, @qdy,  @temp, @qdy                              'qdy += temp
+        word  FLT#opShift, @qdy,  @const_neg1, @qdy                      'qdy *= 0.5
   '8 instructions  (44)
 
   'qdot.z =  (r.z*w + r.y*x - r.x*y) * 0.5
-                long      FLT#opMul, @rz | (@qw<<16), @qdz                                 'qdz = rz*qw 
-                long      FLT#opMul, @ry | (@qx<<16), @temp                                'temp = ry*qx
-                long      FLT#opAdd, @qdz | (@temp<<16), @qdz                              'qdz += temp
-                long      FLT#opMul, @rx | (@qy<<16), @temp                                'temp = rx*qy
-                long      FLT#opSub, @qdz | (@temp<<16), @qdz                              'qdz -= temp
-                long      FLT#opShift, @qdz | (@const_neg1<<16), @qdz                      'qdz *= 0.5
+        word  FLT#opMul, @rz,  @qw, @qdz                                 'qdz = rz*qw 
+        word  FLT#opMul, @ry,  @qx, @temp                                'temp = ry*qx
+        word  FLT#opAdd, @qdz,  @temp, @qdz                              'qdz += temp
+        word  FLT#opMul, @rx,  @qy, @temp                                'temp = rx*qy
+        word  FLT#opSub, @qdz,  @temp, @qdz                              'qdz -= temp
+        word  FLT#opShift, @qdz,  @const_neg1, @qdz                      'qdz *= 0.5
   '8 instructions  (52)
    
   'q.w = cosr * q.w + sinr * qdot.w
-                long      FLT#opMul, @cosr | (@qw<<16), @qw                                'qw = cosr*qw 
-                long      FLT#opMul, @sinr | (@qdw<<16), @temp                             'temp = sinr*qdw
-                long      FLT#opAdd, @qw | (@temp<<16), @qw                                'qw += temp
+        word  FLT#opMul, @cosr,  @qw, @qw                                'qw = cosr*qw 
+        word  FLT#opMul, @sinr,  @qdw, @temp                             'temp = sinr*qdw
+        word  FLT#opAdd, @qw,  @temp, @qw                                'qw += temp
 
   'q.x = cosr * q.x + sinr * qdot.x
-                long      FLT#opMul, @cosr | (@qx<<16), @qx                                'qx = cosr*qx 
-                long      FLT#opMul, @sinr | (@qdx<<16), @temp                             'temp = sinr*qdx
-                long      FLT#opAdd, @qx | (@temp<<16), @qx                                'qx += temp
+        word  FLT#opMul, @cosr,  @qx, @qx                                'qx = cosr*qx 
+        word  FLT#opMul, @sinr,  @qdx, @temp                             'temp = sinr*qdx
+        word  FLT#opAdd, @qx,  @temp, @qx                                'qx += temp
 
   'q.y = cosr * q.y + sinr * qdot.y
-                long      FLT#opMul, @cosr | (@qy<<16), @qy                                'qy = cosr*qy 
-                long      FLT#opMul, @sinr | (@qdy<<16), @temp                             'temp = sinr*qdy
-                long      FLT#opAdd, @qy | (@temp<<16), @qy                                'qy += temp
+        word  FLT#opMul, @cosr,  @qy, @qy                                'qy = cosr*qy 
+        word  FLT#opMul, @sinr,  @qdy, @temp                             'temp = sinr*qdy
+        word  FLT#opAdd, @qy,  @temp, @qy                                'qy += temp
 
   'q.z = cosr * q.z + sinr * qdot.z
-                long      FLT#opMul, @cosr | (@qz<<16), @qz                                'qz = cosr*qz 
-                long      FLT#opMul, @sinr | (@qdz<<16), @temp                             'temp = sinr*qdz
-                long      FLT#opAdd, @qz | (@temp<<16), @qz                                'qz += temp
+        word  FLT#opMul, @cosr,  @qz, @qz                                'qz = cosr*qz 
+        word  FLT#opMul, @sinr,  @qdz, @temp                             'temp = sinr*qdz
+        word  FLT#opAdd, @qz,  @temp, @qz                                'qz += temp
   '12 instructions  (64)
 
   'q = q.Normalize()
   'rmag = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w + 0.0000001)
-                long      FLT#opSqr, @qx | (0<<16), @rmag                                  'rmag = qx*qx 
-                long      FLT#opSqr, @qy | (0<<16), @temp                                  'temp = qy*qy 
-                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp 
-                long      FLT#opSqr, @qz | (0<<16), @temp                                  'temp = qz*qz 
-                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp 
-                long      FLT#opSqr, @qw | (0<<16), @temp                                  'temp = qw*qw 
-                long      FLT#opAdd, @rmag | (@temp<<16), @rmag                            'rmag += temp 
-                long      FLT#opAdd, @rmag | (@const_epsilon<<16), @rmag                   'rmag += 0.0000001 
-                long      FLT#opSqrt, @rmag | (0<<16), @rmag                               'sqrt(rmag) 
+        word  FLT#opSqr, @qx,  0, @rmag                                  'rmag = qx*qx 
+        word  FLT#opSqr, @qy,  0, @temp                                  'temp = qy*qy 
+        word  FLT#opAdd, @rmag,  @temp, @rmag                            'rmag += temp 
+        word  FLT#opSqr, @qz,  0, @temp                                  'temp = qz*qz 
+        word  FLT#opAdd, @rmag,  @temp, @rmag                            'rmag += temp 
+        word  FLT#opSqr, @qw,  0, @temp                                  'temp = qw*qw 
+        word  FLT#opAdd, @rmag,  @temp, @rmag                            'rmag += temp 
+        word  FLT#opAdd, @rmag,  @const_epsilon, @rmag                   'rmag += 0.0000001 
+        word  FLT#opSqrt, @rmag,  0, @rmag                               'sqrt(rmag) 
   '9 instructions (73)
 
   'q /= rmag   
-                long      FLT#opDiv, @qw | (@rmag<<16), @qw                                'qw /= rmag 
-                long      FLT#opDiv, @qx | (@rmag<<16), @qx                                'qx /= rmag 
-                long      FLT#opDiv, @qy | (@rmag<<16), @qy                                'qy /= rmag 
-                long      FLT#opDiv, @qz | (@rmag<<16), @qz                                'qz /= rmag 
+        word  FLT#opDiv, @qw,  @rmag, @qw                                'qw /= rmag 
+        word  FLT#opDiv, @qx,  @rmag, @qx                                'qx /= rmag 
+        word  FLT#opDiv, @qy,  @rmag, @qy                                'qy /= rmag 
+        word  FLT#opDiv, @qz,  @rmag, @qz                                'qz /= rmag 
   '4 instructions (77)
 
 
@@ -880,70 +482,70 @@ QuatUpdateCommands
   'fx2 = qx * qx;
   'fy2 = qy * qy;
   'fz2 = qz * qz;
-                long    FLT#opSqr, @qx | (0<<16), @fx2                                   'fx2 = qx *qx
-                long    FLT#opSqr, @qy | (0<<16), @fy2                                   'fy2 = qy *qy
-                long    FLT#opSqr, @qz | (0<<16), @fz2                                   'fz2 = qz *qz
+        word  FLT#opSqr, @qx,  0, @fx2                                   'fx2 = qx *qx
+        word  FLT#opSqr, @qy,  0, @fy2                                   'fy2 = qy *qy
+        word  FLT#opSqr, @qz,  0, @fz2                                   'fz2 = qz *qz
   '3 instructions (80)
 
   'fwx = qw * qx;
   'fwy = qw * qy;
   'fwz = qw * qz;
-                long    FLT#opMul, @qw | (@qx<<16), @fwx                                 'fwx = qw *qx
-                long    FLT#opMul, @qw | (@qy<<16), @fwy                                 'fwy = qw *qy
-                long    FLT#opMul, @qw | (@qz<<16), @fwz                                 'fwz = qw *qz
+        word  FLT#opMul, @qw,  @qx, @fwx                                 'fwx = qw *qx
+        word  FLT#opMul, @qw,  @qy, @fwy                                 'fwy = qw *qy
+        word  FLT#opMul, @qw,  @qz, @fwz                                 'fwz = qw *qz
   '3 instructions (83)
 
   'fxy = qx * qy;
   'fxz = qx * qz;
   'fyz = qy * qz;
-                long    FLT#opMul, @qx | (@qy<<16), @fxy                                 'fxy = qx *qy
-                long    FLT#opMul, @qx | (@qz<<16), @fxz                                 'fxz = qx *qz
-                long    FLT#opMul, @qy | (@qz<<16), @fyz                                 'fyz = qy *qz
+        word  FLT#opMul, @qx,  @qy, @fxy                                 'fxy = qx *qy
+        word  FLT#opMul, @qx,  @qz, @fxz                                 'fxz = qx *qz
+        word  FLT#opMul, @qy,  @qz, @fyz                                 'fyz = qy *qz
   '3 instructions (86)
 
    
   'm00 = 1.0f - 2.0f * (y2 + z2)
-                long    FLT#opAdd, @fy2 | (@fz2<<16), @temp                              'temp = fy2+fz2
-                long    FLT#opShift, @temp | (@const_1<<16), @temp                       'temp *= 2.0
-                long    FLT#opSub, @const_F1 | (@temp<<16), @m00                         'm00 = 1.0 - temp
+        word  FLT#opAdd, @fy2,  @fz2, @temp                              'temp = fy2+fz2
+        word  FLT#opShift, @temp,  @const_1, @temp                       'temp *= 2.0
+        word  FLT#opSub, @const_F1,  @temp, @m00                         'm00 = 1.0 - temp
      
   'm01 =        2.0f * (fxy - fwz)
-                long    FLT#opSub, @fxy | (@fwz<<16), @temp                              'temp = fxy-fwz
-                long    FLT#opShift, @temp | (@const_1<<16), @m01                        'm01 = 2.0 * temp
+        word  FLT#opSub, @fxy,  @fwz, @temp                              'temp = fxy-fwz
+        word  FLT#opShift, @temp,  @const_1, @m01                        'm01 = 2.0 * temp
 
   'm02 =        2.0f * (fxz + fwy)
-                long    FLT#opAdd, @fxz | (@fwy<<16), @temp                              'temp = fxz+fwy
-                long    FLT#opShift, @temp | (@const_1<<16), @m02                        'm02 = 2.0 * temp
+        word  FLT#opAdd, @fxz,  @fwy, @temp                              'temp = fxz+fwy
+        word  FLT#opShift, @temp,  @const_1, @m02                        'm02 = 2.0 * temp
   '7 instructions (93)
 
    
   'm10 =        2.0f * (fxy + fwz)
-                long    FLT#opAdd, @fxy | (@fwz<<16), @temp                              'temp = fxy-fwz
-                long    FLT#opShift, @temp | (@const_1<<16), @m10                        'm10 = 2.0 * temp
+        word  FLT#opAdd, @fxy,  @fwz, @temp                              'temp = fxy-fwz
+        word  FLT#opShift, @temp,  @const_1, @m10                        'm10 = 2.0 * temp
 
   'm11 = 1.0f - 2.0f * (x2 + z2)
-                long    FLT#opAdd, @fx2 | (@fz2<<16), @temp                              'temp = fx2+fz2
-                long    FLT#opShift, @temp | (@const_1<<16), @temp                       'temp *= 2.0
-                long    FLT#opSub, @const_F1 | (@temp<<16), @m11                         'm11 = 1.0 - temp
+        word  FLT#opAdd, @fx2,  @fz2, @temp                              'temp = fx2+fz2
+        word  FLT#opShift, @temp,  @const_1, @temp                       'temp *= 2.0
+        word  FLT#opSub, @const_F1,  @temp, @m11                         'm11 = 1.0 - temp
 
   'm12 =        2.0f * (fyz - fwx)
-                long    FLT#opSub, @fyz | (@fwx<<16), @temp                              'temp = fyz-fwx
-                long    FLT#opShift, @temp | (@const_1<<16), @m12                        'm12 = 2.0 * temp
+        word  FLT#opSub, @fyz,  @fwx, @temp                              'temp = fyz-fwx
+        word  FLT#opShift, @temp,  @const_1, @m12                        'm12 = 2.0 * temp
   '7 instructions (100)
 
    
   'm20 =        2.0f * (fxz - fwy)
-                long    FLT#opSub, @fxz | (@fwy<<16), @temp                              'temp = fxz-fwz
-                long    FLT#opShift, @temp | (@const_1<<16), @m20                        'm20 = 2.0 * temp
+        word  FLT#opSub, @fxz,  @fwy, @temp                              'temp = fxz-fwz
+        word  FLT#opShift, @temp,  @const_1, @m20                        'm20 = 2.0 * temp
 
   'm21 =        2.0f * (fyz + fwx)
-                long    FLT#opAdd, @fyz | (@fwx<<16), @temp                              'temp = fyz+fwx
-                long    FLT#opShift, @temp | (@const_1<<16), @m21                        'm21 = 2.0 * temp
+        word  FLT#opAdd, @fyz,  @fwx, @temp                              'temp = fyz+fwx
+        word  FLT#opShift, @temp,  @const_1, @m21                        'm21 = 2.0 * temp
 
   'm22 = 1.0f - 2.0f * (x2 + y2)
-                long    FLT#opAdd, @fx2 | (@fy2<<16), @temp                              'temp = fx2+fy2
-                long    FLT#opShift, @temp | (@const_1<<16), @temp                       'temp *= 2.0
-                long    FLT#opSub, @const_F1 | (@temp<<16), @m22                         'm22 = 1.0 - temp
+        word  FLT#opAdd, @fx2,  @fy2, @temp                              'temp = fx2+fy2
+        word  FLT#opShift, @temp,  @const_1, @temp                       'temp *= 2.0
+        word  FLT#opSub, @const_F1,  @temp, @m22                         'm22 = 1.0 - temp
   '7 instructions (107)
 
 
@@ -951,108 +553,108 @@ QuatUpdateCommands
   'fax =  packet.ax;           // Acceleration in X (left/right)
   'fay =  packet.az;           // Acceleration in Y (up/down)
   'faz =  packet.ay;           // Acceleration in Z (toward/away)
-               long     FLT#opFloat, @ax | (0<<16), @fax  
-               long     FLT#opFloat, @az | (0<<16), @fay  
-               long     FLT#opFloat, @ay | (0<<16), @faz  
-               long     FLT#opNeg, @fax | (0<<16), @fax
+        word  FLT#opFloat, @ax,  0, @fax  
+        word  FLT#opFloat, @az,  0, @fay  
+        word  FLT#opFloat, @ay,  0, @faz  
+        word  FLT#opNeg, @fax,  0, @fax
 
 
 'Rotation correction of the accelerometer vector - rotate around the pitch and roll axes by the specified amounts
 
   'axRot = (fax * accRollCorrCos) - (fay * accRollCorrSin)
-              long  FLT#opMul, @fax | (@accRollCorrCos<<16), @axRot                           
-              long  FLT#opMul, @fay | (@accRollCorrSin<<16), @temp
-              long  FLT#opSub, @axRot | (@temp<<16), @axRot 
+        word  FLT#opMul, @fax,  @accRollCorrCos, @axRot                           
+        word  FLT#opMul, @fay,  @accRollCorrSin, @temp
+        word  FLT#opSub, @axRot,  @temp, @axRot 
 
   'ayRot = (fax * accRollCorrSin) + (fay * accRollCorrCos)
-              long  FLT#opMul, @fax | (@accRollCorrSin<<16), @ayRot                           
-              long  FLT#opMul, @fay | (@accRollCorrCos<<16), @temp
-              long  FLT#opAdd, @ayRot | (@temp<<16), @ayRot
+        word  FLT#opMul, @fax,  @accRollCorrSin, @ayRot                           
+        word  FLT#opMul, @fay,  @accRollCorrCos, @temp
+        word  FLT#opAdd, @ayRot,  @temp, @ayRot
 
   'fax = axRot         
   'fay = ayRot
-              long  FLT#opMov, @axRot | (0<<16), @fax          
-              long  FLT#opMov, @ayRot | (0<<16), @fay          
+        word  FLT#opMov, @axRot,  0, @fax          
+        word  FLT#opMov, @ayRot,  0, @fay          
 
 
 
   'axRot = (faz * accPitchCorrCos) - (fay * accPitchCorrSin)
-              long  FLT#opMul, @faz | (@accPitchCorrCos<<16), @axRot
-              long  FLT#opMul, @fay | (@accPitchCorrSin<<16), @temp
-              long  FLT#opSub, @axRot | (@temp<<16), @axRot 
+        word  FLT#opMul, @faz,  @accPitchCorrCos, @axRot
+        word  FLT#opMul, @fay,  @accPitchCorrSin, @temp
+        word  FLT#opSub, @axRot,  @temp, @axRot 
 
   'ayRot = (fax * accPitchCorrSin) + (fay * accPitchCorrCos)
-              long  FLT#opMul, @faz | (@accPitchCorrSin<<16), @ayRot                           
-              long  FLT#opMul, @fay | (@accPitchCorrCos<<16), @temp
-              long  FLT#opAdd, @ayRot | (@temp<<16), @ayRot
+        word  FLT#opMul, @faz,  @accPitchCorrSin, @ayRot                           
+        word  FLT#opMul, @fay,  @accPitchCorrCos, @temp
+        word  FLT#opAdd, @ayRot,  @temp, @ayRot
 
   'faz = axRot         
   'fay = ayRot
-              long  FLT#opMov, @axRot | (0<<16), @faz          
-              long  FLT#opMov, @ayRot | (0<<16), @fay          
+        word  FLT#opMov, @axRot,  0, @faz          
+        word  FLT#opMov, @ayRot,  0, @fay          
 
 
 
 'Compute length of the accelerometer vector to decide weighting                                   
 
   'rmag = facc.length
-               long     FLT#opSqr, @fax | (0<<16), @rmag                                  'rmag = fax*fax
-               long     FLT#opSqr, @fay | (0<<16), @temp                                  'temp = fay*fay
-               long     FLT#opAdd, @rmag | (@temp<<16), @rmag                             'rmag += temp
-               long     FLT#opSqr, @faz | (0<<16), @temp                                  'temp = faz*faz
-               long     FLT#opAdd, @rmag | (@temp<<16), @rmag                             'rmag += temp
-               long     FLT#opAdd, @rmag | (@const_epsilon<<16), @rmag                    'rmag += 0.00000001
-               long     FLT#opSqrt, @rmag | (0<<16), @rmag                                'rmag = Sqrt(rmag)                                                  
+        word  FLT#opSqr, @fax,  0, @rmag                                  'rmag = fax*fax
+        word  FLT#opSqr, @fay,  0, @temp                                  'temp = fay*fay
+        word  FLT#opAdd, @rmag,  @temp, @rmag                             'rmag += temp
+        word  FLT#opSqr, @faz,  0, @temp                                  'temp = faz*faz
+        word  FLT#opAdd, @rmag,  @temp, @rmag                             'rmag += temp
+        word  FLT#opAdd, @rmag,  @const_epsilon, @rmag                    'rmag += 0.00000001
+        word  FLT#opSqrt, @rmag,  0, @rmag                                'rmag = Sqrt(rmag)                                                  
 
   'facc /= rmag
-               long     FLT#opDiv, @fax | (@rmag<<16), @faxn                              'faxn = fax / rmag 
-               long     FLT#opDiv, @fay | (@rmag<<16), @fayn                              'fayn = fay / rmag 
-               long     FLT#opDiv, @faz | (@rmag<<16), @fazn                              'fazn = faz / rmag 
+        word  FLT#opDiv, @fax,  @rmag, @faxn                              'faxn = fax / rmag 
+        word  FLT#opDiv, @fay,  @rmag, @fayn                              'fayn = fay / rmag 
+        word  FLT#opDiv, @faz,  @rmag, @fazn                              'fazn = faz / rmag 
 
 
 
   'accWeight = 1.0 - FMin( FAbs( 2.0 - accLen * 2.0 ), 1.0 )
-               long     FLT#opMul, @rmag | (@const_AccScale<<16), @rmag                   'rmag /= accScale (accelerometer to 1G units)
-               long     FLT#opShift, @rmag | (@const_1<<16), @accWeight                   'accWeight = rmag * 2.0
-               long     FLT#opSub, @const_F2 | (@accWeight<<16), @accWeight               'accWeight = 2.0 - accWeight
-               long     FLT#opFAbs, @accWeight | (0<<16), @accWeight                      'accWeight = FAbs(accWeight)
-               long     FLT#opFMin, @accWeight | (@const_F1<<16), @accWeight              'accWeight = FMin( accWeight, 1.0 )
-               long     FLT#opSub, @const_F1 | (@accWeight<<16), @accWeight               'accWeight = 1.0 - accWeight                                                
+        word  FLT#opMul, @rmag,  @const_AccScale, @rmag                   'rmag /= accScale (accelerometer to 1G units)
+        word  FLT#opShift, @rmag,  @const_1, @accWeight                   'accWeight = rmag * 2.0
+        word  FLT#opSub, @const_F2,  @accWeight, @accWeight               'accWeight = 2.0 - accWeight
+        word  FLT#opFAbs, @accWeight,  0, @accWeight                      'accWeight = FAbs(accWeight)
+        word  FLT#opFMin, @accWeight,  @const_F1, @accWeight              'accWeight = FMin( accWeight, 1.0 )
+        word  FLT#opSub, @const_F1,  @accWeight, @accWeight               'accWeight = 1.0 - accWeight                                                
 
    
 
   'errDiffX = fayn * m12 - fazn * m11
-               long     FLT#opMul, @fayn | (@m12<<16), @errDiffX 
-               long     FLT#opMul, @fazn | (@m11<<16), @temp 
-               long     FLT#opSub, @errDiffX | (@temp<<16), @errDiffX 
+        word  FLT#opMul, @fayn,  @m12, @errDiffX 
+        word  FLT#opMul, @fazn,  @m11, @temp 
+        word  FLT#opSub, @errDiffX,  @temp, @errDiffX 
 
   'errDiffY = fazn * m10 - faxn * m12
-               long     FLT#opMul, @fazn | (@m10<<16), @errDiffY 
-               long     FLT#opMul, @faxn | (@m12<<16), @temp 
-               long     FLT#opSub, @errDiffY | (@temp<<16), @errDiffY 
+        word  FLT#opMul, @fazn,  @m10, @errDiffY 
+        word  FLT#opMul, @faxn,  @m12, @temp 
+        word  FLT#opSub, @errDiffY,  @temp, @errDiffY 
 
   'errDiffZ = faxn * m11 - fayn * m10
-               long     FLT#opMul, @faxn | (@m11<<16), @errDiffZ 
-               long     FLT#opMul, @fayn | (@m10<<16), @temp 
-               long     FLT#opSub, @errDiffZ | (@temp<<16), @errDiffZ 
+        word  FLT#opMul, @faxn,  @m11, @errDiffZ 
+        word  FLT#opMul, @fayn,  @m10, @temp 
+        word  FLT#opSub, @errDiffZ,  @temp, @errDiffZ 
 
   'accWeight *= const_ErrScale   
-               long     FLT#opMul, @const_ErrScale | (@accWeight<<16), @accWeight
+        word  FLT#opMul, @const_ErrScale,  @accWeight, @accWeight
 
   'Test: Does ErrCorr need to be rotated into the local frame from the world frame?
 
 
   'errCorr = errDiff * accWeight
-               long      FLT#opMul, @errDiffX | (@accWeight<<16), @errCorrX  
-               long      FLT#opMul, @errDiffY | (@accWeight<<16), @errCorrY  
-               long      FLT#opMul, @errDiffZ | (@accWeight<<16), @errCorrZ  
+        word  FLT#opMul, @errDiffX,  @accWeight, @errCorrX  
+        word  FLT#opMul, @errDiffY,  @accWeight, @errCorrY  
+        word  FLT#opMul, @errDiffZ,  @accWeight, @errCorrZ  
 
 
     'tx := Flt.ASin( Flt.FFloatDiv28( DCM.GetM12 ) )     'Convert to float, then divide by (float)(1<<28)
     'tz := Flt.ASin( Flt.FFloatDiv28( DCM.GetM10 ) )     'Convert to float, then divide by (float)(1<<28) 
 
-    'XAngle := Flt.FRound( Flt.FMul( tx , constant( 320000.0 / (PI / 2.0)) ) ) 
-    'ZAngle := Flt.FRound( Flt.FMul( tz , constant(-320000.0 / (PI / 2.0)) ) )
+    'XAngle := Flt.FRound( Flt.FMul( tx,  constant( 320000.0 / (PI / 2.0)) ) ) 
+    'ZAngle := Flt.FRound( Flt.FMul( tz,  constant(-320000.0 / (PI / 2.0)) ) )
 
     'if( DCM.GetMatrixvalue(4) < 0 )                     'If the Y value of the Y axis is negative, we're upside down
     '  if( ||ZAngle > ||XAngle ) 
@@ -1062,106 +664,106 @@ QuatUpdateCommands
     'YAngle := Flt.FRound( Flt.FMul( Flt.Atan2( Flt.FFloat(DCM.GetM20), Flt.FFloat(DCM.GetM22)), constant(32768.0 / PI) ) ) & 65535 
 
 
-               long      FLT#opASinCos, @m12 | (0<<16), @temp  
-               long      FLT#opMul, @temp | (@const_outAngleScale<<16), @temp  
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @Pitch  
+        word  FLT#opASinCos, @m12,  0, @temp  
+        word  FLT#opMul, @temp,  @const_outAngleScale, @temp
+        word  FLT#opTruncRound, @temp,  @const_0, @Pitch  
     
-               long      FLT#opASinCos, @m10 | (0<<16), @temp  
-               long      FLT#opMul, @temp | (@const_outAngleScale<<16), @temp  
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @Roll  
-    
-               long      FLT#opATan2, @m20 | (@m22<<16), @temp  
-               long      FLT#opMul, @temp | (@const_outAngleScale<<16), @temp    
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @Yaw  
+        word  FLT#opASinCos, @m10,  0, @temp  
+        word  FLT#opMul, @temp,  @const_outNegAngleScale, @temp  
+        word  FLT#opTruncRound, @temp,  @const_0, @Roll  
+              
+        word  FLT#opATan2, @m20,  @m22, @temp  
+        word  FLT#opMul, @temp,  @const_outNegAngleScale, @temp    
+        word  FLT#opTruncRound, @temp,  @const_0, @Yaw  
 
 
-               long      FLT#opDiv, @const_F1 | (@m11<<16), @temp                          '1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
-               long      FLT#opMul, @temp | (@const_ThrustScale<<16), @temp                '*= 256.0  
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @ThrustFactor  
+        word  FLT#opDiv, @const_F1,  @m11, @temp                          '1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
+        word  FLT#opMul, @temp,  @const_ThrustScale, @temp                '*= 256.0  
+        word  FLT#opTruncRound, @temp,  @const_0, @ThrustFactor  
 
 
 
   'Compute the running height estimate
 
   'force := acc / 4096.0
-               long      FLT#opShift, @fax | (@const_neg12<<16), @forceX    
-               long      FLT#opShift, @fay | (@const_neg12<<16), @forceY    
-               long      FLT#opShift, @faz | (@const_neg12<<16), @forceZ    
+        word  FLT#opShift, @fax,  @const_neg12, @forceX    
+        word  FLT#opShift, @fay,  @const_neg12, @forceY    
+        word  FLT#opShift, @faz,  @const_neg12, @forceZ    
 
   'force -= m[1,0], m[1,1], m[1,2]  - Subtract gravity (1G, straight down)
-               long      FLT#opSub, @forceX | (@m10<<16), @forceX    
-               long      FLT#opSub, @forceY | (@m11<<16), @forceY    
-               long      FLT#opSub, @forceZ | (@m12<<16), @forceZ    
+        word  FLT#opSub, @forceX,  @m10, @forceX    
+        word  FLT#opSub, @forceY,  @m11, @forceY    
+        word  FLT#opSub, @forceZ,  @m12, @forceZ    
 
   'forceWY := M.Transpose().Mul(Force).y                 'Orient force vector into world frame
   'forceWY = m01*forceX + m11*forceY + m21*forceZ
 
-               long      FLT#opMul, @forceX | (@m01<<16), @forceWY  
+        word  FLT#opMul, @forceX,  @m01, @forceWY  
    
-               long      FLT#opMul, @forceY | (@m11<<16), @temp  
-               long      FLT#opAdd, @forceWY | (@temp<<16), @forceWY  
+        word  FLT#opMul, @forceY,  @m11, @temp  
+        word  FLT#opAdd, @forceWY,  @temp, @forceWY  
 
-               long      FLT#opMul, @forceZ | (@m21<<16), @temp  
-               long      FLT#opAdd, @forceWY | (@temp<<16), @forceWY  
+        word  FLT#opMul, @forceZ,  @m21, @temp  
+        word  FLT#opAdd, @forceWY,  @temp, @forceWY  
 
   'forceWY *= 9.8                                       'Convert to M/sec^2
-               long      FLT#opMul, @forceWY | (@const_GMetersPerSec<<16), @forceWY  
+        word  FLT#opMul, @forceWY,  @const_GMetersPerSec, @forceWY  
 
 
 
-               long      FLT#opMul, @forceWY | (@const_UpdateScale<<16), @temp             'temp := forceWY / UpdateRate
-               long      FLT#opAdd, @velocityEstimate | (@temp<<16), @velocityEstimate     'velEstimate += forceWY / UpdateRate
+        word  FLT#opMul, @forceWY,  @const_UpdateScale, @temp             'temp := forceWY / UpdateRate
+        word  FLT#opAdd, @velocityEstimate,  @temp, @velocityEstimate     'velEstimate += forceWY / UpdateRate
 
   
-               long      FLT#opFloat, @altRate | (0<<16), @altitudeVelocity                'AltVelocity = float(altRate)
-               long      FLT#opMul, @altitudeVelocity | (@const_AltiVelScale<<16), @altitudeVelocity   'Convert from mm/sec to m/sec   
+        word  FLT#opFloat, @altRate,  0, @altitudeVelocity                'AltVelocity = float(altRate)
+        word  FLT#opMul, @altitudeVelocity,  @const_AltiVelScale, @altitudeVelocity   'Convert from mm/sec to m/sec   
 
 
   'VelocityEstimate := (VelocityEstimate * 0.9950) + (altVelocity * 0.0050)
-               long      FLT#opMul, @velocityEstimate | (@const_velAccScale<<16), @velocityEstimate 
-               long      FLT#opMul, @altitudeVelocity | (@const_velAltiScale<<16), @temp  
-               long      Flt#opAdd, @velocityEstimate | (@temp<<16), @velocityEstimate   
+        word  FLT#opMul, @velocityEstimate,  @const_velAccScale, @velocityEstimate 
+        word  FLT#opMul, @altitudeVelocity,  @const_velAltiScale, @temp  
+        word  Flt#opAdd, @velocityEstimate,  @temp, @velocityEstimate   
 
   'altitudeEstimate += velocityEstimate / UpdateRate
-               long      FLT#opMul, @velocityEstimate | (@const_UpdateScale<<16), @temp  
-               long      FLT#opAdd, @altitudeEstimate | (@temp<<16), @altitudeEstimate   
+        word  FLT#opMul, @velocityEstimate,  @const_UpdateScale, @temp  
+        word  FLT#opAdd, @altitudeEstimate,  @temp, @altitudeEstimate   
 
   'altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
-               long      FLT#opMul, @altitudeEstimate | (@const_velAccTrust<<16), @altitudeEstimate 
+        word  FLT#opMul, @altitudeEstimate,  @const_velAccTrust, @altitudeEstimate 
 
-               long      FLT#opFloat, @alt | (0<<16), @temp                               'temp := float(alt)
-               long      FLT#opDiv, @temp | (@const_m_to_mm<<16), @temp                   'temp /= 1000.0    (alt now in m)
-               long      FLT#opMul, @temp | (@const_velAltiTrust<<16), @temp              'temp *= 0.0050
-               long      FLT#opAdd, @altitudeEstimate | (@temp<<16), @altitudeEstimate    'altEstimate += temp 
+        word  FLT#opFloat, @alt,  0, @temp                               'temp := float(alt)
+        word  FLT#opDiv, @temp,  @const_m_to_mm, @temp                   'temp /= 1000.0    (alt now in m)
+        word  FLT#opMul, @temp,  @const_velAltiTrust, @temp              'temp *= 0.0050
+        word  FLT#opAdd, @altitudeEstimate,  @temp, @altitudeEstimate    'altEstimate += temp 
 
 
-               long      FLT#opMul, @altitudeEstimate | (@const_m_to_mm<<16), @temp       'temp = altEst * 1000.0    (temp now in mm)
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @AltitudeEstMM 
+        word  FLT#opMul, @altitudeEstimate,  @const_m_to_mm, @temp       'temp = altEst * 1000.0    (temp now in mm)
+        word  FLT#opTruncRound, @temp,  @const_0, @AltitudeEstMM 
 
-               long      FLT#opMul, @velocityEstimate | (@const_m_to_mm<<16), @temp       'temp = velEst * 1000.0    (temp now in mm/sec)
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @VelocityEstMM 
+        word  FLT#opMul, @velocityEstimate,  @const_m_to_mm, @temp       'temp = velEst * 1000.0    (temp now in mm/sec)
+        word  FLT#opTruncRound, @temp,  @const_0, @VelocityEstMM 
 
 
   'Create a fixed point version of the orientation matrix
-               long      FLT#opShift, @m00 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm00 
-               long      FLT#opShift, @m01 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm01 
-               long      FLT#opShift, @m02 | (@const_16<<16), @temp     
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm02 
+        word  FLT#opShift, @m00,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm00 
+        word  FLT#opShift, @m01,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm01 
+        word  FLT#opShift, @m02,  @const_16, @temp     
+        word  FLT#opTruncRound, @temp,  @const_0, @fm02 
 
-               long      FLT#opShift, @m10 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm10 
-               long      FLT#opShift, @m11 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm11 
-               long      FLT#opShift, @m12 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm12 
+        word  FLT#opShift, @m10,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm10 
+        word  FLT#opShift, @m11,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm11 
+        word  FLT#opShift, @m12,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm12 
 
-               long      FLT#opShift, @m20 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm20 
-               long      FLT#opShift, @m21 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm21 
-               long      FLT#opShift, @m22 | (@const_16<<16), @temp   
-               long      FLT#opTruncRound, @temp | (@const_0<<16), @fm22
-               long      0, 0, 0 
+        word  FLT#opShift, @m20,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm20 
+        word  FLT#opShift, @m21,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm21 
+        word  FLT#opShift, @m22,  @const_16, @temp   
+        word  FLT#opTruncRound, @temp,  @const_0, @fm22
+        word  0, 0, 0, 0 
 '}
