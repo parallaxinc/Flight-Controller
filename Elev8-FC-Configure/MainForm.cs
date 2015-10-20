@@ -8,6 +8,7 @@ using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.Threading;
 
 using FTD2XX_NET;
 
@@ -42,7 +43,7 @@ namespace Elev8
 		int GyroX, GyroY, GyroZ;
 		int AccelX, AccelY, AccelZ;
 		int MagX, MagY, MagZ;
-		int Alt, AltTemp, prevAlt = 0;
+		int Alt, AltTemp, AltEst, prevAlt = 0;
 		int Pitch, Roll, Yaw;
 
 		float[] accXCal = new float[4];
@@ -59,7 +60,7 @@ namespace Elev8
 		int QTail = 0;
 
 		byte[] OutputMode = { 0, 1, 2, 3, 2, 2, 4, 5, 6 };			// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
-		byte[] PacketSizes = { 0, 16+3, 28+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=31, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
+		byte[] PacketSizes = { 0, 16+3, 32+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=35, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
 		int SampleCounter = 0;
 
 		int[] AltTable = new int[251];
@@ -317,6 +318,42 @@ namespace Elev8
 		}
 
 
+#if NEW_COMM_THREAD
+
+		volatile bool TerminateConnection = false;
+
+
+		private void CommThread()
+		{
+			while( !TerminateConnection )
+			{
+				if(Active == false || ftdi == null)
+				{
+					Thread.Sleep( 20 );
+					continue;
+				}
+
+				if(ftdi.IsOpen == false)
+				{
+					ConnectFTDI();
+
+					if(ftdi.IsOpen == false) {
+						Thread.Sleep( 20 );
+						continue;
+					}
+				}
+
+				// Processing goes here
+					// Pull data from the comm port
+					// add it to a queue
+					// process when there's enough data
+					// notify the main thread that something happened
+			}
+		}
+#endif
+
+
+
 		private void tickTimer_Tick( object sender, EventArgs e )
 		{
 			UpdateCommStatus();
@@ -492,6 +529,8 @@ namespace Elev8
 					prevAlt = Alt;
 					Alt = GetCommLong();
 					AltTemp = GetCommLong();
+					AltEst = GetCommLong();
+
 
 					// If we're on the sensor test tab, update those UI controls
 					if(currentMode == Mode.SensorTest)
@@ -515,11 +554,11 @@ namespace Elev8
 
 						float altTempDegrees = 42.5f + (float)AltTemp / 480.0f;
 
-						lblAltimeter.Text = string.Format( "{0:0.000} m", (float)Alt / 1000.0f );	// Altimeter output is in mm
+						lblAltimeter.Text = string.Format( "{0:0.000} m", (float)AltEst / 1000.0f );	// Altimeter output is in mm
 						lblAltimeterTemp.Text = string.Format( "{0:0.00}*C", altTempDegrees );
 
 
-						int[] sample = {Alt, Alt, Alt };
+						int[] sample = {AltEst, Alt, Alt };
 						SampleCounter++;
 						bool DoUpdate = (SampleCounter & 15) == 15;
 						gAltimeter.AddSample( sample, true );
