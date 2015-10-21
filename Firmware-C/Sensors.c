@@ -2,6 +2,7 @@
 #include <propeller.h>
 #include "Constants.h"
 #include "Settings.h"
+#include "sensors.h"
 
 /*
   HUNDRED_nS  = _clkfreq / 10_000_000  'Number of clock cycles per 100 nanoseconds (8 @ 80MHz)                        
@@ -38,10 +39,8 @@ const int AltTemp = 12;
 const int Pressure = 13;
 const int Timer = 14;
 
-#define ParamsSize 15
 
-
-static long  ins[ParamsSize];         //Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
+static long  ins[Sensors_ParamsSize];         //Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
 static long  DriftScale[3];
 static long  DriftOffset[3];          //These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
 static long  AccelOffset[3];
@@ -81,6 +80,13 @@ void Sensors_Start( int ipin, int opin, int cpin, int sgpin, int smpin, int apin
 	ins[8] = _LEDCount;
 	ins[9] = (long)&AltTable_000[0];       //Append the HUB address of the pressure to altitude table 
 
+
+	DriftScale[0] = DriftScale[1] = DriftScale[2] = 0;
+	DriftOffset[0] = DriftOffset[1] = DriftOffset[2] = 0;
+	AccelOffset[0] = AccelOffset[1] = AccelOffset[2] = 0;
+	MagOffsetX = MagOffsetY = MagOffsetZ = 0;
+	MagScaleX = MagScaleY = MagScaleZ = 1024;
+
 	// cog = cognew(@entry, @ins) + 1;
   use_cog_driver(Sensors_driver);
   cog = load_cog_driver(Sensors_driver, &ins[0]) + 1;
@@ -96,7 +102,7 @@ void Sensors_Stop(void)
 	}
 }
 
-int Sensors_In( int channel )
+long Sensors_In( int channel )
 {
 // Read the current value from a channel (0..ParamsSize-1)
 
