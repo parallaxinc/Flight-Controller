@@ -18,13 +18,16 @@ QuatIMU.c
 QuatIMU.h
 IntPID.c
 IntPID.h
->compiler=C
+pins_v2.h
+Beep.c
+Beep.h
+>compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os
 >-m32bit-doubles
 >-fno-exceptions
 >-Dprintf=__simple_printf
 >-enable_pruning
->defs::-std=c99
+>-fno-rtti
 >-ltiny
 >BOARD::QUICKSTART
