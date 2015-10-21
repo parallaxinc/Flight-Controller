@@ -1,0 +1,15 @@
+Elev8-Main.c
+QuatIMU.c
+QuatIMU.h
+F32.h
+Constants.h
+>compiler=C
+>memtype=cmm main ram compact
+>optimize=-Os
+>-m32bit-doubles
+>-fno-exceptions
+>-Dprintf=__simple_printf
+>-enable_pruning
+>defs::-std=c99
+>-ltiny
+>BOARD::QUICKSTART

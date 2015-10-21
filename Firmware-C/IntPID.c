@@ -2,6 +2,13 @@
 #include "IntPID.h"
 
 
+static int clamp( int v, int min, int max ) {
+  v = (v < min) ? min : v;
+  v = (v > max) ? max : v;
+  return v;
+}
+
+
 void IntPID_Init( INTPID * pid, int PGain, int IGain, int DGain, int SampleRate )
 {
   pid->SampleRate = SampleRate;
@@ -45,10 +52,8 @@ int IntPID_Calculate( INTPID * pid, int SetPoint , int Measured , int DoIntegrat
   pid->LastPError = pid->PError;
 
   int PClamped = pid->PError;
-  if( pid->PMax > 0 )
-  {
-    if( PClamped < -pid->PMax ) PClamped = -pid->PMax;
-    else if( PClamped > pid->PMax ) PClamped = pid->PMax;
+  if( pid->PMax > 0 ) {
+    PClamped = clamp( PClamped, -pid->PMax, pid->PMax );
   }
 
   pid->Output = ((pid->Kp * PClamped) + (pid->Kd * pid->DError) + (pid->Kd2 * pid->D2Error) + (pid->Ki * pid->IError) + pid->RoundOffset) >> pid->Precision;
@@ -56,20 +61,17 @@ int IntPID_Calculate( INTPID * pid, int SetPoint , int Measured , int DoIntegrat
   //Accumulate Integral error *or* Limit output. 
   //Stop accumulating when output saturates 
 
-  if( pid->Output < -pid->MaxOutput) pid->Output = -pid->MaxOutput;
-  else if( pid->Output > pid->MaxOutput) pid->Output =  pid->MaxOutput;
+  pid->Output = clamp( pid->Output, -pid->MaxOutput, pid->MaxOutput );
      
   if( DoIntegrate )
   {
     PClamped = pid->PError;
     if( pid->PIMax > 0 )
     {
-      if( PClamped < -pid->PIMax ) PClamped = -pid->PIMax;
-      else if( PClamped > pid->PIMax ) PClamped = pid->PIMax;
+      PClamped = clamp( PClamped, -pid->PIMax, pid->PIMax );
 
-      pid->IError += pid->PClamped;
-      if( pid->IError < -pid->MaxIntegral ) pid->IError = -pid->MaxIntegral;
-      else if( pid->IError > pid->MaxIntegral ) pid->IError = pid->MaxIntegral;
+      pid->IError += PClamped;
+      pid->IError = clamp( pid->IError, -pid->MaxIntegral, pid->MaxIntegral );
     }
   }
 
@@ -96,10 +98,8 @@ int IntPID_Calculate_NoD2( INTPID * pid, int SetPoint , int Measured , int DoInt
   pid->LastPError = pid->PError;
 
   int PClamped = pid->PError;
-  if( pid->PMax > 0 )
-  {
-    if( PClamped < -pid->PMax ) PClamped = -pid->PMax;
-    else if( PClamped > pid->PMax ) PClamped = pid->PMax;
+  if( pid->PMax > 0 ) {
+    PClamped = clamp( PClamped, -pid->PMax, pid->PMax );
   }
 
   pid->Output = ((pid->Kp * PClamped) + (pid->Kd * pid->DError) + (pid->Ki * pid->IError) + pid->RoundOffset) >> pid->Precision;
@@ -107,20 +107,17 @@ int IntPID_Calculate_NoD2( INTPID * pid, int SetPoint , int Measured , int DoInt
   //Accumulate Integral error *or* Limit output. 
   //Stop accumulating when output saturates 
 
-  if( pid->Output < -pid->MaxOutput) pid->Output = -pid->MaxOutput;
-  else if( pid->Output > pid->MaxOutput) pid->Output =  pid->MaxOutput;
+  pid->Output = clamp( pid->Output, -pid->MaxOutput, pid->MaxOutput );
      
   if( DoIntegrate )
   {
     PClamped = pid->PError;
     if( pid->PIMax > 0 )
     {
-      if( PClamped < -pid->PIMax ) PClamped = -pid->PIMax;
-      else if( PClamped > pid->PIMax ) PClamped = pid->PIMax;
+      PClamped = clamp( PClamped, -pid->PIMax, pid->PIMax );
      
-      pid->IError += pid->PClamped;
-	   if( pid->IError < -pid->MaxIntegral ) pid->IError = -pid->MaxIntegral;
-	   else if( pid->IError > pid->MaxIntegral ) pid->IError = pid->MaxIntegral;
+      pid->IError += PClamped;
+      pid->IError = clamp( pid->IError, -pid->MaxIntegral, pid->MaxIntegral );
 	 }
   }
      
@@ -128,66 +125,66 @@ int IntPID_Calculate_NoD2( INTPID * pid, int SetPoint , int Measured , int DoInt
 }
 
 
+int IntPID_Calculate_ForceD( INTPID * pid, int SetPoint , int Measured , int Deriv , int DoIntegrate )
+{
+  // Proportional error is Desired - Measured
+  pid->PError = SetPoint - Measured;
+
+  // Derivative error is the delta PError divided by time
+  // If loop timing is const, you can skip the divide and just make the factor smaller
+  pid->DError = Deriv;
+  pid->D2Error = pid->DError - pid->LastDError;;
+
+  pid->LastDError = pid->DError;
+  pid->LastPError = pid->PError;
+
+  pid->Output = ((pid->Kp * pid->PError) + (pid->Kd * pid->DError) + (pid->Kd2 * pid->D2Error) + (pid->Ki * pid->IError) + pid->RoundOffset) >> pid->Precision;
+
+  //Accumulate Integral error *or* Limit output. 
+  //Stop accumulating when output saturates 
+
+  pid->Output = clamp( pid->Output, -pid->MaxOutput , pid->MaxOutput );
+
+  if( DoIntegrate )
+  {
+    pid->IError += pid->PError;
+    pid->IError = clamp( pid->IError, -pid->MaxIntegral, pid->MaxIntegral );
+  }    
+
+  return pid->Output;
+}  
+
+
+int IntPID_Calculate_ForceD_NoD2( INTPID * pid, int SetPoint , int Measured , int Deriv , int DoIntegrate )
+{
+  // Proportional error is Desired - Measured
+  pid->PError = SetPoint - Measured;
+  
+  // Derivative error is the delta PError divided by time
+  // If loop timing is const, you can skip the divide and just make the factor smaller
+  pid->DError = Deriv;
+
+  pid->LastDError = pid->DError;
+  pid->LastPError = pid->PError;
+
+  pid->Output = ((pid->Kp * pid->PError) + (pid->Kd * pid->DError) + (pid->Ki * pid->IError) + pid->RoundOffset) >> pid->Precision;
+
+  //Accumulate Integral error *or* Limit output. 
+  //Stop accumulating when output saturates 
+     
+  pid->Output = clamp( pid->Output, -pid->MaxOutput , pid->MaxOutput);
+     
+  if( DoIntegrate )
+  {
+    pid->IError += pid->PError;
+    pid->IError = clamp( pid->IError, -pid->MaxIntegral , pid->MaxIntegral );
+  }     
+  return pid->Output;
+}  
+
+
+
 /*
-
-
-int IntPID_Calculate_ForceD( INTPID * pid, int SetPoint , Measured , Deriv , DoIntegrate )
-
-  // Proportional error is Desired - Measured
-  PError = SetPoint - Measured
-  
-  // Derivative error is the delta PError divided by time
-  // If loop timing is const, you can skip the divide and just make the factor smaller
-  DError = Deriv
-  D2Error = DError - LastDError  
-
-  LastDError = DError
-  LastPError = PError
-
-  Output = ((Kp * PError) + (Kd * DError) + (Kd2 * D2Error) + (Ki * IError) + RoundOffset) ~> Precision
-  
-  //Accumulate Integral error *or* Limit output. 
-  //Stop accumulating when output saturates 
-     
-  Output = -MaxOutput #> Output <# MaxOutput
-     
-  if( DoIntegrate )
-    IError += PError
-    IError = -MaxIntegral #> IError <# MaxIntegral  
-     
-  return Output
-
-
-
-
-int IntPID_Calculate_ForceD_NoD2( INTPID * pid, int SetPoint , Measured , Deriv , DoIntegrate )
-
-  // Proportional error is Desired - Measured
-  PError = SetPoint - Measured
-  
-  // Derivative error is the delta PError divided by time
-  // If loop timing is const, you can skip the divide and just make the factor smaller
-  DError = Deriv
-
-  LastDError = DError
-  LastPError = PError
-
-  Output = ((Kp * PError) + (Kd * DError) + (Ki * IError) + RoundOffset) ~> Precision
-  
-  //Accumulate Integral error *or* Limit output. 
-  //Stop accumulating when output saturates 
-     
-  Output = -MaxOutput #> Output <# MaxOutput
-     
-  if( DoIntegrate )
-    IError += PError
-    IError = -MaxIntegral #> IError <# MaxIntegral  
-     
-  return Output
-
-
-
-
 int IntPID_Calculate_PI( INTPID * pid, int SetPoint , Measured )
 
   // Proportional error is Desired - Measured
