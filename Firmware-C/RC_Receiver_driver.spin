@@ -15,6 +15,7 @@ and will be returned when you call Get( 0 ) or GetRC( 0 ).  Pins are returned fr
 to highest.
 
 }}
+
 Con
   Scale = 80/2 ' System clock frequency in Mhz, halved - we're converting outputs to 1/2 microsecond resolution
    
@@ -44,12 +45,12 @@ PUB stop
 
 
 PUB get(_pin) : value
-'' Get receiver servo pulse width in µs. 
+'' Get receiver servo pulse width in ï¿½s. 
   value := Pins[_pin] / Scale                           ' Get pulse width from Pins[..] , convert to uSec
 
 
 PUB getrc(_pin) : value
-'' Get receiver servo pulse width as normal r/c values (±1000) 
+'' Get receiver servo pulse width as normal r/c values (ï¿½1000) 
   value := Pins[_pin] / Scale - 3000                   ' Get puls width from Pins[..], convert to uSec, make 0 center
 
 
