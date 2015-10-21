@@ -48,7 +48,7 @@ PUB Main | testCheck
 static PREFS Prefs;
 
 
-void Load(void)
+void Settings_Load(void)
 {
   // eeprom.ToRam(@PrefStorage, @PrefStorage + constant(PrefLen*4 + 3), 32768 )    'Copy from EEPROM to DAT, address 32768
 
@@ -60,7 +60,7 @@ void Load(void)
   }    
 }
 
-void Save(void)
+void Settings_Save(void)
 {
   Prefs.Checksum = Settings_CalculateChecksum();
   //eeprom.FromRam(@PrefStorage, @PrefStorage + constant(PrefLen*4 + 3), 32768 )  'Copy from DAT to EEPROM, address 32768
