@@ -6,13 +6,16 @@
 #include "F32.h"
 
 
- 
-static volatile long  f32_cmd;
-static char  cog;
 
+typedef struct {
+  volatile long  f32_cmd;
+  int  TempCommand, StreamAddr; // These have to be contiguous in memory, which is why they're in a struct
+} F32_Vars;
+
+static F32_Vars v;
 static int* CommandAddr[8];
-static int  TempCommand, StreamAddr;
 static int* cmdCallTableAddr = 0;
+static char  cog;
 
 int F32_Start(void)
 {
@@ -20,7 +23,7 @@ int F32_Start(void)
 //  Returns:     True (non-zero) if cog started, or False (0) if no cog is available.
 
   F32_Stop();
-  f32_cmd = 0;
+  v.f32_cmd = 0;
 
   use_cog_driver(F32_driver);
 
@@ -31,7 +34,7 @@ int F32_Start(void)
 
   cmdCallTableAddr = (int *)driverMem + i + 1;
 
-  load_cog_driver(F32_driver, &f32_cmd);
+  load_cog_driver(F32_driver, &v.f32_cmd);
   return cog;
 }
 
@@ -83,15 +86,15 @@ int* F32_GetCommandPtr( int fp_op )
 void F32_RunStream( int * a )
 {
   //Can't use the stack for these, because they might be different by the time the COG gets to them
-  TempCommand = cmdCallTableAddr[ F32_opRunStream ];
-  StreamAddr = (int)a;
-  f32_cmd = (int)&TempCommand;
+  v.TempCommand = cmdCallTableAddr[ F32_opRunStream ];
+  v.StreamAddr = (int)a;
+  v.f32_cmd = (int)&v.TempCommand;
 }
 
 
 void F32_WaitStream(void)
 {
-	while( f32_cmd )
+	while( v.f32_cmd )
 		;
 }
 
