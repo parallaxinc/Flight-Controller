@@ -3,18 +3,20 @@
 */
 
 #include <stdio.h>
-#include <Propeller.h>
-#include "RC_Receiver.h"
-#include "Servo32_HighRes.h"
-#include "Sensors.h"
-#include "Settings.h"
-#include "F32.h"
-#include "IntPID.h"
-#include "QuatIMU.h"
+#include <propeller.h>
+#include "rc.h"
+#include "servo32_highres.h"
+#include "sensors.h"
+#include "settings.h"
+#include "sbus.h"
+#include "f32.h"
+#include "intpid.h"
+#include "quatimu.h"
 #include "fdserial.h"
 #include "pins_v2.h"
 #include "constants.h"
 #include "beep.h"
+#include "eeprom.h"
 
 fdserial *dbg;
 
@@ -28,6 +30,7 @@ void StartCompassCalibrate(void);
 void DoCompassCalibrate(void);
 void CheckDebugMode(void);
 void DoDebugModeOutput(void);
+void InitializeSettings(void);
 void ApplySettings(void);
 
 void All_LED( int Color );
@@ -75,10 +78,9 @@ long  Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
 long  iRudd;         //Integrated rudder input value
 
 //Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
-typedef struct {
+struct SENS {
   long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltRate, AltTemp, Pressure;
-} SENS;
-SENS  sens;
+} sens;
   
 long  SensorTime;    //How long sensors took to read (debug / optimization test value)
 long  GyroZX, GyroZY, GyroZZ;
@@ -136,7 +138,7 @@ char calib_step;
 long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
 
-INTPID  RollPID, PitchPID, YawPID, AscentPID;
+IntPID  RollPID, PitchPID, YawPID, AscentPID;
 
 
 //Values used to when conditioning heading and desired heading to be within 180 degrees of each other 
@@ -172,13 +174,12 @@ int main()                                    // Main function
   //Set a reasonable starting point for the altitude computation
   QuatIMU_SetInitialAltitudeGuess( sens.Alt );
 
-  int LoopTimer = CNT;
+  loopTimer = CNT;
   counter = 0;
-  int Cycles;
 
   while(1)
   {
-    Cycles = CNT;
+    int Cycles = CNT;
 
     //Read ALL inputs from the sensors into local memory, starting at Temperature
     memcpy( &sens.Temperature, Sensors_Address(), Sensors_ParamsSize * sizeof(int) );
@@ -189,25 +190,25 @@ int main()                                    // Main function
 
     if( UseSBUS )
     {
-      //Thro =  SBUS.GetRC( RC_THRO );
-      //Aile =  SBUS.GetRC( RC_AILE );
-      //Elev =  SBUS.GetRC( RC_ELEV );
-      //Rudd =  SBUS.GetRC( RC_RUDD );
-      //Gear =  SBUS.GetRC( RC_GEAR );
-      //Aux1 =  SBUS.GetRC( RC_AUX1 );
-      //Aux2 =  SBUS.GetRC( RC_AUX2 );
-      //Aux3 =  SBUS.GetRC( RC_AUX3 );
+      Thro =  SBUS::GetRC( RC_THRO );
+      Aile =  SBUS::GetRC( RC_AILE );
+      Elev =  SBUS::GetRC( RC_ELEV );
+      Rudd =  SBUS::GetRC( RC_RUDD );
+      Gear =  SBUS::GetRC( RC_GEAR );
+      Aux1 =  SBUS::GetRC( RC_AUX1 );
+      Aux2 =  SBUS::GetRC( RC_AUX2 );
+      Aux3 =  SBUS::GetRC( RC_AUX3 );
     }
     else
     {
-      Thro =  RC_GetRC( RC_THRO );
-      Aile =  RC_GetRC( RC_AILE );
-      Elev =  RC_GetRC( RC_ELEV );
-      Rudd =  RC_GetRC( RC_RUDD );
-      Gear =  RC_GetRC( RC_GEAR );
-      Aux1 =  RC_GetRC( RC_AUX1 );
-      Aux2 =  RC_GetRC( RC_AUX2 );
-      Aux3 =  RC_GetRC( RC_AUX3 );
+      Thro =  RC::GetRC( RC_THRO );
+      Aile =  RC::GetRC( RC_AILE );
+      Elev =  RC::GetRC( RC_ELEV );
+      Rudd =  RC::GetRC( RC_RUDD );
+      Gear =  RC::GetRC( RC_GEAR );
+      Aux1 =  RC::GetRC( RC_AUX1 );
+      Aux2 =  RC::GetRC( RC_AUX2 );
+      Aux3 =  RC::GetRC( RC_AUX3 );
     }
 
 
@@ -266,24 +267,12 @@ int main()                                    // Main function
     ++counter;
     loopTimer += Const_UpdateCycles;
     waitcnt( loopTimer );
-    //waitcnt( CNT + Const_UpdateCycles );
   }    
 }
 
 
 void Initialize(void)
 {
-  RC_Start();
-  F32_Start();
-  dbg = fdserial_open( 31, 30, 0, 115200 );
-
-  All_LED( LED_Red & LED_Half );                         //LED red on startup
-  
-  Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
-  QuatIMU_Start();
-
-  FindGyroZero();
-
   //Initialize everything - First reset all variables to known states
 
   MotorIndex[0] = PIN_MOTOR_FL;
@@ -301,6 +290,23 @@ void Initialize(void)
   FlightMode = FlightMode_Assisted;
   GyroRPFilter = 192;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
   GyroYawFilter = 192;
+
+  dbg = fdserial_open( 31, 30, 0, 115200 );
+
+  InitializeSettings();
+
+  if( UseSBUS ) {
+    SBUS::Start( PIN_RC_0 , SBUSCenter );
+  }
+  else {
+    RC::Start();
+  }    
+  F32::Start();
+
+  All_LED( LED_Red & LED_Half );                         //LED red on startup
+  
+  Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
+  QuatIMU_Start();
 
   DIRA |= (1<<PIN_BUZZER_1);           //Enable buzzer pins    
   DIRA |= (1<<PIN_BUZZER_2);
@@ -320,35 +326,37 @@ void Initialize(void)
   RollPitch_D = 30000 * 250; 
 
 
-  IntPID_Init( &RollPID, RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
-  IntPID_SetPrecision( &RollPID, 12 );
-  IntPID_SetMaxOutput( &RollPID, 3000 );
-  IntPID_SetPIMax( &RollPID, 100 );
-  IntPID_SetMaxIntegral( &RollPID, 1900 );
-  IntPID_SetDervativeFilter( &RollPID, 96 );
+  RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
+  RollPID.SetPrecision( 12 );
+  RollPID.SetMaxOutput( 3000 );
+  RollPID.SetPIMax( 100 );
+  RollPID.SetMaxIntegral( 1900 );
+  RollPID.SetDervativeFilter( 96 );
 
 
-  IntPID_Init( &PitchPID, RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
-  IntPID_SetPrecision( &PitchPID, 12 );
-  IntPID_SetMaxOutput( &PitchPID, 3000 );
-  IntPID_SetPIMax( &PitchPID, 100 );
-  IntPID_SetMaxIntegral( &PitchPID, 1900 );
-  IntPID_SetDervativeFilter( &PitchPID, 96 );
+  PitchPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
+  PitchPID.SetPrecision( 12 );
+  PitchPID.SetMaxOutput( 3000 );
+  PitchPID.SetPIMax( 100 );
+  PitchPID.SetMaxIntegral( 1900 );
+  PitchPID.SetDervativeFilter( 96 );
 
 
-  IntPID_Init( &YawPID, 5000,   0,  -3750000 , Const_UpdateRate );
-  IntPID_SetPrecision( &YawPID, 12 );
-  IntPID_SetMaxOutput( &YawPID, 5000 );
-  IntPID_SetDervativeFilter( &YawPID, 96 );
+  YawPID.Init( 5000,   0,  -3750000 , Const_UpdateRate );
+  YawPID.SetPrecision( 12 );
+  YawPID.SetMaxOutput( 5000 );
+  YawPID.SetDervativeFilter( 96 );
 
 
   //Altitude hold PID object
-  IntPID_Init( &AscentPID, 1000, 0, 250000 , Const_UpdateRate );
-  IntPID_SetPrecision( &AscentPID, 12 );
-  IntPID_SetMaxOutput( &AscentPID, 4000 );
-  IntPID_SetPIMax( &AscentPID, 100 );
-  IntPID_SetMaxIntegral( &AscentPID, 3000 );
-  IntPID_SetDervativeFilter( &AscentPID, 96 );
+  AscentPID.Init( 1000, 0, 250000 , Const_UpdateRate );
+  AscentPID.SetPrecision( 12 );
+  AscentPID.SetMaxOutput( 4000 );
+  AscentPID.SetPIMax( 100 );
+  AscentPID.SetMaxIntegral( 3000 );
+  AscentPID.SetDervativeFilter( 96 );
+
+  FindGyroZero();
 }
 
 static int clamp( int v, int min, int max ) {
@@ -357,8 +365,9 @@ static int clamp( int v, int min, int max ) {
   return v;
 }
 
-static int abs( int v) {
+static int abs(int v) {
   v = (v<0) ? -v : v;
+  return v;
 }
 
 
@@ -367,7 +376,7 @@ void FindGyroZero(void)
   GyroZX = 128;
   GyroZY = 128;
   GyroZZ = 128;
-  waitcnt( CNT + 80000000/4 );
+  waitcnt( CNT + Const_ClockFreq/4 );
   
   for( int i=0; i<256; i++ )
   {
@@ -375,7 +384,7 @@ void FindGyroZero(void)
     GyroZY += Sensors_In(2);
     GyroZZ += Sensors_In(3);
 
-    waitcnt( CNT + 80000000/2000 );
+    waitcnt( CNT + Const_ClockFreq/2000 );
   }
 
   GyroZX /= 256;
@@ -498,8 +507,8 @@ void UpdateFlightLoop(void)
     else {
       DoIntegrate = 1;
     }      
-     
-     
+
+
     DesiredYaw &= YawMask;
      
     if( abs(DesiredYaw - Yaw) >= YawCircleHalf )
@@ -521,9 +530,9 @@ void UpdateFlightLoop(void)
     PitchPID.SetDGain( T2 )
     */
      
-    RollOut = IntPID_Calculate_NoD2( &RollPID, RollDifference , GyroRoll , DoIntegrate );
-    PitchOut = IntPID_Calculate_NoD2( &PitchPID, PitchDifference , GyroPitch , DoIntegrate );
-    YawOut = IntPID_Calculate_ForceD_NoD2( &YawPID, DesiredYaw , Yaw , GyroYaw, DoIntegrate );
+    RollOut = RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate );
+    PitchOut = PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate );
+    YawOut = YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , GyroYaw, DoIntegrate );
 
 
     ThroMix = (Thro + 1024) >> 2;                      // Approx 0 - 512
@@ -531,7 +540,6 @@ void UpdateFlightLoop(void)
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
     ThroOut = (Thro << 2) + 12000;
-
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
@@ -548,10 +556,10 @@ void UpdateFlightLoop(void)
         T1 = (Aux2 + 1024) << 1;        //Left side control
         T2 = (Aux3 + 1024) << 8;        //Right side control 
          
-        IntPID_SetPGain( &AscentPID, T1 );
-        IntPID_SetDGain( &AscentPID, T2 );
+        AscentPID.SetPGain( T1 );
+        AscentPID.SetDGain( T2 );
       
-        AltiThrust = IntPID_Calculate_NoD2( &AscentPID, DesiredAltitude , AltiEst , DoIntegrate );
+        AltiThrust = AscentPID.Calculate_NoD2( DesiredAltitude , AltiEst , DoIntegrate );
         ThroOut = 12000 + Thro + AltiThrust;
       }
       else
@@ -570,10 +578,10 @@ void UpdateFlightLoop(void)
 
      
     //X configuration
-    Motor[OUT_FL] = ThroOut + ((+PitchOut + RollOut - YawOut) * ThroMix) >> 7;
-    Motor[OUT_FR] = ThroOut + ((+PitchOut - RollOut + YawOut) * ThroMix) >> 7;
-    Motor[OUT_BL] = ThroOut + ((-PitchOut + RollOut + YawOut) * ThroMix) >> 7;
-    Motor[OUT_BR] = ThroOut + ((-PitchOut - RollOut - YawOut) * ThroMix) >> 7;
+    Motor[OUT_FL] = ThroOut + (((+PitchOut + RollOut - YawOut) * ThroMix) >> 7);
+    Motor[OUT_FR] = ThroOut + (((+PitchOut - RollOut + YawOut) * ThroMix) >> 7);
+    Motor[OUT_BL] = ThroOut + (((-PitchOut + RollOut + YawOut) * ThroMix) >> 7);
+    Motor[OUT_BR] = ThroOut + (((-PitchOut - RollOut - YawOut) * ThroMix) >> 7);
 
 
     //The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
@@ -968,11 +976,25 @@ void DoDebugModeOutput(void)
   }    
 }
 
+void InitializeSettings(void)
+{
+  Settings_Load();
+  ApplySettings();
+}  
 
 void ApplySettings(void)
 {
-  // Placeholder
-}  
+  Sensors_SetDriftValues( Settings_GetAddress(DriftScalePref) );
+  Sensors_SetAccelOffsetValues( Settings_GetAddress(AccelOffsetPref) );
+  Sensors_SetMagnetometerScaleOffsets( Settings_GetAddress(MagScaleOfsPref) );
+
+  QuatIMU_SetRollCorrection( (float*)Settings_GetAddress(RollCorrectPref) );
+  QuatIMU_SetPitchCorrection( (float*)Settings_GetAddress(PitchCorrectPref) );
+
+  UseSBUS = Settings_GetValue(UseSBUSPref);
+  SBUSCenter = Settings_GetValue(SBUSCenterPref);
+  UsePing = Settings_GetValue(UsePingPref);
+}
 
 
 void All_LED( int Color )
