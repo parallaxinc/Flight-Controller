@@ -3,16 +3,16 @@
 //
 
 typedef struct {
-  long  DriftScale[3];
-  long  DriftOffset[3];
-  long  AccelOffset[3];
-  long  MagScaleOfs[6];
-  long  UseSBUS;
-  long  SBUSCenter;
-  long  UsePing;
+  int   DriftScale[3];
+  int   DriftOffset[3];
+  int   AccelOffset[3];
+  int   MagScaleOfs[6];
+  int   UseSBUS;
+  int   SBUSCenter;
+  int   UsePing;
   float RollCorrect[2];
   float PitchCorrect[2];
-  long  Checksum;
+  int   Checksum;
 } PREFS;
   
 
@@ -38,7 +38,8 @@ void Settings_Save(void);
 void Settings_SetDefaults(void);
 
 long Settings_GetValue( int index );
-void Settings_SetValue( int index , long val );
-long * Settings_GetAddress( int index );
+void Settings_SetValue( int index , int val );
+void Settings_SetValue( int index , float val );
+int * Settings_GetAddress( int index );
 
-long Settings_CalculateChecksum(void);
+int Settings_CalculateChecksum(void);

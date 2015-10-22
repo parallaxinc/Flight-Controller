@@ -3,9 +3,8 @@
 //
 
 #include <string.h>
-#include "Settings.h"
-
-// eeprom : "Propeller Eeprom.spin"
+#include "eeprom.h"
+#include "settings.h"
 
 
 /*
@@ -50,20 +49,20 @@ static PREFS Prefs;
 
 void Settings_Load(void)
 {
-  // eeprom.ToRam(@PrefStorage, @PrefStorage + constant(PrefLen*4 + 3), 32768 )    'Copy from EEPROM to DAT, address 32768
+  EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
   int testChecksum = Settings_CalculateChecksum();
   if( testChecksum != Prefs.Checksum )
   {
     Settings_SetDefaults();
     Settings_Save();
-  }    
+  }
 }
 
 void Settings_Save(void)
 {
   Prefs.Checksum = Settings_CalculateChecksum();
-  //eeprom.FromRam(@PrefStorage, @PrefStorage + constant(PrefLen*4 + 3), 32768 )  'Copy from DAT to EEPROM, address 32768
+  EEPROM::FromRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );  //Copy from DAT to EEPROM, address 32768
 }
 
 
@@ -81,27 +80,32 @@ void Settings_SetDefaults(void)
 
 long Settings_GetValue( int index )
 {
-  return ((long *)&Prefs)[index];
+  return ((int *)&Prefs)[index];
 }
 
-void Settings_SetValue( int index , long val )
+void Settings_SetValue( int index , int val )
 {
-  ((long*)&Prefs)[index] = val;
+  ((int*)&Prefs)[index] = val;
 }  
 
-long * Settings_GetAddress( int index )
+void Settings_SetValue( int index , float val )
 {
-  return ((long*)&Prefs) + index;
+  ((float*)&Prefs)[index] = val;
+}  
+
+int * Settings_GetAddress( int index )
+{
+  return ((int*)&Prefs) + index;
 }
 
 
-long Settings_CalculateChecksum(void)
+int Settings_CalculateChecksum(void)
 {
-  long r = 0x55555555;            //Start with a strange, known value
-  for( int i=0; i < sizeof(Prefs)/4; i++ )
+  unsigned int r = 0x55555555;            //Start with a strange, known value
+  for( int i=0; i < (sizeof(Prefs)/4)-1; i++ )
   {
-    r = (r << 7) | (r >> 32-7);
-    r = r ^ ((long*)&Prefs)[i];     //Jumble the bits, XOR in the prefs value
+    r = (r << 7) | (r >> (32-7));
+    r = r ^ ((unsigned int*)&Prefs)[i];     //Jumble the bits, XOR in the prefs value
   }    
-  return r;
+  return (int)r;
 }  
