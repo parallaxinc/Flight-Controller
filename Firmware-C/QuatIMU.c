@@ -13,90 +13,85 @@
 // Working variables for the IMU code, in a struct so the compiler doesn't screw up the order,
 // or remove some of them due to overly aggressive (IE wrong) optimization.
 
-typedef struct
-{
-	int Roll, Pitch, Yaw;				// Outputs, scaled units
-	int ThrustFactor;
+static struct IMU_VARS {
+    int Roll, Pitch, Yaw;				       // Outputs, scaled units
+    int ThrustFactor;
 
-	// Inputs
-	int zx, zy, zz;						// Gyro zero readings
+    // Inputs
+    int zx, zy, zz;						       // Gyro zero readings
 
-	int gx, gy, gz;
-	int ax, ay, az;						// Sensor inputs
-	int mx, my, mz;
-	int alt, altRate;
-
-
-	// Internal orientation storage
-	float qx, qy, qz, qw;				// Body orientation quaternion
-
-	  
-	float m00, m01, m02;
-	float m10, m11, m12;					// Body orientation as a 3x3 matrix
-	float m20, m21, m22;
+    int gx, gy, gz;
+    int ax, ay, az;						       // Sensor inputs
+    int mx, my, mz;
+    int alt, altRate;
 
 
-	int fm00, fm01, fm02;
-	int fm10, fm11, fm12;				// Body orientation as a 3x3 matrix in fixed integer form (+/- 65536 == +/- 1.0)
-	int fm20, fm21, fm22;
-	  
-	  //Internal working variables - It isn't strictly necessary to break all of these out like this,
-	  //but it makes the code much more readable than having a bunch of temp variables
-	  
-	float qdx, qdy, qdz, qdw;			// Incremental rotation quaternion
+    // Internal orientation storage
+    float qx, qy, qz, qw;				       // Body orientation quaternion
 
-	float fx2, fy2, fz2;
-	float fwx, fwy, fwz;					// Quaternion to matrix temp coefficients
-	float fxy, fxz, fyz;
-
-	float rx, ry, rz;					   // Float versions of rotation components
-	float fax, fay, faz;					// Float version of accelerometer vector
-
-	float faxn, fayn, fazn;				// Float version of accelerometer vector (normalized)
-	float rmag, cosr, sinr;				// magnitude, cos, sin values
-	
-	float errDiffX, errDiffY, errDiffZ;	// holds difference vector between target and measured orientation
-	float errCorrX, errCorrY, errCorrZ;	// computed rotation correction factor
-	
-	float temp;							// temp value for use in equations
-
-	float axRot, ayRot, azRot;
-	float accWeight;
-
-	float accRollCorrSin;			// used to correct the accelerometer vector angle offset
-	float accRollCorrCos;
-	float accPitchCorrSin;
-	float accPitchCorrCos;
-
-	  //Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
-	float velocityEstimate;
-	float altitudeVelocity;
-	float altitudeEstimate;
-	int AltitudeEstMM;
-	int VelocityEstMM;
-
-	float forceX, forceY, forceZ;		// 'Current forces acting on craft, excluding gravity
-	float forceWX, forceWY, forceWZ;		// Current forces acting on craft, excluding gravity, in world frame
-
-} IMU_VARS;
+      
+    float m00, m01, m02;
+    float m10, m11, m12;                 // Body orientation as a 3x3 matrix
+    float m20, m21, m22;
 
 
-static IMU_VARS v;
+    int fm00, fm01, fm02;
+    int fm10, fm11, fm12;					    // Body orientation as a 3x3 matrix in fixed integer form (+/- 65536 == +/- 1.0)
+    int fm20, fm21, fm22;
+      
+      //Internal working variables - It isn't strictly necessary to break all of these out like this,
+      //but it makes the code much more readable than having a bunch of temp variables
+      
+    float qdx, qdy, qdz, qdw;			    // Incremental rotation quaternion
+
+    float fx2, fy2, fz2;
+    float fwx, fwy, fwz;					    // Quaternion to matrix temp coefficients
+    float fxy, fxz, fyz;
+
+    float rx, ry, rz;					       // Float versions of rotation components
+    float fax, fay, faz;					    // Float version of accelerometer vector
+
+    float faxn, fayn, fazn;				    // Float version of accelerometer vector (normalized)
+    float rmag, cosr, sinr;				    // magnitude, cos, sin values
+    
+    float errDiffX, errDiffY, errDiffZ;	 // holds difference vector between target and measured orientation
+    float errCorrX, errCorrY, errCorrZ;	 // computed rotation correction factor
+    
+    float temp;							       // temp value for use in equations
+
+    float axRot, ayRot, azRot;
+    float accWeight;
+
+    float accRollCorrSin;			          // used to correct the accelerometer vector angle offset
+    float accRollCorrCos;
+    float accPitchCorrSin;
+    float accPitchCorrCos;
+
+      //Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
+    float velocityEstimate;
+    float altitudeVelocity;
+    float altitudeEstimate;
+    int AltitudeEstMM;
+    int VelocityEstMM;
+
+    float forceX, forceY, forceZ;		      // Current forces acting on craft, excluding gravity
+    float forceWX, forceWY, forceWZ;		   // Current forces acting on craft, excluding gravity, in world frame
+} v;
 
 
 void QuatIMU_Start(void)
 {
   memset( &v, 0, sizeof(v) );
 
-  v.qx = 0.0;
-  v.qy = 0.0;
-  v.qz = 0.0;
-  v.qw = 1.0;
+  v.qx = 0.0f;
+  v.qy = 0.0f;
+  v.qz = 0.0f;
+  v.qw = 1.0f;
 
-  v.accRollCorrSin = 0.0;			// used to correct the accelerometer vector angle offset
-  v.accRollCorrCos = 1.0;
-  v.accPitchCorrSin = 0.0;
-  v.accPitchCorrCos = 1.0;
+  v.accRollCorrSin = 0.0f;			           // used to correct the accelerometer vector angle offset
+  v.accRollCorrCos = 1.0f;
+  v.accPitchCorrSin = 0.0f;
+  v.accPitchCorrCos = 1.0f;
 
   QuatIMU_InitFunctions();
 }
@@ -199,11 +194,11 @@ void QuatIMU_SetGyroZero( int x, int y, int z )
 
 void QuatIMU_AdjustStreamPointers( int * p )
 {
-	while( p[0] != 0 )
-	{
-		p[0] = (int)F32_GetCommandPtr( p[0] );				// Convert the instruction index into the address of a jump table instruction
-		p += 4;
-	}
+    while( p[0] != 0 )
+    {
+        p[0] = (int)F32::GetCommandPtr( p[0] );             // Convert the instruction index into the address of a jump table instruction
+        p += 4;
+    }
 }   
 
 
@@ -248,19 +243,19 @@ static float const_velAltiTrust      =    0.001;
 
 
 int TestUpdate[] = {
-        //F32_opFloat, (int)&v.gx, 0, (int)&v.rx,                         //rx = float(gx)
-        //F32_opMul, (int)&v.rx, (int)&const_GyroScale, (int)&v.rx,            //rx /= GyroScale
-        //F32_opAdd, (int)&v.rx, (int)&errCorrX, (int)&v.rx,                   //rx += errCorrX
+        //F32_opFloat, (int)&v.gx, 0, (int)&v.rx,                          //rx = float(gx)
+        //F32_opMul, (int)&v.rx, (int)&const_GyroScale, (int)&v.rx,        //rx /= GyroScale
+        //F32_opAdd, (int)&v.rx, (int)&errCorrX, (int)&v.rx,               //rx += errCorrX
 
   //fgy = gy / GyroScale + errCorrY
-        F32_opFloat, (int)&v.gz,  0, (int)&v.ry,                         //ry = float(gz)
-        F32_opMul, (int)&v.ry, (int)&const_NegGyroScale, (int)&v.ry,         //ry /= GyroScale
-        F32_opAdd, (int)&v.ry, (int)&v.errCorrY, (int)&v.ry,                   //ry += errCorrY
+        F32_opFloat, (int)&v.gz,  0, (int)&v.ry,                           //ry = float(gz)
+        F32_opMul, (int)&v.ry, (int)&const_NegGyroScale, (int)&v.ry,       //ry /= GyroScale
+        F32_opAdd, (int)&v.ry, (int)&v.errCorrY, (int)&v.ry,               //ry += errCorrY
 
   //fgz = gz / GyroScale + errCorrZ
-        F32_opFloat, (int)&v.gy, 0, (int)&v.rz,                         //rz = float(gy)
-        F32_opMul, (int)&v.rz, (int)&const_NegGyroScale, (int)&v.rz,         //rz /= GyroScale
-        F32_opAdd, (int)&v.rz, (int)&v.errCorrZ, (int)&v.rz,                   //rz += errCorrZ
+        F32_opFloat, (int)&v.gy, 0, (int)&v.rz,                            //rz = float(gy)
+        F32_opMul, (int)&v.rz, (int)&const_NegGyroScale, (int)&v.rz,       //rz /= GyroScale
+        F32_opAdd, (int)&v.rz, (int)&v.errCorrZ, (int)&v.rz,               //rz += errCorrZ
 
         0, 0, 0, 0
         };
@@ -272,112 +267,112 @@ int TestUpdate[] = {
   //fgx = gx / GyroScale + errCorrX
               
 int QuatUpdateCommands[] = {
-        F32_opFloat, (int)&v.gx, 0, (int)&v.rx,                         //rx = float(gx)
-        F32_opMul, (int)&v.rx, (int)&const_GyroScale, (int)&v.rx,            //rx /= GyroScale
-        F32_opAdd, (int)&v.rx, (int)&v.errCorrX, (int)&v.rx,                   //rx += errCorrX
+        F32_opFloat, (int)&v.gx, 0, (int)&v.rx,                            //rx = float(gx)
+        F32_opMul, (int)&v.rx, (int)&const_GyroScale, (int)&v.rx,          //rx /= GyroScale
+        F32_opAdd, (int)&v.rx, (int)&v.errCorrX, (int)&v.rx,               //rx += errCorrX
 
   //fgy = gy / GyroScale + errCorrY
-        F32_opFloat, (int)&v.gz,  0, (int)&v.ry,                         //ry = float(gz)
-        F32_opMul, (int)&v.ry, (int)&const_NegGyroScale, (int)&v.ry,         //ry /= GyroScale
-        F32_opAdd, (int)&v.ry, (int)&v.errCorrY, (int)&v.ry,                   //ry += errCorrY
+        F32_opFloat, (int)&v.gz,  0, (int)&v.ry,                           //ry = float(gz)
+        F32_opMul, (int)&v.ry, (int)&const_NegGyroScale, (int)&v.ry,       //ry /= GyroScale
+        F32_opAdd, (int)&v.ry, (int)&v.errCorrY, (int)&v.ry,               //ry += errCorrY
 
   //fgz = gz / GyroScale + errCorrZ
-        F32_opFloat, (int)&v.gy, 0, (int)&v.rz,                         //rz = float(gy)
-        F32_opMul, (int)&v.rz, (int)&const_NegGyroScale, (int)&v.rz,         //rz /= GyroScale
-        F32_opAdd, (int)&v.rz, (int)&v.errCorrZ, (int)&v.rz,                   //rz += errCorrZ
+        F32_opFloat, (int)&v.gy, 0, (int)&v.rz,                            //rz = float(gy)
+        F32_opMul, (int)&v.rz, (int)&const_NegGyroScale, (int)&v.rz,       //rz /= GyroScale
+        F32_opAdd, (int)&v.rz, (int)&v.errCorrZ, (int)&v.rz,               //rz += errCorrZ
 
   //rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5
-        F32_opSqr, (int)&v.rx, 0, (int)&v.rmag,                                  //rmag = fgx*fgx
-        F32_opSqr, (int)&v.ry, 0, (int)&v.temp,                                  //temp = fgy*fgy
-        F32_opAdd, (int)&v.rmag, (int)&v.temp, (int)&v.rmag,                            //rmag += temp
-        F32_opSqr, (int)&v.rz, 0, (int)&v.temp,                                  //temp = fgz*fgz
-        F32_opAdd, (int)&v.rmag, (int)&v.temp, (int)&v.rmag,                            //rmag += temp
-        F32_opAdd, (int)&v.rmag, (int)&const_epsilon, (int)&v.rmag,                   //rmag += 0.00000001
-        F32_opSqrt, (int)&v.rmag, 0, (int)&v.rmag,                               //rmag = Sqrt(rmag)                                                  
-        F32_opShift, (int)&v.rmag, (int)&const_neg1, (int)&v.rmag,                    //rmag *= 0.5                                                  
+        F32_opSqr, (int)&v.rx, 0, (int)&v.rmag,                            //rmag = fgx*fgx
+        F32_opSqr, (int)&v.ry, 0, (int)&v.temp,                            //temp = fgy*fgy
+        F32_opAdd, (int)&v.rmag, (int)&v.temp, (int)&v.rmag,               //rmag += temp
+        F32_opSqr, (int)&v.rz, 0, (int)&v.temp,                            //temp = fgz*fgz
+        F32_opAdd, (int)&v.rmag, (int)&v.temp, (int)&v.rmag,               //rmag += temp
+        F32_opAdd, (int)&v.rmag, (int)&const_epsilon, (int)&v.rmag,        //rmag += 0.00000001
+        F32_opSqrt, (int)&v.rmag, 0, (int)&v.rmag,                         //rmag = Sqrt(rmag)                                                  
+        F32_opShift, (int)&v.rmag, (int)&const_neg1, (int)&v.rmag,         //rmag *= 0.5                                                  
   //8 instructions  (17)
 
   //cosr = Cos(rMag)
   //sinr = Sin(rMag) / rMag
-        F32_opSinCos, (int)&v.rmag,  (int)&v.sinr, (int)&v.cosr,                         //sinr = Sin(rmag), cosr = Cos(rmag)  
-        F32_opDiv, (int)&v.sinr,  (int)&v.rmag, (int)&v.sinr,                            //sinr /= rmag                                                  
+        F32_opSinCos, (int)&v.rmag,  (int)&v.sinr, (int)&v.cosr,           //sinr = Sin(rmag), cosr = Cos(rmag)  
+        F32_opDiv, (int)&v.sinr,  (int)&v.rmag, (int)&v.sinr,              //sinr /= rmag                                                  
   //3 instructions  (20)
 
   //qdot.w =  (r.x*x + r.y*y + r.z*z) * -0.5
-        F32_opMul, (int)&v.rx,  (int)&v.qx, (int)&v.qdw,                                 //qdw = rx*qx 
-        F32_opMul, (int)&v.ry,  (int)&v.qy, (int)&v.temp,                                //temp = ry*qy
-        F32_opAdd, (int)&v.qdw,  (int)&v.temp, (int)&v.qdw,                              //qdw += temp
-        F32_opMul, (int)&v.rz,  (int)&v.qz, (int)&v.temp,                                //temp = rz*qz
-        F32_opAdd, (int)&v.qdw,  (int)&v.temp, (int)&v.qdw,                              //qdw += temp
-        F32_opMul, (int)&v.qdw,  (int)&const_neghalf, (int)&v.qdw,                     //qdw *= -0.5
+        F32_opMul, (int)&v.rx,  (int)&v.qx, (int)&v.qdw,                   //qdw = rx*qx 
+        F32_opMul, (int)&v.ry,  (int)&v.qy, (int)&v.temp,                  //temp = ry*qy
+        F32_opAdd, (int)&v.qdw,  (int)&v.temp, (int)&v.qdw,                //qdw += temp
+        F32_opMul, (int)&v.rz,  (int)&v.qz, (int)&v.temp,                  //temp = rz*qz
+        F32_opAdd, (int)&v.qdw,  (int)&v.temp, (int)&v.qdw,                //qdw += temp
+        F32_opMul, (int)&v.qdw,  (int)&const_neghalf, (int)&v.qdw,         //qdw *= -0.5
   //8 instructions  (28)
 
   //qdot.x =  (r.x*w + r.z*y - r.y*z) * 0.5
-        F32_opMul, (int)&v.rx,  (int)&v.qw, (int)&v.qdx,                                 //qdx = rx*qw 
-        F32_opMul, (int)&v.rz,  (int)&v.qy, (int)&v.temp,                                //temp = rz*qy
-        F32_opAdd, (int)&v.qdx,  (int)&v.temp, (int)&v.qdx,                              //qdx += temp
-        F32_opMul, (int)&v.ry,  (int)&v.qz, (int)&v.temp,                                //temp = ry*qz
-        F32_opSub, (int)&v.qdx,  (int)&v.temp, (int)&v.qdx,                              //qdx -= temp
-        F32_opShift, (int)&v.qdx,  (int)&const_neg1, (int)&v.qdx,                      //qdx *= 0.5
+        F32_opMul, (int)&v.rx,  (int)&v.qw, (int)&v.qdx,                   //qdx = rx*qw 
+        F32_opMul, (int)&v.rz,  (int)&v.qy, (int)&v.temp,                  //temp = rz*qy
+        F32_opAdd, (int)&v.qdx,  (int)&v.temp, (int)&v.qdx,                //qdx += temp
+        F32_opMul, (int)&v.ry,  (int)&v.qz, (int)&v.temp,                  //temp = ry*qz
+        F32_opSub, (int)&v.qdx,  (int)&v.temp, (int)&v.qdx,                //qdx -= temp
+        F32_opShift, (int)&v.qdx,  (int)&const_neg1, (int)&v.qdx,          //qdx *= 0.5
   //8 instructions  (36)
 
   //qdot.y =  (r.y*w - r.z*x + r.x*z) * 0.5
-        F32_opMul, (int)&v.ry,  (int)&v.qw, (int)&v.qdy,                                 //qdy = ry*qw 
-        F32_opMul, (int)&v.rz,  (int)&v.qx, (int)&v.temp,                                //temp = rz*qx
-        F32_opSub, (int)&v.qdy,  (int)&v.temp, (int)&v.qdy,                              //qdy -= temp
-        F32_opMul, (int)&v.rx,  (int)&v.qz, (int)&v.temp,                                //temp = rx*qz
-        F32_opAdd, (int)&v.qdy,  (int)&v.temp, (int)&v.qdy,                              //qdy += temp
-        F32_opShift, (int)&v.qdy,  (int)&const_neg1, (int)&v.qdy,                      //qdy *= 0.5
+        F32_opMul, (int)&v.ry,  (int)&v.qw, (int)&v.qdy,                   //qdy = ry*qw 
+        F32_opMul, (int)&v.rz,  (int)&v.qx, (int)&v.temp,                  //temp = rz*qx
+        F32_opSub, (int)&v.qdy,  (int)&v.temp, (int)&v.qdy,                //qdy -= temp
+        F32_opMul, (int)&v.rx,  (int)&v.qz, (int)&v.temp,                  //temp = rx*qz
+        F32_opAdd, (int)&v.qdy,  (int)&v.temp, (int)&v.qdy,                //qdy += temp
+        F32_opShift, (int)&v.qdy,  (int)&const_neg1, (int)&v.qdy,          //qdy *= 0.5
   //8 instructions  (44)
 
   //qdot.z =  (r.z*w + r.y*x - r.x*y) * 0.5
-        F32_opMul, (int)&v.rz,  (int)&v.qw, (int)&v.qdz,                                 //qdz = rz*qw 
-        F32_opMul, (int)&v.ry,  (int)&v.qx, (int)&v.temp,                                //temp = ry*qx
-        F32_opAdd, (int)&v.qdz,  (int)&v.temp, (int)&v.qdz,                              //qdz += temp
-        F32_opMul, (int)&v.rx,  (int)&v.qy, (int)&v.temp,                                //temp = rx*qy
-        F32_opSub, (int)&v.qdz,  (int)&v.temp, (int)&v.qdz,                              //qdz -= temp
-        F32_opShift, (int)&v.qdz,  (int)&const_neg1, (int)&v.qdz,                      //qdz *= 0.5
+        F32_opMul, (int)&v.rz,  (int)&v.qw, (int)&v.qdz,                   //qdz = rz*qw 
+        F32_opMul, (int)&v.ry,  (int)&v.qx, (int)&v.temp,                  //temp = ry*qx
+        F32_opAdd, (int)&v.qdz,  (int)&v.temp, (int)&v.qdz,                //qdz += temp
+        F32_opMul, (int)&v.rx,  (int)&v.qy, (int)&v.temp,                  //temp = rx*qy
+        F32_opSub, (int)&v.qdz,  (int)&v.temp, (int)&v.qdz,                //qdz -= temp
+        F32_opShift, (int)&v.qdz,  (int)&const_neg1, (int)&v.qdz,          //qdz *= 0.5
   //8 instructions  (52)
    
   //q.w = cosr * q.w + sinr * qdot.w
-        F32_opMul, (int)&v.cosr,  (int)&v.qw, (int)&v.qw,                                //qw = cosr*qw 
-        F32_opMul, (int)&v.sinr,  (int)&v.qdw, (int)&v.temp,                             //temp = sinr*qdw
-        F32_opAdd, (int)&v.qw,  (int)&v.temp, (int)&v.qw,                                //qw += temp
+        F32_opMul, (int)&v.cosr,  (int)&v.qw, (int)&v.qw,                  //qw = cosr*qw 
+        F32_opMul, (int)&v.sinr,  (int)&v.qdw, (int)&v.temp,               //temp = sinr*qdw
+        F32_opAdd, (int)&v.qw,  (int)&v.temp, (int)&v.qw,                  //qw += temp
 
   //q.x = cosr * q.x + sinr * qdot.x
-        F32_opMul, (int)&v.cosr,  (int)&v.qx, (int)&v.qx,                                //qx = cosr*qx 
-        F32_opMul, (int)&v.sinr,  (int)&v.qdx, (int)&v.temp,                             //temp = sinr*qdx
-        F32_opAdd, (int)&v.qx,  (int)&v.temp, (int)&v.qx,                                //qx += temp
+        F32_opMul, (int)&v.cosr,  (int)&v.qx, (int)&v.qx,                  //qx = cosr*qx 
+        F32_opMul, (int)&v.sinr,  (int)&v.qdx, (int)&v.temp,               //temp = sinr*qdx
+        F32_opAdd, (int)&v.qx,  (int)&v.temp, (int)&v.qx,                  //qx += temp
 
   //q.y = cosr * q.y + sinr * qdot.y
-        F32_opMul, (int)&v.cosr,  (int)&v.qy, (int)&v.qy,                                //qy = cosr*qy 
-        F32_opMul, (int)&v.sinr,  (int)&v.qdy, (int)&v.temp,                             //temp = sinr*qdy
-        F32_opAdd, (int)&v.qy,  (int)&v.temp, (int)&v.qy,                                //qy += temp
+        F32_opMul, (int)&v.cosr,  (int)&v.qy, (int)&v.qy,                  //qy = cosr*qy 
+        F32_opMul, (int)&v.sinr,  (int)&v.qdy, (int)&v.temp,               //temp = sinr*qdy
+        F32_opAdd, (int)&v.qy,  (int)&v.temp, (int)&v.qy,                  //qy += temp
 
   //q.z = cosr * q.z + sinr * qdot.z
-        F32_opMul, (int)&v.cosr,  (int)&v.qz, (int)&v.qz,                                //qz = cosr*qz 
-        F32_opMul, (int)&v.sinr,  (int)&v.qdz, (int)&v.temp,                             //temp = sinr*qdz
-        F32_opAdd, (int)&v.qz,  (int)&v.temp, (int)&v.qz,                                //qz += temp
+        F32_opMul, (int)&v.cosr,  (int)&v.qz, (int)&v.qz,                  //qz = cosr*qz 
+        F32_opMul, (int)&v.sinr,  (int)&v.qdz, (int)&v.temp,               //temp = sinr*qdz
+        F32_opAdd, (int)&v.qz,  (int)&v.temp, (int)&v.qz,                  //qz += temp
   //12 instructions  (64)
 
   //q = q.Normalize()
   //rmag = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w + 0.0000001)
-        F32_opSqr, (int)&v.qx,  0, (int)&v.rmag,                                  //rmag = qx*qx 
-        F32_opSqr, (int)&v.qy,  0, (int)&v.temp,                                  //temp = qy*qy 
-        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,                            //rmag += temp 
-        F32_opSqr, (int)&v.qz,  0, (int)&v.temp,                                  //temp = qz*qz 
-        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,                            //rmag += temp 
-        F32_opSqr, (int)&v.qw,  0, (int)&v.temp,                                  //temp = qw*qw 
-        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,                            //rmag += temp 
-        F32_opAdd, (int)&v.rmag,  (int)&const_epsilon, (int)&v.rmag,                   //rmag += 0.0000001 
-        F32_opSqrt, (int)&v.rmag,  0, (int)&v.rmag,                               //sqrt(rmag) 
+        F32_opSqr, (int)&v.qx,  0, (int)&v.rmag,                           //rmag = qx*qx 
+        F32_opSqr, (int)&v.qy,  0, (int)&v.temp,                           //temp = qy*qy 
+        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,              //rmag += temp 
+        F32_opSqr, (int)&v.qz,  0, (int)&v.temp,                           //temp = qz*qz 
+        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,              //rmag += temp 
+        F32_opSqr, (int)&v.qw,  0, (int)&v.temp,                           //temp = qw*qw 
+        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,              //rmag += temp 
+        F32_opAdd, (int)&v.rmag,  (int)&const_epsilon, (int)&v.rmag,       //rmag += 0.0000001 
+        F32_opSqrt, (int)&v.rmag,  0, (int)&v.rmag,                        //sqrt(rmag) 
   //9 instructions (73)
 
   //q /= rmag   
-        F32_opDiv, (int)&v.qw,  (int)&v.rmag, (int)&v.qw,                                //qw /= rmag 
-        F32_opDiv, (int)&v.qx,  (int)&v.rmag, (int)&v.qx,                                //qx /= rmag 
-        F32_opDiv, (int)&v.qy,  (int)&v.rmag, (int)&v.qy,                                //qy /= rmag 
-        F32_opDiv, (int)&v.qz,  (int)&v.rmag, (int)&v.qz,                                //qz /= rmag 
+        F32_opDiv, (int)&v.qw,  (int)&v.rmag, (int)&v.qw,                  //qw /= rmag 
+        F32_opDiv, (int)&v.qx,  (int)&v.rmag, (int)&v.qx,                  //qx /= rmag 
+        F32_opDiv, (int)&v.qy,  (int)&v.rmag, (int)&v.qy,                  //qy /= rmag 
+        F32_opDiv, (int)&v.qz,  (int)&v.rmag, (int)&v.qz,                  //qz /= rmag 
   //4 instructions (77)
 
 
@@ -386,70 +381,70 @@ int QuatUpdateCommands[] = {
   //fx2 = qx * qx;
   //fy2 = qy * qy;
   //fz2 = qz * qz;
-        F32_opSqr, (int)&v.qx,  0, (int)&v.fx2,                                   //fx2 = qx *qx
-        F32_opSqr, (int)&v.qy,  0, (int)&v.fy2,                                   //fy2 = qy *qy
-        F32_opSqr, (int)&v.qz,  0, (int)&v.fz2,                                   //fz2 = qz *qz
+        F32_opSqr, (int)&v.qx,  0, (int)&v.fx2,                            //fx2 = qx *qx
+        F32_opSqr, (int)&v.qy,  0, (int)&v.fy2,                            //fy2 = qy *qy
+        F32_opSqr, (int)&v.qz,  0, (int)&v.fz2,                            //fz2 = qz *qz
   //3 instructions (80)
 
   //fwx = qw * qx;
   //fwy = qw * qy;
   //fwz = qw * qz;
-        F32_opMul, (int)&v.qw,  (int)&v.qx, (int)&v.fwx,                                 //fwx = qw *qx
-        F32_opMul, (int)&v.qw,  (int)&v.qy, (int)&v.fwy,                                 //fwy = qw *qy
-        F32_opMul, (int)&v.qw,  (int)&v.qz, (int)&v.fwz,                                 //fwz = qw *qz
+        F32_opMul, (int)&v.qw,  (int)&v.qx, (int)&v.fwx,                   //fwx = qw *qx
+        F32_opMul, (int)&v.qw,  (int)&v.qy, (int)&v.fwy,                   //fwy = qw *qy
+        F32_opMul, (int)&v.qw,  (int)&v.qz, (int)&v.fwz,                   //fwz = qw *qz
   //3 instructions (83)
 
   //fxy = qx * qy;
   //fxz = qx * qz;
   //fyz = qy * qz;
-        F32_opMul, (int)&v.qx,  (int)&v.qy, (int)&v.fxy,                                 //fxy = qx *qy
-        F32_opMul, (int)&v.qx,  (int)&v.qz, (int)&v.fxz,                                 //fxz = qx *qz
-        F32_opMul, (int)&v.qy,  (int)&v.qz, (int)&v.fyz,                                 //fyz = qy *qz
+        F32_opMul, (int)&v.qx,  (int)&v.qy, (int)&v.fxy,                   //fxy = qx *qy
+        F32_opMul, (int)&v.qx,  (int)&v.qz, (int)&v.fxz,                   //fxz = qx *qz
+        F32_opMul, (int)&v.qy,  (int)&v.qz, (int)&v.fyz,                   //fyz = qy *qz
   //3 instructions (86)
 
    
   //m00 = 1.0f - 2.0f * (y2 + z2)
-        F32_opAdd, (int)&v.fy2,  (int)&v.fz2, (int)&v.temp,                              //temp = fy2+fz2
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.temp,                       //temp *= 2.0
-        F32_opSub, (int)&const_F1,  (int)&v.temp, (int)&v.m00,                         //m00 = 1.0 - temp
+        F32_opAdd, (int)&v.fy2,  (int)&v.fz2, (int)&v.temp,                //temp = fy2+fz2
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.temp,           //temp *= 2.0
+        F32_opSub, (int)&const_F1,  (int)&v.temp, (int)&v.m00,             //m00 = 1.0 - temp
      
   //m01 =        2.0f * (fxy - fwz)
-        F32_opSub, (int)&v.fxy,  (int)&v.fwz, (int)&v.temp,                              //temp = fxy-fwz
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m01,                        //m01 = 2.0 * temp
+        F32_opSub, (int)&v.fxy,  (int)&v.fwz, (int)&v.temp,                //temp = fxy-fwz
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m01,            //m01 = 2.0 * temp
 
   //m02 =        2.0f * (fxz + fwy)
-        F32_opAdd, (int)&v.fxz,  (int)&v.fwy, (int)&v.temp,                              //temp = fxz+fwy
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m02,                        //m02 = 2.0 * temp
+        F32_opAdd, (int)&v.fxz,  (int)&v.fwy, (int)&v.temp,                //temp = fxz+fwy
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m02,            //m02 = 2.0 * temp
   //7 instructions (93)
 
    
   //m10 =        2.0f * (fxy + fwz)
-        F32_opAdd, (int)&v.fxy,  (int)&v.fwz, (int)&v.temp,                              //temp = fxy-fwz
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m10,                        //m10 = 2.0 * temp
+        F32_opAdd, (int)&v.fxy,  (int)&v.fwz, (int)&v.temp,                //temp = fxy-fwz
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m10,            //m10 = 2.0 * temp
 
   //m11 = 1.0f - 2.0f * (x2 + z2)
-        F32_opAdd, (int)&v.fx2,  (int)&v.fz2, (int)&v.temp,                              //temp = fx2+fz2
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.temp,                       //temp *= 2.0
-        F32_opSub, (int)&const_F1,  (int)&v.temp, (int)&v.m11,                         //m11 = 1.0 - temp
+        F32_opAdd, (int)&v.fx2,  (int)&v.fz2, (int)&v.temp,                //temp = fx2+fz2
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.temp,           //temp *= 2.0
+        F32_opSub, (int)&const_F1,  (int)&v.temp, (int)&v.m11,             //m11 = 1.0 - temp
 
   //m12 =        2.0f * (fyz - fwx)
-        F32_opSub, (int)&v.fyz,  (int)&v.fwx, (int)&v.temp,                              //temp = fyz-fwx
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m12,                        //m12 = 2.0 * temp
+        F32_opSub, (int)&v.fyz,  (int)&v.fwx, (int)&v.temp,                //temp = fyz-fwx
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m12,            //m12 = 2.0 * temp
   //7 instructions (100)
 
    
   //m20 =        2.0f * (fxz - fwy)
-        F32_opSub, (int)&v.fxz,  (int)&v.fwy, (int)&v.temp,                              //temp = fxz-fwz
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m20,                        //m20 = 2.0 * temp
+        F32_opSub, (int)&v.fxz,  (int)&v.fwy, (int)&v.temp,                //temp = fxz-fwz
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m20,            //m20 = 2.0 * temp
 
   //m21 =        2.0f * (fyz + fwx)
-        F32_opAdd, (int)&v.fyz,  (int)&v.fwx, (int)&v.temp,                              //temp = fyz+fwx
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m21,                        //m21 = 2.0 * temp
+        F32_opAdd, (int)&v.fyz,  (int)&v.fwx, (int)&v.temp,                //temp = fyz+fwx
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.m21,            //m21 = 2.0 * temp
 
   //m22 = 1.0f - 2.0f * (x2 + y2)
-        F32_opAdd, (int)&v.fx2,  (int)&v.fy2, (int)&v.temp,                              //temp = fx2+fy2
-        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.temp,                       //temp *= 2.0
-        F32_opSub, (int)&const_F1,  (int)&v.temp, (int)&v.m22,                         //m22 = 1.0 - temp
+        F32_opAdd, (int)&v.fx2,  (int)&v.fy2, (int)&v.temp,                //temp = fx2+fy2
+        F32_opShift, (int)&v.temp,  (int)&const_1, (int)&v.temp,           //temp *= 2.0
+        F32_opSub, (int)&const_F1,  (int)&v.temp, (int)&v.m22,             //m22 = 1.0 - temp
   //7 instructions (107)
 
 
@@ -502,28 +497,28 @@ int QuatUpdateCommands[] = {
 //Compute length of the accelerometer vector to decide weighting                                   
 
   //rmag = facc.length
-        F32_opSqr, (int)&v.fax,  0, (int)&v.rmag,                                  //rmag = fax*fax
-        F32_opSqr, (int)&v.fay,  0, (int)&v.temp,                                  //temp = fay*fay
-        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,                             //rmag += temp
-        F32_opSqr, (int)&v.faz,  0, (int)&v.temp,                                  //temp = faz*faz
-        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,                             //rmag += temp
-        F32_opAdd, (int)&v.rmag,  (int)&const_epsilon, (int)&v.rmag,                    //rmag += 0.00000001
-        F32_opSqrt, (int)&v.rmag,  0, (int)&v.rmag,                                //rmag = Sqrt(rmag)                                                  
+        F32_opSqr, (int)&v.fax,  0, (int)&v.rmag,                          //rmag = fax*fax
+        F32_opSqr, (int)&v.fay,  0, (int)&v.temp,                          //temp = fay*fay
+        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,              //rmag += temp
+        F32_opSqr, (int)&v.faz,  0, (int)&v.temp,                          //temp = faz*faz
+        F32_opAdd, (int)&v.rmag,  (int)&v.temp, (int)&v.rmag,              //rmag += temp
+        F32_opAdd, (int)&v.rmag,  (int)&const_epsilon, (int)&v.rmag,       //rmag += 0.00000001
+        F32_opSqrt, (int)&v.rmag,  0, (int)&v.rmag,                        //rmag = Sqrt(rmag)                                                  
 
   //facc /= rmag
-        F32_opDiv, (int)&v.fax,  (int)&v.rmag, (int)&v.faxn,                              //faxn = fax / rmag 
-        F32_opDiv, (int)&v.fay,  (int)&v.rmag, (int)&v.fayn,                              //fayn = fay / rmag 
-        F32_opDiv, (int)&v.faz,  (int)&v.rmag, (int)&v.fazn,                              //fazn = faz / rmag 
+        F32_opDiv, (int)&v.fax,  (int)&v.rmag, (int)&v.faxn,               //faxn = fax / rmag 
+        F32_opDiv, (int)&v.fay,  (int)&v.rmag, (int)&v.fayn,               //fayn = fay / rmag 
+        F32_opDiv, (int)&v.faz,  (int)&v.rmag, (int)&v.fazn,               //fazn = faz / rmag 
 
 
 
   //accWeight = 1.0 - FMin( FAbs( 2.0 - accLen * 2.0 ), 1.0 )
-        F32_opMul, (int)&v.rmag,  (int)&const_AccScale, (int)&v.rmag,                   //rmag /= accScale (accelerometer to 1G units)
-        F32_opShift, (int)&v.rmag,  (int)&const_1, (int)&v.accWeight,                   //accWeight = rmag * 2.0
-        F32_opSub, (int)&const_F2,  (int)&v.accWeight, (int)&v.accWeight,               //accWeight = 2.0 - accWeight
-        F32_opFAbs, (int)&v.accWeight,  0, (int)&v.accWeight,                      //accWeight = FAbs(accWeight)
-        F32_opFMin, (int)&v.accWeight,  (int)&const_F1, (int)&v.accWeight,              //accWeight = FMin( accWeight, 1.0 )
-        F32_opSub, (int)&const_F1,  (int)&v.accWeight, (int)&v.accWeight,               //accWeight = 1.0 - accWeight                                                
+        F32_opMul, (int)&v.rmag,  (int)&const_AccScale, (int)&v.rmag,      //rmag /= accScale (accelerometer to 1G units)
+        F32_opShift, (int)&v.rmag,  (int)&const_1, (int)&v.accWeight,      //accWeight = rmag * 2.0
+        F32_opSub, (int)&const_F2,  (int)&v.accWeight, (int)&v.accWeight,  //accWeight = 2.0 - accWeight
+        F32_opFAbs, (int)&v.accWeight,  0, (int)&v.accWeight,              //accWeight = FAbs(accWeight)
+        F32_opFMin, (int)&v.accWeight,  (int)&const_F1, (int)&v.accWeight, //accWeight = FMin( accWeight, 1.0 )
+        F32_opSub, (int)&const_F1,  (int)&v.accWeight, (int)&v.accWeight,  //accWeight = 1.0 - accWeight                                                
 
    
 
@@ -635,16 +630,16 @@ int QuatUpdateCommands[] = {
   //altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
         F32_opMul, (int)&v.altitudeEstimate,  (int)&const_velAccTrust, (int)&v.altitudeEstimate, 
 
-        F32_opFloat, (int)&v.alt,  0, (int)&v.temp,                               //temp := float(alt)
-        F32_opDiv, (int)&v.temp,  (int)&const_m_to_mm, (int)&v.temp,                   //temp /= 1000.0    (alt now in m)
-        F32_opMul, (int)&v.temp,  (int)&const_velAltiTrust, (int)&v.temp,              //temp *= 0.0050
-        F32_opAdd, (int)&v.altitudeEstimate,  (int)&v.temp, (int)&v.altitudeEstimate,    //altEstimate += temp 
+        F32_opFloat, (int)&v.alt,  0, (int)&v.temp,                                   //temp := float(alt)
+        F32_opDiv, (int)&v.temp,  (int)&const_m_to_mm, (int)&v.temp,                  //temp /= 1000.0    (alt now in m)
+        F32_opMul, (int)&v.temp,  (int)&const_velAltiTrust, (int)&v.temp,             //temp *= 0.0050
+        F32_opAdd, (int)&v.altitudeEstimate,  (int)&v.temp, (int)&v.altitudeEstimate, //altEstimate += temp 
 
 
-        F32_opMul, (int)&v.altitudeEstimate,  (int)&const_m_to_mm, (int)&v.temp,       //temp = altEst * 1000.0    (temp now in mm)
+        F32_opMul, (int)&v.altitudeEstimate,  (int)&const_m_to_mm, (int)&v.temp,      //temp = altEst * 1000.0    (temp now in mm)
         F32_opTruncRound, (int)&v.temp,  (int)&const_0, (int)&v.AltitudeEstMM, 
 
-        F32_opMul, (int)&v.velocityEstimate,  (int)&const_m_to_mm, (int)&v.temp,       //temp = velEst * 1000.0    (temp now in mm/sec)
+        F32_opMul, (int)&v.velocityEstimate,  (int)&const_m_to_mm, (int)&v.temp,      //temp = velEst * 1000.0    (temp now in mm/sec)
         F32_opTruncRound, (int)&v.temp,  (int)&const_0, (int)&v.VelocityEstMM, 
 
 
@@ -670,7 +665,7 @@ int QuatUpdateCommands[] = {
         F32_opShift, (int)&v.m22,  (int)&const_16, (int)&v.temp,
         F32_opTruncRound, (int)&v.temp,  (int)&const_0, (int)&v.fm22,
         0, 0, 0, 0
-		};
+        };
 //}
 
 
@@ -694,11 +689,11 @@ void QuatIMU_Update( int * packetAddr )
   v.gz -= v.zz;
 
   cycleTimer = CNT;
-  F32_RunStream( QuatUpdateCommands );
+  F32::RunStream( QuatUpdateCommands );
 }
 
 int QuatIMU_WaitForCompletion(void)
 {
-  F32_WaitStream();	// Wait for the stream to complete
+  F32::WaitStream();	// Wait for the stream to complete
   return CNT - cycleTimer;
 }
