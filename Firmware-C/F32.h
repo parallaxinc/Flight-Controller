@@ -2,33 +2,22 @@
 #define __F32_H__
 
 
-int F32_Start(void);
-void F32_Stop(void);
+class F32
+{
+public:
+	static int  Start(void);
+	static void Stop(void);
 
-void F32_StartStream( int index, int * baseAddr );
+	static void StartStream( int index, int * baseAddr );
 
-void F32_AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr );
-void F32_EndStream( int index );
+	static void AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr );
+	static void EndStream( int index );
 
-int* F32_GetCommandPtr( int fp_op );
+	static int* GetCommandPtr( int fp_op );
 
-void F32_RunStream( int * a );
-void F32_WaitStream(void);
-
-/*
-PUB Cmd_ptr
-{{
-  return the Hub address of f32_Cmd, so other code can call F32 functions directly
-}}
-  return @f32_Cmd
-
-
-PUB Call_ptr
-{{
-  return the Hub address of the dispatch table, so other code can call F32 functions directly
-}}
-  return @cmdCallTable
-*/
+	static void RunStream( int * a );
+	static void WaitStream(void);
+};
 
 
 /*

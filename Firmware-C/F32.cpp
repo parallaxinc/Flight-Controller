@@ -3,26 +3,27 @@
 #include <cog.h>
 #include <sys/driver.h>
 #include <propeller.h>
-#include "F32.h"
+#include "f32.h"
 
 
 
-typedef struct {
+static struct F32_DATA {
   volatile long  f32_cmd;
   int  TempCommand, StreamAddr; // These have to be contiguous in memory, which is why they're in a struct
-} F32_Vars;
+} v;
 
-static F32_Vars v;
 static int* CommandAddr[8];
 static int* cmdCallTableAddr = 0;
-static char  cog;
+static char cog;
 
-int F32_Start(void)
+
+
+int F32::Start(void)
 {
 //  Start start floating point engine in a new cog.
 //  Returns:     True (non-zero) if cog started, or False (0) if no cog is available.
 
-  F32_Stop();
+  F32::Stop();
   v.f32_cmd = 0;
 
   use_cog_driver(F32_driver);
@@ -39,24 +40,23 @@ int F32_Start(void)
 }
 
 
-void F32_Stop(void)
+void F32::Stop(void)
 {
-// Stop floating point engine and release the cog.
-
-	if(cog) {
+	// Stop floating point engine and release the cog.
+  if(cog) {
     cogstop(cog - 1);
     cog = 0;
-	}
+  }
 }
 
 
-void F32_StartStream( int index, int* baseAddr )
+void F32::StartStream( int index, int* baseAddr )
 {
   CommandAddr[index] = baseAddr;
 }
 
 
-void F32_AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr )
+void F32::AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr )
 {
   int *addr = CommandAddr[index];
   addr[0] = (fp_op << 2) + (int)cmdCallTableAddr;  //This is a pointer into the JMPRET instruction table
@@ -67,7 +67,7 @@ void F32_AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out
   CommandAddr[index] = addr + 4;
 }
 
-void F32_EndStream( int index )
+void F32::EndStream( int index )
 {
   int *addr = CommandAddr[index];
   addr[0] = 0;					         //Use zero to indicate end-of-stream 
@@ -77,13 +77,13 @@ void F32_EndStream( int index )
 }
 
 
-int* F32_GetCommandPtr( int fp_op )
+int* F32::GetCommandPtr( int fp_op )
 {
   return cmdCallTableAddr + fp_op;
 }
       
 
-void F32_RunStream( int * a )
+void F32::RunStream( int * a )
 {
   //Can't use the stack for these, because they might be different by the time the COG gets to them
   v.TempCommand = cmdCallTableAddr[ F32_opRunStream ];
@@ -92,26 +92,27 @@ void F32_RunStream( int * a )
 }
 
 
-void F32_WaitStream(void)
+void F32::WaitStream(void)
 {
 	while( v.f32_cmd )
 		;
 }
 
 /*
-void F32_Cmd_ptr(void)
+void F32::Cmd_ptr(void)
 {
 //  return the Hub address of f32_Cmd, so other code can call F32 functions directly
 	return &f32_cmd;
 }
 
 
-void F32_Call_ptr(void)
+void F32::Call_ptr(void)
 {
 //  return the Hub address of the dispatch table, so other code can call F32 functions directly
 	//return &cmdCallTable;
 }
 */
+
 
 
 #if 0
@@ -616,5 +617,3 @@ PUB FShift(a, b)
   while f32_Cmd
 
 #endif
-
-

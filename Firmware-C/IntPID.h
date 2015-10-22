@@ -1,7 +1,47 @@
 #ifndef __INTPID_H__
 #define __INTPID_H__
 
-typedef struct {
+class IntPID
+{
+public:
+  void Init( int PGain, int IGain, int DGain, int SampleRate );
+
+  void SetPrecision( int prec ) {
+      Precision = prec;
+      RoundOffset = 1 << (Precision-1);
+  }
+
+  void SetPGain( int Value )        { Kp = Value; }
+  void SetIGain( int Value )        { Ki = Value / SampleRate; }
+  void SetDGain( int Value )        { Kd = Value / SampleRate; }
+  void SetD2Gain( int Value )       { Kd2 = Value / SampleRate; }
+  void SetPMax( int Value )         { PMax = Value; }
+  void SetPIMax( int Value )        { PIMax = Value; }
+  void SetMaxIntegral( int Value )  { MaxIntegral = Value; }
+  void SetMaxOutput( int Value )    { MaxOutput = Value; }
+
+
+  //Derivative is normally used "raw", but if the set point or measurement change quickly
+  //it can lead to "derivative kick".  The filter value is applied as a fraction over 256.
+  //So a filter value of 128 allows 1/2 of the actual change in derivative to feed through
+  //in each iteration.  Smaller numbers are a stronger filter.
+
+  void SetDervativeFilter( int Filter ) { DerivFilter = Filter; }
+
+
+  void ResetIntegralError(void) { IError = 0; }
+  int GetIError(void)           { return IError; }
+
+
+  int Calculate( int SetPoint , int Measured , int DoIntegrate );
+  int Calculate_NoD2( int SetPoint , int Measured , int DoIntegrate );
+  int Calculate_ForceD( int SetPoint , int Measured , int Deriv , int DoIntegrate );
+  int Calculate_ForceD_NoD2( int SetPoint , int Measured , int Deriv , int DoIntegrate );
+  int Calculate_PI( int SetPoint , int Measured );
+
+
+public:
+
   long Kp;             //PID Gain
   long Ki;             //PID Gain
   long Kd;             //PID Gain
@@ -21,47 +61,7 @@ typedef struct {
   long MaxOutput;
   long DerivFilter;
   long SampleRate;
-} INTPID;
+};
 
-
-void IntPID_Init( INTPID * pid, int PGain, int IGain, int DGain, int SampleRate );
-
-inline void IntPID_SetPrecision( INTPID * pid, int prec )
-{
-  pid->Precision = prec;
-  pid->RoundOffset = 1 << (pid->Precision-1);
-}
-
-inline void IntPID_SetPGain( INTPID * pid, int Value )        { pid->Kp = Value; }
-inline void IntPID_SetIGain( INTPID * pid, int Value )        { pid->Ki = Value / pid->SampleRate; }
-inline void IntPID_SetDGain( INTPID * pid, int Value )        { pid->Kd = Value / pid->SampleRate; }
-inline void IntPID_SetD2Gain( INTPID * pid, int Value )       { pid->Kd2 = Value / pid->SampleRate; }
-inline void IntPID_SetPMax( INTPID * pid, int Value )         { pid->PMax = Value; }
-inline void IntPID_SetPIMax( INTPID * pid, int Value )        { pid->PIMax = Value; }
-inline void IntPID_SetMaxIntegral( INTPID * pid, int Value )  { pid->MaxIntegral = Value; }
-inline void IntPID_SetMaxOutput( INTPID * pid, int Value )    { pid->MaxOutput = Value; }
-
-
-inline void IntPID_SetDervativeFilter( INTPID * pid, int Filter )
-{
-  //Derivative is normally used "raw", but if the set point or measurement change quickly
-  //it can lead to "derivative kick".  The filter value is applied as a fraction over 256.
-  //So a filter value of 128 allows 1/2 of the actual change in derivative to feed through
-  //in each iteration.  Smaller numbers are a stronger filter.
-  
-  pid->DerivFilter = Filter;
-}
-
-
-inline void IntPID_ResetIntegralError(INTPID * pid) { pid->IError = 0; }
-
-inline int IntPID_GetIError( INTPID * pid ) { return pid->IError; }
-
-
-int IntPID_Calculate( INTPID * pid, int SetPoint , int Measured , int DoIntegrate );
-int IntPID_Calculate_NoD2( INTPID * pid, int SetPoint , int Measured , int DoIntegrate );
-int IntPID_Calculate_ForceD( INTPID * pid, int SetPoint , int Measured , int Deriv , int DoIntegrate );
-int IntPID_Calculate_ForceD_NoD2( INTPID * pid, int SetPoint , int Measured , int Deriv , int DoIntegrate );
-int IntPID_Calculate_PI( INTPID * pid, int SetPoint , int Measured );
 
 #endif

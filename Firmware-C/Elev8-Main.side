@@ -1,7 +1,4 @@
 Elev8-Main.c
-RC_Receiver.c
-RC_Receiver.h
-RC_Receiver_driver.spin
 Servo32_HighRes.c
 Servo32_HighRes.h
 Servo32_HighRes_driver.spin
@@ -11,16 +8,24 @@ Sensors.h
 Constants.h
 Settings.c
 Settings.h
-F32.c
 F32.h
 F32_driver.spin
 QuatIMU.c
 QuatIMU.h
-IntPID.c
 IntPID.h
 pins_v2.h
 Beep.c
 Beep.h
+RC.cpp
+RC.h
+RC_driver.spin
+F32.cpp
+IntPID.cpp
+SBUS.cpp
+SBUS.h
+SBUS_driver.spin
+Eeprom.cpp
+Eeprom.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

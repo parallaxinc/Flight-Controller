@@ -1,4 +1,4 @@
-{{RC_Receiver.spin
+{{RC_driver.spin
 -----------------------------------------------------------------------------------------------
 Read servo control pulses from a generic R/C receiver
 Use 4.7K resistors (or 4050 buffers) between each Propeller input and receiver signal output.
