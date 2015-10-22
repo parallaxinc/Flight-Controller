@@ -1,7 +1,7 @@
 
 #include <propeller.h>
-#include "Constants.h"
-#include "Settings.h"
+#include "constants.h"
+#include "settings.h"
 #include "sensors.h"
 
 /*
@@ -39,17 +39,20 @@ const int AltTemp = 12;
 const int Pressure = 13;
 const int Timer = 14;
 
-
-static long  ins[Sensors_ParamsSize];         //Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
-static long  DriftScale[3];
-static long  DriftOffset[3];          //These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
-static long  AccelOffset[3];
-static long  MagOffsetX, MagScaleX, MagOffsetY, MagScaleY, MagOffsetZ, MagScaleZ;
-static long  cog;
-
-void Sensors_Stop(void);
-
+static struct DATA {
+  int  ins[Sensors_ParamsSize];         //Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
+  int  DriftScale[3];
+  int  DriftOffset[3];          //These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
+  int  AccelOffset[3];
+  int  MagOffsetX, MagScaleX, MagOffsetY, MagScaleY, MagOffsetZ, MagScaleZ;
+} data;
+ 
+static int cog;
 extern long AltTable_000[];
+
+static int DriftBackup[6];
+static int AccelBackup[3];
+static int MagBackup[6];
 
 void Sensors_Start( int ipin, int opin, int cpin, int sgpin, int smpin, int apin, int _LEDPin, int _LEDAddr, int _LEDCount )
 {
@@ -69,27 +72,27 @@ void Sensors_Start( int ipin, int opin, int cpin, int sgpin, int smpin, int apin
 
 	Sensors_Stop();
 
-	ins[0] = ipin;
-	ins[1] = opin;
-	ins[2] = cpin;
-	ins[3] = sgpin;
-	ins[4] = smpin;
-	ins[5] = apin;
-	ins[6] = _LEDPin;
-	ins[7] = _LEDAddr;
-	ins[8] = _LEDCount;
-	ins[9] = (long)&AltTable_000[0];       //Append the HUB address of the pressure to altitude table 
+	data.ins[0] = ipin;
+	data.ins[1] = opin;
+	data.ins[2] = cpin;
+	data.ins[3] = sgpin;
+	data.ins[4] = smpin;
+	data.ins[5] = apin;
+	data.ins[6] = _LEDPin;
+	data.ins[7] = _LEDAddr;
+	data.ins[8] = _LEDCount;
+	data.ins[9] = (long)&AltTable_000[0];       //Append the HUB address of the pressure to altitude table 
 
 
-	DriftScale[0] = DriftScale[1] = DriftScale[2] = 0;
-	DriftOffset[0] = DriftOffset[1] = DriftOffset[2] = 0;
-	AccelOffset[0] = AccelOffset[1] = AccelOffset[2] = 0;
-	MagOffsetX = MagOffsetY = MagOffsetZ = 0;
-	MagScaleX = MagScaleY = MagScaleZ = 1024;
+	data.DriftScale[0] = data.DriftScale[1] = data.DriftScale[2] = 0;
+	data.DriftOffset[0] = data.DriftOffset[1] = data.DriftOffset[2] = 0;
+	data.AccelOffset[0] = data.AccelOffset[1] = data.AccelOffset[2] = 0;
+	data.MagOffsetX = data.MagOffsetY = data.MagOffsetZ = 0;
+	data.MagScaleX = data.MagScaleY = data.MagScaleZ = 1024;
 
 	// cog = cognew(@entry, @ins) + 1;
   use_cog_driver(Sensors_driver);
-  cog = load_cog_driver(Sensors_driver, &ins[0]) + 1;
+  cog = load_cog_driver(Sensors_driver, &data.ins[0]) + 1;
 }
 
 
@@ -102,66 +105,68 @@ void Sensors_Stop(void)
 	}
 }
 
-long Sensors_In( int channel )
+int Sensors_In( int channel )
 {
 // Read the current value from a channel (0..ParamsSize-1)
 
-  return ins[channel];
+  return data.ins[channel];
 }
 
 
-long * Sensors_Address(void)
+int * Sensors_Address(void)
 {
   // Get the address of the sensor readings
-  return &ins[0];
+  return &data.ins[0];
 }
 
 void Sensors_TempZeroDriftValues(void)
 {
-  //longmove( @DriftScaleGX, @DriftScale[0], 6 )          'Temporarily back up the values in the DAT section so we can restore them with "ResetDriftValues"
-  //longfill( @DriftScale[0], 0, 6 )
+  //Temporarily back up the values so we can restore them with "ResetDriftValues"
+  memcpy( &DriftBackup, &data.DriftScale[0], 6*sizeof(int) );
+  memset( &data.DriftScale[0], 0, 6*sizeof(int));
 }
 
 void Sensors_ResetDriftValues(void)
 {
-  //longmove( @DriftScale[0], @DriftScaleGX, 6 )
+  //Restore the values from our backup
+  memcpy( &data.DriftScale[0], &DriftBackup, 6*sizeof(int) );
 }
-
 
 
 void Sensors_TempZeroAccelOffsetValues(void)
 {
-  //longmove( @AccelOffsetX, @AccelOffset[0], 3 )         'Temporarily back up the values in the DAT section so we can restore them with "ResetAccelOffsetValues"
-  //longfill( @AccelOffset[0], 0, 3 )
+  //Temporarily back up the values so we can restore them with "ResetAccelOffsetValues"
+  memcpy( &AccelBackup, &data.AccelOffset[0], 3*sizeof(int) );
+  memset( &data.AccelOffset[0], 0, 3*sizeof(int) );
 }
 
 void Sensors_ResetAccelOffsetValues(void)
 {
-  //longmove( @AccelOffset[0], @AccelOffsetX, 3 )
+  memcpy( &data.AccelOffset[0], &AccelBackup, 3*sizeof(int) );
 }
 
 
-void Sensors_SetDriftValues( long * ScaleAndOffsetsAddr )
+void Sensors_SetDriftValues( int * ScaleAndOffsetsAddr )
 {
-  //longmove( @DriftScale[0], ScaleAndOffsetsAddr, 6 )
-  //longmove( @DriftScaleGX, ScaleAndOffsetsAddr, 6 )
+  memcpy( &data.DriftScale[0], ScaleAndOffsetsAddr, 6*sizeof(int) );
+  memcpy( &DriftBackup, ScaleAndOffsetsAddr, 6*sizeof(int) );
 }
 
 
-void Sensors_SetAccelOffsetValues( long * OffsetsAddr )
+void Sensors_SetAccelOffsetValues( int * OffsetsAddr )
 {
-  //longmove( @AccelOffset[0], OffsetsAddr, 3 )
-  //longmove( @AccelOffsetX, OffsetsAddr, 3 )
+  memcpy( &data.AccelOffset[0], OffsetsAddr, 3*sizeof(int) );
+  memcpy( &AccelBackup, OffsetsAddr, 3*sizeof(int) );
 }
 
 void Sensors_ZeroMagnetometerScaleOffsets(void)
 {
-  //longfill( @MagOffsetX, 0, 6 )
+  memset( &data.MagOffsetX, 0, 6*sizeof(int) );
 }
 
-void Sensors_SetMagnetometerScaleOffsets( long * MagOffsetsAndScalesAddr )
+void Sensors_SetMagnetometerScaleOffsets( int * MagOffsetsAndScalesAddr )
 {
-  //longmove( @MagOffsetX, MagOffsetsAndScalesAddr, 6 )
+  memcpy( &data.MagOffsetX, MagOffsetsAndScalesAddr, 6*sizeof(int) );
 }
 
 
