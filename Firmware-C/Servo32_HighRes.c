@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <cog.h>
 #include <propeller.h>
+#include "constants.h"
 #include "Servo32_Highres.h"
 
 
@@ -25,8 +26,8 @@ void Servo32_Start(void)
 
 void Servo32_Init( int fastRate )
 {
-	Data.MasterLoopDelay = 80000000 / fastRate;
-	Data.SlowUpdateCounter = (80000000 / 50) / Data.MasterLoopDelay;
+	Data.MasterLoopDelay = Const_ClockFreq / fastRate;
+	Data.SlowUpdateCounter = (Const_ClockFreq / 50) / Data.MasterLoopDelay;
 
   memset(&Data.ServoData, 0, sizeof(Data.ServoData) );
 
