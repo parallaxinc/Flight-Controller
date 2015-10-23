@@ -38,7 +38,7 @@ static long  GyroZX, GyroZY, GyroZZ;
 static long  AccelZSmooth;
 
 //Debug output mode, working variables  
-static long   Mode=0, counter=0, NudgeMotor=-1;
+static long   Mode, counter, NudgeMotor;
 static short  TxData[10];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
 static char   Quat[16];       //Current quaternion from the IMU functions
 
@@ -102,8 +102,10 @@ int main()                                    // Main function
   //Set a reasonable starting point for the altitude computation
   QuatIMU_SetInitialAltitudeGuess( sens.Alt );
 
-  loopTimer = CNT;
+  Mode = 0;
   counter = 0;
+  NudgeMotor = -1;
+  loopTimer = CNT;
 
   while(1)
   {
