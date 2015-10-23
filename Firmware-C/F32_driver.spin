@@ -1579,7 +1579,6 @@ _FltAbs_ret             ret
 
 
 
-
 '------------------------------------------------------------------------------
 
 '------------------------------------------------------------------------------
@@ -1588,24 +1587,24 @@ _RunCommandStream
 
                         mov     cmdAddr, fnumA 
 :LoadVariables
-                        rdlong  t1, cmdAddr     wz
+                        rdword  t1, cmdAddr     wz
               if_z      jmp     #:FinishedStream
                         rdlong  :execute, t1   
-                        add     cmdAddr, #4
+                        add     cmdAddr, #2
 
-                        rdlong  t1, cmdAddr             ' fnumA addr is the next word
-                        add     cmdAddr, #4
+                        rdword  t1, cmdAddr             ' fnumA addr is the next word
+                        add     cmdAddr, #2
 
-                        rdlong  t2, cmdAddr             ' fnumB addr is the next word
-                        add     cmdAddr, #4                        
+                        rdword  t2, cmdAddr             ' fnumB addr is the next word
+                        add     cmdAddr, #2                        
 
                         rdlong  fnumA, t1               ' Get actual value
                         rdlong  fnumB, t2               ' Get actual value
 
 :execute                nop                             ' execute command, which was replaced by getCommand
 
-                        rdlong  t1, cmdAddr             ' Get address to write the destination
-                        add     cmdAddr, #4                        
+                        rdword  t1, cmdAddr             ' Get address to write the destination
+                        add     cmdAddr, #2                        
                         wrlong  fnumA, t1               ' store the result
                         
                         jmp     #:LoadVariables                        
@@ -1666,7 +1665,6 @@ cmdFMul                 call    #_FMul
 cmdFDiv                 call    #_FDiv
 cmdFFloat               call    #_FFloat
 cmdFTruncRound          call    #_FTruncRound
-'cmdUintTrunc            call    #_UintTrunc
 cmdFSqrt                call    #_FSqrt
 cmdFCmp                 call    #_FCmp
 cmdFSin                 call    #_Sin
@@ -1675,12 +1673,8 @@ cmdFTan                 call    #_Tan
 cmdFLog2                call    #_Log2
 cmdFExp2                call    #_Exp2
 cmdFPow                 call    #_Pow
-'cmdFFrac                call    #_Frac
-'cmdFMod                 call    #_FMod
 cmdASinCos              call    #_ASinCos
 cmdATan2                call    #_ATan2
-'cmdCeil                 call    #_Ceil
-'cmdFloor                call    #_Floor
 cmdShift                call    #_Shift
 cmdNeg                  call    #_FltNeg
 cmdSqr                  call    #_FSqr
@@ -1690,7 +1684,6 @@ cmdFMin                 call    #_FMin
 cmdFrac                 call    #_Frac
 cmdMov                  nop
 
-                   
 cmdRunCommandStream     call    #_RunCommandStream
 
 

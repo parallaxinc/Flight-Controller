@@ -8,14 +8,14 @@ public:
 	static int  Start(void);
 	static void Stop(void);
 
-	static void StartStream( int index, int * baseAddr );
+	static void StartStream( int index, short * baseAddr );
 
 	static void AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr );
 	static void EndStream( int index );
 
 	static int* GetCommandPtr( int fp_op );
 
-	static void RunStream( int * a );
+	static void RunStream( short * a );
 	static void WaitStream(void);
 };
 

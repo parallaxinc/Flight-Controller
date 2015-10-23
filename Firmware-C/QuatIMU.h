@@ -2,6 +2,7 @@
 #ifndef __QUATIMU_H__
 #define __QUATIMU_H__
 
+// These are created this way because I need to be able to convert the code to addresses easily at runtime
 
 void QuatIMU_Start(void);
 

@@ -1,7 +1,4 @@
 
-#include <stdio.h>
-#include <cog.h>
-#include <sys/driver.h>
 #include <propeller.h>
 #include "f32.h"
 
@@ -12,7 +9,7 @@ static struct F32_DATA {
   int  TempCommand, StreamAddr; // These have to be contiguous in memory, which is why they're in a struct
 } v;
 
-static int* CommandAddr[8];
+static short* CommandAddr[4];
 static int* cmdCallTableAddr = 0;
 static char cog;
 
@@ -26,16 +23,16 @@ int F32::Start(void)
   F32::Stop();
   v.f32_cmd = 0;
 
-  use_cog_driver(F32_driver);
+  use_cog_driver(f32_driver);
 
-  uint32_t * driverMem = get_cog_driver(F32_driver);
+  uint32_t * driverMem = get_cog_driver(f32_driver);
   int i=0;
   while( driverMem[i] != 0x12345678 )
     i++;
 
   cmdCallTableAddr = (int *)driverMem + i + 1;
 
-  load_cog_driver(F32_driver, &v.f32_cmd);
+  load_cog_driver(f32_driver, &v.f32_cmd);
   return cog;
 }
 
@@ -49,8 +46,8 @@ void F32::Stop(void)
   }
 }
 
-
-void F32::StartStream( int index, int* baseAddr )
+/*
+void F32::StartStream( int index, short* baseAddr )
 {
   CommandAddr[index] = baseAddr;
 }
@@ -58,23 +55,24 @@ void F32::StartStream( int index, int* baseAddr )
 
 void F32::AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr )
 {
-  int *addr = CommandAddr[index];
+  short *addr = CommandAddr[index];
   addr[0] = (fp_op << 2) + (int)cmdCallTableAddr;  //This is a pointer into the JMPRET instruction table
-  addr[1] = (int)a_addr;
-  addr[2] = (int)b_addr;                           //Prop memory addresses are only 16 bit
-  addr[3] = (int)out_addr;
+  addr[1] = (short)(int)a_addr;
+  addr[2] = (short)(int)b_addr;                    //Prop memory addresses are only 16 bit
+  addr[3] = (short)(int)out_addr;                  //casting the ptr to int, then to short suppresses warnings
 
   CommandAddr[index] = addr + 4;
 }
 
 void F32::EndStream( int index )
 {
-  int *addr = CommandAddr[index];
+  short *addr = CommandAddr[index];
   addr[0] = 0;					         //Use zero to indicate end-of-stream 
   CommandAddr[index]++;
 
   //return CommandAddr[index];      //Allows the caller to figure out how much space this actually took
 }
+*/
 
 
 int* F32::GetCommandPtr( int fp_op )
@@ -83,7 +81,7 @@ int* F32::GetCommandPtr( int fp_op )
 }
       
 
-void F32::RunStream( int * a )
+void F32::RunStream( short * a )
 {
   //Can't use the stack for these, because they might be different by the time the COG gets to them
   v.TempCommand = cmdCallTableAddr[ F32_opRunStream ];
