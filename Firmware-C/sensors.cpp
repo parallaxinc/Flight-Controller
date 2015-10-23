@@ -1,8 +1,8 @@
 
 #include <propeller.h>
 #include "constants.h"
-#include "settings.h"
 #include "sensors.h"
+#include "settings.h"
 
 /*
   HUNDRED_nS  = _clkfreq / 10_000_000  'Number of clock cycles per 100 nanoseconds (8 @ 80MHz)                        
@@ -91,8 +91,8 @@ void Sensors_Start( int ipin, int opin, int cpin, int sgpin, int smpin, int apin
 	data.MagScaleX = data.MagScaleY = data.MagScaleZ = 1024;
 
 	// cog = cognew(@entry, @ins) + 1;
-  use_cog_driver(Sensors_driver);
-  cog = load_cog_driver(Sensors_driver, &data.ins[0]) + 1;
+  use_cog_driver(sensors_driver);
+  cog = load_cog_driver(sensors_driver, &data.ins[0]) + 1;
 }
 
 

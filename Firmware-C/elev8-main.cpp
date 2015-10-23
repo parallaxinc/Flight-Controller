@@ -2,73 +2,24 @@
   Elev8 Flight Controller
 */
 
-#include <stdio.h>
 #include <propeller.h>
-#include "rc.h"
-#include "servo32_highres.h"
-#include "sensors.h"
-#include "settings.h"
-#include "sbus.h"
-#include "f32.h"
-#include "intpid.h"
-#include "quatimu.h"
-#include "fdserial.h"
-#include "pins_v2.h"
-#include "constants.h"
+
 #include "beep.h"
+#include "constants.h"
 #include "eeprom.h"
+#include "elev8-main.h"
+#include "f32.h"
+#include "fdserial.h"
+#include "intpid.h"
+#include "pins_v2.h"
+#include "quatimu.h"
+#include "rc.h"
+#include "sbus.h"
+#include "sensors.h"
+#include "servo32_highres.h"
+#include "settings.h"
 
 fdserial *dbg;
-
-void Initialize(void);
-void FindGyroZero(void);
-void UpdateFlightLoop(void);
-void UpdateFlightLEDColor(void);
-void ArmFlightMode(void);
-void DisarmFlightMode(void);
-void StartCompassCalibrate(void);
-void DoCompassCalibrate(void);
-void CheckDebugMode(void);
-void DoDebugModeOutput(void);
-void InitializeSettings(void);
-void ApplySettings(void);
-
-void All_LED( int Color );
-
-
-#define   RC_THRO  0
-#define   RC_AILE  1
-#define   RC_ELEV  2
-#define   RC_RUDD  3   //R/C input channel assignments (pin values are specified in the RC_Receiver object)
-#define   RC_GEAR  4
-#define   RC_AUX1  5
-#define   RC_AUX2  6
-#define   RC_AUX3  7 
-
- // ESC output array indices for corresponding motors
-#define   OUT_FL  0
-#define   OUT_FR  1
-#define   OUT_BR  2
-#define   OUT_BL  3
-
-#define LED_COUNT 2
-
-enum MODE {
-  MODE_None = 0,
-  MODE_RadioTest = 1,
-  MODE_SensorTest = 2,
-  MODE_MotorTest = 3,
-  MODE_IMUTest = 4,
-  MODE_IMUComp = 5,
-  MODE_VibrationTest = 6,
-};
-
-enum FLIGHTMODE {
-  FlightMode_Assisted = 0,
-  FlightMode_Automatic = 1,
-  FlightMode_Manual = 2,
-  FlightMode_CalibrateCompass = 3,
-};
 
 
 //Working variables for the flight controller
@@ -87,9 +38,9 @@ long  GyroZX, GyroZY, GyroZZ;
 long  AccelZSmooth;
 
 //Debug output mode, working variables  
-long  Mode=0, counter=0, NudgeMotor=-1;
+long   Mode=0, counter=0, NudgeMotor=-1;
 short  TxData[10];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
-char  Quat[16];       //Current quaternion from the IMU functions
+char   Quat[16];       //Current quaternion from the IMU functions
 
 //Current IMU values for orientation estimate
 long  Pitch, Roll, Yaw, AltiEst, AscentEst;
@@ -98,11 +49,9 @@ long  Pitch, Roll, Yaw, AltiEst, AscentEst;
 long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredAltitude, DesiredAltitudeFractional;
 
 long  RollDifference, PitchDifference;                 //Delta between current measured roll/pitch and desired roll/pitch                         
-long  GyroRoll, GyroPitch;                             //Raw gyro values altered by desired pitch & roll targets
-long  GyroYaw;   
+long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
-long  GyroRPFilter;
-long  GyroYawFilter;
+long  GyroRPFilter, GyroYawFilter;
 
 
 long  PitchOut, RollOut, YawOut;                       //Output values from the PIDs
@@ -137,7 +86,6 @@ char calib_Quadrants;
 char calib_step;
 long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
-
 IntPID  RollPID, PitchPID, YawPID, AscentPID;
 
 
@@ -146,22 +94,6 @@ const int YawCircle = 0x20000;           //IMU Yaw output reading is from 0 to Y
 const int YawMask = YawCircle - 1;
 const int YawCircleHalf = YawCircle >> 1;
 
-  //LED Color values
-const int LED_Red   = 0x00FF00;
-const int LED_Green = 0xFF0000;
-const int LED_Blue  = 0x0000FF;
-const int LED_Yellow = LED_Red | LED_Green;
-const int LED_Violet = LED_Red | LED_Blue;
-const int LED_Cyan =   LED_Blue | LED_Green;
-const int LED_DimCyan =((LED_Blue | LED_Green) & 0xFEFEFE) >> 1;
-const int LED_White   = 0xFFFFFF;
-
-  //LED Brightness values - AND with color values to dim them
-const int LED_Full    = 0xffffff;
-const int LED_Half    = 0x7f7f7f;
-const int LED_Quarter = 0x3f3f3f;
-const int LED_Eighth  = 0x1f1f1f;
-const int LED_Dim     = 0x0f0f0f;
 
 
 int main()                                    // Main function

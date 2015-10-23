@@ -1,9 +1,8 @@
 
-#include <stdio.h>
-#include <cog.h>
 #include <propeller.h>
+
 #include "constants.h"
-#include "Servo32_Highres.h"
+#include "servo32_highres.h"
 
 
 struct ServoData {
@@ -19,8 +18,8 @@ static const int Scale = 10;
 
 void Servo32_Start(void)
 {
-    use_cog_driver(Servo32_HighRes_driver);
-    load_cog_driver(Servo32_HighRes_driver, &Data);
+    use_cog_driver(servo32_highres_driver);
+    load_cog_driver(servo32_highres_driver, &Data);
 }
 
 
@@ -56,6 +55,7 @@ void Servo32_Set( int ServoPin, int Width )		// Set Servo value as a raw delay, 
 	Data.ServoData[ServoPin] = Width * Scale;		// Servo widths are set in 10ths of a uS, so 8000 = min, 12000 = mid, 16000 = max
 }
 
+/*
 void Servo32_SetRC( int ServoPin, int Width )	// Set Servo value signed, assuming 12000 is your center
 {
 	Data.ServoData[ServoPin] = (12000 + Width) * Scale;	// Servo widths are set in 10ths of a uS, so -4000 min, 0 = mid, +4000 = max
@@ -65,3 +65,4 @@ int Servo32_GetCycles(void)
 {
 	return Data.Cycles;
 }
+*/

@@ -1120,9 +1120,9 @@ ALT_ROUND               long    (16384-1)               'Difference in pressure 
 
 
 AccelTableIndex         long    0                       'Index into the accel values median table
-AccelXTable             long    0,0,0,0,0,0,0,0,0       '9 entries per accel table
-AccelYTable             long    0,0,0,0,0,0,0,0,0
-AccelZTable             long    0,0,0,0,0,0,0,0,0
+AccelXTable             res     9                       '9 entries per accel table
+AccelYTable             res     9
+AccelZTable             res     9
  
 '
 ' Uninitialized data

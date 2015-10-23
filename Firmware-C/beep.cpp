@@ -1,4 +1,4 @@
-#include <Propeller.h>
+#include <propeller.h>
 #include "beep.h"
 #include "pins_v2.h"
 
@@ -11,24 +11,21 @@ void BeepHz( int Hz , int Delay )
 
   d = (80000000/2) / Hz;                        //Compute the amount of time to delay between pulses to get the right frequency
   loop = (Delay * (80000000/2000)) / d;         //How many iterations of the loop to make "Delay" milliseconds?
-   
+
   if( PIN_BUZZER_1 == PIN_BUZZER_2 )
   {
     //Revision 3 firmware has one buzzer pin  
 
+    loop <<= 1;   // Double the loop count, because we're doing one toggle per loop
     ctr = CNT;
+
     for( i=0; i<=loop; i++ )
     {
-      OUTA |= (1<<PIN_BUZZER_1);
+      OUTA ^= (1<<PIN_BUZZER_1);
 
       ctr += d;
       waitcnt( ctr );
-     
-      OUTA &= ~(1<<PIN_BUZZER_1);
-
-      ctr += d;
-      waitcnt( ctr );
-    }      
+    }
   }
   else
   {
@@ -48,7 +45,7 @@ void BeepHz( int Hz , int Delay )
      
       ctr += d;
       waitcnt( ctr );
-    }    
+    }
     OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));
   }    
 }    

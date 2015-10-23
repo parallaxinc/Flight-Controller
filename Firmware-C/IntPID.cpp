@@ -1,5 +1,5 @@
 
-#include "IntPID.h"
+#include "intpid.h"
 
 
 static int clamp( int v, int min, int max ) {
@@ -29,7 +29,7 @@ void IntPID::Init( int PGain, int IGain, int DGain, int _SampleRate )
 }
 
 
-int IntPID::Calculate( int SetPoint , int Measured , int DoIntegrate )
+/*int IntPID::Calculate( int SetPoint , int Measured , int DoIntegrate )
 {
   // Proportional error is Desired - Measured
   PError = SetPoint - Measured;
@@ -77,7 +77,7 @@ int IntPID::Calculate( int SetPoint , int Measured , int DoIntegrate )
 
   return Output;
 }
-
+*/
 
 int IntPID::Calculate_NoD2( int SetPoint , int Measured , int DoIntegrate )
 {
@@ -125,6 +125,7 @@ int IntPID::Calculate_NoD2( int SetPoint , int Measured , int DoIntegrate )
 }
 
 
+/*
 int IntPID::Calculate_ForceD( int SetPoint , int Measured , int Deriv , int DoIntegrate )
 {
   // Proportional error is Desired - Measured
@@ -152,7 +153,8 @@ int IntPID::Calculate_ForceD( int SetPoint , int Measured , int Deriv , int DoIn
   }    
 
   return Output;
-}  
+}
+*/
 
 
 int IntPID::Calculate_ForceD_NoD2( int SetPoint , int Measured , int Deriv , int DoIntegrate )

@@ -1,8 +1,9 @@
 #include <propeller.h>
+
 #include "constants.h"
 #include "sbus.h"
 
-static int Cog;
+static char Cog;
 
 static struct DATA {
   long  InputMask;
@@ -18,8 +19,8 @@ void SBUS::Start( int InputPin , short Center )
   data.InputMask = 1 << InputPin;
   data.BaudDelay = Const_ClockFreq / 100000;                        //SBUS is 100,000 bps 
 
-  use_cog_driver(SBUS_driver);
-  Cog = load_cog_driver(SBUS_driver, &data) + 1;
+  use_cog_driver(sbus_driver);
+  Cog = load_cog_driver(sbus_driver, &data) + 1;
 }
 
 
@@ -32,12 +33,10 @@ void SBUS::Stop(void)
   }
 }
 
-short SBUS::Get( int i )
-{
-  return data.Channels[i];
-}
+//short SBUS::Get( int i ) {
+//  return data.Channels[i];
+//}
 
-short SBUS::GetRC( int i )
-{
+short SBUS::GetRC( int i ) {
   return data.Channels[i] - data.CenterOffset;
 }

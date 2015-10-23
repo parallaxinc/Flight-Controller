@@ -94,10 +94,13 @@ taken because a separate program will overwrite all the collected data.
 
   //24LC256 EEPROM constants
 
-const int SDA = 29;                                      //P29 = data line
-const int SCL = 28;                                      //P28 = clock line
-const int ACK = 0;                                       //Acknowledge bit = 0
-const int NACK = 1;                                      //(No) acknowledge bit = 1
+const int SDAPIN = 29;                                 //P29 = data line
+const int SCLPIN = 28;                                 //P28 = clock line
+
+const int SDA = (1<<SDAPIN);                           //P29 = data line
+const int SCL = (1<<SCLPIN);                           //P28 = clock line
+const int ACK = 0;                                     //Acknowledge bit = 0
+const int NACK = 1;                                    //(No) acknowledge bit = 1
 
 
 void EEPROM::VarBackup(void * startAddr, void * endAddr)
@@ -191,8 +194,8 @@ void EEPROM::Poll(void)
 }
 
 
-#define Set( var, bit )   { var |= 1<<bit; }
-#define Clear( var, bit ) { var &= ~(1<<bit); }
+#define Set( var, mask )   { var |= mask; }
+#define Clear( var, mask ) { var &= ~mask; }
 
 
 void EEPROM::i2cStart(void)
@@ -240,7 +243,7 @@ int EEPROM::GetAck(void)
 
   Clear(DIRA,SDA);                               //SDA -> SendByte so 24LC256 controls
   Set(OUTA,SCL);                                 //Start a pulse on SCL
-  int ackbit = (INA >> SDA) & 1;                 //GetByte the SDA state from 24LC256
+  int ackbit = (INA >> SDAPIN) & 1;                 //GetByte the SDA state from 24LC256
   Clear(OUTA,SCL);                               //Finish SCL pulse
   Clear(OUTA,SDA);                               //SDA will hold low
   Set(DIRA,SDA);                                 //SDA -> outSendByte, master controls
@@ -280,7 +283,7 @@ unsigned char EEPROM::GetByte(void)
   for(int i=0; i<8; i++) {                       //Repeat shift in eight times
     Set(OUTA,SCL);                               //Start an SCL pulse
     value <<= 1;                                 //Shift the value left
-    value += (INA>>SDA) & 1;                     //Add the next most significant bit
+    value += (INA >> SDAPIN) & 1;                     //Add the next most significant bit
     Clear(OUTA,SCL);                             //Finish the SCL pulse
   }
   return value;

@@ -172,25 +172,8 @@ if_nz   wrlong pe7, p1
 '=================================================================================
 
 pin_mask long 0
-
-c1      long  0
                
 d1      long  0
-d2      long  0
-d3      long  0
-d4      long  0
-
-p1      long  0
-
-pe0     long  0
-pe1     long  0
-pe2     long  0
-pe3     long  0
-pe4     long  0
-pe5     long  0
-pe6     long  0
-pe7     long  0
-
 
 pin_mask_0    long      %00000100_00000000_00000000_00000000         'Pin 26
 pin_mask_1    long      %00001000_00000000_00000000_00000000         'Pin 27 
@@ -200,6 +183,22 @@ pin_mask_4    long      %00000000_00000000_00000000_00000100         'Pin 2
 pin_mask_5    long      %00000000_00000000_00000000_00001000         'Pin 3
 pin_mask_6    long      %00000000_00000000_00000000_00010000         'Pin 4
 pin_mask_7    long      %00000000_00000000_00000000_00100000         'Pin 5
+
+d2      res   1
+d3      res   1
+d4      res   1
+
+c1      res   1
+p1      res   1
+
+pe0     res   1
+pe1     res   1
+pe2     res   1
+pe3     res   1
+pe4     res   1
+pe5     res   1
+pe6     res   1
+pe7     res   1
 
 
         FIT   496

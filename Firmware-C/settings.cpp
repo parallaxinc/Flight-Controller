@@ -2,7 +2,8 @@
 // Settings - settings and user prefs storage for Elev8-FC
 //
 
-#include <string.h>
+#include <string.h>   // for memset()
+
 #include "eeprom.h"
 #include "settings.h"
 
