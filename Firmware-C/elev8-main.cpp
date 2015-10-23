@@ -25,37 +25,34 @@ fdserial *dbg;
 //Working variables for the flight controller
 
 //Receiver inputs
-long  Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
-long  iRudd;         //Integrated rudder input value
+static long  Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
+static long  iRudd;         //Integrated rudder input value
 
 //Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
-struct SENS {
+static struct SENS {
   long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltRate, AltTemp, Pressure;
 } sens;
   
-long  SensorTime;    //How long sensors took to read (debug / optimization test value)
-long  GyroZX, GyroZY, GyroZZ;
-long  AccelZSmooth;
+static long  SensorTime;    //How long sensors took to read (debug / optimization test value)
+static long  GyroZX, GyroZY, GyroZZ;
+static long  AccelZSmooth;
 
 //Debug output mode, working variables  
-long   Mode=0, counter=0, NudgeMotor=-1;
-short  TxData[10];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
-char   Quat[16];       //Current quaternion from the IMU functions
+static long   Mode=0, counter=0, NudgeMotor=-1;
+static short  TxData[10];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
+static char   Quat[16];       //Current quaternion from the IMU functions
 
 //Current IMU values for orientation estimate
-long  Pitch, Roll, Yaw, AltiEst, AscentEst;
+static long  Pitch, Roll, Yaw, AltiEst, AscentEst;
 
 //Working variables - used to convert receiver inputs to desired ranges for the PIDs  
-long  DesiredRoll, DesiredPitch, DesiredYaw, DesiredAltitude, DesiredAltitudeFractional;
+static long  DesiredAltitude, DesiredAltitudeFractional;
 
-long  RollDifference, PitchDifference;                 //Delta between current measured roll/pitch and desired roll/pitch                         
-long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
+static long  RollDifference, PitchDifference;                 //Delta between current measured roll/pitch and desired roll/pitch                         
+static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
-long  GyroRPFilter, GyroYawFilter;
+static long  GyroRPFilter, GyroYawFilter;
 
-
-long  PitchOut, RollOut, YawOut;                       //Output values from the PIDs
-long  ThroMix;                           
 
 long  Motor[4];                                        //Motor output values  
 long  LEDValue[LED_COUNT];                             //LED outputs (copied to the LEDs by the Sensors cog)
@@ -71,7 +68,6 @@ char FlightEnabled;            //Flight arm/disarm flag
 char FlightMode;
 char NewFlightMode;
 
-char DoIntegrate;              //Integration enabled in the flight PIDs
 char UsePing;              
 char MotorIndex[4];            //Motor index to pin index table
 
@@ -216,7 +212,6 @@ void Initialize(void)
   NudgeMotor = -1;                                      //No motor to nudge
   FlightEnabled = 0; 
 
-  DesiredRoll = DesiredPitch = DesiredYaw = 0;
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
   FlightMode = FlightMode_Assisted;
@@ -330,6 +325,7 @@ void FindGyroZero(void)
 void UpdateFlightLoop(void)
 {
   int ThroOut, T1, T2, ThrustMul, AltiThrust, v, gr, gp, gy;
+  char DoIntegrate;  //Integration enabled in the flight PIDs?
 
   UpdateFlightLEDColor();
 
@@ -408,8 +404,8 @@ void UpdateFlightLoop(void)
       //Angular output from the IMU is +/- 65536 units, or 32768 = 90 degrees
       //Input range from the controls is +/- 1000 units.  Scale that up to about 22.5 degrees       
 
-      DesiredRoll =  Aile << 3;
-      DesiredPitch = -Elev << 3;
+      int DesiredRoll =  Aile << 3;
+      int DesiredPitch = -Elev << 3;
 
       RollDifference = (DesiredRoll - Roll) >> 2;
       PitchDifference = (DesiredPitch - Pitch) >> 2;
@@ -425,11 +421,10 @@ void UpdateFlightLoop(void)
 
     //Yaw is different because we accumulate it - It's not specified absolutely like you can
     //with pitch and roll, so scale the stick input down a bit
-    DesiredYaw = iRudd >> 3;
+    int DesiredYaw = iRudd >> 3;
 
-     
+ 
     //Zero yaw target when throttle is off - makes for more stable liftoff
-
     if( Thro < -700 )
     {
       DoIntegrate = 0;          //Disable PID integral term until throttle is applied      
@@ -462,12 +457,12 @@ void UpdateFlightLoop(void)
     PitchPID.SetDGain( T2 )
     */
      
-    RollOut = RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate );
-    PitchOut = PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate );
-    YawOut = YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , GyroYaw, DoIntegrate );
+    int RollOut = RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate );
+    int PitchOut = PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate );
+    int YawOut = YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , GyroYaw, DoIntegrate );
 
 
-    ThroMix = (Thro + 1024) >> 2;                      // Approx 0 - 512
+    int ThroMix = (Thro + 1024) >> 2;                      // Approx 0 - 512
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/8 throttle, clamp it to 64
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
