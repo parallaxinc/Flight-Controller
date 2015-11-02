@@ -23,36 +23,20 @@
 */
 
 
-const int Gy_Temp = 0;
-const int GyroX = 1;
-const int GyroY = 2;
-const int GyroZ = 3;
-const int AccX = 4;
-const int AccY = 5;
-const int AccZ = 6;
-const int MagX = 7;
-const int MagY = 8;
-const int MagZ = 9;
-const int Alt = 10;
-const int AltRate = 11;
-const int AltTemp = 12;
-const int Pressure = 13;
-const int Timer = 14;
-
 static struct DATA {
-  int  ins[Sensors_ParamsSize];         //Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
+  int  ins[Sensors_ParamsCount];  //Temp, GX, GY, GZ, AX, AY, AZ, MX, MY, MZ, Alt, AltRate, AltTemp, Pressure, Timer
   int  DriftScale[3];
-  int  DriftOffset[3];          //These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
+  int  DriftOffset[3];            //These values will be altered in the EEPROM by the Config Tool and Propeller Eeprom code                       
   int  AccelOffset[3];
   int  MagOffsetX, MagScaleX, MagOffsetY, MagScaleY, MagOffsetZ, MagScaleZ;
 } data;
- 
-static int cog;
-extern long AltTable_000[];
 
 static int DriftBackup[6];
 static int AccelBackup[3];
 static int MagBackup[6];
+
+static int cog;
+extern long AltTable_000[];
 
 void Sensors_Start( int ipin, int opin, int cpin, int sgpin, int smpin, int apin, int _LEDPin, int _LEDAddr, int _LEDCount )
 {
@@ -108,7 +92,6 @@ void Sensors_Stop(void)
 int Sensors_In( int channel )
 {
 // Read the current value from a channel (0..ParamsSize-1)
-
   return data.ins[channel];
 }
 

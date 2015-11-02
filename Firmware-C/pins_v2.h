@@ -1,6 +1,6 @@
 
-#ifndef __PINS_H__
-#define __PINS_H__
+#ifndef __PINS_V2_H__
+#define __PINS_V2_H__
 
 #define PIN_RC_0  26
 #define PIN_RC_1  27

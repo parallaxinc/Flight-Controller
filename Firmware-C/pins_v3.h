@@ -1,0 +1,54 @@
+
+#ifndef __PINS_V3_H__
+#define __PINS_V3_H__
+
+#define PIN_RC_0  25
+#define PIN_RC_1  26
+#define PIN_RC_2  24
+#define PIN_RC_3  27   //R/C input channel assignments (pin values are specified in the RC_Receiver object)
+#define PIN_RC_4  0
+#define PIN_RC_5  1
+#define PIN_RC_6  2
+#define PIN_RC_7  3 
+
+#define PIN_PING  RC_7
+
+
+  //Output pins to corresponding motors
+#define PIN_MOTOR_FL  12
+#define PIN_MOTOR_FR  13
+#define PIN_MOTOR_BR  14
+#define PIN_MOTOR_BL  15
+
+#define PIN_MOTOR_AUX1  17
+#define PIN_MOTOR_AUX2  18
+
+#define PIN_VBATT  16
+
+
+#define PIN_CS_ALT   10
+#define PIN_CS_AG    6
+#define PIN_SDO      7
+#define PIN_SDI      8
+#define PIN_SCL      9
+#define PIN_CS_M     5
+#define PIN_LED      4
+
+#define PIN_BUZZER_1  11
+#define PIN_BUZZER_2  11
+
+
+
+#define PIN_RC_0_MASK  (1<<PIN_RC_0)
+#define PIN_RC_1_MASK  (1<<PIN_RC_1)
+#define PIN_RC_2_MASK  (1<<PIN_RC_2)
+#define PIN_RC_3_MASK  (1<<PIN_RC_3)
+#define PIN_RC_4_MASK  (1<<PIN_RC_4)
+#define PIN_RC_5_MASK  (1<<PIN_RC_5)
+#define PIN_RC_6_MASK  (1<<PIN_RC_6)
+#define PIN_RC_7_MASK  (1<<PIN_RC_7)
+
+#define PIN_RC_MASK    (PIN_RC_0_MASK | PIN_RC_1_MASK + PIN_RC_2_MASK | PIN_RC_3_MASK | PIN_RC_4_MASK | PIN_RC_5_MASK + PIN_RC_6_MASK | PIN_RC_7_MASK)
+
+
+#endif

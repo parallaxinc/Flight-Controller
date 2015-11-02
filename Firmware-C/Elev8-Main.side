@@ -12,7 +12,6 @@ intpid.h
 pins_v2.h
 rc.cpp
 rc.h
-rc_driver.spin
 sbus.cpp
 sbus.h
 sbus_driver.spin
@@ -24,9 +23,15 @@ sensors.h
 sensors_driver.spin
 settings.cpp
 settings.h
+elev8-main.h
+pins.h
+pins_v3.h
+rc_driver_v2.spin
+rc_driver_v3.spin
+battery.cpp
+battery.h
 quatimu.cpp
 quatimu.h
-elev8-main.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

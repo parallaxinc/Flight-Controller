@@ -1,6 +1,7 @@
 
 #include <propeller.h>
 #include "rc.h"
+#include "pins.h"
 
 static const int Scale = 80/2; // System clock frequency in Mhz, halved - we're converting outputs to 1/2 microsecond resolution
 
@@ -13,10 +14,17 @@ static struct {
 void RC::Start(void)
 {
 	// Input pins are P0,1,2,3,4,5,26,27
-  data.PinMask = 0x0C00003F; // Elev8-FC pins are non-contiguous (27, 26, 5, 4, 3, 2, 1, 0)
+  data.PinMask = PIN_RC_MASK; // Elev8-FC pins are defined in pins.h
 
-  use_cog_driver(rc_driver);
-  load_cog_driver(rc_driver, &data);
+#if defined( __PINS_V2_H__ )
+  use_cog_driver(rc_driver_v2);
+  load_cog_driver(rc_driver_v2, &data);
+#endif
+
+#if defined( __PINS_V3_H__ )
+  use_cog_driver(rc_driver_v3);
+  load_cog_driver(rc_driver_v3, &data);
+#endif
 }
 
 //int RC::Get( int _pin ) {

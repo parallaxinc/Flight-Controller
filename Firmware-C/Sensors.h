@@ -22,7 +22,17 @@ void Sensors_ZeroMagnetometerScaleOffsets(void);
 void Sensors_SetMagnetometerScaleOffsets( int * MagOffsetsAndScalesAddr );
 
 
-#define Sensors_ParamsSize 15
+struct SENS {
+  long Temperature;               // Gyro temperature
+  long GyroX, GyroY, GyroZ;       // Gyro readings
+  long AccelX, AccelY, AccelZ;    // Accelerometer readings
+  long MagX, MagY, MagZ;          // Magnetometer readings
+  long Alt, AltRate;              // Computed altimeter height (mm) and rate (mm/sec)
+  long AltTemp, Pressure;         // Altimeter temperature and pressure
+  long SensorTime;                //How long sensors took to read (debug / optimization test value)
+};
 
+#define Sensors_ParamsSize  sizeof(SENS)
+#define Sensors_ParamsCount (sizeof(SENS) / sizeof(long))
 
 #endif

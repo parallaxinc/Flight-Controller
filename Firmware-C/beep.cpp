@@ -1,6 +1,6 @@
 #include <propeller.h>
 #include "beep.h"
-#include "pins_v2.h"
+#include "pins.h"
 
 
 void BeepHz( int Hz , int Delay )

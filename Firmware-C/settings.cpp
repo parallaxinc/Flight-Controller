@@ -3,49 +3,13 @@
 //
 
 #include <string.h>   // for memset()
+#include <fdserial.h>
 
 #include "eeprom.h"
 #include "settings.h"
 
 
-/*
-PUB Main | testCheck
-  ''This function exists only to test and validate the Load / Save / Checksum code
-   
-  {
-  Dbg.Start( 31, 30, 0, 115200 )
-  Dbg.rx
-
-  eeprom.ToRam(@PrefStorage, @PrefStorage + constant(PrefLen*4 + 3), 32768 )    'Copy from EEPROM to DAT, address 32768
-
-  testCheck := CalculateChecksum
-  dbg.tx(0)
-  dbg.hex( Checksum, 8 )
-  dbg.tx(32)
-  dbg.hex( testCheck, 8 )
-  dbg.tx(13)
-
-
-  SetDefaults   
-  testCheck := CalculateChecksum
-  dbg.hex( testCheck, 8 )
-  dbg.tx(13)
-
-  Save
-
-  eeprom.ToRam(@PrefStorage, @PrefStorage + constant(PrefLen*4 + 3), 32768 )    'Copy from EEPROM to DAT, address 32768
-
-
-  testCheck := CalculateChecksum
-  dbg.tx(0)
-  dbg.hex( Checksum, 8 )
-  dbg.tx(32)
-  dbg.hex( testCheck, 8 )
-  dbg.tx(13)
-  }
-*/
-
-static PREFS Prefs;
+PREFS Prefs;
 
 
 void Settings_Load(void)
@@ -70,15 +34,23 @@ void Settings_Save(void)
 void Settings_SetDefaults(void)
 {
   memset( &Prefs, 0, sizeof(Prefs) );
-  Prefs.SBUSCenter = 1000; 
+
+  Prefs.SBUSCenter = 1000;
+  Prefs.UseBattMon = 1;
+
   Prefs.RollCorrect[0] = 0.0f;                         //Sin of roll correction angle
   Prefs.RollCorrect[1] = 1.0f;                         //Cos of roll correction angle
 
   Prefs.PitchCorrect[0] = 0.0f;                        //Sin of pitch correction angle 
   Prefs.PitchCorrect[1] = 1.0f;                        //Cos of pitch correction angle 
+
+  // MagOffsetX=0, MagScaleX=1, MagOffsetY=2, MagScaleY=3, MagOffsetZ=4, MagScaleZ=5;
+  Prefs.MagScaleOfs[1] = 1024;
+  Prefs.MagScaleOfs[3] = 1024;
+  Prefs.MagScaleOfs[5] = 1024;
 }
 
-
+/*
 long Settings_GetValue( int index )
 {
   return ((int *)&Prefs)[index];
@@ -98,6 +70,7 @@ int * Settings_GetAddress( int index )
 {
   return ((int*)&Prefs) + index;
 }
+*/
 
 
 int Settings_CalculateChecksum(void)
@@ -109,4 +82,74 @@ int Settings_CalculateChecksum(void)
     r = r ^ ((unsigned int*)&Prefs)[i];     //Jumble the bits, XOR in the prefs value
   }    
   return (int)r;
+}
+
+
+extern fdserial * dbg;
+
+static int tGetC( void ) {
+  return fdserial_rxChar( dbg );
+}
+
+static void tPutC( char c ) {
+  fdserial_txChar( dbg, c );
+}
+
+static void tPutHexNibble( int x ) {
+  if( x <= 9 ) {
+    tPutC( x + '0' );
+  }
+  else {
+    tPutC( x - 10 + 'a' );
+  }        
 }  
+
+static void tPutHex( int x, int len ) {
+  for( int i=len-1; i>=0; i-- ) {
+    tPutHexNibble( (x>>(4*i)) & 15 );
+  }    
+}
+
+
+void Settings_Test( void )
+{
+  // This function exists only to test and validate the Load / Save / Checksum code
+   
+  tGetC();
+
+  EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
+
+  int testCheck = Settings_CalculateChecksum();
+  tPutC(0);
+  tPutHex( Prefs.Checksum, 8 );
+  tPutC(32);
+  tPutHex( testCheck, 8 );
+  tPutC(13);
+
+  //EEPROM::FromRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
+
+  //tPutHex( Prefs.Checksum, 8 );
+  //tPutC(32);
+  //tPutHex( testCheck, 8 );
+  //tPutC(13);
+  //tPutC(13);
+
+
+  Settings_SetDefaults();
+  testCheck = Settings_CalculateChecksum();
+  tPutHex( testCheck, 8 );
+  tPutC(13);
+
+  Settings_Save();
+
+  EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
+
+  testCheck = Settings_CalculateChecksum();
+
+  tPutHex( Prefs.Checksum, 8 );
+  tPutC(32);
+  tPutHex( testCheck, 8 );
+  tPutC(13);
+
+  tGetC();
+}

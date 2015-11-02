@@ -44,6 +44,7 @@ namespace Elev8
 		int AccelX, AccelY, AccelZ;
 		int MagX, MagY, MagZ;
 		int Alt, AltTemp, AltEst, prevAlt = 0;
+		int Battery = 0;
 		int Pitch, Roll, Yaw;
 
 		float[] accXCal = new float[4];
@@ -60,7 +61,7 @@ namespace Elev8
 		int QTail = 0;
 
 		byte[] OutputMode = { 0, 1, 2, 3, 2, 2, 4, 5, 6 };			// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
-		byte[] PacketSizes = { 0, 16+3, 32+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=35, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
+		byte[] PacketSizes = { 0, 16+3, 34+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=35, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
 		int SampleCounter = 0;
 
 		int[] AltTable = new int[251];
@@ -101,6 +102,10 @@ namespace Elev8
 
 			gHeading.displayScale = 0.1f;	// We're going to feed it +/- 1800 units, or 10 units per degree
 			gHeading.GaugeCircle = 1.0f;	// want this to use the full 360 degrees of the gauge, unlike a normal analog gauge
+
+			gPitch.displayScale = 180.0f / 65536.0f;	// Convert -65536 to +63356 to -180 to +180 degrees
+			gRoll.displayScale = 180.0f / 65536.0f;
+			gYaw.displayScale = 180.0f / 32768.0f;		// Heading is -32768 to +32768
 
 			ConnectFTDI();
 
@@ -525,6 +530,7 @@ namespace Elev8
 					MagX = GetCommWord();
 					MagY = GetCommWord();
 					MagZ = GetCommWord();
+					Battery = GetCommWord();
 
 					prevAlt = Alt;
 					Alt = GetCommLong();
@@ -547,6 +553,8 @@ namespace Elev8
 						gMagX.Value = (float)MagX;
 						gMagY.Value = (float)MagY;
 						gMagZ.Value = (float)MagZ;
+
+						lblBattery.Text = string.Format( "{0:0.00} v", (float)Battery / 100.0 );
 
 						// Compute a heading from the magnetometer readings (not tilt compensated)
 						//gHeading.Value = (float)(Math.Atan2( MagX, MagY ) * 1800.0/Math.PI);

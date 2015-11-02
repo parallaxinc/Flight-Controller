@@ -3,15 +3,16 @@
 */
 
 #include <propeller.h>
+#include <fdserial.h>
 
+#include "battery.h"
 #include "beep.h"
 #include "constants.h"
 #include "eeprom.h"
 #include "elev8-main.h"
 #include "f32.h"
-#include "fdserial.h"
 #include "intpid.h"
-#include "pins_v2.h"
+#include "pins.h"
 #include "quatimu.h"
 #include "rc.h"
 #include "sbus.h"
@@ -29,17 +30,15 @@ static long  Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
 static long  iRudd;         //Integrated rudder input value
 
 //Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
-static struct SENS {
-  long  Temperature, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ, Alt, AltRate, AltTemp, Pressure;
-} sens;
+static SENS sens;
   
-static long  SensorTime;    //How long sensors took to read (debug / optimization test value)
+
 static long  GyroZX, GyroZY, GyroZZ;
 static long  AccelZSmooth;
 
 //Debug output mode, working variables  
 static long   Mode, counter, NudgeMotor;
-static short  TxData[10];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
+static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
 static char   Quat[16];       //Current quaternion from the IMU functions
 
 //Current IMU values for orientation estimate
@@ -54,35 +53,39 @@ static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values 
 static long  GyroRPFilter, GyroYawFilter;
 
 
-long  Motor[4];                                        //Motor output values  
-long  LEDValue[LED_COUNT];                             //LED outputs (copied to the LEDs by the Sensors cog)
+static long  Motor[4];                                        //Motor output values  
+static long  LEDValue[LED_COUNT];                             //LED outputs (copied to the LEDs by the Sensors cog)
 
-long loopTimer;                //Master flight loop counter - used to keep a steady update rate
+static long loopTimer;                //Master flight loop counter - used to keep a steady update rate
 
-long PingZero, PingHeight;
+static long PingZero, PingHeight;
 
-short FlightEnableStep;         //Flight arm/disarm counter
-short CompassConfigStep;        //Compass configure mode counter
+static short FlightEnableStep;         //Flight arm/disarm counter
+static short CompassConfigStep;        //Compass configure mode counter
 
-char FlightEnabled;            //Flight arm/disarm flag
-char FlightMode;
-char NewFlightMode;
+static char FlightEnabled;            //Flight arm/disarm flag
+static char FlightMode;
 
-char UsePing;              
-char MotorIndex[4];            //Motor index to pin index table
+static char UseBatteryMonitor;
+static char UsePing;
 
-
-long RollPitch_P, RollPitch_D;
-long UseSBUS = 0, SBUSCenter;
-long LEDModeColor;
+static char MotorIndex[4];            //Motor index to pin index table
 
 
-char calib_startQuadrant;
-char calib_Quadrants;
-char calib_step;
-long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
+static long RollPitch_P, RollPitch_D;
+static long UseSBUS = 0, SBUSCenter;
+static long LEDModeColor;
+static long BatteryVolts = 0;
 
-IntPID  RollPID, PitchPID, YawPID, AscentPID;
+const long LowBattery = 1050;
+
+
+static char calib_startQuadrant;
+static char calib_Quadrants;
+static char calib_step;
+static long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
+
+static IntPID  RollPID, PitchPID, YawPID, AscentPID;
 
 
 //Values used to when conditioning heading and desired heading to be within 180 degrees of each other 
@@ -96,13 +99,15 @@ int main()                                    // Main function
 {
   Initialize(); // Set up all the objects
 
+  //Settings_Test();
+
   //Grab the first set of sensor readings (should be ready by now)
-  memcpy( &sens.Temperature, Sensors_Address(), Sensors_ParamsSize * sizeof(int) );
+  memcpy( &sens, Sensors_Address(), Sensors_ParamsSize );
 
   //Set a reasonable starting point for the altitude computation
   QuatIMU_SetInitialAltitudeGuess( sens.Alt );
 
-  Mode = 0;
+  Mode = MODE_None;
   counter = 0;
   NudgeMotor = -1;
   loopTimer = CNT;
@@ -112,7 +117,7 @@ int main()                                    // Main function
     int Cycles = CNT;
 
     //Read ALL inputs from the sensors into local memory, starting at Temperature
-    memcpy( &sens.Temperature, Sensors_Address(), Sensors_ParamsSize * sizeof(int) );
+    memcpy( &sens, Sensors_Address(), Sensors_ParamsSize );
 
     QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~92000 cycles
 
@@ -148,7 +153,6 @@ int main()                                    // Main function
     //    Ping.Fire( PIN#PING )
     //  elseif( PingCycle == 15 )
     //    PingHeight := Ping.Millimeters( PIN#PING ) - PingZero 
-       
 
       //-------------------------------------------------
     if( FlightMode == FlightMode_CalibrateCompass )
@@ -159,6 +163,8 @@ int main()                                    // Main function
     else
     //-------------------------------------------------
     {
+      char NewFlightMode;
+
       if( Gear < -512 )
         NewFlightMode = FlightMode_Assisted;
       else if( Gear > 512 )
@@ -179,7 +185,21 @@ int main()                                    // Main function
       //-------------------------------------------------
     }  
 
+
+    // Update the battery voltage
+    switch( counter & 15 )
+    {
+      case 0: Battery::DischargePin();   break;
+      case 2: Battery::ChargePin();      break;
+
+      case 15:
+        BatteryVolts = Battery::ComputeVoltage( Battery::ReadResult() );
+        break;
+    }      
+
+
     All_LED( LEDModeColor );
+
 
     QuatIMU_WaitForCompletion();
 
@@ -211,6 +231,7 @@ void Initialize(void)
   MotorIndex[3] = PIN_MOTOR_BL;
 
   Mode = MODE_None;
+  counter = 0;
   NudgeMotor = -1;                                      //No motor to nudge
   FlightEnabled = 0; 
 
@@ -222,6 +243,9 @@ void Initialize(void)
 
   dbg = fdserial_open( 31, 30, 0, 115200 );
 
+  // Do this before settings are loaded, because Sensors_Start resets the drift coefficients to defaults
+  Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
+
   InitializeSettings();
 
   if( UseSBUS ) {
@@ -229,16 +253,19 @@ void Initialize(void)
   }
   else {
     RC::Start();
-  }    
+  }
+
   F32::Start();
 
   All_LED( LED_Red & LED_Half );                         //LED red on startup
-  
-  Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
+
   QuatIMU_Start();
 
-  DIRA |= (1<<PIN_BUZZER_1);           //Enable buzzer pins    
-  DIRA |= (1<<PIN_BUZZER_2);
+  Battery::Init( PIN_VBATT );
+
+  DIRA |= (1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2);      //Enable buzzer pins
+  OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));   //Set the pins low
+
 
   Servo32_Init( 400 );
   Servo32_AddFastPin( PIN_MOTOR_FL );
@@ -250,6 +277,7 @@ void Initialize(void)
   Servo32_Set( PIN_MOTOR_BR, 8000 );
   Servo32_Set( PIN_MOTOR_BL, 8000 );
   Servo32_Start();
+
 
   RollPitch_P = 10000;           //Set here to allow an in-flight tuning baseline
   RollPitch_D = 30000 * 250; 
@@ -309,9 +337,9 @@ void FindGyroZero(void)
   
   for( int i=0; i<256; i++ )
   {
-    GyroZX += Sensors_In(1);
-    GyroZY += Sensors_In(2);
-    GyroZZ += Sensors_In(3);
+    GyroZX += Sensors_In(1);  // GyroX
+    GyroZY += Sensors_In(2);  // GyroY
+    GyroZZ += Sensors_In(3);  // GyroZ
 
     waitcnt( CNT + Const_ClockFreq/2000 );
   }
@@ -527,6 +555,22 @@ void UpdateFlightLoop(void)
     Servo32_Set( PIN_MOTOR_BR, Motor[2] );
     Servo32_Set( PIN_MOTOR_BL, Motor[3] );
   }
+
+#if 0 && defined( __PINS_V3_H__ )
+    if( UseBatteryMonitor != 0 && (BatteryVolts < LowBattery) && ((counter & 127) < 32) )
+    {
+      int ctr = CNT;
+      int loop = 2;
+      int d = (80000000/2) / 5000;
+  
+      for( int i=0; i<loop; i++ )
+      {
+        OUTA ^= (1<<PIN_BUZZER_1);
+        ctr += d;
+        waitcnt( ctr );
+      }
+    }      
+#endif
 }  
 
 
@@ -545,13 +589,35 @@ static int LEDArmDisarm[] = {
 
 void UpdateFlightLEDColor(void)
 {
-  int index = (counter >> 3) & 15;
-  if( index == 0 ) {
-    LEDModeColor = (LEDColorTable[FlightMode] & 0xFEFEFE) >> 1;
+  int LowBatt = 0;
+
+#if 0 && defined( __PINS_V3_H__ )
+  if( UseBatteryMonitor != 0 && (BatteryVolts < LowBattery) ) {
+    LowBatt = 1;
   }    
+#endif
+
+  if( LowBatt ) {
+    
+    int index = (counter >> 3) & 15;
+
+    if( index < 4 ) {
+      LEDModeColor = (LEDColorTable[FlightMode & 3] & 0xFEFEFE) >> 1;
+    }
+    else {
+      LEDModeColor = (LED_Red & 0xFEFEFE) >> 1; // Seriously?  If I go full brightness, this resets the Prop?
+    }
+
+  }
   else {
-    LEDModeColor = (LEDArmDisarm[FlightEnabled & 1] & 0xFEFEFE) >> 1;
-  }    
+    int index = (counter >> 3) & 15;
+    if( index == 0 ) {
+      LEDModeColor = (LEDColorTable[FlightMode & 3] & 0xFEFEFE) >> 1;
+    }    
+    else {
+      LEDModeColor = (LEDArmDisarm[FlightEnabled & 1] & 0xFEFEFE) >> 1;
+    }
+  }
 }
 
 
@@ -621,11 +687,14 @@ static void TxMode(void)
   Tx(0x77);
   Tx(0x77);
   Tx(Mode);
-}  
+}
 
 void CheckDebugMode(void)
 {
-  int gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz, i, rollOfsSin, rollOfsCos, pitchOfsSin, pitchOfsCos;
+  struct FROM_HOST {
+    int gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz, rollOfsSin, rollOfsCos, pitchOfsSin, pitchOfsCos;
+  } host;
+  int i;
 
   int c = fdserial_rxCheck(dbg);
   if( c < 0 ) return;
@@ -658,16 +727,16 @@ void CheckDebugMode(void)
       else if( c == 0x12 )
       {
         //Write new gyro drift settings - followed by 6 WORD values
-        gsx = GetDbgShort();
-        gsy = GetDbgShort();
-        gsz = GetDbgShort();
-        gox = GetDbgShort();
-        goy = GetDbgShort();
-        goz = GetDbgShort();
+        host.gsx = GetDbgShort();
+        host.gsy = GetDbgShort();
+        host.gsz = GetDbgShort();
+        host.gox = GetDbgShort();
+        host.goy = GetDbgShort();
+        host.goz = GetDbgShort();
 
         //Copy the values into the settings object
-        memcpy( Settings_GetAddress(DriftScalePref), &gsx, 6*sizeof(int) );
-        
+        memcpy( &Prefs.DriftScale[0], &host.gsx, 6*sizeof(int) );
+
         ApplySettings();                                                        //Apply the settings changes
         Settings_Save();
         loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
@@ -685,12 +754,12 @@ void CheckDebugMode(void)
       else if( c == 0x16 )
       {
         //Write new accelerometer offset settings - followed by 3 WORD values
-        aox = GetDbgShort();
-        aoy = GetDbgShort();
-        aoz = GetDbgShort();
+        host.aox = GetDbgShort();
+        host.aoy = GetDbgShort();
+        host.aoz = GetDbgShort();
 
         //Copy the values into the settings object
-        memcpy( Settings_GetAddress(AccelOffsetPref), &aox, 3*sizeof(int) );
+        memcpy( &Prefs.AccelOffset[0], &host.aox, 3*sizeof(int) );
         
         ApplySettings();                                                           //Apply the settings changes
         Settings_Save();
@@ -699,12 +768,12 @@ void CheckDebugMode(void)
       else if( c == 0x17 )
       {
         //Write new accelerometer rotation settings - followed by 4 FLOAT values (Sin.Cos, Sin,Cos)
-        for( i=0; i<=15; i++ ) {
-          ((char *)&rollOfsSin)[i] = fdserial_rxChar(dbg);
+        for( i=0; i<16; i++ ) {
+          ((char *)&host.rollOfsSin)[i] = fdserial_rxChar(dbg);
         }
 
         //Copy the values into the settings object
-        memcpy( Settings_GetAddress(RollCorrectPref), &rollOfsSin, 4*sizeof(int) );
+        memcpy( &Prefs.RollCorrect[0], &host.rollOfsSin, 4*sizeof(int) );
         
         ApplySettings();                                                           //Apply the settings changes
         Settings_Save();
@@ -718,7 +787,7 @@ void CheckDebugMode(void)
   {
     if( c == 0x18 )              //Receiver type (PWM / SBUS)
     {
-      Settings_SetValue( UseSBUSPref , fdserial_rxChar(dbg) );
+      Prefs.UseSBUS = fdserial_rxChar(dbg);
       Settings_Save();
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }
@@ -772,8 +841,9 @@ void DoDebugModeOutput(void)
       TxData[7] = sens.MagX;
       TxData[8] = sens.MagY;
       TxData[9] = sens.MagZ;
+      TxData[10] = BatteryVolts;
 
-      TxBulk( &TxData, 20 );   //Send 20 bytes of data from @TxData onward (sends 10 words worth of data)                         
+      TxBulk( &TxData, 22 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
     }          
     else if( phase == 2 )
     {
@@ -913,16 +983,17 @@ void InitializeSettings(void)
 
 void ApplySettings(void)
 {
-  Sensors_SetDriftValues( Settings_GetAddress(DriftScalePref) );
-  Sensors_SetAccelOffsetValues( Settings_GetAddress(AccelOffsetPref) );
-  Sensors_SetMagnetometerScaleOffsets( Settings_GetAddress(MagScaleOfsPref) );
+  Sensors_SetDriftValues( &Prefs.DriftScale[0] );
+  Sensors_SetAccelOffsetValues( &Prefs.AccelOffset[0] );
+  Sensors_SetMagnetometerScaleOffsets( &Prefs.MagScaleOfs[0] );
 
-  QuatIMU_SetRollCorrection( (float*)Settings_GetAddress(RollCorrectPref) );
-  QuatIMU_SetPitchCorrection( (float*)Settings_GetAddress(PitchCorrectPref) );
+  QuatIMU_SetRollCorrection( &Prefs.RollCorrect[0] );
+  QuatIMU_SetPitchCorrection( &Prefs.PitchCorrect[0] );
 
-  UseSBUS = Settings_GetValue(UseSBUSPref);
-  SBUSCenter = Settings_GetValue(SBUSCenterPref);
-  UsePing = Settings_GetValue(UsePingPref);
+  UseSBUS = Prefs.UseSBUS;
+  SBUSCenter = Prefs.SBUSCenter;
+  UsePing = Prefs.UsePing;
+  UseBatteryMonitor = Prefs.UseBattMon;
 }
 
 
