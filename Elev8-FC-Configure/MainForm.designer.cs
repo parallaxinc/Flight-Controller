@@ -53,6 +53,8 @@
 			this.rsRight = new Elev8.RadioJoystick();
 			this.rsLeft = new Elev8.RadioJoystick();
 			this.tpSensorTest = new System.Windows.Forms.TabPage();
+			this.lblBattery = new System.Windows.Forms.Label();
+			this.label43 = new System.Windows.Forms.Label();
 			this.gAltimeter = new Elev8.Graph();
 			this.label12 = new System.Windows.Forms.Label();
 			this.label19 = new System.Windows.Forms.Label();
@@ -174,11 +176,24 @@
 			this.lblGXMin = new System.Windows.Forms.Label();
 			this.lblGXMax = new System.Windows.Forms.Label();
 			this.grGyro = new Elev8.Graph();
+			this.tpEverything = new System.Windows.Forms.TabPage();
+			this.label47 = new System.Windows.Forms.Label();
+			this.label46 = new System.Windows.Forms.Label();
+			this.label45 = new System.Windows.Forms.Label();
+			this.label44 = new System.Windows.Forms.Label();
+			this.ocCube = new Elev8.OrientationCube();
+			this.grE_Compass = new Elev8.Graph();
+			this.grE_Accel = new Elev8.Graph();
+			this.grE_Gyro = new Elev8.Graph();
+			this.rjE_Right = new Elev8.RadioJoystick();
+			this.rjE_Left = new Elev8.RadioJoystick();
 			this.tickTimer = new System.Windows.Forms.Timer( this.components );
 			this.stStatus = new System.Windows.Forms.StatusStrip();
 			this.tsStatLabel = new System.Windows.Forms.ToolStripStatusLabel();
-			this.label43 = new System.Windows.Forms.Label();
-			this.lblBattery = new System.Windows.Forms.Label();
+			this.tbGear = new System.Windows.Forms.TrackBar();
+			this.tbAux1 = new System.Windows.Forms.TrackBar();
+			this.tbAux2 = new System.Windows.Forms.TrackBar();
+			this.tbAux3 = new System.Windows.Forms.TrackBar();
 			this.tcMainTabs.SuspendLayout();
 			this.tpRadioTest.SuspendLayout();
 			this.groupBox4.SuspendLayout();
@@ -199,7 +214,12 @@
 			this.groupBox3.SuspendLayout();
 			this.groupBox2.SuspendLayout();
 			this.groupBox1.SuspendLayout();
+			this.tpEverything.SuspendLayout();
 			this.stStatus.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.tbGear)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbAux1)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbAux2)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbAux3)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// tcMainTabs
@@ -215,6 +235,7 @@
 			this.tcMainTabs.Controls.Add( this.tpIMUTest );
 			this.tcMainTabs.Controls.Add( this.tpIMUComp );
 			this.tcMainTabs.Controls.Add( this.tpVibration );
+			this.tcMainTabs.Controls.Add( this.tpEverything );
 			this.tcMainTabs.Location = new System.Drawing.Point( 0, 0 );
 			this.tcMainTabs.Name = "tcMainTabs";
 			this.tcMainTabs.SelectedIndex = 0;
@@ -483,6 +504,23 @@
 			this.tpSensorTest.TabIndex = 1;
 			this.tpSensorTest.Text = "Sensor Test";
 			this.tpSensorTest.UseVisualStyleBackColor = true;
+			// 
+			// lblBattery
+			// 
+			this.lblBattery.Location = new System.Drawing.Point( 350, 42 );
+			this.lblBattery.Name = "lblBattery";
+			this.lblBattery.Size = new System.Drawing.Size( 66, 13 );
+			this.lblBattery.TabIndex = 33;
+			this.lblBattery.Text = "0.00 v";
+			// 
+			// label43
+			// 
+			this.label43.AutoSize = true;
+			this.label43.Location = new System.Drawing.Point( 308, 42 );
+			this.label43.Name = "label43";
+			this.label43.Size = new System.Drawing.Size( 43, 13 );
+			this.label43.TabIndex = 32;
+			this.label43.Text = "Battery:";
 			// 
 			// gAltimeter
 			// 
@@ -1758,6 +1796,116 @@
 			this.grGyro.Size = new System.Drawing.Size( 627, 178 );
 			this.grGyro.TabIndex = 0;
 			// 
+			// tpEverything
+			// 
+			this.tpEverything.Controls.Add( this.tbAux3 );
+			this.tpEverything.Controls.Add( this.tbAux2 );
+			this.tpEverything.Controls.Add( this.tbAux1 );
+			this.tpEverything.Controls.Add( this.tbGear );
+			this.tpEverything.Controls.Add( this.label47 );
+			this.tpEverything.Controls.Add( this.label46 );
+			this.tpEverything.Controls.Add( this.label45 );
+			this.tpEverything.Controls.Add( this.label44 );
+			this.tpEverything.Controls.Add( this.ocCube );
+			this.tpEverything.Controls.Add( this.grE_Compass );
+			this.tpEverything.Controls.Add( this.grE_Accel );
+			this.tpEverything.Controls.Add( this.grE_Gyro );
+			this.tpEverything.Controls.Add( this.rjE_Right );
+			this.tpEverything.Controls.Add( this.rjE_Left );
+			this.tpEverything.Location = new System.Drawing.Point( 4, 22 );
+			this.tpEverything.Name = "tpEverything";
+			this.tpEverything.Size = new System.Drawing.Size( 633, 330 );
+			this.tpEverything.TabIndex = 8;
+			this.tpEverything.Text = "Everything";
+			this.tpEverything.UseVisualStyleBackColor = true;
+			// 
+			// label47
+			// 
+			this.label47.AutoSize = true;
+			this.label47.Location = new System.Drawing.Point( 14, 263 );
+			this.label47.Name = "label47";
+			this.label47.Size = new System.Drawing.Size( 50, 13 );
+			this.label47.TabIndex = 9;
+			this.label47.Text = "Compass";
+			// 
+			// label46
+			// 
+			this.label46.AutoSize = true;
+			this.label46.Location = new System.Drawing.Point( 30, 206 );
+			this.label46.Name = "label46";
+			this.label46.Size = new System.Drawing.Size( 34, 13 );
+			this.label46.TabIndex = 8;
+			this.label46.Text = "Accel";
+			// 
+			// label45
+			// 
+			this.label45.AutoSize = true;
+			this.label45.Location = new System.Drawing.Point( 35, 142 );
+			this.label45.Name = "label45";
+			this.label45.Size = new System.Drawing.Size( 29, 13 );
+			this.label45.TabIndex = 7;
+			this.label45.Text = "Gyro";
+			// 
+			// label44
+			// 
+			this.label44.AutoSize = true;
+			this.label44.Location = new System.Drawing.Point( 29, 57 );
+			this.label44.Name = "label44";
+			this.label44.Size = new System.Drawing.Size( 35, 13 );
+			this.label44.TabIndex = 6;
+			this.label44.Text = "Radio";
+			// 
+			// ocCube
+			// 
+			this.ocCube.CubeDepth = 1F;
+			this.ocCube.CubeHeight = 0.25F;
+			this.ocCube.CubeWidth = 1F;
+			this.ocCube.Location = new System.Drawing.Point( 368, 142 );
+			this.ocCube.Name = "ocCube";
+			this.ocCube.Size = new System.Drawing.Size( 191, 139 );
+			this.ocCube.TabIndex = 5;
+			// 
+			// grE_Compass
+			// 
+			this.grE_Compass.Location = new System.Drawing.Point( 77, 243 );
+			this.grE_Compass.Name = "grE_Compass";
+			this.grE_Compass.Size = new System.Drawing.Size( 189, 56 );
+			this.grE_Compass.TabIndex = 4;
+			// 
+			// grE_Accel
+			// 
+			this.grE_Accel.Location = new System.Drawing.Point( 77, 181 );
+			this.grE_Accel.Name = "grE_Accel";
+			this.grE_Accel.Size = new System.Drawing.Size( 189, 56 );
+			this.grE_Accel.TabIndex = 3;
+			// 
+			// grE_Gyro
+			// 
+			this.grE_Gyro.Location = new System.Drawing.Point( 76, 119 );
+			this.grE_Gyro.Name = "grE_Gyro";
+			this.grE_Gyro.Size = new System.Drawing.Size( 189, 56 );
+			this.grE_Gyro.TabIndex = 2;
+			// 
+			// rjE_Right
+			// 
+			this.rjE_Right.Location = new System.Drawing.Point( 174, 16 );
+			this.rjE_Right.Name = "rjE_Right";
+			this.rjE_Right.Range = 1024F;
+			this.rjE_Right.Size = new System.Drawing.Size( 92, 89 );
+			this.rjE_Right.TabIndex = 1;
+			this.rjE_Right.XValue = 0F;
+			this.rjE_Right.YValue = 0F;
+			// 
+			// rjE_Left
+			// 
+			this.rjE_Left.Location = new System.Drawing.Point( 76, 16 );
+			this.rjE_Left.Name = "rjE_Left";
+			this.rjE_Left.Range = 1024F;
+			this.rjE_Left.Size = new System.Drawing.Size( 92, 89 );
+			this.rjE_Left.TabIndex = 0;
+			this.rjE_Left.XValue = 0F;
+			this.rjE_Left.YValue = 0F;
+			// 
 			// tickTimer
 			// 
 			this.tickTimer.Enabled = true;
@@ -1781,22 +1929,49 @@
 			this.tsStatLabel.Size = new System.Drawing.Size( 150, 17 );
 			this.tsStatLabel.Text = "Finding Elev8-FC";
 			// 
-			// label43
+			// tbGear
 			// 
-			this.label43.AutoSize = true;
-			this.label43.Location = new System.Drawing.Point( 308, 42 );
-			this.label43.Name = "label43";
-			this.label43.Size = new System.Drawing.Size( 43, 13 );
-			this.label43.TabIndex = 32;
-			this.label43.Text = "Battery:";
+			this.tbGear.Location = new System.Drawing.Point( 297, 16 );
+			this.tbGear.Maximum = 2048;
+			this.tbGear.Name = "tbGear";
+			this.tbGear.Orientation = System.Windows.Forms.Orientation.Vertical;
+			this.tbGear.Size = new System.Drawing.Size( 45, 89 );
+			this.tbGear.TabIndex = 10;
+			this.tbGear.TickFrequency = 128;
+			this.tbGear.TickStyle = System.Windows.Forms.TickStyle.Both;
 			// 
-			// lblBattery
+			// tbAux1
 			// 
-			this.lblBattery.Location = new System.Drawing.Point( 350, 42 );
-			this.lblBattery.Name = "lblBattery";
-			this.lblBattery.Size = new System.Drawing.Size( 66, 13 );
-			this.lblBattery.TabIndex = 33;
-			this.lblBattery.Text = "0.00 v";
+			this.tbAux1.Location = new System.Drawing.Point( 348, 16 );
+			this.tbAux1.Maximum = 2048;
+			this.tbAux1.Name = "tbAux1";
+			this.tbAux1.Orientation = System.Windows.Forms.Orientation.Vertical;
+			this.tbAux1.Size = new System.Drawing.Size( 45, 89 );
+			this.tbAux1.TabIndex = 11;
+			this.tbAux1.TickFrequency = 128;
+			this.tbAux1.TickStyle = System.Windows.Forms.TickStyle.Both;
+			// 
+			// tbAux2
+			// 
+			this.tbAux2.Location = new System.Drawing.Point( 399, 16 );
+			this.tbAux2.Maximum = 2048;
+			this.tbAux2.Name = "tbAux2";
+			this.tbAux2.Orientation = System.Windows.Forms.Orientation.Vertical;
+			this.tbAux2.Size = new System.Drawing.Size( 45, 89 );
+			this.tbAux2.TabIndex = 12;
+			this.tbAux2.TickFrequency = 128;
+			this.tbAux2.TickStyle = System.Windows.Forms.TickStyle.Both;
+			// 
+			// tbAux3
+			// 
+			this.tbAux3.Location = new System.Drawing.Point( 450, 16 );
+			this.tbAux3.Maximum = 2048;
+			this.tbAux3.Name = "tbAux3";
+			this.tbAux3.Orientation = System.Windows.Forms.Orientation.Vertical;
+			this.tbAux3.Size = new System.Drawing.Size( 45, 89 );
+			this.tbAux3.TabIndex = 13;
+			this.tbAux3.TickFrequency = 128;
+			this.tbAux3.TickStyle = System.Windows.Forms.TickStyle.Both;
 			// 
 			// MainForm
 			// 
@@ -1844,8 +2019,14 @@
 			this.groupBox3.ResumeLayout( false );
 			this.groupBox2.ResumeLayout( false );
 			this.groupBox1.ResumeLayout( false );
+			this.tpEverything.ResumeLayout( false );
+			this.tpEverything.PerformLayout();
 			this.stStatus.ResumeLayout( false );
 			this.stStatus.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.tbGear)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbAux1)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbAux2)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbAux3)).EndInit();
 			this.ResumeLayout( false );
 			this.PerformLayout();
 
@@ -2002,6 +2183,21 @@
 		private System.Windows.Forms.GroupBox groupBox5;
 		private System.Windows.Forms.Label lblBattery;
 		private System.Windows.Forms.Label label43;
+		private System.Windows.Forms.TabPage tpEverything;
+		private System.Windows.Forms.Label label47;
+		private System.Windows.Forms.Label label46;
+		private System.Windows.Forms.Label label45;
+		private System.Windows.Forms.Label label44;
+		private OrientationCube ocCube;
+		private Graph grE_Compass;
+		private Graph grE_Accel;
+		private Graph grE_Gyro;
+		private RadioJoystick rjE_Right;
+		private RadioJoystick rjE_Left;
+		private System.Windows.Forms.TrackBar tbAux3;
+		private System.Windows.Forms.TrackBar tbAux2;
+		private System.Windows.Forms.TrackBar tbAux1;
+		private System.Windows.Forms.TrackBar tbGear;
 	}
 }
 

@@ -30,6 +30,21 @@ namespace Elev8
 			Connected,
 		}
 
+		public struct EVERYTHING_DATA
+		{
+			public short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;         // Radio values = 16 bytes
+			public short BatteryVolts;                                           // Battery Monitor = 2 bytes
+			public short padding;                                                // curently unused
+			public short Temp, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ;  // IMU sensors = 20 bytes
+			public long  Alt, AltRate, Pressure;                                 // Altimeter = 12 bytes
+			public long  Pitch, Roll, Yaw;                                       // IMU = 12 bytes
+
+			public Quaternion q;												// Quaternion = 16 bytes
+		};                                                                      // 80 bytes total
+
+		EVERYTHING_DATA Everything = new EVERYTHING_DATA();
+
+
 		int Thro = 0;
 		int Aile = 0;
 		int Elev = 0;
@@ -53,15 +68,15 @@ namespace Elev8
 
 
 		byte[] txBuffer = new byte[32];
-		byte[] rxBuffer = new byte[128];
+		byte[] rxBuffer = new byte[256];
 
 		const int QSize = 4096;
 		byte[] rxQueue = new byte[QSize];
 		int QHead = 0;
 		int QTail = 0;
 
-		byte[] OutputMode = { 0, 1, 2, 3, 2, 2, 4, 5, 6 };			// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6
-		byte[] PacketSizes = { 0, 16+3, 34+3, 0, 22+3, 16+3, 3+6 };	// None=0, Radio=19, Sensors=35, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes)
+		byte[] OutputMode = { 0, 1, 2, 3, 2, 2, 4, 5, 6, 7 };			// None=0, Radio=1, Sensors=2, Motor=3, Sensors=2, IMU=4, IMUComp=5, VibeTest=6, Everything=7
+		byte[] PacketSizes = { 0, 16+3, 34+3, 0, 22+3, 16+3, 3+6, 4+20 };	// None=0, Radio=19, Sensors=35, Motor=0, IMU=25, IMUComp=16, VibeTest=6 (bytes), Everything=24 bytes per phase
 		int SampleCounter = 0;
 
 		int[] AltTable = new int[251];
@@ -85,6 +100,7 @@ namespace Elev8
 			IMUTest,
 			IMUCompare,
 			VibrationTest,
+			Everything,
 		};
 
 		Mode currentMode = Mode.None;
@@ -95,6 +111,7 @@ namespace Elev8
 		public MainForm()
         {
             InitializeComponent();
+			Everything.q = new Quaternion();
 
 			gGyroTemp.displayOffset = 25.0f;
 			gGyroTemp.displayScale = 1.0f / 16.0f;	// 16 deg C per bit
@@ -291,6 +308,19 @@ namespace Elev8
 		}
 
 
+		byte GetCommByte()
+		{
+			return rxQueue[QTail++];
+		}
+
+		short GetCommShort()
+		{
+			short val = (short)BitConverter.ToInt16( rxQueue, QTail );
+			QTail += 2;
+
+			return val;
+		}
+
 		int GetCommWord()
 		{
 			int val = (int)BitConverter.ToInt16( rxQueue, QTail );
@@ -402,8 +432,8 @@ namespace Elev8
 							QTail++;
 						else
 						{
-							byte packetType = rxQueue[QTail + 2];		// Packet type is the 4th byte
-							if( packetType > (byte)Mode.IMUCompare )	// If it's out of range, this is a bad packet, so skip what we've read and move on
+							byte packetType = rxQueue[QTail + 2];		// Packet type is the 3rd byte
+							if( packetType > (byte)Mode.Everything )	// If it's out of range, this is a bad packet, so skip what we've read and move on
 								QTail += 3;
 							else {
 								byte packetSize = PacketSizes[ packetType ];	// Figure out how big the packet size is
@@ -470,6 +500,13 @@ namespace Elev8
 			{
 				ftdi.Close();	//  comm = null;
 			}
+		}
+
+		short clamp( int v, int min, int max )
+		{
+			if(v < min) return (short)min;
+			if(v > max) return (short)max;
+			return (short)v;
 		}
 
 
@@ -715,6 +752,81 @@ namespace Elev8
 					ocCompQ2.Quat = Q2;
 					break;
 
+
+				case 7:	// Everything mode
+					{
+						int phase = GetCommByte();
+						switch(phase)
+						{
+							case 0:
+								Everything.Thro = GetCommShort();
+								Everything.Aile = GetCommShort();
+								Everything.Elev = GetCommShort();
+								Everything.Rudd = GetCommShort();
+								Everything.Gear = GetCommShort();				// First 20 bytes
+								Everything.Aux1 = GetCommShort();
+								Everything.Aux2 = GetCommShort();
+								Everything.Aux3 = GetCommShort();
+								Everything.BatteryVolts = GetCommShort();
+								Everything.padding = GetCommShort();
+
+								rjE_Left.XValue = Everything.Rudd;
+								rjE_Left.YValue = Everything.Thro;
+
+								rjE_Right.XValue = Everything.Aile;
+								rjE_Right.YValue = Everything.Elev;
+
+								tbGear.Value = clamp( Everything.Gear + 1024, 0, 2048);
+								tbAux1.Value = clamp( Everything.Aux1 + 1024, 0, 2048);
+								tbAux2.Value = clamp( Everything.Aux2 + 1024, 0, 2048);
+								tbAux3.Value = clamp( Everything.Aux3 + 1024, 0, 2048);
+								break;
+
+							case 1:
+								Everything.Temp = GetCommShort();
+								Everything.GyroX = GetCommShort();
+								Everything.GyroY = GetCommShort();
+								Everything.GyroZ = GetCommShort();
+								Everything.AccelX = GetCommShort();				// 2nd 20 bytes
+								Everything.AccelY = GetCommShort();
+								Everything.AccelZ = GetCommShort();
+								Everything.MagX = GetCommShort();
+								Everything.MagY = GetCommShort();
+								Everything.MagZ = GetCommShort();
+
+								int[] gySample = { Everything.GyroX, Everything.GyroY, Everything.GyroZ };
+								grE_Gyro.AddSample( gySample, true );
+
+								int[] accSample = { Everything.AccelX, Everything.AccelY, Everything.AccelZ };
+								grE_Accel.AddSample( accSample, true );
+
+								SampleCounter++;
+								bool DoUpdate = (SampleCounter & 15) == 15;
+								grE_Gyro.UpdateStats();
+								grE_Accel.UpdateStats();
+								break;
+
+							case 2:
+								Everything.Alt = GetCommLong();
+								Everything.AltRate = GetCommLong();
+								Everything.Pressure = GetCommLong();			// 3rd 20 bytes
+								Everything.Pitch = GetCommLong();
+								Everything.Roll = GetCommLong();
+								break;
+
+							case 3:
+								Everything.Yaw = GetCommLong();
+								Everything.q.x = GetCommFloat();
+								Everything.q.y = GetCommFloat();				// Last 20 bytes
+								Everything.q.z = GetCommFloat();
+								Everything.q.w = GetCommFloat();
+
+								ocCube.Quat = Everything.q;
+								break;
+
+						}
+					}
+					break;
 			}
 		}
 

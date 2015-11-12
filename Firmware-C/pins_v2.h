@@ -33,6 +33,8 @@
 #define PIN_BUZZER_2  7
 
 
+#define FORCE_SBUS
+
 
 #define PIN_RC_0_MASK  (1<<PIN_RC_0)
 #define PIN_RC_1_MASK  (1<<PIN_RC_1)

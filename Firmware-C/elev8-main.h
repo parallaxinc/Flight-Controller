@@ -11,8 +11,8 @@ void StartCompassCalibrate(void);
 void DoCompassCalibrate(void);
 void CheckDebugMode(void);
 void DoDebugModeOutput(void);
-void InitializeSettings(void);
-void ApplySettings(void);
+void InitializePrefs(void);
+void ApplyPrefs(void);
 void All_LED( int Color );
 
 
@@ -42,6 +42,7 @@ enum MODE {
   MODE_IMUTest = 4,
   MODE_IMUComp = 5,
   MODE_VibrationTest = 6,
+  MODE_Everything = 7,
 };
 
 enum FLIGHTMODE {
@@ -50,6 +51,26 @@ enum FLIGHTMODE {
   FlightMode_Manual = 2,
   FlightMode_CalibrateCompass = 3,
 };
+
+// Structure to hold radio values to make sure they stay in order
+struct RADIO {
+    short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
+};
+
+
+struct EVERYTHING_DATA
+{
+  short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;         // Radio values = 16 bytes
+  short BatteryVolts;                                           // Battery Monitor = 2 bytes
+  short padding;                                                // curently unused
+
+  short Temp, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ;  // IMU sensors = 20 bytes
+
+  long  Alt, AltRate, Pressure;                                 // Altimeter = 12 bytes
+  long  Pitch, Roll, Yaw;                                       // IMU = 12 bytes
+
+  char Quaternion[16];                                          // Quaternion = 16 bytes
+};                                                              // 80 bytes total
 
 
 //LED Color values

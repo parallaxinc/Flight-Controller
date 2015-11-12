@@ -1,0 +1,110 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Data;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+
+namespace Elev8.Controls
+{
+	public partial class ValueBar : UserControl
+	{
+		int val = 0;
+		int minVal = -1024;
+		int maxVal = 1024;
+		bool fromLeft = true;
+		string leftLabel = "";
+		string rightLabel = "";
+		int buffer = 2;
+
+
+		public ValueBar()
+		{
+			SetStyle( ControlStyles.DoubleBuffer | ControlStyles.UserPaint |
+				ControlStyles.AllPaintingInWmPaint, true );
+
+			InitializeComponent();
+		}
+
+		public int Value
+		{
+			get { return val; }
+			set {
+				if(val == value) return;
+				val = value; Invalidate();
+			}
+		}
+
+		public int MinValue
+		{
+			get { return minVal; }
+			set { minVal = value; }
+		}
+
+		public int MaxValue
+		{
+			get { return maxVal; }
+			set { maxVal = value; }
+		}
+
+		public bool FromLeft
+		{
+			get { return fromLeft; }
+			set { fromLeft = value; }
+		}
+
+
+		public string LeftLabel
+		{
+			get { return leftLabel; }
+			set { leftLabel = value; }
+		}
+
+		public string RightLabel
+		{
+			get { return rightLabel; }
+			set { rightLabel = value; }
+		}
+
+
+
+		private void ValueBar_Paint( object sender, PaintEventArgs e )
+		{
+			// Draw the bar as background color
+
+			Graphics g = e.Graphics;
+			int scale = ClientSize.Width - (buffer * 2);
+			int height = ClientSize.Height;
+
+			g.Clear( BackColor );
+			float l;
+
+			float width = (val - minVal) * scale / (maxVal-minVal);
+
+			if(fromLeft) {
+				l = buffer;
+			}
+			else {
+				l = (ClientSize.Width-buffer) - width;
+			}
+
+			g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+			g.FillRectangle( Brushes.LightGreen, l, 0.0f, width, (float)height );
+
+			System.Windows.Forms.ControlPaint.DrawBorder3D( g, 0, 0, ClientSize.Width, height );
+
+			// Draw the left label
+			SizeF strSize = g.MeasureString( leftLabel, Font );
+			g.DrawString( leftLabel, Font, Brushes.Black, buffer, ((float)Height - strSize.Height) * 0.5f );
+
+			// Draw the right label
+			strSize = g.MeasureString( rightLabel, Font );
+			g.DrawString( rightLabel, Font, Brushes.Black, (ClientSize.Width - buffer) - strSize.Width, ((float)Height - strSize.Height) * 0.5f );
+		}
+
+
+
+	}
+}

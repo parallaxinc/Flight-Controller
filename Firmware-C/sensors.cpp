@@ -2,7 +2,6 @@
 #include <propeller.h>
 #include "constants.h"
 #include "sensors.h"
-#include "settings.h"
 
 /*
   HUNDRED_nS  = _clkfreq / 10_000_000  'Number of clock cycles per 100 nanoseconds (8 @ 80MHz)                        

@@ -1,37 +1,37 @@
 //
-// Settings - settings and user prefs storage for Elev8-FC
+// Prefs - User prefs storage for Elev8-FC
 //
 
 #include <string.h>   // for memset()
 #include <fdserial.h>
 
 #include "eeprom.h"
-#include "settings.h"
+#include "prefs.h"
 
 
 PREFS Prefs;
 
 
-void Settings_Load(void)
+void Prefs_Load(void)
 {
   EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
-  int testChecksum = Settings_CalculateChecksum();
+  int testChecksum = Prefs_CalculateChecksum();
   if( testChecksum != Prefs.Checksum )
   {
-    Settings_SetDefaults();
-    Settings_Save();
+    Prefs_SetDefaults();
+    Prefs_Save();
   }
 }
 
-void Settings_Save(void)
+void Prefs_Save(void)
 {
-  Prefs.Checksum = Settings_CalculateChecksum();
+  Prefs.Checksum = Prefs_CalculateChecksum();
   EEPROM::FromRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );  //Copy from DAT to EEPROM, address 32768
 }
 
 
-void Settings_SetDefaults(void)
+void Prefs_SetDefaults(void)
 {
   memset( &Prefs, 0, sizeof(Prefs) );
 
@@ -48,32 +48,21 @@ void Settings_SetDefaults(void)
   Prefs.MagScaleOfs[1] = 1024;
   Prefs.MagScaleOfs[3] = 1024;
   Prefs.MagScaleOfs[5] = 1024;
+
+  Prefs.MinThrottle = 8500;   //8000 = 1ms in 1/8th uS steps = "full" throttle range is 1ms to 2ms
+
+  Prefs.ThroChannel = 0;      //Standard radio channel mappings
+  Prefs.AileChannel = 1;
+  Prefs.ElevChannel = 2;
+  Prefs.RuddChannel = 3;
+  Prefs.GearChannel = 4;
+  Prefs.Aux1Channel = 5;
+  Prefs.Aux2Channel = 6;
+  Prefs.Aux3Channel = 7;
 }
 
-/*
-long Settings_GetValue( int index )
-{
-  return ((int *)&Prefs)[index];
-}
 
-void Settings_SetValue( int index , int val )
-{
-  ((int*)&Prefs)[index] = val;
-}  
-
-void Settings_SetValue( int index , float val )
-{
-  ((float*)&Prefs)[index] = val;
-}  
-
-int * Settings_GetAddress( int index )
-{
-  return ((int*)&Prefs) + index;
-}
-*/
-
-
-int Settings_CalculateChecksum(void)
+int Prefs_CalculateChecksum(void)
 {
   unsigned int r = 0x55555555;            //Start with a strange, known value
   for( int i=0; i < (sizeof(Prefs)/4)-1; i++ )
@@ -111,7 +100,7 @@ static void tPutHex( int x, int len ) {
 }
 
 
-void Settings_Test( void )
+void Prefs_Test( void )
 {
   // This function exists only to test and validate the Load / Save / Checksum code
    
@@ -119,7 +108,7 @@ void Settings_Test( void )
 
   EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
-  int testCheck = Settings_CalculateChecksum();
+  int testCheck = Prefs_CalculateChecksum();
   tPutC(0);
   tPutHex( Prefs.Checksum, 8 );
   tPutC(32);
@@ -135,16 +124,16 @@ void Settings_Test( void )
   //tPutC(13);
 
 
-  Settings_SetDefaults();
-  testCheck = Settings_CalculateChecksum();
+  Prefs_SetDefaults();
+  testCheck = Prefs_CalculateChecksum();
   tPutHex( testCheck, 8 );
   tPutC(13);
 
-  Settings_Save();
+  Prefs_Save();
 
   EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
-  testCheck = Settings_CalculateChecksum();
+  testCheck = Prefs_CalculateChecksum();
 
   tPutHex( Prefs.Checksum, 8 );
   tPutC(32);

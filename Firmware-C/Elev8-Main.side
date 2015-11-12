@@ -21,8 +21,6 @@ servo32_highres_driver.spin
 sensors.cpp
 sensors.h
 sensors_driver.spin
-settings.cpp
-settings.h
 elev8-main.h
 pins.h
 pins_v3.h
@@ -32,6 +30,8 @@ battery.cpp
 battery.h
 quatimu.cpp
 quatimu.h
+prefs.cpp
+prefs.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os
