@@ -11,6 +11,9 @@ namespace Elev8
 {
 	public class Connection_FTDI : Connection
 	{
+		public event ConnectionEvent ConnectionStarted;
+		public event ConnectionEvent ConnectionEnded;
+
 		FTDI ftdi = null;
 		volatile bool quit = false;
 		volatile bool connected = false;
@@ -89,6 +92,9 @@ namespace Elev8
 							// If we got an error, the port has likely been closed / unplugged - go back to waiting
 							ftdi.Close();
 							connected = false;
+							if(ConnectionEnded != null) {
+								ConnectionEnded();
+							}
 							continue;
 						}
 
@@ -118,8 +124,15 @@ namespace Elev8
 		{
 			if(sigByteIndex < 2)
 			{
-				if(b == 0x77) {
+				if(b == 0x77)
+				{
 					sigByteIndex++;
+					packetByteIndex = 0;
+					return;
+				}
+				else
+				{
+					sigByteIndex = 0;
 					packetByteIndex = 0;
 					return;
 				}
@@ -267,9 +280,12 @@ namespace Elev8
 							txBuffer[0] = 2;	// MODE_Sensors
 							written = 0;
 							ftdi.Write( txBuffer, 1, ref written );
+
+							if(ConnectionStarted != null) {
+								ConnectionStarted();
+							}
 							break;
 						}
-
 						else {
 							ftdi.Close();
 						}

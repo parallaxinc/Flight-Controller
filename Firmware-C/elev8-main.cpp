@@ -33,13 +33,16 @@ static long  iRudd;         //Integrated rudder input value
 static SENS sens;
 
 
-static long  GyroZX, GyroZY, GyroZZ;
-static long  AccelZSmooth;
+static long  GyroZX, GyroZY, GyroZZ;  // Gyro zero values
+static long  AccelZSmooth;            // Smoothed (filtered) accelerometer Z value (used for height fluctuation damping)
 
 //Debug output mode, working variables  
-static long   Mode, counter, NudgeMotor;
+static long   counter;        //Main loop iteration counter
 static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
 static char   Quat[16];       //Current quaternion from the IMU functions
+
+static char Mode;             //Debug communication mode
+static char NudgeMotor;       //Which motor to nudge during testing (-1 == no motor)
 
 static EVERYTHING_DATA Everything;   // Used to store data for the "Everything" transmit mode
 
@@ -53,18 +56,18 @@ static long  DesiredAltitude, DesiredAltitudeFractional;
 static long  RollDifference, PitchDifference;                 //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
-static long  GyroRPFilter, GyroYawFilter;
+static long  GyroRPFilter, GyroYawFilter;   // Tunable damping values for gyro noise
 
 
-static long  Motor[4];                                        //Motor output values  
-static long  LEDValue[LED_COUNT];                             //LED outputs (copied to the LEDs by the Sensors cog)
+static long  Motor[4];                      //Motor output values  
+static long  LEDValue[LED_COUNT];           //LED outputs (copied to the LEDs by the Sensors cog)
 
-static long loopTimer;                //Master flight loop counter - used to keep a steady update rate
+static long loopTimer;                      //Master flight loop counter - used to keep a steady update rate
 
 static long PingZero, PingHeight;
 
-static short FlightEnableStep;         //Flight arm/disarm counter
-static short CompassConfigStep;        //Compass configure mode counter
+static short FlightEnableStep;        //Flight arm/disarm counter
+static short CompassConfigStep;       //Compass configure mode counter
 
 static char FlightEnabled;            //Flight arm/disarm flag
 static char FlightMode;
@@ -74,11 +77,10 @@ static int  BatteryMonitorDelay;      //Can't start discharging the battery moni
 static char MotorIndex[4];            //Motor index to pin index table
 
 
-static long RollPitch_P, RollPitch_D;
+static long RollPitch_P, RollPitch_D; //Tunable values for roll & pitch Proportional gain and Derivative gain
 static long LEDModeColor;
-static short BatteryVolts = 0;
 
-const long LowBattery = 1050;
+static short BatteryVolts = 0;
 
 
 static char calib_startQuadrant;
@@ -86,6 +88,7 @@ static char calib_Quadrants;
 static char calib_step;
 static long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
+// PIDs for roll, pitch, yaw, altitude
 static IntPID  RollPID, PitchPID, YawPID, AscentPID;
 
 
@@ -131,25 +134,15 @@ int main()                                    // Main function
 
     if( Prefs.UseSBUS )
     {
-      Radio.Thro =  SBUS::GetRC( RC_THRO );
-      Radio.Aile =  SBUS::GetRC( RC_AILE );
-      Radio.Elev =  SBUS::GetRC( RC_ELEV );
-      Radio.Rudd =  SBUS::GetRC( RC_RUDD );
-      Radio.Gear =  SBUS::GetRC( RC_GEAR );
-      Radio.Aux1 =  SBUS::GetRC( RC_AUX1 );
-      Radio.Aux2 =  SBUS::GetRC( RC_AUX2 );
-      Radio.Aux3 =  SBUS::GetRC( RC_AUX3 );
+      for( int i=0; i<8; i++ ) {
+        Radio.Channel(i) =  (SBUS::GetRC(Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
+      }
     }
     else
     {
-      Radio.Thro =  RC::GetRC( RC_THRO );
-      Radio.Aile =  RC::GetRC( RC_AILE );
-      Radio.Elev =  RC::GetRC( RC_ELEV );
-      Radio.Rudd =  RC::GetRC( RC_RUDD );
-      Radio.Gear =  RC::GetRC( RC_GEAR );
-      Radio.Aux1 =  RC::GetRC( RC_AUX1 );
-      Radio.Aux2 =  RC::GetRC( RC_AUX2 );
-      Radio.Aux3 =  RC::GetRC( RC_AUX3 );
+      for( int i=0; i<8; i++ ) {
+        Radio.Channel(i) =  (RC::GetRC( Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
+      }        
     }
 
 
@@ -171,9 +164,9 @@ int main()                                    // Main function
     {
       char NewFlightMode;
 
-      if( Radio.Gear < -512 )
+      if( Radio.Gear > 512 )
         NewFlightMode = FlightMode_Assisted;
-      else if( Radio.Gear > 512 )
+      else if( Radio.Gear < -512 )
         NewFlightMode = FlightMode_Manual;
       else
         NewFlightMode = FlightMode_Automatic;
@@ -223,7 +216,7 @@ int main()                                    // Main function
     AltiEst = QuatIMU_GetAltitudeEstimate();
     AscentEst = QuatIMU_GetVerticalVelocityEstimate();
 
-    CheckDebugMode();
+    CheckDebugInput();
     DoDebugModeOutput();
 
     Cycles = CNT - Cycles;
@@ -263,7 +256,7 @@ void Initialize(void)
   InitializePrefs();
 
   if( Prefs.UseSBUS ) {
-    SBUS::Start( PIN_RC_0 , Prefs.SBUSCenter );
+    SBUS::Start( PIN_RC_0 , 1024 ); // Doesn't matter - it'll be compensated for by the channel scaling/offset code
   }
   else {
     RC::Start();
@@ -291,10 +284,10 @@ void Initialize(void)
   Servo32_AddFastPin( PIN_MOTOR_FR );
   Servo32_AddFastPin( PIN_MOTOR_BR );
   Servo32_AddFastPin( PIN_MOTOR_BL );
-  Servo32_Set( PIN_MOTOR_FL, 8000 );
-  Servo32_Set( PIN_MOTOR_FR, 8000 );
-  Servo32_Set( PIN_MOTOR_BR, 8000 );
-  Servo32_Set( PIN_MOTOR_BL, 8000 );
+  Servo32_Set( PIN_MOTOR_FL, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_FR, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_BR, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_BL, Prefs.MinThrottle );
   Servo32_Start();
 
 
@@ -445,16 +438,16 @@ void UpdateFlightLoop(void)
 
     if( FlightMode == FlightMode_Manual )
     {
-      RollDifference = Radio.Aile;
-      PitchDifference = -Radio.Elev;
+      RollDifference = Radio.Aile * Prefs.RollPitchSpeed / 64;
+      PitchDifference = -Radio.Elev * Prefs.RollPitchSpeed / 64;
     }
     else
     {
       //Angular output from the IMU is +/- 65536 units, or 32768 = 90 degrees
-      //Input range from the controls is +/- 1000 units.  Scale that up to about 22.5 degrees       
+      //Input range from the controls is +/- 1024 units - scale that to the desired pitch / roll angles
 
-      int DesiredRoll =  Radio.Aile << 3;
-      int DesiredPitch = -Radio.Elev << 3;
+      int DesiredRoll =  Radio.Aile * Prefs.MaxRollPitch;
+      int DesiredPitch = -Radio.Elev * Prefs.MaxRollPitch;
 
       RollDifference = (DesiredRoll - Roll) >> 2;
       PitchDifference = (DesiredPitch - Pitch) >> 2;
@@ -470,7 +463,7 @@ void UpdateFlightLoop(void)
 
     //Yaw is different because we accumulate it - It's not specified absolutely like you can
     //with pitch and roll, so scale the stick input down a bit
-    int DesiredYaw = iRudd >> 3;
+    int DesiredYaw = iRudd * Prefs.YawSpeed / 256;
 
  
     //Zero yaw target when throttle is off - makes for more stable liftoff
@@ -478,7 +471,7 @@ void UpdateFlightLoop(void)
     {
       DoIntegrate = 0;          //Disable PID integral term until throttle is applied      
       DesiredYaw = Yaw;         //Desired = measured when the throttle is off
-      iRudd = Yaw << 3;         //Make "measured yaw" match desired yaw until throttle is applied
+      iRudd = Yaw * 128 / Prefs.YawSpeed;  //Make "measured yaw" match desired yaw until throttle is applied
     }      
     else {
       DoIntegrate = 1;
@@ -536,7 +529,7 @@ void UpdateFlightLoop(void)
         //AscentPID.SetDGain( T2 );
       
         AltiThrust = AscentPID.Calculate_NoD2( DesiredAltitude , AltiEst , DoIntegrate );
-        ThroOut = 12000 + Radio.Thro + AltiThrust;
+        ThroOut = Prefs.CenterThrottle + Radio.Thro + AltiThrust;
       }
       else
       {
@@ -548,7 +541,7 @@ void UpdateFlightLoop(void)
 
       //Tilt compensated thrust assist      
       ThrustMul = clamp( QuatIMU_GetThrustFactor(), 256 , 384 );    //Limit the effect of the thrust modifier
-      ThroOut = 8000 + (((ThroOut-8000) * ThrustMul) >> 8);
+      ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
     }      
     //-------------------------------------------
 
@@ -563,10 +556,10 @@ void UpdateFlightLoop(void)
     //The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
     //the ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment
      
-    Motor[0] = clamp( Motor[0], Prefs.MinThrottle , 16000);
-    Motor[1] = clamp( Motor[1], Prefs.MinThrottle , 16000);
-    Motor[2] = clamp( Motor[2], Prefs.MinThrottle , 16000);
-    Motor[3] = clamp( Motor[3], Prefs.MinThrottle , 16000);
+    Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
 
     //Copy new Ouput array into servo values
     Servo32_Set( PIN_MOTOR_FL, Motor[0] );
@@ -577,7 +570,7 @@ void UpdateFlightLoop(void)
 
 #if 0 && defined( __PINS_V3_H__ )
     // Battery alarm at low voltage
-    if( UseBattMon != 0 && (BatteryVolts < LowBattery) && ((counter & 127) < 32) )
+    if( UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarm) && ((counter & 127) < 32) )
     {
       int ctr = CNT;
       int loop = 2;
@@ -612,7 +605,7 @@ void UpdateFlightLEDColor(void)
   int LowBatt = 0;
 
 #if 0 && defined( __PINS_V3_H__ )
-  if( UseBattMon != 0 && (BatteryVolts < LowBattery) ) {
+  if( UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarm) ) {
     LowBatt = 1;
   }    
 #endif
@@ -660,10 +653,10 @@ void ArmFlightMode(void)
   
 void DisarmFlightMode(void)
 {
-  Servo32_Set( PIN_MOTOR_FL, 8000 );
-  Servo32_Set( PIN_MOTOR_FR, 8000 );
-  Servo32_Set( PIN_MOTOR_BR, 8000 );
-  Servo32_Set( PIN_MOTOR_BL, 8000 );
+  Servo32_Set( PIN_MOTOR_FL, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_FR, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_BR, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_BL, Prefs.MinThrottle );
 
   FlightEnabled = 0;
   FlightEnableStep = 0;
@@ -709,7 +702,7 @@ static void TxMode( int val )
   Tx(val);
 }
 
-void CheckDebugMode(void)
+void CheckDebugInput(void)
 {
   struct FROM_HOST {
     int gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz, rollOfsSin, rollOfsCos, pitchOfsSin, pitchOfsCos;
@@ -724,12 +717,11 @@ void CheckDebugMode(void)
     return;
   }
 
-  if( (c & 0xF8) == 0x08 )  //Nudge one of the motors
-  {
-    if( Mode == MODE_MotorTest )
+  if( (c & 0xF8) == 0x08 ) {  //Nudge one of the motors
       NudgeMotor = c & 7;  //Nudge the motor selected by the configuration app
+      return;
   }
-  
+
   if( (c & 0xF8) == 0x10 )  //Zero, Reset, or set gyro or accelerometer calibration
   {
     if( Mode == MODE_SensorTest )
@@ -760,6 +752,16 @@ void CheckDebugMode(void)
         ApplyPrefs();                                                        //Apply the settings changes
         Prefs_Save();
         loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
+      }
+      else if( c == 0x13 )
+      {
+        for( int i=0; i<8; i++ ) {
+          Prefs.ChannelScale(i) = 1024;
+          Prefs.ChannelCenter(i) = 0;
+        }
+
+        Beep2();
+        loopTimer = CNT;
       }
       else if( c == 0x14 )
       {
@@ -803,14 +805,43 @@ void CheckDebugMode(void)
   }  
 
 
-  if( (c & 0xf8) == 0x18 )        //Modify a flag setting, like PWM/SBUS, Ping, etc
+  if( (c & 0xf8) == 0x18 )        //Query or modify all settings
   {
-    if( c == 0x18 )              //Receiver type (PWM / SBUS)
+    if( c == 0x18 )               //Query current settings
     {
-      Prefs.UseSBUS = fdserial_rxChar(dbg);
-      Prefs_Save();
+      TxMode( 0x18 );
+      int size = sizeof(Prefs);
+      Tx( size );   // Note that this will only work up to a packet size of 255 bytes - could always transmit two length bytes, perhaps?
+
+      Prefs.Checksum = Prefs_CalculateChecksum( Prefs );
+      TxBulk( &Prefs, size );
+
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }
+    else if( c == 0x19 )          //Store new settings
+    {
+      PREFS TempPrefs;
+      for( int i=0; i<sizeof(Prefs); i++ ) {
+        ((char *)&TempPrefs)[i] = fdserial_rxTime(dbg, 50);   // wait up to 40ms per byte - Should be plenty
+      }
+
+      if( Prefs_CalculateChecksum( TempPrefs ) == TempPrefs.Checksum ) {
+        memcpy( &Prefs, &TempPrefs, sizeof(Prefs) );
+        Prefs_Save();
+
+        if( Prefs_Load() ) {
+          Beep2();
+          ApplyPrefs();
+        }
+        else {
+          Beep();
+        }
+      }
+      else {
+        Beep();
+      }        
+      loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
+    }      
   }    
 
   if( c == 0xff ) {
@@ -874,82 +905,79 @@ void DoDebugModeOutput(void)
         TxBulk( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
         TxBulk( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         break;
-      }
     }
-    break;
+  }
+  break;
+}
 
 
-  case MODE_MotorTest:
-
-    //Motor test code---------------------------------------
-    if( NudgeMotor > -1 )
+  //Motor test code---------------------------------------
+  if( NudgeMotor > -1 )
+  {
+    if( NudgeMotor < 4 )
     {
-      if( NudgeMotor < 4 )
-      {
-        Servo32_Set(MotorIndex[NudgeMotor], 9000);       //Motor test - 1/8 throttle
-      }
-      else if( NudgeMotor == 4 )                         //Buzzer test
-      {
-        BeepHz(4500, 50);
-        waitcnt( CNT + 5000000 );
-        BeepHz(3500, 50);
-      }      
-      else if( NudgeMotor == 5 )                         //LED test
-      {
-        //RGB led will run a rainbow
-        for( i=0; i<256; i++ ) {
-          All_LED( ((255-i)<<16) + (i<<8) );
-          waitcnt( CNT + 160000 );
-        }          
-
-        for( i=0; i<256; i++ ) {
-          All_LED( i + ((255-i) << 8) );
-          waitcnt( CNT + 160000 );
-        }          
-
-        for( i=0; i<256; i++ ) {
-          All_LED( (255-i) + (i<<16) );
-          waitcnt( CNT + 160000 );
-        }          
-      }
-      else if( NudgeMotor == 6 )                         //ESC Throttle calibration
-      {
-        BeepHz(4500, 100);
-        waitcnt( CNT + 5000000 );
-        BeepHz(4500, 100);
-        waitcnt( CNT + 5000000 );
-        BeepHz(4500, 100);
-        waitcnt( CNT + 5000000 );
-        BeepHz(4500, 100);
-
-        if( fdserial_rxChar(dbg) == 0xFF )  //Safety check - Allow the user to break out by sending anything else                  
-        {
-          Servo32_Set(MotorIndex[0], 16000);
-          Servo32_Set(MotorIndex[1], 16000);
-          Servo32_Set(MotorIndex[2], 16000);
-          Servo32_Set(MotorIndex[3], 16000);
-           
-          fdserial_rxChar(dbg);
-
-          Servo32_Set(MotorIndex[0], 8000);
-          Servo32_Set(MotorIndex[1], 8000);
-          Servo32_Set(MotorIndex[2], 8000);
-          Servo32_Set(MotorIndex[3], 8000);
-        }
-      }        
-      else if( NudgeMotor == 7 )                         //Motor off (after motor test)
-      {
-        Servo32_Set(MotorIndex[0], 8000);
-        Servo32_Set(MotorIndex[1], 8000);
-        Servo32_Set(MotorIndex[2], 8000);
-        Servo32_Set(MotorIndex[3], 8000);
-      }        
-      NudgeMotor = -1;
-      loopTimer = CNT;
+      Servo32_Set(MotorIndex[NudgeMotor], 9500);       //Motor test - 1/8 throttle
     }
-    break;
-    //End Motor test code-----------------------------------
-  }    
+    else if( NudgeMotor == 4 )                         //Buzzer test
+    {
+      BeepHz(4500, 50);
+      waitcnt( CNT + 5000000 );
+      BeepHz(3500, 50);
+    }      
+    else if( NudgeMotor == 5 )                         //LED test
+    {
+      //RGB led will run a rainbow
+      for( i=0; i<256; i++ ) {
+        All_LED( ((255-i)<<16) + (i<<8) );
+        waitcnt( CNT + 160000 );
+      }          
+
+      for( i=0; i<256; i++ ) {
+        All_LED( i + ((255-i) << 8) );
+        waitcnt( CNT + 160000 );
+      }          
+
+      for( i=0; i<256; i++ ) {
+        All_LED( (255-i) + (i<<16) );
+        waitcnt( CNT + 160000 );
+      }          
+    }
+    else if( NudgeMotor == 6 )                         //ESC Throttle calibration
+    {
+      BeepHz(4500, 100);
+      waitcnt( CNT + 5000000 );
+      BeepHz(4500, 100);
+      waitcnt( CNT + 5000000 );
+      BeepHz(4500, 100);
+      waitcnt( CNT + 5000000 );
+      BeepHz(4500, 100);
+
+      if( fdserial_rxChar(dbg) == 0xFF )  //Safety check - Allow the user to break out by sending anything else                  
+      {
+        Servo32_Set(MotorIndex[0], Prefs.MaxThrottle);
+        Servo32_Set(MotorIndex[1], Prefs.MaxThrottle);
+        Servo32_Set(MotorIndex[2], Prefs.MaxThrottle);
+        Servo32_Set(MotorIndex[3], Prefs.MaxThrottle);
+         
+        fdserial_rxChar(dbg);
+
+        Servo32_Set(MotorIndex[0], Prefs.MinThrottle);
+        Servo32_Set(MotorIndex[1], Prefs.MinThrottle);
+        Servo32_Set(MotorIndex[2], Prefs.MinThrottle);
+        Servo32_Set(MotorIndex[3], Prefs.MinThrottle);
+      }
+    }        
+    else if( NudgeMotor == 7 )                         //Motor off (after motor test)
+    {
+      Servo32_Set(MotorIndex[0], Prefs.MinThrottle);
+      Servo32_Set(MotorIndex[1], Prefs.MinThrottle);
+      Servo32_Set(MotorIndex[2], Prefs.MinThrottle);
+      Servo32_Set(MotorIndex[3], Prefs.MinThrottle);
+    }        
+    NudgeMotor = -1;
+    loopTimer = CNT;
+  }
+  //End Motor test code-----------------------------------
 }
 
 void InitializePrefs(void)

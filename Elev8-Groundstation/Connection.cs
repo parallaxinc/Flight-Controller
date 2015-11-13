@@ -15,6 +15,7 @@ namespace Elev8
 		Connected,
 	}
 
+
 	public class Packet
 	{
 		public byte mode, len;
@@ -52,8 +53,14 @@ namespace Elev8
 
 	// Declare the interface that will be used for any Connection objects (raw serial, or FDTI)
 
+	public delegate void ConnectionEvent();
+
 	public interface Connection
 	{
+		event ConnectionEvent ConnectionStarted;
+		event ConnectionEvent ConnectionEnded;
+
+
 		bool Active {
 			set;
 		}

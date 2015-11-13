@@ -84,7 +84,7 @@ namespace Elev8
 			float endX = centerX + (float)Math.Sin( angle ) * radius;
 			float endY = centerY - (float)Math.Cos( angle ) * radius;
 
-			g.Clear( SystemColors.Window );
+			g.Clear( BackColor );
 			g.FillEllipse( SystemBrushes.ControlLight, this.ClientRectangle );
 			g.DrawEllipse( Pens.White, this.ClientRectangle );
 

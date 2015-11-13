@@ -12,21 +12,23 @@
 PREFS Prefs;
 
 
-void Prefs_Load(void)
+int Prefs_Load(void)
 {
   EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
-  int testChecksum = Prefs_CalculateChecksum();
+  int testChecksum = Prefs_CalculateChecksum( Prefs );
   if( testChecksum != Prefs.Checksum )
   {
     Prefs_SetDefaults();
     Prefs_Save();
+    return 0;
   }
+  return 1;
 }
 
 void Prefs_Save(void)
 {
-  Prefs.Checksum = Prefs_CalculateChecksum();
+  Prefs.Checksum = Prefs_CalculateChecksum( Prefs );
   EEPROM::FromRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );  //Copy from DAT to EEPROM, address 32768
 }
 
@@ -35,7 +37,6 @@ void Prefs_SetDefaults(void)
 {
   memset( &Prefs, 0, sizeof(Prefs) );
 
-  Prefs.SBUSCenter = 1000;
   Prefs.UseBattMon = 1;
 
   Prefs.RollCorrect[0] = 0.0f;                         //Sin of roll correction angle
@@ -49,7 +50,18 @@ void Prefs_SetDefaults(void)
   Prefs.MagScaleOfs[3] = 1024;
   Prefs.MagScaleOfs[5] = 1024;
 
-  Prefs.MinThrottle = 8500;   //8000 = 1ms in 1/8th uS steps = "full" throttle range is 1ms to 2ms
+  Prefs.LowVoltageAlarm = 1050;
+
+  Prefs.MaxRollPitch = 20;
+  Prefs.RollPitchSpeed = 64;
+  Prefs.YawSpeed = 40;
+
+  Prefs.ThrottleTest = 1185 * 8;
+
+  Prefs.MinThrottle = 1040 * 8;     // Values are in 1/8us resolution, full range is 1000us to 2000us
+  Prefs.MaxThrottle = 1960 * 8;
+  Prefs.CenterThrottle = 1500 * 8;
+  Prefs.MinThrottleArmed = 1060 * 8;
 
   Prefs.ThroChannel = 0;      //Standard radio channel mappings
   Prefs.AileChannel = 1;
@@ -59,16 +71,26 @@ void Prefs_SetDefaults(void)
   Prefs.Aux1Channel = 5;
   Prefs.Aux2Channel = 6;
   Prefs.Aux3Channel = 7;
+
+
+  Prefs.ThroScale =  1024;
+  Prefs.AileScale = -1024;
+  Prefs.ElevScale =  1024;
+  Prefs.RuddScale = -1024;
+  Prefs.GearScale = -1024;
+  Prefs.Aux1Scale =  1024;
+  Prefs.Aux2Scale =  1024;
+  Prefs.Aux3Scale =  1024;
 }
 
 
-int Prefs_CalculateChecksum(void)
+int Prefs_CalculateChecksum(PREFS & PrefsStruct )
 {
   unsigned int r = 0x55555555;            //Start with a strange, known value
-  for( int i=0; i < (sizeof(Prefs)/4)-1; i++ )
+  for( int i=0; i < (sizeof(PrefsStruct)/4)-1; i++ )
   {
     r = (r << 7) | (r >> (32-7));
-    r = r ^ ((unsigned int*)&Prefs)[i];     //Jumble the bits, XOR in the prefs value
+    r = r ^ ((unsigned int*)&PrefsStruct)[i];     //Jumble the bits, XOR in the prefs value
   }    
   return (int)r;
 }
@@ -108,7 +130,7 @@ void Prefs_Test( void )
 
   EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
-  int testCheck = Prefs_CalculateChecksum();
+  int testCheck = Prefs_CalculateChecksum( Prefs );
   tPutC(0);
   tPutHex( Prefs.Checksum, 8 );
   tPutC(32);
@@ -125,7 +147,7 @@ void Prefs_Test( void )
 
 
   Prefs_SetDefaults();
-  testCheck = Prefs_CalculateChecksum();
+  testCheck = Prefs_CalculateChecksum( Prefs );
   tPutHex( testCheck, 8 );
   tPutC(13);
 
@@ -133,7 +155,7 @@ void Prefs_Test( void )
 
   EEPROM::ToRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );    //Copy from EEPROM to DAT, address 32768
 
-  testCheck = Prefs_CalculateChecksum();
+  testCheck = Prefs_CalculateChecksum( Prefs );
 
   tPutHex( Prefs.Checksum, 8 );
   tPutC(32);

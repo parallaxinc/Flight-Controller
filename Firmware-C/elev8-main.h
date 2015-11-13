@@ -9,21 +9,12 @@ void ArmFlightMode(void);
 void DisarmFlightMode(void);
 void StartCompassCalibrate(void);
 void DoCompassCalibrate(void);
-void CheckDebugMode(void);
+void CheckDebugInput(void);
 void DoDebugModeOutput(void);
 void InitializePrefs(void);
 void ApplyPrefs(void);
 void All_LED( int Color );
 
-
-#define   RC_THRO  0
-#define   RC_AILE  1
-#define   RC_ELEV  2
-#define   RC_RUDD  3   //R/C input channel assignments (pin values are specified in the RC_Receiver object)
-#define   RC_GEAR  4
-#define   RC_AUX1  5
-#define   RC_AUX2  6
-#define   RC_AUX3  7 
 
  // ESC output array indices for corresponding motors
 #define   OUT_FL  0
@@ -54,7 +45,9 @@ enum FLIGHTMODE {
 
 // Structure to hold radio values to make sure they stay in order
 struct RADIO {
-    short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
+  short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
+
+  short & Channel(int i) { return (&Thro)[i]; }
 };
 
 

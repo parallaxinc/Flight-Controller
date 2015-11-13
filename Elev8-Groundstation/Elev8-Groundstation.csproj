@@ -39,6 +39,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Design" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -58,6 +59,40 @@
     <Compile Include="Controls\ValueBar.Designer.cs">
       <DependentUpon>ValueBar.cs</DependentUpon>
     </Compile>
+    <Compile Include="GraphLib\BackBuffer.cs" />
+    <Compile Include="GraphLib\PlotterGraphEx.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="GraphLib\PlotterGraphEx.designer.cs">
+      <DependentUpon>PlotterGraphEx.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GraphLib\PlotterGraphPaneEx.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="GraphLib\PlotterGraphPaneEx.Designer.cs">
+      <DependentUpon>PlotterGraphPaneEx.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GraphLib\PlotterGraphPropertiesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GraphLib\PlotterGraphPropertiesForm.Designer.cs">
+      <DependentUpon>PlotterGraphPropertiesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GraphLib\PlotterGraphTypes.cs" />
+    <Compile Include="GraphLib\PrecisionTimer.cs" />
+    <Compile Include="GraphLib\PrintPreviewForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GraphLib\PrintPreviewForm.Designer.cs">
+      <DependentUpon>PrintPreviewForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GraphLib\SelectCurvesForm.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="GraphLib\SelectCurvesForm.Designer.cs">
+      <DependentUpon>SelectCurvesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="GraphLib\Utils.cs" />
     <Compile Include="Instruments\Altimeter.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -108,6 +143,7 @@
     <Compile Include="Controls\OrientationCube.designer.cs">
       <DependentUpon>OrientationCube.cs</DependentUpon>
     </Compile>
+    <Compile Include="Prefs.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Controls\Gauge.resx">
@@ -167,8 +203,25 @@
       <DependentUpon>ValueBar.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
+    <EmbeddedResource Include="GraphLib\PlotterGraphEx.resx">
+      <DependentUpon>PlotterGraphEx.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GraphLib\PlotterGraphPaneEx.resx">
+      <DependentUpon>PlotterGraphPaneEx.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GraphLib\PlotterGraphPropertiesForm.resx">
+      <DependentUpon>PlotterGraphPropertiesForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <EmbeddedResource Include="GraphLib\PrintPreviewForm.resx">
+      <DependentUpon>PrintPreviewForm.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Instruments\Horizon_Background.bmp" />
     <EmbeddedResource Include="Instruments\Horizon_GroundSky.bmp" />
+    <Content Include="GraphLib\GraphLib.csproj" />
     <Content Include="Icon_Clockwise.png" />
     <Content Include="Icon_Counter-clockwise.png" />
     <EmbeddedResource Include="Instruments\RadioStick_Background.bmp" />
