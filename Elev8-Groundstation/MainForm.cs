@@ -659,6 +659,11 @@ namespace Elev8
 			Value = prefs.YawSpeed;
 			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
+			udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
+			udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
+			udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
+			udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
+
 			InternalChange = false;
 		}
 
@@ -681,6 +686,17 @@ namespace Elev8
 		{
 			CalibrateControlsStep++;
 			CalibrateTimer = 200;
+		}
+
+		private void btnControlReset_Click( object sender, EventArgs e )
+		{
+			for(int i = 0; i < 8; i++)
+			{
+				prefs.SetChannelIndex( i, (char)i );
+				prefs.SetChannelScale( i, 1024 );
+				prefs.SetChannelCenter( i, 0 );
+			}
+			UpdateElev8Preferences();
 		}
 
 		void ResetAllScalesAndReverses()
@@ -1142,6 +1158,17 @@ namespace Elev8
 
 			Value = tbYawSpeed.Value;
 			prefs.YawSpeed = (short)Value;
+
+			UpdateElev8Preferences();
+		}
+
+
+		private void btnUploadThrottle_Click( object sender, EventArgs e )
+		{
+			prefs.MinThrottle = (short)(udLowThrottle.Value * 8);
+			prefs.MinThrottleArmed = (short)(udArmedLowThrottle.Value * 8);
+			prefs.ThrottleTest = (short)(udTestThrottle.Value * 8);
+			prefs.MaxThrottle = (short)(udHighThrottle.Value * 8);
 
 			UpdateElev8Preferences();
 		}

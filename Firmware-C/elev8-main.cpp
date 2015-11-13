@@ -121,6 +121,12 @@ int main()                                    // Main function
   NudgeMotor = -1;
   loopTimer = CNT;
 
+  Servo32_Set( PIN_MOTOR_FL, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_FR, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_BR, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_BL, Prefs.MinThrottle );
+
+
   while(1)
   {
     int Cycles = CNT;
@@ -284,10 +290,10 @@ void Initialize(void)
   Servo32_AddFastPin( PIN_MOTOR_FR );
   Servo32_AddFastPin( PIN_MOTOR_BR );
   Servo32_AddFastPin( PIN_MOTOR_BL );
-  Servo32_Set( PIN_MOTOR_FL, Prefs.MinThrottle );
-  Servo32_Set( PIN_MOTOR_FR, Prefs.MinThrottle );
-  Servo32_Set( PIN_MOTOR_BR, Prefs.MinThrottle );
-  Servo32_Set( PIN_MOTOR_BL, Prefs.MinThrottle );
+  Servo32_Set( PIN_MOTOR_FL, 8000 );
+  Servo32_Set( PIN_MOTOR_FR, 8000 );
+  Servo32_Set( PIN_MOTOR_BR, 8000 );
+  Servo32_Set( PIN_MOTOR_BL, 8000 );
   Servo32_Start();
 
 
@@ -961,10 +967,10 @@ void DoDebugModeOutput(void)
          
         fdserial_rxChar(dbg);
 
-        Servo32_Set(MotorIndex[0], Prefs.MinThrottle);
-        Servo32_Set(MotorIndex[1], Prefs.MinThrottle);
-        Servo32_Set(MotorIndex[2], Prefs.MinThrottle);
-        Servo32_Set(MotorIndex[3], Prefs.MinThrottle);
+        Servo32_Set(MotorIndex[0], Prefs.MinThrottle - 16);
+        Servo32_Set(MotorIndex[1], Prefs.MinThrottle - 16);
+        Servo32_Set(MotorIndex[2], Prefs.MinThrottle - 16);
+        Servo32_Set(MotorIndex[3], Prefs.MinThrottle - 16);
       }
     }        
     else if( NudgeMotor == 7 )                         //Motor off (after motor test)

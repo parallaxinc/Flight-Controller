@@ -35,22 +35,7 @@
 			this.tmCommTimer = new System.Windows.Forms.Timer( this.components );
 			this.tcTabs = new System.Windows.Forms.TabControl();
 			this.tpStatus = new System.Windows.Forms.TabPage();
-			this.vbChannel8 = new Elev8.Controls.ValueBar();
-			this.vbChannel7 = new Elev8.Controls.ValueBar();
-			this.vbChannel6 = new Elev8.Controls.ValueBar();
-			this.vbChannel5 = new Elev8.Controls.ValueBar();
-			this.vbRS_XValue = new Elev8.Controls.ValueBar();
-			this.vbRS_YValue = new Elev8.Controls.ValueBar();
-			this.vbLS_XValue = new Elev8.Controls.ValueBar();
-			this.vbLS_YValue = new Elev8.Controls.ValueBar();
-			this.rsRight = new Elev8.RadioStick();
-			this.rsLeft = new Elev8.RadioStick();
-			this.aicAttitude = new Elev8.AttitudeIndicator();
-			this.ocOrientation = new Elev8.OrientationCube();
-			this.aicHeading = new Elev8.HeadingIndicator();
-			this.aicAltimeter = new Elev8.Altimeter();
 			this.tpSensors = new System.Windows.Forms.TabPage();
-			this.plotSensors = new GraphLib.PlotterDisplayEx();
 			this.cbVoltage = new System.Windows.Forms.CheckBox();
 			this.cbYaw = new System.Windows.Forms.CheckBox();
 			this.cbRoll = new System.Windows.Forms.CheckBox();
@@ -76,6 +61,11 @@
 			this.btnMotor2 = new System.Windows.Forms.Button();
 			this.btnMotor1 = new System.Windows.Forms.Button();
 			this.tpControlSetup = new System.Windows.Forms.TabPage();
+			this.btnControlReset = new System.Windows.Forms.Button();
+			this.tbCalibrateDocs = new System.Windows.Forms.TextBox();
+			this.lblYawSpeed = new System.Windows.Forms.Label();
+			this.label5 = new System.Windows.Forms.Label();
+			this.tbYawSpeed = new System.Windows.Forms.TrackBar();
 			this.btnUploadRollPitch = new System.Windows.Forms.Button();
 			this.lblRollPitchSpeed = new System.Windows.Forms.Label();
 			this.lblRollPitchAngle = new System.Windows.Forms.Label();
@@ -83,7 +73,6 @@
 			this.tbRollPitchSpeed = new System.Windows.Forms.TrackBar();
 			this.label2 = new System.Windows.Forms.Label();
 			this.tbRollPitchAngle = new System.Windows.Forms.TrackBar();
-			this.tbCalibrateDocs = new System.Windows.Forms.TextBox();
 			this.btnCalibrate = new System.Windows.Forms.Button();
 			this.label1 = new System.Windows.Forms.Label();
 			this.cbReceiverType = new System.Windows.Forms.ComboBox();
@@ -103,22 +92,17 @@
 			this.cbChannel5 = new System.Windows.Forms.ComboBox();
 			this.cbChannel4 = new System.Windows.Forms.ComboBox();
 			this.cbChannel1 = new System.Windows.Forms.ComboBox();
-			this.vbR_Channel8 = new Elev8.Controls.ValueBar();
-			this.vbR_Channel7 = new Elev8.Controls.ValueBar();
-			this.vbR_Channel6 = new Elev8.Controls.ValueBar();
-			this.vbR_Channel5 = new Elev8.Controls.ValueBar();
-			this.vbR_RS_XValue = new Elev8.Controls.ValueBar();
-			this.vbR_RS_YValue = new Elev8.Controls.ValueBar();
-			this.vbR_LS_XValue = new Elev8.Controls.ValueBar();
-			this.vbR_LS_YValue = new Elev8.Controls.ValueBar();
-			this.rsR_Right = new Elev8.RadioStick();
-			this.rsR_Left = new Elev8.RadioStick();
 			this.tpSystemSetup = new System.Windows.Forms.TabPage();
+			this.btnUploadThrottle = new System.Windows.Forms.Button();
+			this.udTestThrottle = new System.Windows.Forms.NumericUpDown();
+			this.label8 = new System.Windows.Forms.Label();
+			this.udHighThrottle = new System.Windows.Forms.NumericUpDown();
+			this.udArmedLowThrottle = new System.Windows.Forms.NumericUpDown();
+			this.udLowThrottle = new System.Windows.Forms.NumericUpDown();
+			this.label7 = new System.Windows.Forms.Label();
+			this.label6 = new System.Windows.Forms.Label();
+			this.label4 = new System.Windows.Forms.Label();
 			this.tpGyroCalibration = new System.Windows.Forms.TabPage();
-			this.gCalibTemp = new Elev8.Gauge();
-			this.gCalibZ = new Elev8.Gauge();
-			this.gCalibY = new Elev8.Gauge();
-			this.gCalibX = new Elev8.Gauge();
 			this.btnUploadGyroCalibration = new System.Windows.Forms.Button();
 			this.btnResetGyroCal = new System.Windows.Forms.Button();
 			this.groupBox10 = new System.Windows.Forms.GroupBox();
@@ -136,9 +120,7 @@
 			this.gxOffset = new System.Windows.Forms.Label();
 			this.label28 = new System.Windows.Forms.Label();
 			this.gxScale = new System.Windows.Forms.Label();
-			this.lfGraph = new Elev8.LineFit();
 			this.tpAccelCalibration = new System.Windows.Forms.TabPage();
-			this.ocAccelOrient = new Elev8.OrientationCube();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
 			this.btnUploadAngleCorrection = new System.Windows.Forms.Button();
 			this.udRollCorrection = new System.Windows.Forms.NumericUpDown();
@@ -146,9 +128,6 @@
 			this.label42 = new System.Windows.Forms.Label();
 			this.udPitchCorrection = new System.Windows.Forms.NumericUpDown();
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
-			this.gAccelXCal = new Elev8.Gauge();
-			this.gAccelYCal = new Elev8.Gauge();
-			this.gAccelZCal = new Elev8.Gauge();
 			this.label39 = new System.Windows.Forms.Label();
 			this.label38 = new System.Windows.Forms.Label();
 			this.label37 = new System.Windows.Forms.Label();
@@ -183,6 +162,40 @@
 			this.comboBox7 = new System.Windows.Forms.ComboBox();
 			this.comboBox8 = new System.Windows.Forms.ComboBox();
 			this.tlToolTip = new System.Windows.Forms.ToolTip( this.components );
+			this.vbChannel8 = new Elev8.Controls.ValueBar();
+			this.vbChannel7 = new Elev8.Controls.ValueBar();
+			this.vbChannel6 = new Elev8.Controls.ValueBar();
+			this.vbChannel5 = new Elev8.Controls.ValueBar();
+			this.vbRS_XValue = new Elev8.Controls.ValueBar();
+			this.vbRS_YValue = new Elev8.Controls.ValueBar();
+			this.vbLS_XValue = new Elev8.Controls.ValueBar();
+			this.vbLS_YValue = new Elev8.Controls.ValueBar();
+			this.rsRight = new Elev8.RadioStick();
+			this.rsLeft = new Elev8.RadioStick();
+			this.aicAttitude = new Elev8.AttitudeIndicator();
+			this.ocOrientation = new Elev8.OrientationCube();
+			this.aicHeading = new Elev8.HeadingIndicator();
+			this.aicAltimeter = new Elev8.Altimeter();
+			this.plotSensors = new GraphLib.PlotterDisplayEx();
+			this.vbR_Channel8 = new Elev8.Controls.ValueBar();
+			this.vbR_Channel7 = new Elev8.Controls.ValueBar();
+			this.vbR_Channel6 = new Elev8.Controls.ValueBar();
+			this.vbR_Channel5 = new Elev8.Controls.ValueBar();
+			this.vbR_RS_XValue = new Elev8.Controls.ValueBar();
+			this.vbR_RS_YValue = new Elev8.Controls.ValueBar();
+			this.vbR_LS_XValue = new Elev8.Controls.ValueBar();
+			this.vbR_LS_YValue = new Elev8.Controls.ValueBar();
+			this.rsR_Right = new Elev8.RadioStick();
+			this.rsR_Left = new Elev8.RadioStick();
+			this.gCalibTemp = new Elev8.Gauge();
+			this.gCalibZ = new Elev8.Gauge();
+			this.gCalibY = new Elev8.Gauge();
+			this.gCalibX = new Elev8.Gauge();
+			this.lfGraph = new Elev8.LineFit();
+			this.ocAccelOrient = new Elev8.OrientationCube();
+			this.gAccelXCal = new Elev8.Gauge();
+			this.gAccelYCal = new Elev8.Gauge();
+			this.gAccelZCal = new Elev8.Gauge();
 			this.valueBar1 = new Elev8.Controls.ValueBar();
 			this.valueBar2 = new Elev8.Controls.ValueBar();
 			this.valueBar3 = new Elev8.Controls.ValueBar();
@@ -193,17 +206,20 @@
 			this.valueBar8 = new Elev8.Controls.ValueBar();
 			this.radioStick1 = new Elev8.RadioStick();
 			this.radioStick2 = new Elev8.RadioStick();
-			this.lblYawSpeed = new System.Windows.Forms.Label();
-			this.label5 = new System.Windows.Forms.Label();
-			this.tbYawSpeed = new System.Windows.Forms.TrackBar();
 			this.stMainStatus.SuspendLayout();
 			this.tcTabs.SuspendLayout();
 			this.tpStatus.SuspendLayout();
 			this.tpSensors.SuspendLayout();
 			this.tpSysTest.SuspendLayout();
 			this.tpControlSetup.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeed)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchSpeed)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchAngle)).BeginInit();
+			this.tpSystemSetup.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udTestThrottle)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udHighThrottle)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udArmedLowThrottle)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).BeginInit();
 			this.tpGyroCalibration.SuspendLayout();
 			this.groupBox10.SuspendLayout();
 			this.groupBox11.SuspendLayout();
@@ -214,7 +230,6 @@
 			((System.ComponentModel.ISupportInitialize)(this.udPitchCorrection)).BeginInit();
 			this.groupBox5.SuspendLayout();
 			this.msMainMenu.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeed)).BeginInit();
 			this.SuspendLayout();
 			// 
 			// stMainStatus
@@ -253,7 +268,7 @@
 			this.tcTabs.Name = "tcTabs";
 			this.tcTabs.SelectedIndex = 0;
 			this.tcTabs.Size = new System.Drawing.Size( 729, 382 );
-			this.tcTabs.TabIndex = 7;
+			this.tcTabs.TabIndex = 0;
 			this.tcTabs.SelectedIndexChanged += new System.EventHandler( this.tcTabs_SelectedIndexChanged );
 			// 
 			// tpStatus
@@ -280,160 +295,6 @@
 			this.tpStatus.TabIndex = 0;
 			this.tpStatus.Text = "Status";
 			// 
-			// vbChannel8
-			// 
-			this.vbChannel8.FromLeft = true;
-			this.vbChannel8.LeftLabel = "Aux3";
-			this.vbChannel8.Location = new System.Drawing.Point( 425, 290 );
-			this.vbChannel8.MaxValue = 1024;
-			this.vbChannel8.MinValue = -1024;
-			this.vbChannel8.Name = "vbChannel8";
-			this.vbChannel8.RightLabel = "0";
-			this.vbChannel8.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel8.TabIndex = 32;
-			this.vbChannel8.Value = 0;
-			// 
-			// vbChannel7
-			// 
-			this.vbChannel7.FromLeft = true;
-			this.vbChannel7.LeftLabel = "Aux2";
-			this.vbChannel7.Location = new System.Drawing.Point( 425, 262 );
-			this.vbChannel7.MaxValue = 1024;
-			this.vbChannel7.MinValue = -1024;
-			this.vbChannel7.Name = "vbChannel7";
-			this.vbChannel7.RightLabel = "0";
-			this.vbChannel7.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel7.TabIndex = 31;
-			this.vbChannel7.Value = 0;
-			// 
-			// vbChannel6
-			// 
-			this.vbChannel6.FromLeft = true;
-			this.vbChannel6.LeftLabel = "Aux1";
-			this.vbChannel6.Location = new System.Drawing.Point( 9, 290 );
-			this.vbChannel6.MaxValue = 1024;
-			this.vbChannel6.MinValue = -1024;
-			this.vbChannel6.Name = "vbChannel6";
-			this.vbChannel6.RightLabel = "0";
-			this.vbChannel6.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel6.TabIndex = 30;
-			this.vbChannel6.Value = 0;
-			// 
-			// vbChannel5
-			// 
-			this.vbChannel5.FromLeft = true;
-			this.vbChannel5.LeftLabel = "Gear";
-			this.vbChannel5.Location = new System.Drawing.Point( 9, 262 );
-			this.vbChannel5.MaxValue = 1024;
-			this.vbChannel5.MinValue = -1024;
-			this.vbChannel5.Name = "vbChannel5";
-			this.vbChannel5.RightLabel = "0";
-			this.vbChannel5.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel5.TabIndex = 29;
-			this.vbChannel5.Value = 0;
-			// 
-			// vbRS_XValue
-			// 
-			this.vbRS_XValue.FromLeft = true;
-			this.vbRS_XValue.LeftLabel = "Aileron";
-			this.vbRS_XValue.Location = new System.Drawing.Point( 425, 234 );
-			this.vbRS_XValue.MaxValue = 1024;
-			this.vbRS_XValue.MinValue = -1024;
-			this.vbRS_XValue.Name = "vbRS_XValue";
-			this.vbRS_XValue.RightLabel = "0";
-			this.vbRS_XValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbRS_XValue.TabIndex = 28;
-			this.vbRS_XValue.Value = 0;
-			// 
-			// vbRS_YValue
-			// 
-			this.vbRS_YValue.FromLeft = true;
-			this.vbRS_YValue.LeftLabel = "Elevator";
-			this.vbRS_YValue.Location = new System.Drawing.Point( 425, 206 );
-			this.vbRS_YValue.MaxValue = 1024;
-			this.vbRS_YValue.MinValue = -1024;
-			this.vbRS_YValue.Name = "vbRS_YValue";
-			this.vbRS_YValue.RightLabel = "0";
-			this.vbRS_YValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbRS_YValue.TabIndex = 27;
-			this.vbRS_YValue.Value = 0;
-			// 
-			// vbLS_XValue
-			// 
-			this.vbLS_XValue.FromLeft = true;
-			this.vbLS_XValue.LeftLabel = "Rudder";
-			this.vbLS_XValue.Location = new System.Drawing.Point( 9, 234 );
-			this.vbLS_XValue.MaxValue = 1024;
-			this.vbLS_XValue.MinValue = -1024;
-			this.vbLS_XValue.Name = "vbLS_XValue";
-			this.vbLS_XValue.RightLabel = "0";
-			this.vbLS_XValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbLS_XValue.TabIndex = 26;
-			this.vbLS_XValue.Value = 0;
-			// 
-			// vbLS_YValue
-			// 
-			this.vbLS_YValue.FromLeft = true;
-			this.vbLS_YValue.LeftLabel = "Throttle";
-			this.vbLS_YValue.Location = new System.Drawing.Point( 9, 206 );
-			this.vbLS_YValue.MaxValue = 1024;
-			this.vbLS_YValue.MinValue = -1024;
-			this.vbLS_YValue.Name = "vbLS_YValue";
-			this.vbLS_YValue.RightLabel = "0";
-			this.vbLS_YValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbLS_YValue.TabIndex = 25;
-			this.vbLS_YValue.Value = 0;
-			// 
-			// rsRight
-			// 
-			this.rsRight.Location = new System.Drawing.Point( 265, 182 );
-			this.rsRight.Name = "rsRight";
-			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
-			this.rsRight.TabIndex = 8;
-			this.rsRight.Text = "radioStick2";
-			// 
-			// rsLeft
-			// 
-			this.rsLeft.Location = new System.Drawing.Point( 102, 182 );
-			this.rsLeft.Name = "rsLeft";
-			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
-			this.rsLeft.TabIndex = 7;
-			this.rsLeft.Text = "radioStick1";
-			// 
-			// aicAttitude
-			// 
-			this.aicAttitude.Location = new System.Drawing.Point( 183, 6 );
-			this.aicAttitude.Name = "aicAttitude";
-			this.aicAttitude.Size = new System.Drawing.Size( 150, 150 );
-			this.aicAttitude.TabIndex = 4;
-			this.aicAttitude.Text = "attitudeIndicatorInstrumentControl1";
-			// 
-			// ocOrientation
-			// 
-			this.ocOrientation.CubeDepth = 1.2F;
-			this.ocOrientation.CubeHeight = 0.8F;
-			this.ocOrientation.CubeWidth = 1.2F;
-			this.ocOrientation.Location = new System.Drawing.Point( 507, 6 );
-			this.ocOrientation.Name = "ocOrientation";
-			this.ocOrientation.Size = new System.Drawing.Size( 206, 150 );
-			this.ocOrientation.TabIndex = 3;
-			// 
-			// aicHeading
-			// 
-			this.aicHeading.Location = new System.Drawing.Point( 351, 6 );
-			this.aicHeading.Name = "aicHeading";
-			this.aicHeading.Size = new System.Drawing.Size( 150, 150 );
-			this.aicHeading.TabIndex = 6;
-			this.aicHeading.Text = "headingIndicator1";
-			// 
-			// aicAltimeter
-			// 
-			this.aicAltimeter.Location = new System.Drawing.Point( 15, 6 );
-			this.aicAltimeter.Name = "aicAltimeter";
-			this.aicAltimeter.Size = new System.Drawing.Size( 150, 150 );
-			this.aicAltimeter.TabIndex = 5;
-			this.aicAltimeter.Text = "altimeter1";
-			// 
 			// tpSensors
 			// 
 			this.tpSensors.BackColor = System.Drawing.Color.Transparent;
@@ -458,23 +319,6 @@
 			this.tpSensors.Size = new System.Drawing.Size( 721, 356 );
 			this.tpSensors.TabIndex = 1;
 			this.tpSensors.Text = "Sensors";
-			// 
-			// plotSensors
-			// 
-			this.plotSensors.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-						| System.Windows.Forms.AnchorStyles.Left)
-						| System.Windows.Forms.AnchorStyles.Right)));
-			this.plotSensors.BackColor = System.Drawing.Color.Transparent;
-			this.plotSensors.BackgroundColorBot = System.Drawing.Color.White;
-			this.plotSensors.BackgroundColorTop = System.Drawing.Color.White;
-			this.plotSensors.DashedGridColor = System.Drawing.Color.DarkGray;
-			this.plotSensors.DoubleBuffering = true;
-			this.plotSensors.Location = new System.Drawing.Point( 87, 6 );
-			this.plotSensors.Name = "plotSensors";
-			this.plotSensors.PlaySpeed = 0.5F;
-			this.plotSensors.Size = new System.Drawing.Size( 626, 344 );
-			this.plotSensors.SolidGridColor = System.Drawing.Color.DarkGray;
-			this.plotSensors.TabIndex = 14;
 			// 
 			// cbVoltage
 			// 
@@ -772,6 +616,7 @@
 			// tpControlSetup
 			// 
 			this.tpControlSetup.BackColor = System.Drawing.SystemColors.Control;
+			this.tpControlSetup.Controls.Add( this.btnControlReset );
 			this.tpControlSetup.Controls.Add( this.tbCalibrateDocs );
 			this.tpControlSetup.Controls.Add( this.lblYawSpeed );
 			this.tpControlSetup.Controls.Add( this.label5 );
@@ -818,12 +663,69 @@
 			this.tpControlSetup.TabIndex = 3;
 			this.tpControlSetup.Text = "Control Setup";
 			// 
+			// btnControlReset
+			// 
+			this.btnControlReset.Location = new System.Drawing.Point( 136, 19 );
+			this.btnControlReset.Name = "btnControlReset";
+			this.btnControlReset.Size = new System.Drawing.Size( 75, 23 );
+			this.btnControlReset.TabIndex = 0;
+			this.btnControlReset.Text = "Reset";
+			this.tlToolTip.SetToolTip( this.btnControlReset, "Automatically determine channel ranges and reverse settings" );
+			this.btnControlReset.UseVisualStyleBackColor = true;
+			this.btnControlReset.Click += new System.EventHandler( this.btnControlReset_Click );
+			// 
+			// tbCalibrateDocs
+			// 
+			this.tbCalibrateDocs.AcceptsReturn = true;
+			this.tbCalibrateDocs.BackColor = System.Drawing.Color.Orange;
+			this.tbCalibrateDocs.BorderStyle = System.Windows.Forms.BorderStyle.None;
+			this.tbCalibrateDocs.Font = new System.Drawing.Font( "Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.tbCalibrateDocs.Location = new System.Drawing.Point( 7, 213 );
+			this.tbCalibrateDocs.Multiline = true;
+			this.tbCalibrateDocs.Name = "tbCalibrateDocs";
+			this.tbCalibrateDocs.ReadOnly = true;
+			this.tbCalibrateDocs.Size = new System.Drawing.Size( 706, 10 );
+			this.tbCalibrateDocs.TabIndex = 64;
+			this.tbCalibrateDocs.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+			this.tbCalibrateDocs.Visible = false;
+			// 
+			// lblYawSpeed
+			// 
+			this.lblYawSpeed.AutoSize = true;
+			this.lblYawSpeed.Location = new System.Drawing.Point( 606, 270 );
+			this.lblYawSpeed.Name = "lblYawSpeed";
+			this.lblYawSpeed.Size = new System.Drawing.Size( 19, 13 );
+			this.lblYawSpeed.TabIndex = 74;
+			this.lblYawSpeed.Text = "40";
+			// 
+			// label5
+			// 
+			this.label5.Location = new System.Drawing.Point( 346, 254 );
+			this.label5.Name = "label5";
+			this.label5.Size = new System.Drawing.Size( 87, 45 );
+			this.label5.TabIndex = 73;
+			this.label5.Text = "Yaw Speed (Manual)";
+			this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// tbYawSpeed
+			// 
+			this.tbYawSpeed.LargeChange = 12;
+			this.tbYawSpeed.Location = new System.Drawing.Point( 439, 254 );
+			this.tbYawSpeed.Maximum = 128;
+			this.tbYawSpeed.Minimum = 8;
+			this.tbYawSpeed.Name = "tbYawSpeed";
+			this.tbYawSpeed.Size = new System.Drawing.Size( 161, 45 );
+			this.tbYawSpeed.TabIndex = 20;
+			this.tbYawSpeed.TickFrequency = 5;
+			this.tbYawSpeed.Value = 40;
+			this.tbYawSpeed.Scroll += new System.EventHandler( this.tbYawSpeed_Scroll );
+			// 
 			// btnUploadRollPitch
 			// 
 			this.btnUploadRollPitch.Location = new System.Drawing.Point( 297, 328 );
 			this.btnUploadRollPitch.Name = "btnUploadRollPitch";
 			this.btnUploadRollPitch.Size = new System.Drawing.Size( 75, 22 );
-			this.btnUploadRollPitch.TabIndex = 71;
+			this.btnUploadRollPitch.TabIndex = 22;
 			this.btnUploadRollPitch.Text = "Upload";
 			this.btnUploadRollPitch.UseVisualStyleBackColor = true;
 			this.btnUploadRollPitch.Click += new System.EventHandler( this.btnUploadRollPitch_Click );
@@ -863,7 +765,7 @@
 			this.tbRollPitchSpeed.Minimum = 8;
 			this.tbRollPitchSpeed.Name = "tbRollPitchSpeed";
 			this.tbRollPitchSpeed.Size = new System.Drawing.Size( 161, 45 );
-			this.tbRollPitchSpeed.TabIndex = 67;
+			this.tbRollPitchSpeed.TabIndex = 21;
 			this.tbRollPitchSpeed.TickFrequency = 5;
 			this.tbRollPitchSpeed.Value = 64;
 			this.tbRollPitchSpeed.ValueChanged += new System.EventHandler( this.tbRollPitchSpeed_ValueChanged );
@@ -885,32 +787,17 @@
 			this.tbRollPitchAngle.Minimum = 10;
 			this.tbRollPitchAngle.Name = "tbRollPitchAngle";
 			this.tbRollPitchAngle.Size = new System.Drawing.Size( 161, 45 );
-			this.tbRollPitchAngle.TabIndex = 65;
+			this.tbRollPitchAngle.TabIndex = 19;
 			this.tbRollPitchAngle.TickFrequency = 5;
 			this.tbRollPitchAngle.Value = 30;
 			this.tbRollPitchAngle.ValueChanged += new System.EventHandler( this.tbRollPitchAngle_ValueChanged );
 			// 
-			// tbCalibrateDocs
-			// 
-			this.tbCalibrateDocs.AcceptsReturn = true;
-			this.tbCalibrateDocs.BackColor = System.Drawing.Color.Orange;
-			this.tbCalibrateDocs.BorderStyle = System.Windows.Forms.BorderStyle.None;
-			this.tbCalibrateDocs.Font = new System.Drawing.Font( "Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.tbCalibrateDocs.Location = new System.Drawing.Point( 7, 213 );
-			this.tbCalibrateDocs.Multiline = true;
-			this.tbCalibrateDocs.Name = "tbCalibrateDocs";
-			this.tbCalibrateDocs.ReadOnly = true;
-			this.tbCalibrateDocs.Size = new System.Drawing.Size( 706, 10 );
-			this.tbCalibrateDocs.TabIndex = 64;
-			this.tbCalibrateDocs.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-			this.tbCalibrateDocs.Visible = false;
-			// 
 			// btnCalibrate
 			// 
-			this.btnCalibrate.Location = new System.Drawing.Point( 230, 19 );
+			this.btnCalibrate.Location = new System.Drawing.Point( 233, 19 );
 			this.btnCalibrate.Name = "btnCalibrate";
 			this.btnCalibrate.Size = new System.Drawing.Size( 75, 23 );
-			this.btnCalibrate.TabIndex = 63;
+			this.btnCalibrate.TabIndex = 17;
 			this.btnCalibrate.Text = "Calibrate";
 			this.tlToolTip.SetToolTip( this.btnCalibrate, "Automatically determine channel ranges and reverse settings" );
 			this.btnCalibrate.UseVisualStyleBackColor = true;
@@ -935,7 +822,7 @@
 			this.cbReceiverType.Location = new System.Drawing.Point( 328, 21 );
 			this.cbReceiverType.Name = "cbReceiverType";
 			this.cbReceiverType.Size = new System.Drawing.Size( 74, 21 );
-			this.cbReceiverType.TabIndex = 61;
+			this.cbReceiverType.TabIndex = 18;
 			this.tlToolTip.SetToolTip( this.cbReceiverType, "Choose the communication type for your receiver (SBUS = 1 wire, PWM = multiple wi" +
 					"res)" );
 			// 
@@ -945,7 +832,7 @@
 			this.cbRev8.Location = new System.Drawing.Point( 670, 188 );
 			this.cbRev8.Name = "cbRev8";
 			this.cbRev8.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev8.TabIndex = 60;
+			this.cbRev8.TabIndex = 16;
 			this.cbRev8.Tag = "8";
 			this.cbRev8.Text = "Rev";
 			this.cbRev8.UseVisualStyleBackColor = true;
@@ -957,7 +844,7 @@
 			this.cbRev7.Location = new System.Drawing.Point( 670, 145 );
 			this.cbRev7.Name = "cbRev7";
 			this.cbRev7.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev7.TabIndex = 59;
+			this.cbRev7.TabIndex = 15;
 			this.cbRev7.Tag = "7";
 			this.cbRev7.Text = "Rev";
 			this.cbRev7.UseVisualStyleBackColor = true;
@@ -969,7 +856,7 @@
 			this.cbRev2.Location = new System.Drawing.Point( 670, 102 );
 			this.cbRev2.Name = "cbRev2";
 			this.cbRev2.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev2.TabIndex = 58;
+			this.cbRev2.TabIndex = 14;
 			this.cbRev2.Tag = "2";
 			this.cbRev2.Text = "Rev";
 			this.cbRev2.UseVisualStyleBackColor = true;
@@ -981,7 +868,7 @@
 			this.cbRev3.Location = new System.Drawing.Point( 670, 59 );
 			this.cbRev3.Name = "cbRev3";
 			this.cbRev3.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev3.TabIndex = 57;
+			this.cbRev3.TabIndex = 13;
 			this.cbRev3.Tag = "3";
 			this.cbRev3.Text = "Rev";
 			this.cbRev3.UseVisualStyleBackColor = true;
@@ -994,7 +881,7 @@
 			this.cbRev6.Name = "cbRev6";
 			this.cbRev6.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
 			this.cbRev6.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev6.TabIndex = 56;
+			this.cbRev6.TabIndex = 3;
 			this.cbRev6.Tag = "6";
 			this.cbRev6.Text = "Rev";
 			this.cbRev6.UseVisualStyleBackColor = true;
@@ -1007,7 +894,7 @@
 			this.cbRev5.Name = "cbRev5";
 			this.cbRev5.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
 			this.cbRev5.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev5.TabIndex = 55;
+			this.cbRev5.TabIndex = 2;
 			this.cbRev5.Tag = "5";
 			this.cbRev5.Text = "Rev";
 			this.cbRev5.UseVisualStyleBackColor = true;
@@ -1020,7 +907,7 @@
 			this.cbRev4.Name = "cbRev4";
 			this.cbRev4.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
 			this.cbRev4.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev4.TabIndex = 54;
+			this.cbRev4.TabIndex = 1;
 			this.cbRev4.Tag = "4";
 			this.cbRev4.Text = "Rev";
 			this.cbRev4.UseVisualStyleBackColor = true;
@@ -1033,7 +920,7 @@
 			this.cbRev1.Name = "cbRev1";
 			this.cbRev1.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
 			this.cbRev1.Size = new System.Drawing.Size( 46, 17 );
-			this.cbRev1.TabIndex = 53;
+			this.cbRev1.TabIndex = 0;
 			this.cbRev1.Tag = "1";
 			this.cbRev1.Text = "Rev";
 			this.cbRev1.UseVisualStyleBackColor = true;
@@ -1046,7 +933,7 @@
 			this.cbChannel8.Location = new System.Drawing.Point( 616, 186 );
 			this.cbChannel8.Name = "cbChannel8";
 			this.cbChannel8.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel8.TabIndex = 50;
+			this.cbChannel8.TabIndex = 12;
 			this.cbChannel8.Tag = "8";
 			this.cbChannel8.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1057,7 +944,7 @@
 			this.cbChannel7.Location = new System.Drawing.Point( 616, 143 );
 			this.cbChannel7.Name = "cbChannel7";
 			this.cbChannel7.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel7.TabIndex = 49;
+			this.cbChannel7.TabIndex = 11;
 			this.cbChannel7.Tag = "7";
 			this.cbChannel7.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1068,7 +955,7 @@
 			this.cbChannel2.Location = new System.Drawing.Point( 616, 100 );
 			this.cbChannel2.Name = "cbChannel2";
 			this.cbChannel2.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel2.TabIndex = 48;
+			this.cbChannel2.TabIndex = 9;
 			this.cbChannel2.Tag = "2";
 			this.cbChannel2.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1079,7 +966,7 @@
 			this.cbChannel3.Location = new System.Drawing.Point( 616, 57 );
 			this.cbChannel3.Name = "cbChannel3";
 			this.cbChannel3.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel3.TabIndex = 47;
+			this.cbChannel3.TabIndex = 8;
 			this.cbChannel3.Tag = "3";
 			this.cbChannel3.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1090,7 +977,7 @@
 			this.cbChannel6.Location = new System.Drawing.Point( 59, 186 );
 			this.cbChannel6.Name = "cbChannel6";
 			this.cbChannel6.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel6.TabIndex = 46;
+			this.cbChannel6.TabIndex = 7;
 			this.cbChannel6.Tag = "6";
 			this.cbChannel6.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1101,7 +988,7 @@
 			this.cbChannel5.Location = new System.Drawing.Point( 59, 143 );
 			this.cbChannel5.Name = "cbChannel5";
 			this.cbChannel5.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel5.TabIndex = 45;
+			this.cbChannel5.TabIndex = 6;
 			this.cbChannel5.Tag = "5";
 			this.cbChannel5.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1112,7 +999,7 @@
 			this.cbChannel4.Location = new System.Drawing.Point( 59, 100 );
 			this.cbChannel4.Name = "cbChannel4";
 			this.cbChannel4.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel4.TabIndex = 44;
+			this.cbChannel4.TabIndex = 5;
 			this.cbChannel4.Tag = "4";
 			this.cbChannel4.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
@@ -1123,137 +1010,140 @@
 			this.cbChannel1.Location = new System.Drawing.Point( 59, 57 );
 			this.cbChannel1.Name = "cbChannel1";
 			this.cbChannel1.Size = new System.Drawing.Size( 46, 21 );
-			this.cbChannel1.TabIndex = 43;
+			this.cbChannel1.TabIndex = 4;
 			this.cbChannel1.Tag = "1";
 			this.cbChannel1.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
-			// vbR_Channel8
-			// 
-			this.vbR_Channel8.FromLeft = true;
-			this.vbR_Channel8.LeftLabel = "Aux3";
-			this.vbR_Channel8.Location = new System.Drawing.Point( 527, 186 );
-			this.vbR_Channel8.MaxValue = 1024;
-			this.vbR_Channel8.MinValue = -1024;
-			this.vbR_Channel8.Name = "vbR_Channel8";
-			this.vbR_Channel8.RightLabel = "0";
-			this.vbR_Channel8.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel8.TabIndex = 42;
-			this.vbR_Channel8.Value = 0;
-			// 
-			// vbR_Channel7
-			// 
-			this.vbR_Channel7.FromLeft = true;
-			this.vbR_Channel7.LeftLabel = "Aux2";
-			this.vbR_Channel7.Location = new System.Drawing.Point( 527, 143 );
-			this.vbR_Channel7.MaxValue = 1024;
-			this.vbR_Channel7.MinValue = -1024;
-			this.vbR_Channel7.Name = "vbR_Channel7";
-			this.vbR_Channel7.RightLabel = "0";
-			this.vbR_Channel7.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel7.TabIndex = 41;
-			this.vbR_Channel7.Value = 0;
-			// 
-			// vbR_Channel6
-			// 
-			this.vbR_Channel6.FromLeft = true;
-			this.vbR_Channel6.LeftLabel = "Aux1";
-			this.vbR_Channel6.Location = new System.Drawing.Point( 111, 186 );
-			this.vbR_Channel6.MaxValue = 1024;
-			this.vbR_Channel6.MinValue = -1024;
-			this.vbR_Channel6.Name = "vbR_Channel6";
-			this.vbR_Channel6.RightLabel = "0";
-			this.vbR_Channel6.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel6.TabIndex = 40;
-			this.vbR_Channel6.Value = 0;
-			// 
-			// vbR_Channel5
-			// 
-			this.vbR_Channel5.FromLeft = true;
-			this.vbR_Channel5.LeftLabel = "Gear";
-			this.vbR_Channel5.Location = new System.Drawing.Point( 111, 143 );
-			this.vbR_Channel5.MaxValue = 1024;
-			this.vbR_Channel5.MinValue = -1024;
-			this.vbR_Channel5.Name = "vbR_Channel5";
-			this.vbR_Channel5.RightLabel = "0";
-			this.vbR_Channel5.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel5.TabIndex = 39;
-			this.vbR_Channel5.Value = 0;
-			// 
-			// vbR_RS_XValue
-			// 
-			this.vbR_RS_XValue.FromLeft = true;
-			this.vbR_RS_XValue.LeftLabel = "Aileron";
-			this.vbR_RS_XValue.Location = new System.Drawing.Point( 527, 100 );
-			this.vbR_RS_XValue.MaxValue = 1024;
-			this.vbR_RS_XValue.MinValue = -1024;
-			this.vbR_RS_XValue.Name = "vbR_RS_XValue";
-			this.vbR_RS_XValue.RightLabel = "0";
-			this.vbR_RS_XValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_RS_XValue.TabIndex = 38;
-			this.vbR_RS_XValue.Value = 0;
-			// 
-			// vbR_RS_YValue
-			// 
-			this.vbR_RS_YValue.FromLeft = true;
-			this.vbR_RS_YValue.LeftLabel = "Elevator";
-			this.vbR_RS_YValue.Location = new System.Drawing.Point( 527, 57 );
-			this.vbR_RS_YValue.MaxValue = 1024;
-			this.vbR_RS_YValue.MinValue = -1024;
-			this.vbR_RS_YValue.Name = "vbR_RS_YValue";
-			this.vbR_RS_YValue.RightLabel = "0";
-			this.vbR_RS_YValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_RS_YValue.TabIndex = 37;
-			this.vbR_RS_YValue.Value = 0;
-			// 
-			// vbR_LS_XValue
-			// 
-			this.vbR_LS_XValue.FromLeft = true;
-			this.vbR_LS_XValue.LeftLabel = "Rudder";
-			this.vbR_LS_XValue.Location = new System.Drawing.Point( 111, 100 );
-			this.vbR_LS_XValue.MaxValue = 1024;
-			this.vbR_LS_XValue.MinValue = -1024;
-			this.vbR_LS_XValue.Name = "vbR_LS_XValue";
-			this.vbR_LS_XValue.RightLabel = "0";
-			this.vbR_LS_XValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_LS_XValue.TabIndex = 36;
-			this.vbR_LS_XValue.Value = 0;
-			// 
-			// vbR_LS_YValue
-			// 
-			this.vbR_LS_YValue.FromLeft = true;
-			this.vbR_LS_YValue.LeftLabel = "Throttle";
-			this.vbR_LS_YValue.Location = new System.Drawing.Point( 111, 57 );
-			this.vbR_LS_YValue.MaxValue = 1024;
-			this.vbR_LS_YValue.MinValue = -1024;
-			this.vbR_LS_YValue.Name = "vbR_LS_YValue";
-			this.vbR_LS_YValue.RightLabel = "0";
-			this.vbR_LS_YValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_LS_YValue.TabIndex = 35;
-			this.vbR_LS_YValue.Value = 0;
-			// 
-			// rsR_Right
-			// 
-			this.rsR_Right.Location = new System.Drawing.Point( 367, 57 );
-			this.rsR_Right.Name = "rsR_Right";
-			this.rsR_Right.Size = new System.Drawing.Size( 150, 150 );
-			this.rsR_Right.TabIndex = 34;
-			this.rsR_Right.Text = "radioStick2";
-			// 
-			// rsR_Left
-			// 
-			this.rsR_Left.Location = new System.Drawing.Point( 204, 57 );
-			this.rsR_Left.Name = "rsR_Left";
-			this.rsR_Left.Size = new System.Drawing.Size( 150, 150 );
-			this.rsR_Left.TabIndex = 33;
-			this.rsR_Left.Text = "radioStick1";
-			// 
 			// tpSystemSetup
 			// 
+			this.tpSystemSetup.Controls.Add( this.btnUploadThrottle );
+			this.tpSystemSetup.Controls.Add( this.udTestThrottle );
+			this.tpSystemSetup.Controls.Add( this.label8 );
+			this.tpSystemSetup.Controls.Add( this.udHighThrottle );
+			this.tpSystemSetup.Controls.Add( this.udArmedLowThrottle );
+			this.tpSystemSetup.Controls.Add( this.udLowThrottle );
+			this.tpSystemSetup.Controls.Add( this.label7 );
+			this.tpSystemSetup.Controls.Add( this.label6 );
+			this.tpSystemSetup.Controls.Add( this.label4 );
 			this.tpSystemSetup.Location = new System.Drawing.Point( 4, 22 );
 			this.tpSystemSetup.Name = "tpSystemSetup";
 			this.tpSystemSetup.Size = new System.Drawing.Size( 721, 356 );
 			this.tpSystemSetup.TabIndex = 4;
 			this.tpSystemSetup.Text = "System Setup";
+			// 
+			// btnUploadThrottle
+			// 
+			this.btnUploadThrottle.Location = new System.Drawing.Point( 232, 101 );
+			this.btnUploadThrottle.Name = "btnUploadThrottle";
+			this.btnUploadThrottle.Size = new System.Drawing.Size( 75, 23 );
+			this.btnUploadThrottle.TabIndex = 4;
+			this.btnUploadThrottle.Text = "Upload";
+			this.btnUploadThrottle.UseVisualStyleBackColor = true;
+			this.btnUploadThrottle.Click += new System.EventHandler( this.btnUploadThrottle_Click );
+			// 
+			// udTestThrottle
+			// 
+			this.udTestThrottle.Location = new System.Drawing.Point( 126, 124 );
+			this.udTestThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udTestThrottle.Name = "udTestThrottle";
+			this.udTestThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udTestThrottle.TabIndex = 2;
+			this.udTestThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// label8
+			// 
+			this.label8.AutoSize = true;
+			this.label8.Location = new System.Drawing.Point( 53, 126 );
+			this.label8.Name = "label8";
+			this.label8.Size = new System.Drawing.Size( 67, 13 );
+			this.label8.TabIndex = 6;
+			this.label8.Text = "Test Throttle";
+			// 
+			// udHighThrottle
+			// 
+			this.udHighThrottle.Location = new System.Drawing.Point( 126, 148 );
+			this.udHighThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udHighThrottle.Name = "udHighThrottle";
+			this.udHighThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udHighThrottle.TabIndex = 3;
+			this.udHighThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// udArmedLowThrottle
+			// 
+			this.udArmedLowThrottle.Location = new System.Drawing.Point( 126, 99 );
+			this.udArmedLowThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udArmedLowThrottle.Name = "udArmedLowThrottle";
+			this.udArmedLowThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udArmedLowThrottle.TabIndex = 1;
+			this.udArmedLowThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// udLowThrottle
+			// 
+			this.udLowThrottle.Location = new System.Drawing.Point( 126, 74 );
+			this.udLowThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udLowThrottle.Name = "udLowThrottle";
+			this.udLowThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udLowThrottle.TabIndex = 0;
+			this.udLowThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// label7
+			// 
+			this.label7.AutoSize = true;
+			this.label7.Location = new System.Drawing.Point( 53, 150 );
+			this.label7.Name = "label7";
+			this.label7.Size = new System.Drawing.Size( 68, 13 );
+			this.label7.TabIndex = 2;
+			this.label7.Text = "High Throttle";
+			// 
+			// label6
+			// 
+			this.label6.AutoSize = true;
+			this.label6.Location = new System.Drawing.Point( 21, 101 );
+			this.label6.Name = "label6";
+			this.label6.Size = new System.Drawing.Size( 99, 13 );
+			this.label6.TabIndex = 1;
+			this.label6.Text = "Armed Low Throttle";
+			// 
+			// label4
+			// 
+			this.label4.AutoSize = true;
+			this.label4.Location = new System.Drawing.Point( 53, 76 );
+			this.label4.Name = "label4";
+			this.label4.Size = new System.Drawing.Size( 66, 13 );
+			this.label4.TabIndex = 0;
+			this.label4.Text = "Low Throttle";
 			// 
 			// tpGyroCalibration
 			// 
@@ -1272,50 +1162,6 @@
 			this.tpGyroCalibration.Size = new System.Drawing.Size( 721, 356 );
 			this.tpGyroCalibration.TabIndex = 5;
 			this.tpGyroCalibration.Text = "Gyro Calibration";
-			// 
-			// gCalibTemp
-			// 
-			this.gCalibTemp.AverageCount = 128;
-			this.gCalibTemp.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibTemp.Location = new System.Drawing.Point( 251, 254 );
-			this.gCalibTemp.Name = "gCalibTemp";
-			this.gCalibTemp.Range = 8192F;
-			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibTemp.TabIndex = 38;
-			this.gCalibTemp.Value = 0F;
-			// 
-			// gCalibZ
-			// 
-			this.gCalibZ.AverageCount = 128;
-			this.gCalibZ.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibZ.Location = new System.Drawing.Point( 560, 254 );
-			this.gCalibZ.Name = "gCalibZ";
-			this.gCalibZ.Range = 8192F;
-			this.gCalibZ.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibZ.TabIndex = 37;
-			this.gCalibZ.Value = 0F;
-			// 
-			// gCalibY
-			// 
-			this.gCalibY.AverageCount = 128;
-			this.gCalibY.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibY.Location = new System.Drawing.Point( 466, 254 );
-			this.gCalibY.Name = "gCalibY";
-			this.gCalibY.Range = 8192F;
-			this.gCalibY.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibY.TabIndex = 36;
-			this.gCalibY.Value = 0F;
-			// 
-			// gCalibX
-			// 
-			this.gCalibX.AverageCount = 128;
-			this.gCalibX.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibX.Location = new System.Drawing.Point( 372, 254 );
-			this.gCalibX.Name = "gCalibX";
-			this.gCalibX.Range = 8192F;
-			this.gCalibX.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibX.TabIndex = 35;
-			this.gCalibX.Value = 0F;
 			// 
 			// btnUploadGyroCalibration
 			// 
@@ -1490,13 +1336,6 @@
 			this.gxScale.Text = "0";
 			this.gxScale.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
-			// lfGraph
-			// 
-			this.lfGraph.Location = new System.Drawing.Point( 224, 19 );
-			this.lfGraph.Name = "lfGraph";
-			this.lfGraph.Size = new System.Drawing.Size( 447, 232 );
-			this.lfGraph.TabIndex = 29;
-			// 
 			// tpAccelCalibration
 			// 
 			this.tpAccelCalibration.Controls.Add( this.ocAccelOrient );
@@ -1507,16 +1346,6 @@
 			this.tpAccelCalibration.Size = new System.Drawing.Size( 721, 356 );
 			this.tpAccelCalibration.TabIndex = 6;
 			this.tpAccelCalibration.Text = "Accel Calibration";
-			// 
-			// ocAccelOrient
-			// 
-			this.ocAccelOrient.CubeDepth = 1.25F;
-			this.ocAccelOrient.CubeHeight = 0.6F;
-			this.ocAccelOrient.CubeWidth = 1.25F;
-			this.ocAccelOrient.Location = new System.Drawing.Point( 358, 166 );
-			this.ocAccelOrient.Name = "ocAccelOrient";
-			this.ocAccelOrient.Size = new System.Drawing.Size( 313, 165 );
-			this.ocAccelOrient.TabIndex = 37;
 			// 
 			// groupBox6
 			// 
@@ -1630,39 +1459,6 @@
 			this.groupBox5.TabIndex = 35;
 			this.groupBox5.TabStop = false;
 			this.groupBox5.Text = "Fixed offset compensation";
-			// 
-			// gAccelXCal
-			// 
-			this.gAccelXCal.AverageCount = 325;
-			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelXCal.Location = new System.Drawing.Point( 6, 19 );
-			this.gAccelXCal.Name = "gAccelXCal";
-			this.gAccelXCal.Range = 32768F;
-			this.gAccelXCal.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelXCal.TabIndex = 12;
-			this.gAccelXCal.Value = 0F;
-			// 
-			// gAccelYCal
-			// 
-			this.gAccelYCal.AverageCount = 325;
-			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelYCal.Location = new System.Drawing.Point( 103, 19 );
-			this.gAccelYCal.Name = "gAccelYCal";
-			this.gAccelYCal.Range = 32768F;
-			this.gAccelYCal.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelYCal.TabIndex = 13;
-			this.gAccelYCal.Value = 0F;
-			// 
-			// gAccelZCal
-			// 
-			this.gAccelZCal.AverageCount = 325;
-			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelZCal.Location = new System.Drawing.Point( 200, 19 );
-			this.gAccelZCal.Name = "gAccelZCal";
-			this.gAccelZCal.Range = 32768F;
-			this.gAccelZCal.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelZCal.TabIndex = 14;
-			this.gAccelZCal.Value = 0F;
 			// 
 			// label39
 			// 
@@ -1955,6 +1751,391 @@
 			this.comboBox8.Size = new System.Drawing.Size( 40, 21 );
 			this.comboBox8.TabIndex = 43;
 			// 
+			// vbChannel8
+			// 
+			this.vbChannel8.FromLeft = true;
+			this.vbChannel8.LeftLabel = "Aux3";
+			this.vbChannel8.Location = new System.Drawing.Point( 425, 290 );
+			this.vbChannel8.MaxValue = 1024;
+			this.vbChannel8.MinValue = -1024;
+			this.vbChannel8.Name = "vbChannel8";
+			this.vbChannel8.RightLabel = "0";
+			this.vbChannel8.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel8.TabIndex = 32;
+			this.vbChannel8.Value = 0;
+			// 
+			// vbChannel7
+			// 
+			this.vbChannel7.FromLeft = true;
+			this.vbChannel7.LeftLabel = "Aux2";
+			this.vbChannel7.Location = new System.Drawing.Point( 425, 262 );
+			this.vbChannel7.MaxValue = 1024;
+			this.vbChannel7.MinValue = -1024;
+			this.vbChannel7.Name = "vbChannel7";
+			this.vbChannel7.RightLabel = "0";
+			this.vbChannel7.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel7.TabIndex = 31;
+			this.vbChannel7.Value = 0;
+			// 
+			// vbChannel6
+			// 
+			this.vbChannel6.FromLeft = true;
+			this.vbChannel6.LeftLabel = "Aux1";
+			this.vbChannel6.Location = new System.Drawing.Point( 9, 290 );
+			this.vbChannel6.MaxValue = 1024;
+			this.vbChannel6.MinValue = -1024;
+			this.vbChannel6.Name = "vbChannel6";
+			this.vbChannel6.RightLabel = "0";
+			this.vbChannel6.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel6.TabIndex = 30;
+			this.vbChannel6.Value = 0;
+			// 
+			// vbChannel5
+			// 
+			this.vbChannel5.FromLeft = true;
+			this.vbChannel5.LeftLabel = "Gear";
+			this.vbChannel5.Location = new System.Drawing.Point( 9, 262 );
+			this.vbChannel5.MaxValue = 1024;
+			this.vbChannel5.MinValue = -1024;
+			this.vbChannel5.Name = "vbChannel5";
+			this.vbChannel5.RightLabel = "0";
+			this.vbChannel5.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel5.TabIndex = 29;
+			this.vbChannel5.Value = 0;
+			// 
+			// vbRS_XValue
+			// 
+			this.vbRS_XValue.FromLeft = true;
+			this.vbRS_XValue.LeftLabel = "Aileron";
+			this.vbRS_XValue.Location = new System.Drawing.Point( 425, 234 );
+			this.vbRS_XValue.MaxValue = 1024;
+			this.vbRS_XValue.MinValue = -1024;
+			this.vbRS_XValue.Name = "vbRS_XValue";
+			this.vbRS_XValue.RightLabel = "0";
+			this.vbRS_XValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbRS_XValue.TabIndex = 28;
+			this.vbRS_XValue.Value = 0;
+			// 
+			// vbRS_YValue
+			// 
+			this.vbRS_YValue.FromLeft = true;
+			this.vbRS_YValue.LeftLabel = "Elevator";
+			this.vbRS_YValue.Location = new System.Drawing.Point( 425, 206 );
+			this.vbRS_YValue.MaxValue = 1024;
+			this.vbRS_YValue.MinValue = -1024;
+			this.vbRS_YValue.Name = "vbRS_YValue";
+			this.vbRS_YValue.RightLabel = "0";
+			this.vbRS_YValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbRS_YValue.TabIndex = 27;
+			this.vbRS_YValue.Value = 0;
+			// 
+			// vbLS_XValue
+			// 
+			this.vbLS_XValue.FromLeft = true;
+			this.vbLS_XValue.LeftLabel = "Rudder";
+			this.vbLS_XValue.Location = new System.Drawing.Point( 9, 234 );
+			this.vbLS_XValue.MaxValue = 1024;
+			this.vbLS_XValue.MinValue = -1024;
+			this.vbLS_XValue.Name = "vbLS_XValue";
+			this.vbLS_XValue.RightLabel = "0";
+			this.vbLS_XValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbLS_XValue.TabIndex = 26;
+			this.vbLS_XValue.Value = 0;
+			// 
+			// vbLS_YValue
+			// 
+			this.vbLS_YValue.FromLeft = true;
+			this.vbLS_YValue.LeftLabel = "Throttle";
+			this.vbLS_YValue.Location = new System.Drawing.Point( 9, 206 );
+			this.vbLS_YValue.MaxValue = 1024;
+			this.vbLS_YValue.MinValue = -1024;
+			this.vbLS_YValue.Name = "vbLS_YValue";
+			this.vbLS_YValue.RightLabel = "0";
+			this.vbLS_YValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbLS_YValue.TabIndex = 25;
+			this.vbLS_YValue.Value = 0;
+			// 
+			// rsRight
+			// 
+			this.rsRight.Location = new System.Drawing.Point( 265, 182 );
+			this.rsRight.Name = "rsRight";
+			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
+			this.rsRight.TabIndex = 8;
+			this.rsRight.Text = "radioStick2";
+			// 
+			// rsLeft
+			// 
+			this.rsLeft.Location = new System.Drawing.Point( 102, 182 );
+			this.rsLeft.Name = "rsLeft";
+			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
+			this.rsLeft.TabIndex = 7;
+			this.rsLeft.Text = "radioStick1";
+			// 
+			// aicAttitude
+			// 
+			this.aicAttitude.Location = new System.Drawing.Point( 183, 6 );
+			this.aicAttitude.Name = "aicAttitude";
+			this.aicAttitude.Size = new System.Drawing.Size( 150, 150 );
+			this.aicAttitude.TabIndex = 4;
+			this.aicAttitude.Text = "attitudeIndicatorInstrumentControl1";
+			// 
+			// ocOrientation
+			// 
+			this.ocOrientation.CubeDepth = 1.2F;
+			this.ocOrientation.CubeHeight = 0.8F;
+			this.ocOrientation.CubeWidth = 1.2F;
+			this.ocOrientation.Location = new System.Drawing.Point( 507, 6 );
+			this.ocOrientation.Name = "ocOrientation";
+			this.ocOrientation.Size = new System.Drawing.Size( 206, 150 );
+			this.ocOrientation.TabIndex = 3;
+			// 
+			// aicHeading
+			// 
+			this.aicHeading.Location = new System.Drawing.Point( 351, 6 );
+			this.aicHeading.Name = "aicHeading";
+			this.aicHeading.Size = new System.Drawing.Size( 150, 150 );
+			this.aicHeading.TabIndex = 6;
+			this.aicHeading.Text = "headingIndicator1";
+			// 
+			// aicAltimeter
+			// 
+			this.aicAltimeter.Location = new System.Drawing.Point( 15, 6 );
+			this.aicAltimeter.Name = "aicAltimeter";
+			this.aicAltimeter.Size = new System.Drawing.Size( 150, 150 );
+			this.aicAltimeter.TabIndex = 5;
+			this.aicAltimeter.Text = "altimeter1";
+			// 
+			// plotSensors
+			// 
+			this.plotSensors.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+						| System.Windows.Forms.AnchorStyles.Left)
+						| System.Windows.Forms.AnchorStyles.Right)));
+			this.plotSensors.BackColor = System.Drawing.Color.Transparent;
+			this.plotSensors.BackgroundColorBot = System.Drawing.Color.White;
+			this.plotSensors.BackgroundColorTop = System.Drawing.Color.White;
+			this.plotSensors.DashedGridColor = System.Drawing.Color.DarkGray;
+			this.plotSensors.DoubleBuffering = true;
+			this.plotSensors.Location = new System.Drawing.Point( 87, 6 );
+			this.plotSensors.Name = "plotSensors";
+			this.plotSensors.PlaySpeed = 0.5F;
+			this.plotSensors.Size = new System.Drawing.Size( 626, 344 );
+			this.plotSensors.SolidGridColor = System.Drawing.Color.DarkGray;
+			this.plotSensors.TabIndex = 14;
+			// 
+			// vbR_Channel8
+			// 
+			this.vbR_Channel8.FromLeft = true;
+			this.vbR_Channel8.LeftLabel = "Aux3";
+			this.vbR_Channel8.Location = new System.Drawing.Point( 527, 186 );
+			this.vbR_Channel8.MaxValue = 1024;
+			this.vbR_Channel8.MinValue = -1024;
+			this.vbR_Channel8.Name = "vbR_Channel8";
+			this.vbR_Channel8.RightLabel = "0";
+			this.vbR_Channel8.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel8.TabIndex = 42;
+			this.vbR_Channel8.Value = 0;
+			// 
+			// vbR_Channel7
+			// 
+			this.vbR_Channel7.FromLeft = true;
+			this.vbR_Channel7.LeftLabel = "Aux2";
+			this.vbR_Channel7.Location = new System.Drawing.Point( 527, 143 );
+			this.vbR_Channel7.MaxValue = 1024;
+			this.vbR_Channel7.MinValue = -1024;
+			this.vbR_Channel7.Name = "vbR_Channel7";
+			this.vbR_Channel7.RightLabel = "0";
+			this.vbR_Channel7.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel7.TabIndex = 41;
+			this.vbR_Channel7.Value = 0;
+			// 
+			// vbR_Channel6
+			// 
+			this.vbR_Channel6.FromLeft = true;
+			this.vbR_Channel6.LeftLabel = "Aux1";
+			this.vbR_Channel6.Location = new System.Drawing.Point( 111, 186 );
+			this.vbR_Channel6.MaxValue = 1024;
+			this.vbR_Channel6.MinValue = -1024;
+			this.vbR_Channel6.Name = "vbR_Channel6";
+			this.vbR_Channel6.RightLabel = "0";
+			this.vbR_Channel6.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel6.TabIndex = 40;
+			this.vbR_Channel6.Value = 0;
+			// 
+			// vbR_Channel5
+			// 
+			this.vbR_Channel5.FromLeft = true;
+			this.vbR_Channel5.LeftLabel = "Gear";
+			this.vbR_Channel5.Location = new System.Drawing.Point( 111, 143 );
+			this.vbR_Channel5.MaxValue = 1024;
+			this.vbR_Channel5.MinValue = -1024;
+			this.vbR_Channel5.Name = "vbR_Channel5";
+			this.vbR_Channel5.RightLabel = "0";
+			this.vbR_Channel5.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel5.TabIndex = 39;
+			this.vbR_Channel5.Value = 0;
+			// 
+			// vbR_RS_XValue
+			// 
+			this.vbR_RS_XValue.FromLeft = true;
+			this.vbR_RS_XValue.LeftLabel = "Aileron";
+			this.vbR_RS_XValue.Location = new System.Drawing.Point( 527, 100 );
+			this.vbR_RS_XValue.MaxValue = 1024;
+			this.vbR_RS_XValue.MinValue = -1024;
+			this.vbR_RS_XValue.Name = "vbR_RS_XValue";
+			this.vbR_RS_XValue.RightLabel = "0";
+			this.vbR_RS_XValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_RS_XValue.TabIndex = 38;
+			this.vbR_RS_XValue.Value = 0;
+			// 
+			// vbR_RS_YValue
+			// 
+			this.vbR_RS_YValue.FromLeft = true;
+			this.vbR_RS_YValue.LeftLabel = "Elevator";
+			this.vbR_RS_YValue.Location = new System.Drawing.Point( 527, 57 );
+			this.vbR_RS_YValue.MaxValue = 1024;
+			this.vbR_RS_YValue.MinValue = -1024;
+			this.vbR_RS_YValue.Name = "vbR_RS_YValue";
+			this.vbR_RS_YValue.RightLabel = "0";
+			this.vbR_RS_YValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_RS_YValue.TabIndex = 37;
+			this.vbR_RS_YValue.Value = 0;
+			// 
+			// vbR_LS_XValue
+			// 
+			this.vbR_LS_XValue.FromLeft = true;
+			this.vbR_LS_XValue.LeftLabel = "Rudder";
+			this.vbR_LS_XValue.Location = new System.Drawing.Point( 111, 100 );
+			this.vbR_LS_XValue.MaxValue = 1024;
+			this.vbR_LS_XValue.MinValue = -1024;
+			this.vbR_LS_XValue.Name = "vbR_LS_XValue";
+			this.vbR_LS_XValue.RightLabel = "0";
+			this.vbR_LS_XValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_LS_XValue.TabIndex = 36;
+			this.vbR_LS_XValue.Value = 0;
+			// 
+			// vbR_LS_YValue
+			// 
+			this.vbR_LS_YValue.FromLeft = true;
+			this.vbR_LS_YValue.LeftLabel = "Throttle";
+			this.vbR_LS_YValue.Location = new System.Drawing.Point( 111, 57 );
+			this.vbR_LS_YValue.MaxValue = 1024;
+			this.vbR_LS_YValue.MinValue = -1024;
+			this.vbR_LS_YValue.Name = "vbR_LS_YValue";
+			this.vbR_LS_YValue.RightLabel = "0";
+			this.vbR_LS_YValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_LS_YValue.TabIndex = 35;
+			this.vbR_LS_YValue.Value = 0;
+			// 
+			// rsR_Right
+			// 
+			this.rsR_Right.Location = new System.Drawing.Point( 367, 57 );
+			this.rsR_Right.Name = "rsR_Right";
+			this.rsR_Right.Size = new System.Drawing.Size( 150, 150 );
+			this.rsR_Right.TabIndex = 34;
+			this.rsR_Right.Text = "radioStick2";
+			// 
+			// rsR_Left
+			// 
+			this.rsR_Left.Location = new System.Drawing.Point( 204, 57 );
+			this.rsR_Left.Name = "rsR_Left";
+			this.rsR_Left.Size = new System.Drawing.Size( 150, 150 );
+			this.rsR_Left.TabIndex = 33;
+			this.rsR_Left.Text = "radioStick1";
+			// 
+			// gCalibTemp
+			// 
+			this.gCalibTemp.AverageCount = 128;
+			this.gCalibTemp.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibTemp.Location = new System.Drawing.Point( 251, 254 );
+			this.gCalibTemp.Name = "gCalibTemp";
+			this.gCalibTemp.Range = 8192F;
+			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibTemp.TabIndex = 38;
+			this.gCalibTemp.Value = 0F;
+			// 
+			// gCalibZ
+			// 
+			this.gCalibZ.AverageCount = 128;
+			this.gCalibZ.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibZ.Location = new System.Drawing.Point( 560, 254 );
+			this.gCalibZ.Name = "gCalibZ";
+			this.gCalibZ.Range = 8192F;
+			this.gCalibZ.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibZ.TabIndex = 37;
+			this.gCalibZ.Value = 0F;
+			// 
+			// gCalibY
+			// 
+			this.gCalibY.AverageCount = 128;
+			this.gCalibY.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibY.Location = new System.Drawing.Point( 466, 254 );
+			this.gCalibY.Name = "gCalibY";
+			this.gCalibY.Range = 8192F;
+			this.gCalibY.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibY.TabIndex = 36;
+			this.gCalibY.Value = 0F;
+			// 
+			// gCalibX
+			// 
+			this.gCalibX.AverageCount = 128;
+			this.gCalibX.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibX.Location = new System.Drawing.Point( 372, 254 );
+			this.gCalibX.Name = "gCalibX";
+			this.gCalibX.Range = 8192F;
+			this.gCalibX.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibX.TabIndex = 35;
+			this.gCalibX.Value = 0F;
+			// 
+			// lfGraph
+			// 
+			this.lfGraph.Location = new System.Drawing.Point( 224, 19 );
+			this.lfGraph.Name = "lfGraph";
+			this.lfGraph.Size = new System.Drawing.Size( 447, 232 );
+			this.lfGraph.TabIndex = 29;
+			// 
+			// ocAccelOrient
+			// 
+			this.ocAccelOrient.CubeDepth = 1.25F;
+			this.ocAccelOrient.CubeHeight = 0.6F;
+			this.ocAccelOrient.CubeWidth = 1.25F;
+			this.ocAccelOrient.Location = new System.Drawing.Point( 358, 166 );
+			this.ocAccelOrient.Name = "ocAccelOrient";
+			this.ocAccelOrient.Size = new System.Drawing.Size( 313, 165 );
+			this.ocAccelOrient.TabIndex = 37;
+			// 
+			// gAccelXCal
+			// 
+			this.gAccelXCal.AverageCount = 325;
+			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelXCal.Location = new System.Drawing.Point( 6, 19 );
+			this.gAccelXCal.Name = "gAccelXCal";
+			this.gAccelXCal.Range = 32768F;
+			this.gAccelXCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelXCal.TabIndex = 12;
+			this.gAccelXCal.Value = 0F;
+			// 
+			// gAccelYCal
+			// 
+			this.gAccelYCal.AverageCount = 325;
+			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelYCal.Location = new System.Drawing.Point( 103, 19 );
+			this.gAccelYCal.Name = "gAccelYCal";
+			this.gAccelYCal.Range = 32768F;
+			this.gAccelYCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelYCal.TabIndex = 13;
+			this.gAccelYCal.Value = 0F;
+			// 
+			// gAccelZCal
+			// 
+			this.gAccelZCal.AverageCount = 325;
+			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelZCal.Location = new System.Drawing.Point( 200, 19 );
+			this.gAccelZCal.Name = "gAccelZCal";
+			this.gAccelZCal.Range = 32768F;
+			this.gAccelZCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelZCal.TabIndex = 14;
+			this.gAccelZCal.Value = 0F;
+			// 
 			// valueBar1
 			// 
 			this.valueBar1.FromLeft = true;
@@ -2075,37 +2256,6 @@
 			this.radioStick2.TabIndex = 33;
 			this.radioStick2.Text = "radioStick1";
 			// 
-			// lblYawSpeed
-			// 
-			this.lblYawSpeed.AutoSize = true;
-			this.lblYawSpeed.Location = new System.Drawing.Point( 606, 270 );
-			this.lblYawSpeed.Name = "lblYawSpeed";
-			this.lblYawSpeed.Size = new System.Drawing.Size( 19, 13 );
-			this.lblYawSpeed.TabIndex = 74;
-			this.lblYawSpeed.Text = "40";
-			// 
-			// label5
-			// 
-			this.label5.Location = new System.Drawing.Point( 346, 254 );
-			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size( 87, 45 );
-			this.label5.TabIndex = 73;
-			this.label5.Text = "Yaw Speed (Manual)";
-			this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-			// 
-			// tbYawSpeed
-			// 
-			this.tbYawSpeed.LargeChange = 12;
-			this.tbYawSpeed.Location = new System.Drawing.Point( 439, 254 );
-			this.tbYawSpeed.Maximum = 128;
-			this.tbYawSpeed.Minimum = 8;
-			this.tbYawSpeed.Name = "tbYawSpeed";
-			this.tbYawSpeed.Size = new System.Drawing.Size( 161, 45 );
-			this.tbYawSpeed.TabIndex = 72;
-			this.tbYawSpeed.TickFrequency = 5;
-			this.tbYawSpeed.Value = 40;
-			this.tbYawSpeed.Scroll += new System.EventHandler( this.tbYawSpeed_Scroll );
-			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF( 6F, 13F );
@@ -2128,8 +2278,15 @@
 			this.tpSysTest.PerformLayout();
 			this.tpControlSetup.ResumeLayout( false );
 			this.tpControlSetup.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeed)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchSpeed)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchAngle)).EndInit();
+			this.tpSystemSetup.ResumeLayout( false );
+			this.tpSystemSetup.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udTestThrottle)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udHighThrottle)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udArmedLowThrottle)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).EndInit();
 			this.tpGyroCalibration.ResumeLayout( false );
 			this.groupBox10.ResumeLayout( false );
 			this.groupBox10.PerformLayout();
@@ -2146,7 +2303,6 @@
 			this.groupBox5.PerformLayout();
 			this.msMainMenu.ResumeLayout( false );
 			this.msMainMenu.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeed)).EndInit();
 			this.ResumeLayout( false );
 			this.PerformLayout();
 
@@ -2320,6 +2476,16 @@
 		private System.Windows.Forms.Label lblYawSpeed;
 		private System.Windows.Forms.Label label5;
 		private System.Windows.Forms.TrackBar tbYawSpeed;
+		private System.Windows.Forms.Button btnControlReset;
+		private System.Windows.Forms.NumericUpDown udHighThrottle;
+		private System.Windows.Forms.NumericUpDown udArmedLowThrottle;
+		private System.Windows.Forms.NumericUpDown udLowThrottle;
+		private System.Windows.Forms.Label label7;
+		private System.Windows.Forms.Label label6;
+		private System.Windows.Forms.Label label4;
+		private System.Windows.Forms.NumericUpDown udTestThrottle;
+		private System.Windows.Forms.Label label8;
+		private System.Windows.Forms.Button btnUploadThrottle;
 	}
 }
 

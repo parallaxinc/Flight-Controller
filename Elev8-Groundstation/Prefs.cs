@@ -97,6 +97,21 @@ namespace Elev8
 			}
 		}
 
+		public void SetChannelCenter( int i, short val )
+		{
+			switch(i)
+			{
+				case 0: ThroCenter = val; break;
+				case 1: AileCenter = val; break;
+				case 2: ElevCenter = val; break;
+				case 3: RuddCenter = val; break;
+				case 4: GearCenter = val; break;
+				case 5: Aux1Center = val; break;
+				case 6: Aux2Center = val; break;
+				case 7: Aux3Center = val; break;
+			}
+		}
+
 		public void SetChannelIndex( int i, char Index )
 		{
 			switch(i)

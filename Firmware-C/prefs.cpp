@@ -37,7 +37,7 @@ void Prefs_SetDefaults(void)
 {
   memset( &Prefs, 0, sizeof(Prefs) );
 
-  Prefs.UseBattMon = 1;
+  Prefs.UseBattMon = 0;
 
   Prefs.RollCorrect[0] = 0.0f;                         //Sin of roll correction angle
   Prefs.RollCorrect[1] = 1.0f;                         //Cos of roll correction angle
