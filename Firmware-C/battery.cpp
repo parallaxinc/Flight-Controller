@@ -77,7 +77,7 @@ long Battery::ComputeVoltage( long ChargeTime )
   if( ChargeTime < ChargeTimeTable[0] )
     Result = FirstChargeValue;
   else if( ChargeTime > ChargeTimeTable[ ChargeTimeCount-1 ] )
-    Result = LastChargeValue;
+    Result = 0;   // Unmeasurable, call it zero
   else
   {
     int low = 0;

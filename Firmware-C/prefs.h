@@ -16,12 +16,24 @@ typedef struct {
   char  UseBattMon;
   char  unused;
 
+  char  LowVoltageBuzzer;
+  char  LowVoltageAscentLimit;
+  char  unused2;
+  char  unused3;
+
+  short  ThrustCorrectionScale;  // 0 to 256  =  0 to 1
+  short  AccelCorrectionFilter;  // 0 to 256  =  0 to 1
+
   short MaxRollPitch;
   short RollPitchSpeed;
   short YawSpeed;
-  short unused2;
 
+  short VoltageOffset;    // Used to correct the difference between measured and actual voltage
   short LowVoltageAlarm;  // default is 1050 (10.50v)
+
+  short ArmDelay;
+  short DisarmDelay;
+
   short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
 
   short MinThrottle;      // Minimum motor output value

@@ -61,6 +61,12 @@
 			this.btnMotor2 = new System.Windows.Forms.Button();
 			this.btnMotor1 = new System.Windows.Forms.Button();
 			this.tpControlSetup = new System.Windows.Forms.TabPage();
+			this.lblAccelCorrectionFilter = new System.Windows.Forms.Label();
+			this.label13 = new System.Windows.Forms.Label();
+			this.tbAccelCorrectionFilter = new System.Windows.Forms.TrackBar();
+			this.lblThrustCorrection = new System.Windows.Forms.Label();
+			this.label17 = new System.Windows.Forms.Label();
+			this.tbThrustCorrection = new System.Windows.Forms.TrackBar();
 			this.btnControlReset = new System.Windows.Forms.Button();
 			this.tbCalibrateDocs = new System.Windows.Forms.TextBox();
 			this.lblYawSpeed = new System.Windows.Forms.Label();
@@ -93,15 +99,27 @@
 			this.cbChannel4 = new System.Windows.Forms.ComboBox();
 			this.cbChannel1 = new System.Windows.Forms.ComboBox();
 			this.tpSystemSetup = new System.Windows.Forms.TabPage();
+			this.cbLowVoltageBuzzer = new System.Windows.Forms.CheckBox();
+			this.label16 = new System.Windows.Forms.Label();
+			this.cbArmingDelay = new System.Windows.Forms.ComboBox();
+			this.label15 = new System.Windows.Forms.Label();
+			this.cbDisarmDelay = new System.Windows.Forms.ComboBox();
+			this.label10 = new System.Windows.Forms.Label();
+			this.udVoltageOffset = new System.Windows.Forms.NumericUpDown();
+			this.label12 = new System.Windows.Forms.Label();
+			this.label9 = new System.Windows.Forms.Label();
 			this.btnUploadThrottle = new System.Windows.Forms.Button();
-			this.udTestThrottle = new System.Windows.Forms.NumericUpDown();
-			this.label8 = new System.Windows.Forms.Label();
-			this.udHighThrottle = new System.Windows.Forms.NumericUpDown();
-			this.udArmedLowThrottle = new System.Windows.Forms.NumericUpDown();
-			this.udLowThrottle = new System.Windows.Forms.NumericUpDown();
-			this.label7 = new System.Windows.Forms.Label();
+			this.udLowVoltageAlarm = new System.Windows.Forms.NumericUpDown();
+			this.cbUseBatteryMonitor = new System.Windows.Forms.CheckBox();
+			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.label6 = new System.Windows.Forms.Label();
 			this.label4 = new System.Windows.Forms.Label();
+			this.udTestThrottle = new System.Windows.Forms.NumericUpDown();
+			this.label7 = new System.Windows.Forms.Label();
+			this.label8 = new System.Windows.Forms.Label();
+			this.udLowThrottle = new System.Windows.Forms.NumericUpDown();
+			this.udHighThrottle = new System.Windows.Forms.NumericUpDown();
+			this.udArmedLowThrottle = new System.Windows.Forms.NumericUpDown();
 			this.tpGyroCalibration = new System.Windows.Forms.TabPage();
 			this.btnUploadGyroCalibration = new System.Windows.Forms.Button();
 			this.btnResetGyroCal = new System.Windows.Forms.Button();
@@ -162,6 +180,7 @@
 			this.comboBox7 = new System.Windows.Forms.ComboBox();
 			this.comboBox8 = new System.Windows.Forms.ComboBox();
 			this.tlToolTip = new System.Windows.Forms.ToolTip( this.components );
+			this.vbVoltage = new Elev8.Controls.ValueBar();
 			this.vbChannel8 = new Elev8.Controls.ValueBar();
 			this.vbChannel7 = new Elev8.Controls.ValueBar();
 			this.vbChannel6 = new Elev8.Controls.ValueBar();
@@ -187,6 +206,7 @@
 			this.vbR_LS_YValue = new Elev8.Controls.ValueBar();
 			this.rsR_Right = new Elev8.RadioStick();
 			this.rsR_Left = new Elev8.RadioStick();
+			this.vbVoltage2 = new Elev8.Controls.ValueBar();
 			this.gCalibTemp = new Elev8.Gauge();
 			this.gCalibZ = new Elev8.Gauge();
 			this.gCalibY = new Elev8.Gauge();
@@ -212,14 +232,19 @@
 			this.tpSensors.SuspendLayout();
 			this.tpSysTest.SuspendLayout();
 			this.tpControlSetup.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.tbAccelCorrectionFilter)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbThrustCorrection)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeed)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchSpeed)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchAngle)).BeginInit();
 			this.tpSystemSetup.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udVoltageOffset)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udLowVoltageAlarm)).BeginInit();
+			this.groupBox1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.udTestThrottle)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udHighThrottle)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udArmedLowThrottle)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).BeginInit();
 			this.tpGyroCalibration.SuspendLayout();
 			this.groupBox10.SuspendLayout();
 			this.groupBox11.SuspendLayout();
@@ -274,6 +299,7 @@
 			// tpStatus
 			// 
 			this.tpStatus.BackColor = System.Drawing.SystemColors.Control;
+			this.tpStatus.Controls.Add( this.vbVoltage );
 			this.tpStatus.Controls.Add( this.vbChannel8 );
 			this.tpStatus.Controls.Add( this.vbChannel7 );
 			this.tpStatus.Controls.Add( this.vbChannel6 );
@@ -616,6 +642,12 @@
 			// tpControlSetup
 			// 
 			this.tpControlSetup.BackColor = System.Drawing.SystemColors.Control;
+			this.tpControlSetup.Controls.Add( this.lblAccelCorrectionFilter );
+			this.tpControlSetup.Controls.Add( this.label13 );
+			this.tpControlSetup.Controls.Add( this.tbAccelCorrectionFilter );
+			this.tpControlSetup.Controls.Add( this.lblThrustCorrection );
+			this.tpControlSetup.Controls.Add( this.label17 );
+			this.tpControlSetup.Controls.Add( this.tbThrustCorrection );
 			this.tpControlSetup.Controls.Add( this.btnControlReset );
 			this.tpControlSetup.Controls.Add( this.tbCalibrateDocs );
 			this.tpControlSetup.Controls.Add( this.lblYawSpeed );
@@ -663,6 +695,68 @@
 			this.tpControlSetup.TabIndex = 3;
 			this.tpControlSetup.Text = "Control Setup";
 			// 
+			// lblAccelCorrectionFilter
+			// 
+			this.lblAccelCorrectionFilter.AutoSize = true;
+			this.lblAccelCorrectionFilter.Location = new System.Drawing.Point( 678, 252 );
+			this.lblAccelCorrectionFilter.Name = "lblAccelCorrectionFilter";
+			this.lblAccelCorrectionFilter.Size = new System.Drawing.Size( 34, 13 );
+			this.lblAccelCorrectionFilter.TabIndex = 82;
+			this.lblAccelCorrectionFilter.Text = "0.062";
+			// 
+			// label13
+			// 
+			this.label13.Location = new System.Drawing.Point( 496, 236 );
+			this.label13.Name = "label13";
+			this.label13.Size = new System.Drawing.Size( 73, 45 );
+			this.label13.TabIndex = 81;
+			this.label13.Text = "Vertical Disturbance Correction";
+			this.label13.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// tbAccelCorrectionFilter
+			// 
+			this.tbAccelCorrectionFilter.LargeChange = 16;
+			this.tbAccelCorrectionFilter.Location = new System.Drawing.Point( 575, 236 );
+			this.tbAccelCorrectionFilter.Maximum = 256;
+			this.tbAccelCorrectionFilter.Name = "tbAccelCorrectionFilter";
+			this.tbAccelCorrectionFilter.Size = new System.Drawing.Size( 97, 45 );
+			this.tbAccelCorrectionFilter.TabIndex = 80;
+			this.tbAccelCorrectionFilter.TickFrequency = 16;
+			this.tlToolTip.SetToolTip( this.tbAccelCorrectionFilter, "Smaller numbers mean vertical disturbance correction is softer.  (0 is disabled)" );
+			this.tbAccelCorrectionFilter.Value = 16;
+			this.tbAccelCorrectionFilter.Scroll += new System.EventHandler( this.tbAccelCorrectionFilter_Scroll );
+			// 
+			// lblThrustCorrection
+			// 
+			this.lblThrustCorrection.AutoSize = true;
+			this.lblThrustCorrection.Location = new System.Drawing.Point( 678, 312 );
+			this.lblThrustCorrection.Name = "lblThrustCorrection";
+			this.lblThrustCorrection.Size = new System.Drawing.Size( 34, 13 );
+			this.lblThrustCorrection.TabIndex = 79;
+			this.lblThrustCorrection.Text = "1.000";
+			// 
+			// label17
+			// 
+			this.label17.Location = new System.Drawing.Point( 496, 296 );
+			this.label17.Name = "label17";
+			this.label17.Size = new System.Drawing.Size( 73, 45 );
+			this.label17.TabIndex = 78;
+			this.label17.Text = "Thrust Angle Correction";
+			this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// tbThrustCorrection
+			// 
+			this.tbThrustCorrection.LargeChange = 32;
+			this.tbThrustCorrection.Location = new System.Drawing.Point( 575, 296 );
+			this.tbThrustCorrection.Maximum = 512;
+			this.tbThrustCorrection.Name = "tbThrustCorrection";
+			this.tbThrustCorrection.Size = new System.Drawing.Size( 97, 45 );
+			this.tbThrustCorrection.TabIndex = 77;
+			this.tbThrustCorrection.TickFrequency = 32;
+			this.tlToolTip.SetToolTip( this.tbThrustCorrection, "Compensates for loss of thrust when the craft is tilted.  (0 is disabled)" );
+			this.tbThrustCorrection.Value = 256;
+			this.tbThrustCorrection.Scroll += new System.EventHandler( this.tbThrustCorrection_Scroll );
+			// 
 			// btnControlReset
 			// 
 			this.btnControlReset.Location = new System.Drawing.Point( 136, 19 );
@@ -692,7 +786,7 @@
 			// lblYawSpeed
 			// 
 			this.lblYawSpeed.AutoSize = true;
-			this.lblYawSpeed.Location = new System.Drawing.Point( 606, 270 );
+			this.lblYawSpeed.Location = new System.Drawing.Point( 461, 268 );
 			this.lblYawSpeed.Name = "lblYawSpeed";
 			this.lblYawSpeed.Size = new System.Drawing.Size( 19, 13 );
 			this.lblYawSpeed.TabIndex = 74;
@@ -700,9 +794,9 @@
 			// 
 			// label5
 			// 
-			this.label5.Location = new System.Drawing.Point( 346, 254 );
+			this.label5.Location = new System.Drawing.Point( 266, 252 );
 			this.label5.Name = "label5";
-			this.label5.Size = new System.Drawing.Size( 87, 45 );
+			this.label5.Size = new System.Drawing.Size( 73, 45 );
 			this.label5.TabIndex = 73;
 			this.label5.Text = "Yaw Speed (Manual)";
 			this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -710,19 +804,20 @@
 			// tbYawSpeed
 			// 
 			this.tbYawSpeed.LargeChange = 12;
-			this.tbYawSpeed.Location = new System.Drawing.Point( 439, 254 );
+			this.tbYawSpeed.Location = new System.Drawing.Point( 345, 252 );
 			this.tbYawSpeed.Maximum = 128;
 			this.tbYawSpeed.Minimum = 8;
 			this.tbYawSpeed.Name = "tbYawSpeed";
-			this.tbYawSpeed.Size = new System.Drawing.Size( 161, 45 );
+			this.tbYawSpeed.Size = new System.Drawing.Size( 110, 45 );
 			this.tbYawSpeed.TabIndex = 20;
 			this.tbYawSpeed.TickFrequency = 5;
+			this.tlToolTip.SetToolTip( this.tbYawSpeed, "How quickly the craft will change heading.  Larger numbers are faster." );
 			this.tbYawSpeed.Value = 40;
 			this.tbYawSpeed.Scroll += new System.EventHandler( this.tbYawSpeed_Scroll );
 			// 
 			// btnUploadRollPitch
 			// 
-			this.btnUploadRollPitch.Location = new System.Drawing.Point( 297, 328 );
+			this.btnUploadRollPitch.Location = new System.Drawing.Point( 323, 328 );
 			this.btnUploadRollPitch.Name = "btnUploadRollPitch";
 			this.btnUploadRollPitch.Size = new System.Drawing.Size( 75, 22 );
 			this.btnUploadRollPitch.TabIndex = 22;
@@ -733,7 +828,7 @@
 			// lblRollPitchSpeed
 			// 
 			this.lblRollPitchSpeed.AutoSize = true;
-			this.lblRollPitchSpeed.Location = new System.Drawing.Point( 268, 296 );
+			this.lblRollPitchSpeed.Location = new System.Drawing.Point( 217, 312 );
 			this.lblRollPitchSpeed.Name = "lblRollPitchSpeed";
 			this.lblRollPitchSpeed.Size = new System.Drawing.Size( 19, 13 );
 			this.lblRollPitchSpeed.TabIndex = 70;
@@ -742,7 +837,7 @@
 			// lblRollPitchAngle
 			// 
 			this.lblRollPitchAngle.AutoSize = true;
-			this.lblRollPitchAngle.Location = new System.Drawing.Point( 268, 245 );
+			this.lblRollPitchAngle.Location = new System.Drawing.Point( 217, 252 );
 			this.lblRollPitchAngle.Name = "lblRollPitchAngle";
 			this.lblRollPitchAngle.Size = new System.Drawing.Size( 40, 13 );
 			this.lblRollPitchAngle.TabIndex = 69;
@@ -750,7 +845,7 @@
 			// 
 			// label3
 			// 
-			this.label3.Location = new System.Drawing.Point( 8, 280 );
+			this.label3.Location = new System.Drawing.Point( 8, 296 );
 			this.label3.Name = "label3";
 			this.label3.Size = new System.Drawing.Size( 87, 45 );
 			this.label3.TabIndex = 68;
@@ -760,19 +855,21 @@
 			// tbRollPitchSpeed
 			// 
 			this.tbRollPitchSpeed.LargeChange = 12;
-			this.tbRollPitchSpeed.Location = new System.Drawing.Point( 101, 280 );
+			this.tbRollPitchSpeed.Location = new System.Drawing.Point( 101, 296 );
 			this.tbRollPitchSpeed.Maximum = 128;
 			this.tbRollPitchSpeed.Minimum = 8;
 			this.tbRollPitchSpeed.Name = "tbRollPitchSpeed";
-			this.tbRollPitchSpeed.Size = new System.Drawing.Size( 161, 45 );
+			this.tbRollPitchSpeed.Size = new System.Drawing.Size( 110, 45 );
 			this.tbRollPitchSpeed.TabIndex = 21;
 			this.tbRollPitchSpeed.TickFrequency = 5;
+			this.tlToolTip.SetToolTip( this.tbRollPitchSpeed, "Speed the craft will tilt when given a full-stick command in manual mode (larger " +
+					"numbers are faster)" );
 			this.tbRollPitchSpeed.Value = 64;
 			this.tbRollPitchSpeed.ValueChanged += new System.EventHandler( this.tbRollPitchSpeed_ValueChanged );
 			// 
 			// label2
 			// 
-			this.label2.Location = new System.Drawing.Point( 8, 229 );
+			this.label2.Location = new System.Drawing.Point( 8, 236 );
 			this.label2.Name = "label2";
 			this.label2.Size = new System.Drawing.Size( 87, 45 );
 			this.label2.TabIndex = 66;
@@ -782,13 +879,14 @@
 			// tbRollPitchAngle
 			// 
 			this.tbRollPitchAngle.LargeChange = 15;
-			this.tbRollPitchAngle.Location = new System.Drawing.Point( 101, 229 );
+			this.tbRollPitchAngle.Location = new System.Drawing.Point( 101, 236 );
 			this.tbRollPitchAngle.Maximum = 75;
 			this.tbRollPitchAngle.Minimum = 10;
 			this.tbRollPitchAngle.Name = "tbRollPitchAngle";
-			this.tbRollPitchAngle.Size = new System.Drawing.Size( 161, 45 );
+			this.tbRollPitchAngle.Size = new System.Drawing.Size( 110, 45 );
 			this.tbRollPitchAngle.TabIndex = 19;
 			this.tbRollPitchAngle.TickFrequency = 5;
+			this.tlToolTip.SetToolTip( this.tbRollPitchAngle, "Maximum angle the craft will tilt when given a full-stick command" );
 			this.tbRollPitchAngle.Value = 30;
 			this.tbRollPitchAngle.ValueChanged += new System.EventHandler( this.tbRollPitchAngle_ValueChanged );
 			// 
@@ -1016,121 +1114,211 @@
 			// 
 			// tpSystemSetup
 			// 
+			this.tpSystemSetup.Controls.Add( this.cbLowVoltageBuzzer );
+			this.tpSystemSetup.Controls.Add( this.label16 );
+			this.tpSystemSetup.Controls.Add( this.cbArmingDelay );
+			this.tpSystemSetup.Controls.Add( this.label15 );
+			this.tpSystemSetup.Controls.Add( this.cbDisarmDelay );
+			this.tpSystemSetup.Controls.Add( this.label10 );
+			this.tpSystemSetup.Controls.Add( this.udVoltageOffset );
+			this.tpSystemSetup.Controls.Add( this.label12 );
+			this.tpSystemSetup.Controls.Add( this.label9 );
 			this.tpSystemSetup.Controls.Add( this.btnUploadThrottle );
-			this.tpSystemSetup.Controls.Add( this.udTestThrottle );
-			this.tpSystemSetup.Controls.Add( this.label8 );
-			this.tpSystemSetup.Controls.Add( this.udHighThrottle );
-			this.tpSystemSetup.Controls.Add( this.udArmedLowThrottle );
-			this.tpSystemSetup.Controls.Add( this.udLowThrottle );
-			this.tpSystemSetup.Controls.Add( this.label7 );
-			this.tpSystemSetup.Controls.Add( this.label6 );
-			this.tpSystemSetup.Controls.Add( this.label4 );
+			this.tpSystemSetup.Controls.Add( this.udLowVoltageAlarm );
+			this.tpSystemSetup.Controls.Add( this.cbUseBatteryMonitor );
+			this.tpSystemSetup.Controls.Add( this.groupBox1 );
+			this.tpSystemSetup.Controls.Add( this.vbVoltage2 );
 			this.tpSystemSetup.Location = new System.Drawing.Point( 4, 22 );
 			this.tpSystemSetup.Name = "tpSystemSetup";
 			this.tpSystemSetup.Size = new System.Drawing.Size( 721, 356 );
 			this.tpSystemSetup.TabIndex = 4;
 			this.tpSystemSetup.Text = "System Setup";
 			// 
+			// cbLowVoltageBuzzer
+			// 
+			this.cbLowVoltageBuzzer.AutoSize = true;
+			this.cbLowVoltageBuzzer.Location = new System.Drawing.Point( 243, 109 );
+			this.cbLowVoltageBuzzer.Name = "cbLowVoltageBuzzer";
+			this.cbLowVoltageBuzzer.Size = new System.Drawing.Size( 120, 17 );
+			this.cbLowVoltageBuzzer.TabIndex = 39;
+			this.cbLowVoltageBuzzer.Text = "Low Voltage Buzzer";
+			this.tlToolTip.SetToolTip( this.cbLowVoltageBuzzer, "Enable / Disable audible low-voltage buzzer" );
+			this.cbLowVoltageBuzzer.UseVisualStyleBackColor = true;
+			// 
+			// label16
+			// 
+			this.label16.AutoSize = true;
+			this.label16.Location = new System.Drawing.Point( 34, 150 );
+			this.label16.Name = "label16";
+			this.label16.Size = new System.Drawing.Size( 69, 13 );
+			this.label16.TabIndex = 38;
+			this.label16.Text = "Arming Delay";
+			// 
+			// cbArmingDelay
+			// 
+			this.cbArmingDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbArmingDelay.FormattingEnabled = true;
+			this.cbArmingDelay.Items.AddRange( new object[] {
+            "1.00 sec",
+            "0.50 sec",
+            "0.25 sec",
+            "Off"} );
+			this.cbArmingDelay.Location = new System.Drawing.Point( 109, 147 );
+			this.cbArmingDelay.Name = "cbArmingDelay";
+			this.cbArmingDelay.Size = new System.Drawing.Size( 65, 21 );
+			this.cbArmingDelay.TabIndex = 37;
+			// 
+			// label15
+			// 
+			this.label15.AutoSize = true;
+			this.label15.Location = new System.Drawing.Point( 34, 176 );
+			this.label15.Name = "label15";
+			this.label15.Size = new System.Drawing.Size( 69, 13 );
+			this.label15.TabIndex = 36;
+			this.label15.Text = "Disarm Delay";
+			// 
+			// cbDisarmDelay
+			// 
+			this.cbDisarmDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbDisarmDelay.FormattingEnabled = true;
+			this.cbDisarmDelay.Items.AddRange( new object[] {
+            "1.00 sec",
+            "0.50 sec",
+            "0.25 sec",
+            "Off"} );
+			this.cbDisarmDelay.Location = new System.Drawing.Point( 109, 173 );
+			this.cbDisarmDelay.Name = "cbDisarmDelay";
+			this.cbDisarmDelay.Size = new System.Drawing.Size( 65, 21 );
+			this.cbDisarmDelay.TabIndex = 35;
+			// 
+			// label10
+			// 
+			this.label10.AutoSize = true;
+			this.label10.Location = new System.Drawing.Point( 261, 84 );
+			this.label10.Name = "label10";
+			this.label10.Size = new System.Drawing.Size( 74, 13 );
+			this.label10.TabIndex = 15;
+			this.label10.Text = "Voltage Offset";
+			// 
+			// udVoltageOffset
+			// 
+			this.udVoltageOffset.DecimalPlaces = 2;
+			this.udVoltageOffset.Increment = new decimal( new int[] {
+            1,
+            0,
+            0,
+            65536} );
+			this.udVoltageOffset.Location = new System.Drawing.Point( 341, 82 );
+			this.udVoltageOffset.Maximum = new decimal( new int[] {
+            2,
+            0,
+            0,
+            0} );
+			this.udVoltageOffset.Minimum = new decimal( new int[] {
+            2,
+            0,
+            0,
+            -2147483648} );
+			this.udVoltageOffset.Name = "udVoltageOffset";
+			this.udVoltageOffset.Size = new System.Drawing.Size( 57, 20 );
+			this.udVoltageOffset.TabIndex = 14;
+			this.tlToolTip.SetToolTip( this.udVoltageOffset, "Adjust this value to compensate for the difference between actual voltage and the" +
+					" displayed value" );
+			this.udVoltageOffset.Value = new decimal( new int[] {
+            2,
+            0,
+            0,
+            0} );
+			// 
+			// label12
+			// 
+			this.label12.AutoSize = true;
+			this.label12.Location = new System.Drawing.Point( 240, 133 );
+			this.label12.Name = "label12";
+			this.label12.Size = new System.Drawing.Size( 111, 13 );
+			this.label12.TabIndex = 13;
+			this.label12.Text = "TODO: Ascent limiting";
+			// 
+			// label9
+			// 
+			this.label9.AutoSize = true;
+			this.label9.Location = new System.Drawing.Point( 240, 60 );
+			this.label9.Name = "label9";
+			this.label9.Size = new System.Drawing.Size( 95, 13 );
+			this.label9.TabIndex = 10;
+			this.label9.Text = "Low Voltage Alarm";
+			// 
 			// btnUploadThrottle
 			// 
-			this.btnUploadThrottle.Location = new System.Drawing.Point( 232, 101 );
+			this.btnUploadThrottle.Location = new System.Drawing.Point( 246, 161 );
 			this.btnUploadThrottle.Name = "btnUploadThrottle";
-			this.btnUploadThrottle.Size = new System.Drawing.Size( 75, 23 );
+			this.btnUploadThrottle.Size = new System.Drawing.Size( 130, 23 );
 			this.btnUploadThrottle.TabIndex = 4;
-			this.btnUploadThrottle.Text = "Upload";
+			this.btnUploadThrottle.Text = "Upload Changes";
 			this.btnUploadThrottle.UseVisualStyleBackColor = true;
 			this.btnUploadThrottle.Click += new System.EventHandler( this.btnUploadThrottle_Click );
 			// 
-			// udTestThrottle
+			// udLowVoltageAlarm
 			// 
-			this.udTestThrottle.Location = new System.Drawing.Point( 126, 124 );
-			this.udTestThrottle.Maximum = new decimal( new int[] {
-            2000,
+			this.udLowVoltageAlarm.DecimalPlaces = 2;
+			this.udLowVoltageAlarm.Increment = new decimal( new int[] {
+            1,
             0,
             0,
-            0} );
-			this.udTestThrottle.Name = "udTestThrottle";
-			this.udTestThrottle.Size = new System.Drawing.Size( 73, 20 );
-			this.udTestThrottle.TabIndex = 2;
-			this.udTestThrottle.Value = new decimal( new int[] {
-            1000,
+            65536} );
+			this.udLowVoltageAlarm.Location = new System.Drawing.Point( 341, 58 );
+			this.udLowVoltageAlarm.Maximum = new decimal( new int[] {
+            168,
             0,
             0,
-            0} );
+            65536} );
+			this.udLowVoltageAlarm.Minimum = new decimal( new int[] {
+            60,
+            0,
+            0,
+            65536} );
+			this.udLowVoltageAlarm.Name = "udLowVoltageAlarm";
+			this.udLowVoltageAlarm.Size = new System.Drawing.Size( 57, 20 );
+			this.udLowVoltageAlarm.TabIndex = 9;
+			this.tlToolTip.SetToolTip( this.udLowVoltageAlarm, "LED and audio warning of low voltage when battery is below this value" );
+			this.udLowVoltageAlarm.Value = new decimal( new int[] {
+            60,
+            0,
+            0,
+            65536} );
 			// 
-			// label8
+			// cbUseBatteryMonitor
 			// 
-			this.label8.AutoSize = true;
-			this.label8.Location = new System.Drawing.Point( 53, 126 );
-			this.label8.Name = "label8";
-			this.label8.Size = new System.Drawing.Size( 67, 13 );
-			this.label8.TabIndex = 6;
-			this.label8.Text = "Test Throttle";
+			this.cbUseBatteryMonitor.AutoSize = true;
+			this.cbUseBatteryMonitor.Location = new System.Drawing.Point( 243, 35 );
+			this.cbUseBatteryMonitor.Name = "cbUseBatteryMonitor";
+			this.cbUseBatteryMonitor.Size = new System.Drawing.Size( 133, 17 );
+			this.cbUseBatteryMonitor.TabIndex = 8;
+			this.cbUseBatteryMonitor.Text = "Enable Battery Monitor";
+			this.tlToolTip.SetToolTip( this.cbUseBatteryMonitor, "Enable / disable monitoring of battery voltage" );
+			this.cbUseBatteryMonitor.UseVisualStyleBackColor = true;
 			// 
-			// udHighThrottle
+			// groupBox1
 			// 
-			this.udHighThrottle.Location = new System.Drawing.Point( 126, 148 );
-			this.udHighThrottle.Maximum = new decimal( new int[] {
-            2000,
-            0,
-            0,
-            0} );
-			this.udHighThrottle.Name = "udHighThrottle";
-			this.udHighThrottle.Size = new System.Drawing.Size( 73, 20 );
-			this.udHighThrottle.TabIndex = 3;
-			this.udHighThrottle.Value = new decimal( new int[] {
-            1000,
-            0,
-            0,
-            0} );
-			// 
-			// udArmedLowThrottle
-			// 
-			this.udArmedLowThrottle.Location = new System.Drawing.Point( 126, 99 );
-			this.udArmedLowThrottle.Maximum = new decimal( new int[] {
-            2000,
-            0,
-            0,
-            0} );
-			this.udArmedLowThrottle.Name = "udArmedLowThrottle";
-			this.udArmedLowThrottle.Size = new System.Drawing.Size( 73, 20 );
-			this.udArmedLowThrottle.TabIndex = 1;
-			this.udArmedLowThrottle.Value = new decimal( new int[] {
-            1000,
-            0,
-            0,
-            0} );
-			// 
-			// udLowThrottle
-			// 
-			this.udLowThrottle.Location = new System.Drawing.Point( 126, 74 );
-			this.udLowThrottle.Maximum = new decimal( new int[] {
-            2000,
-            0,
-            0,
-            0} );
-			this.udLowThrottle.Name = "udLowThrottle";
-			this.udLowThrottle.Size = new System.Drawing.Size( 73, 20 );
-			this.udLowThrottle.TabIndex = 0;
-			this.udLowThrottle.Value = new decimal( new int[] {
-            1000,
-            0,
-            0,
-            0} );
-			// 
-			// label7
-			// 
-			this.label7.AutoSize = true;
-			this.label7.Location = new System.Drawing.Point( 53, 150 );
-			this.label7.Name = "label7";
-			this.label7.Size = new System.Drawing.Size( 68, 13 );
-			this.label7.TabIndex = 2;
-			this.label7.Text = "High Throttle";
+			this.groupBox1.Controls.Add( this.label6 );
+			this.groupBox1.Controls.Add( this.label4 );
+			this.groupBox1.Controls.Add( this.udTestThrottle );
+			this.groupBox1.Controls.Add( this.label7 );
+			this.groupBox1.Controls.Add( this.label8 );
+			this.groupBox1.Controls.Add( this.udLowThrottle );
+			this.groupBox1.Controls.Add( this.udHighThrottle );
+			this.groupBox1.Controls.Add( this.udArmedLowThrottle );
+			this.groupBox1.Location = new System.Drawing.Point( 8, 14 );
+			this.groupBox1.Name = "groupBox1";
+			this.groupBox1.Size = new System.Drawing.Size( 202, 118 );
+			this.groupBox1.TabIndex = 7;
+			this.groupBox1.TabStop = false;
+			this.groupBox1.Text = "Motor Outputs";
 			// 
 			// label6
 			// 
 			this.label6.AutoSize = true;
-			this.label6.Location = new System.Drawing.Point( 21, 101 );
+			this.label6.Location = new System.Drawing.Point( 12, 46 );
 			this.label6.Name = "label6";
 			this.label6.Size = new System.Drawing.Size( 99, 13 );
 			this.label6.TabIndex = 1;
@@ -1139,11 +1327,141 @@
 			// label4
 			// 
 			this.label4.AutoSize = true;
-			this.label4.Location = new System.Drawing.Point( 53, 76 );
+			this.label4.Location = new System.Drawing.Point( 44, 22 );
 			this.label4.Name = "label4";
 			this.label4.Size = new System.Drawing.Size( 66, 13 );
 			this.label4.TabIndex = 0;
 			this.label4.Text = "Low Throttle";
+			// 
+			// udTestThrottle
+			// 
+			this.udTestThrottle.Increment = new decimal( new int[] {
+            20,
+            0,
+            0,
+            0} );
+			this.udTestThrottle.Location = new System.Drawing.Point( 117, 68 );
+			this.udTestThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udTestThrottle.Minimum = new decimal( new int[] {
+            800,
+            0,
+            0,
+            0} );
+			this.udTestThrottle.Name = "udTestThrottle";
+			this.udTestThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udTestThrottle.TabIndex = 2;
+			this.tlToolTip.SetToolTip( this.udTestThrottle, "Throttle value sent to ESCs when using Motor Test feature" );
+			this.udTestThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// label7
+			// 
+			this.label7.AutoSize = true;
+			this.label7.Location = new System.Drawing.Point( 44, 94 );
+			this.label7.Name = "label7";
+			this.label7.Size = new System.Drawing.Size( 68, 13 );
+			this.label7.TabIndex = 2;
+			this.label7.Text = "High Throttle";
+			// 
+			// label8
+			// 
+			this.label8.AutoSize = true;
+			this.label8.Location = new System.Drawing.Point( 44, 70 );
+			this.label8.Name = "label8";
+			this.label8.Size = new System.Drawing.Size( 67, 13 );
+			this.label8.TabIndex = 6;
+			this.label8.Text = "Test Throttle";
+			// 
+			// udLowThrottle
+			// 
+			this.udLowThrottle.Increment = new decimal( new int[] {
+            20,
+            0,
+            0,
+            0} );
+			this.udLowThrottle.Location = new System.Drawing.Point( 117, 20 );
+			this.udLowThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udLowThrottle.Minimum = new decimal( new int[] {
+            800,
+            0,
+            0,
+            0} );
+			this.udLowThrottle.Name = "udLowThrottle";
+			this.udLowThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udLowThrottle.TabIndex = 0;
+			this.tlToolTip.SetToolTip( this.udLowThrottle, "Minimum throttle value output to ESCs  (in microseconds)" );
+			this.udLowThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// udHighThrottle
+			// 
+			this.udHighThrottle.Increment = new decimal( new int[] {
+            20,
+            0,
+            0,
+            0} );
+			this.udHighThrottle.Location = new System.Drawing.Point( 117, 92 );
+			this.udHighThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udHighThrottle.Minimum = new decimal( new int[] {
+            800,
+            0,
+            0,
+            0} );
+			this.udHighThrottle.Name = "udHighThrottle";
+			this.udHighThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udHighThrottle.TabIndex = 3;
+			this.tlToolTip.SetToolTip( this.udHighThrottle, "Maximum throttle value output to ESCs  (in microseconds)" );
+			this.udHighThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
+			// 
+			// udArmedLowThrottle
+			// 
+			this.udArmedLowThrottle.Increment = new decimal( new int[] {
+            20,
+            0,
+            0,
+            0} );
+			this.udArmedLowThrottle.Location = new System.Drawing.Point( 117, 44 );
+			this.udArmedLowThrottle.Maximum = new decimal( new int[] {
+            2000,
+            0,
+            0,
+            0} );
+			this.udArmedLowThrottle.Minimum = new decimal( new int[] {
+            800,
+            0,
+            0,
+            0} );
+			this.udArmedLowThrottle.Name = "udArmedLowThrottle";
+			this.udArmedLowThrottle.Size = new System.Drawing.Size( 73, 20 );
+			this.udArmedLowThrottle.TabIndex = 1;
+			this.tlToolTip.SetToolTip( this.udArmedLowThrottle, "Minimum throttle value output to ESCs when armed  (in microseconds)" );
+			this.udArmedLowThrottle.Value = new decimal( new int[] {
+            1000,
+            0,
+            0,
+            0} );
 			// 
 			// tpGyroCalibration
 			// 
@@ -1393,6 +1711,7 @@
 			this.udRollCorrection.Name = "udRollCorrection";
 			this.udRollCorrection.Size = new System.Drawing.Size( 76, 20 );
 			this.udRollCorrection.TabIndex = 28;
+			this.tlToolTip.SetToolTip( this.udRollCorrection, "Use this to trim the roll value in level hover" );
 			// 
 			// label41
 			// 
@@ -1434,6 +1753,7 @@
 			this.udPitchCorrection.Name = "udPitchCorrection";
 			this.udPitchCorrection.Size = new System.Drawing.Size( 76, 20 );
 			this.udPitchCorrection.TabIndex = 30;
+			this.tlToolTip.SetToolTip( this.udPitchCorrection, "Use this to trim the pitch value in level hover" );
 			// 
 			// groupBox5
 			// 
@@ -1751,6 +2071,19 @@
 			this.comboBox8.Size = new System.Drawing.Size( 40, 21 );
 			this.comboBox8.TabIndex = 43;
 			// 
+			// vbVoltage
+			// 
+			this.vbVoltage.FromLeft = true;
+			this.vbVoltage.LeftLabel = "Battery Voltage";
+			this.vbVoltage.Location = new System.Drawing.Point( 183, 160 );
+			this.vbVoltage.MaxValue = 1260;
+			this.vbVoltage.MinValue = 900;
+			this.vbVoltage.Name = "vbVoltage";
+			this.vbVoltage.RightLabel = "0";
+			this.vbVoltage.Size = new System.Drawing.Size( 150, 20 );
+			this.vbVoltage.TabIndex = 33;
+			this.vbVoltage.Value = 1200;
+			// 
 			// vbChannel8
 			// 
 			this.vbChannel8.FromLeft = true;
@@ -2042,6 +2375,19 @@
 			this.rsR_Left.TabIndex = 33;
 			this.rsR_Left.Text = "radioStick1";
 			// 
+			// vbVoltage2
+			// 
+			this.vbVoltage2.FromLeft = true;
+			this.vbVoltage2.LeftLabel = "Battery Voltage";
+			this.vbVoltage2.Location = new System.Drawing.Point( 243, 7 );
+			this.vbVoltage2.MaxValue = 1260;
+			this.vbVoltage2.MinValue = 900;
+			this.vbVoltage2.Name = "vbVoltage2";
+			this.vbVoltage2.RightLabel = "0";
+			this.vbVoltage2.Size = new System.Drawing.Size( 150, 20 );
+			this.vbVoltage2.TabIndex = 34;
+			this.vbVoltage2.Value = 1200;
+			// 
 			// gCalibTemp
 			// 
 			this.gCalibTemp.AverageCount = 128;
@@ -2278,15 +2624,21 @@
 			this.tpSysTest.PerformLayout();
 			this.tpControlSetup.ResumeLayout( false );
 			this.tpControlSetup.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.tbAccelCorrectionFilter)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.tbThrustCorrection)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeed)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchSpeed)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchAngle)).EndInit();
 			this.tpSystemSetup.ResumeLayout( false );
 			this.tpSystemSetup.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.udVoltageOffset)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udLowVoltageAlarm)).EndInit();
+			this.groupBox1.ResumeLayout( false );
+			this.groupBox1.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.udTestThrottle)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.udHighThrottle)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.udArmedLowThrottle)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).EndInit();
 			this.tpGyroCalibration.ResumeLayout( false );
 			this.groupBox10.ResumeLayout( false );
 			this.groupBox10.PerformLayout();
@@ -2486,6 +2838,26 @@
 		private System.Windows.Forms.NumericUpDown udTestThrottle;
 		private System.Windows.Forms.Label label8;
 		private System.Windows.Forms.Button btnUploadThrottle;
+		private System.Windows.Forms.GroupBox groupBox1;
+		private System.Windows.Forms.CheckBox cbUseBatteryMonitor;
+		private Elev8.Controls.ValueBar vbVoltage;
+		private System.Windows.Forms.Label label9;
+		private System.Windows.Forms.NumericUpDown udLowVoltageAlarm;
+		private System.Windows.Forms.Label label12;
+		private System.Windows.Forms.Label label10;
+		private System.Windows.Forms.NumericUpDown udVoltageOffset;
+		private Elev8.Controls.ValueBar vbVoltage2;
+		private System.Windows.Forms.ComboBox cbDisarmDelay;
+		private System.Windows.Forms.Label label15;
+		private System.Windows.Forms.Label label16;
+		private System.Windows.Forms.ComboBox cbArmingDelay;
+		private System.Windows.Forms.CheckBox cbLowVoltageBuzzer;
+		private System.Windows.Forms.Label lblThrustCorrection;
+		private System.Windows.Forms.Label label17;
+		private System.Windows.Forms.TrackBar tbThrustCorrection;
+		private System.Windows.Forms.Label lblAccelCorrectionFilter;
+		private System.Windows.Forms.Label label13;
+		private System.Windows.Forms.TrackBar tbAccelCorrectionFilter;
 	}
 }
 

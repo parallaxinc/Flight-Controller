@@ -22,12 +22,24 @@ namespace Elev8
 		public char UseBattMon;
 		public char unused;
 
+		public char LowVoltageBuzzer;
+		public char LowVoltageAscentLimit;
+		public char unused2;
+		public char unused3;
+
+		public short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
+		public short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
+
 		public short MaxRollPitch;
 		public short RollPitchSpeed;
 		public short YawSpeed;
-		public short unused2;
 
+		public short VoltageOffset;
 		public short LowVoltageAlarm;  // default is 1050 (10.50v)
+
+		public short ArmDelay;
+		public short DisarmDelay;
+
 		public short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
 
 		public short MinThrottle;      // Minimum motor output value

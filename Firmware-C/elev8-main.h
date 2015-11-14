@@ -66,16 +66,6 @@ struct EVERYTHING_DATA
 };                                                              // 80 bytes total
 
 
-//LED Color values
-const int LED_Red   = 0x00FF00;
-const int LED_Green = 0xFF0000;
-const int LED_Blue  = 0x0000FF;
-const int LED_Yellow = LED_Red | LED_Green;
-const int LED_Violet = LED_Red | LED_Blue;
-const int LED_Cyan =   LED_Blue | LED_Green;
-const int LED_DimCyan =((LED_Blue | LED_Green) & 0xFEFEFE) >> 1;
-const int LED_White   = 0xFFFFFF;
-
 //LED Brightness values - AND with color values to dim them
 const int LED_Full    = 0xffffff;
 const int LED_Half    = 0x7f7f7f;
@@ -83,6 +73,18 @@ const int LED_Quarter = 0x3f3f3f;
 const int LED_Eighth  = 0x1f1f1f;
 const int LED_Dim     = 0x0f0f0f;
 
+
+//LED Color values
+const int LED_Red   = 0x00FF00;
+const int LED_Green = 0xFF0000;
+const int LED_Blue  = 0x0000FF;
+const int LED_White = 0xFFFFFF;
+const int LED_Yellow = LED_Red | LED_Green;
+const int LED_Violet = LED_Red | LED_Blue;
+const int LED_Cyan =   LED_Blue | LED_Green;
+
+const int LED_DimCyan = (LED_Blue | LED_Green) & LED_Half;
+const int LED_DimWhite = LED_White & LED_Half;
 
 
 #endif

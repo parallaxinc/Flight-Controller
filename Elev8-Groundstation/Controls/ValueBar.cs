@@ -81,7 +81,10 @@ namespace Elev8.Controls
 			g.Clear( BackColor );
 			float l;
 
-			float width = (val - minVal) * scale / (maxVal-minVal);
+			int clampedVal = Math.Max( minVal, val );
+			clampedVal = Math.Min( maxVal, clampedVal);
+
+			float width = (clampedVal - minVal) * scale / (maxVal - minVal);
 
 			if(fromLeft) {
 				l = buffer;

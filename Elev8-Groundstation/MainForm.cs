@@ -418,6 +418,13 @@ namespace Elev8
 			{
 				if(tcTabs.SelectedTab == tpStatus)
 				{
+					vbVoltage.Value = radio.BatteryVolts;
+					vbVoltage.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
+
+					vbVoltage2.Value = radio.BatteryVolts;
+					vbVoltage2.RightLabel = vbVoltage.RightLabel;
+
+
 					if(RadioMode == RADIO_MODE.Mode2)	// North American
 					{
 						rsLeft.SetParameters( radio.Rudd, radio.Thro );
@@ -637,6 +644,9 @@ namespace Elev8
 				prefs.RollCorrectCos = 1.0f;
 			}
 
+			cbUseBatteryMonitor.Checked = prefs.UseBattMon == 1;
+
+
 			double RollAngle = Math.Asin( prefs.RollCorrectSin );
 			double PitchAngle = Math.Asin( prefs.PitchCorrectSin );
 
@@ -663,6 +673,35 @@ namespace Elev8
 			udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
 			udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
 			udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
+
+			udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
+			udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
+
+			switch( prefs.ArmDelay )
+			{
+				default:
+				case 250: cbArmingDelay.SelectedIndex = 0; break;	// 1 sec
+				case 125: cbArmingDelay.SelectedIndex = 1; break;	// 1/2 sec
+				case 62:  cbArmingDelay.SelectedIndex = 2; break;	// 1/4 sec
+				case 0:   cbArmingDelay.SelectedIndex = 3; break;	// none
+			}
+
+			switch(prefs.DisarmDelay)
+			{
+				default:
+				case 250: cbDisarmDelay.SelectedIndex = 0; break;	// 1 sec
+				case 125: cbDisarmDelay.SelectedIndex = 1; break;	// 1/2 sec
+				case 62:  cbDisarmDelay.SelectedIndex = 2; break;	// 1/4 sec
+				case 0:   cbDisarmDelay.SelectedIndex = 3; break;	// none
+			}
+
+			Value = prefs.AccelCorrectionFilter;
+			tbAccelCorrectionFilter.Value = Value;
+			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
+
+			Value = prefs.ThrustCorrectionScale;
+			tbThrustCorrection.Value = Value;
+			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.00" );
 
 			InternalChange = false;
 		}
@@ -874,6 +913,10 @@ namespace Elev8
 
 			// Query prefs (forces to be applied to UI)
 			txBuffer[0] = 0x18;
+			comm.Send( txBuffer, 1 );
+
+			// Put the Elev8 back into read "sensor mode"
+			txBuffer[0] = 0x2;	// Sensor mode
 			comm.Send( txBuffer, 1 );
 		}
 
@@ -1145,6 +1188,18 @@ namespace Elev8
 			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
 		}
 
+		private void tbAccelCorrectionFilter_Scroll( object sender, EventArgs e )
+		{
+			int Value = tbAccelCorrectionFilter.Value;
+			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
+		}
+
+		private void tbThrustCorrection_Scroll( object sender, EventArgs e )
+		{
+			int Value = tbThrustCorrection.Value;
+			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.00" );
+		}
+
 
 		private void btnUploadRollPitch_Click( object sender, EventArgs e )
 		{
@@ -1159,9 +1214,13 @@ namespace Elev8
 			Value = tbYawSpeed.Value;
 			prefs.YawSpeed = (short)Value;
 
+			prefs.AccelCorrectionFilter = (short)tbAccelCorrectionFilter.Value;
+			prefs.ThrustCorrectionScale = (short)tbThrustCorrection.Value;
+
 			UpdateElev8Preferences();
 		}
 
+		short[] DelayTable = { 250, 125, 62, 0 };
 
 		private void btnUploadThrottle_Click( object sender, EventArgs e )
 		{
@@ -1169,6 +1228,14 @@ namespace Elev8
 			prefs.MinThrottleArmed = (short)(udArmedLowThrottle.Value * 8);
 			prefs.ThrottleTest = (short)(udTestThrottle.Value * 8);
 			prefs.MaxThrottle = (short)(udHighThrottle.Value * 8);
+
+			prefs.UseBattMon = cbUseBatteryMonitor.Checked ? (char)1 : (char)0;
+			prefs.LowVoltageAlarm = (short)(udLowVoltageAlarm.Value * 100);
+			prefs.VoltageOffset = (short)(udVoltageOffset.Value * 100);
+
+			prefs.ArmDelay = DelayTable[cbArmingDelay.SelectedIndex];
+			prefs.DisarmDelay = DelayTable[cbDisarmDelay.SelectedIndex];
+
 
 			UpdateElev8Preferences();
 		}

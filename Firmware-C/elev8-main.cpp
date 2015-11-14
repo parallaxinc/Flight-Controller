@@ -136,7 +136,7 @@ int main()                                    // Main function
 
     QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~92000 cycles (without altimeter fusion or thrust angle compensation)
 
-    AccelZSmooth += (sens.AccelZ - AccelZSmooth) / 16;
+    AccelZSmooth += (sens.AccelZ - AccelZSmooth) * Prefs.AccelCorrectionFilter / 256;
 
     if( Prefs.UseSBUS )
     {
@@ -206,7 +206,7 @@ int main()                                    // Main function
           case 2: Battery::ChargePin();      break;
     
           case 15:
-            BatteryVolts = Battery::ComputeVoltage( Battery::ReadResult() );
+            BatteryVolts = Battery::ComputeVoltage( Battery::ReadResult() ) + Prefs.VoltageOffset;
             break;
         }      
       }
@@ -390,7 +390,7 @@ void UpdateFlightLoop(void)
         CompassConfigStep = 0;
         LEDModeColor = LED_Yellow & LED_Half;
                 
-        if( FlightEnableStep == 250 ) {   //Hold for 1 second
+        if( FlightEnableStep >= Prefs.ArmDelay ) {   //Hold for delay time
           ArmFlightMode();
         }          
       }
@@ -427,7 +427,7 @@ void UpdateFlightLoop(void)
       FlightEnableStep++;
       LEDModeColor = LED_Yellow & LED_Half;
 
-      if( FlightEnableStep == 250 ) {   //Hold for 1 second
+      if( FlightEnableStep >= Prefs.DisarmDelay ) {   //Hold for delay time
         DisarmFlightMode();
         return;                  //Prevents the motor outputs from being un-zero'd
       }        
@@ -477,7 +477,7 @@ void UpdateFlightLoop(void)
     {
       DoIntegrate = 0;          //Disable PID integral term until throttle is applied      
       DesiredYaw = Yaw;         //Desired = measured when the throttle is off
-      iRudd = Yaw * 128 / Prefs.YawSpeed;  //Make "measured yaw" match desired yaw until throttle is applied
+      iRudd = Yaw * 256 / Prefs.YawSpeed;  //Make "measured yaw" match desired yaw until throttle is applied
     }      
     else {
       DoIntegrate = 1;
@@ -545,8 +545,9 @@ void UpdateFlightLoop(void)
         }          
       }
 
-      //Tilt compensated thrust assist      
-      ThrustMul = clamp( QuatIMU_GetThrustFactor(), 256 , 384 );    //Limit the effect of the thrust modifier
+      //Tilt compensated thrust assist
+      ThrustMul = 256 + ((QuatIMU_GetThrustFactor() - 256) * Prefs.ThrustCorrectionScale) / 256;
+      ThrustMul = clamp( ThrustMul, 256 , 384 );    //Limit the effect of the thrust modifier
       ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
     }      
     //-------------------------------------------
@@ -574,28 +575,31 @@ void UpdateFlightLoop(void)
     Servo32_Set( PIN_MOTOR_BL, Motor[3] );
   }
 
-#if 0 && defined( __PINS_V3_H__ )
+#if defined( __PINS_V3_H__ )
     // Battery alarm at low voltage
-    if( UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarm) && ((counter & 127) < 32) )
+    if( Prefs.UseBattMon != 0 && Prefs.LowVoltageBuzzer )
     {
-      int ctr = CNT;
-      int loop = 2;
-      int d = (80000000/2) / 5000;
-  
-      for( int i=0; i<loop; i++ )
+      if( (BatteryVolts < Prefs.LowVoltageAlarm) && BatteryVolts > 200 && ((counter & 127) < 32) )  // Make sure the voltage is above the (0 + VoltageOffset) range
       {
-        OUTA ^= (1<<PIN_BUZZER_1);
-        ctr += d;
-        waitcnt( ctr );
-      }
+        int ctr = CNT;
+        int loop = 2;
+        int d = (80000000/2) / 5000;
+    
+        for( int i=0; i<loop; i++ )
+        {
+          OUTA ^= (1<<PIN_BUZZER_1);
+          ctr += d;
+          waitcnt( ctr );
+        }
+      }        
     }      
 #endif
 }  
 
 
 static int LEDColorTable[] = {
-        /* LED_Assisted  */    LED_DimCyan,
-        /* LED_Automatic */    LED_Green,
+        /* LED_Assisted  */    LED_Cyan,
+        /* LED_Automatic */    LED_DimWhite,
         /* LED_Manual    */    LED_Yellow,
         /* LED_CompCalib */    LED_Violet,
 };
@@ -610,8 +614,8 @@ void UpdateFlightLEDColor(void)
 {
   int LowBatt = 0;
 
-#if 0 && defined( __PINS_V3_H__ )
-  if( UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarm) ) {
+#if defined( __PINS_V3_H__ )
+  if( Prefs.UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarm) && BatteryVolts > 200 ) {   // Make sure the voltage is above the (0 + VoltageOffset) range
     LowBatt = 1;
   }    
 #endif
@@ -967,10 +971,10 @@ void DoDebugModeOutput(void)
          
         fdserial_rxChar(dbg);
 
-        Servo32_Set(MotorIndex[0], Prefs.MinThrottle - 16);
-        Servo32_Set(MotorIndex[1], Prefs.MinThrottle - 16);
-        Servo32_Set(MotorIndex[2], Prefs.MinThrottle - 16);
-        Servo32_Set(MotorIndex[3], Prefs.MinThrottle - 16);
+        Servo32_Set(MotorIndex[0], Prefs.MinThrottle + 64);
+        Servo32_Set(MotorIndex[1], Prefs.MinThrottle + 64);
+        Servo32_Set(MotorIndex[2], Prefs.MinThrottle + 64);
+        Servo32_Set(MotorIndex[3], Prefs.MinThrottle + 64);
       }
     }        
     else if( NudgeMotor == 7 )                         //Motor off (after motor test)
