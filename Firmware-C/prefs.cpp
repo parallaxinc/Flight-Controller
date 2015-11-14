@@ -61,7 +61,7 @@ void Prefs_SetDefaults(void)
   Prefs.ArmDelay = 250;
   Prefs.DisarmDelay = 125;
 
-  Prefs.MaxRollPitch = 20;
+  Prefs.MaxRollPitch = 10;    // Range is roughly 0 to 30, equals 0 to 90 degrees)
   Prefs.RollPitchSpeed = 64;
   Prefs.YawSpeed = 40;
 
