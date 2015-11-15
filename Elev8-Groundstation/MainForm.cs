@@ -47,66 +47,6 @@ namespace Elev8
 		RADIO_MODE RadioMode = RADIO_MODE.Mode2;	// North American default
 
 
-		public class RadioData
-		{
-			public short Thro, Aile, Elev, Rudd;
-			public short Gear, Aux1, Aux2, Aux3;						// Radio values = 16 bytes
-			public short BatteryVolts;                                  // Battery Monitor = 2 bytes
-
-			// Array index operator, allowing access to the channels by index value
-			public short this[int i]
-			{
-				get {
-					switch(i)
-					{
-						case 0: return Thro;
-						case 1: return Aile;
-						case 2: return Elev;
-						case 3: return Rudd;
-						case 4: return Gear;
-						case 5: return Aux1;
-						case 6: return Aux2;
-						case 7: return Aux3;
-						case 8: return BatteryVolts;
-						default: return 0;
-					}
-				}
-
-				set
-				{
-					switch(i)
-					{
-						case 0: Thro = value; break;
-						case 1: Aile = value; break;
-						case 2: Elev = value; break;
-						case 3: Rudd = value; break;
-						case 4: Gear = value; break;
-						case 5: Aux1 = value; break;
-						case 6: Aux2 = value; break;
-						case 7: Aux3 = value; break;
-						case 8: BatteryVolts = value; break;
-					}
-				}
-			}
-		}
-
-
-		public struct SensorData
-		{
-			public short Temp, GyroX, GyroY, GyroZ;
-			public short AccelX, AccelY, AccelZ;						// IMU sensors = 20 bytes
-			public short MagX, MagY, MagZ;
-		};
-
-
-
-		public struct ComputedData
-		{
-			public int Pitch, Roll, Yaw;								// IMU = 12 bytes
-			public int Alt, AltTemp, AltiEst;							// Altimeter = 12 bytes
-
-		};
-
 		RadioData radio = new RadioData();
 		SensorData sensors = new SensorData();
 		Quaternion  q = new Quaternion();
@@ -261,30 +201,14 @@ namespace Elev8
 					switch( p.mode )
 					{
 						case 1:	// Radio data
-							radio.Thro = p.GetShort();
-							radio.Aile = p.GetShort();
-							radio.Elev = p.GetShort();
-							radio.Rudd = p.GetShort();
-							radio.Gear = p.GetShort();
-							radio.Aux1 = p.GetShort();
-							radio.Aux2 = p.GetShort();
-							radio.Aux3 = p.GetShort();
-							radio.BatteryVolts = p.GetShort();
+							radio.ReadFrom( p );
+
 							graphSources[13].Samples[SampleIndex].y = radio.BatteryVolts;
 							bRadioChanged = true;
 							break;
 
 						case 2:	// Sensor values
-							sensors.Temp = p.GetShort();
-							sensors.GyroX = p.GetShort();
-							sensors.GyroY = p.GetShort();
-							sensors.GyroZ = p.GetShort();
-							sensors.AccelX = p.GetShort();
-							sensors.AccelY = p.GetShort();
-							sensors.AccelZ = p.GetShort();
-							sensors.MagX = p.GetShort();
-							sensors.MagY = p.GetShort();
-							sensors.MagZ = p.GetShort();
+							sensors.ReadFrom( p );
 
 							graphSources[0].Samples[SampleIndex].y = sensors.GyroX;
 							graphSources[1].Samples[SampleIndex].y = sensors.GyroY;
@@ -308,13 +232,7 @@ namespace Elev8
 							break;
 
 						case 4:	// Compute values
-							computed.Pitch = p.GetInt();
-							computed.Roll = p.GetInt();
-							computed.Yaw = p.GetInt();
-
-							computed.Alt = p.GetInt();
-							computed.AltTemp = p.GetInt();
-							computed.AltiEst = p.GetInt();
+							computed.ReadFrom();
 							bComputedChanged = true;
 
 							graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;

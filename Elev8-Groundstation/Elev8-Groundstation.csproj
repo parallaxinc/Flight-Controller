@@ -196,6 +196,7 @@
     <Compile Include="Controls\RadioJoystick.designer.cs">
       <DependentUpon>RadioJoystick.cs</DependentUpon>
     </Compile>
+    <Compile Include="Elev8Data.cs" />
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>
