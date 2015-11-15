@@ -1,4 +1,7 @@
 ﻿
+using System;
+
+
 namespace Elev8
 {
 	public class Matrix
@@ -95,6 +98,49 @@ namespace Elev8
 				}
 			}
 			return r;
+		}
+
+
+		public Matrix RotateX( float r )
+		{
+			float s = (float)Math.Sin( r );
+			float c = (float)Math.Cos( r );
+
+			Matrix mrot = new Matrix();
+			mrot.m[1,1] = c;
+			mrot.m[1, 2] = -s;
+			mrot.m[2, 1] = s;
+			mrot.m[2, 2] = c;
+
+			return this.Mul( mrot );
+		}
+
+		public Matrix RotateY( float r )
+		{
+			float s = (float)Math.Sin( r );
+			float c = (float)Math.Cos( r );
+
+			Matrix mrot = new Matrix();
+			mrot.m[0, 0] = c;
+			mrot.m[0, 2] = s;
+			mrot.m[2, 0] = -s;
+			mrot.m[2, 2] = c;
+
+			return this.Mul( mrot );
+		}
+
+		public Matrix RotateZ( float r )
+		{
+			float s = (float)Math.Sin( r );
+			float c = (float)Math.Cos( r );
+
+			Matrix mrot = new Matrix();
+			mrot.m[0, 0] = c;
+			mrot.m[0, 1] = -s;
+			mrot.m[1, 0] = s;
+			mrot.m[1, 1] = c;
+
+			return this.Mul( mrot );
 		}
 	}
 }
