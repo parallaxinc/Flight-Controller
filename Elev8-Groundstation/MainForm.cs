@@ -232,7 +232,7 @@ namespace Elev8
 							break;
 
 						case 4:	// Compute values
-							computed.ReadFrom();
+							computed.ReadFrom(p);
 							bComputedChanged = true;
 
 							graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
@@ -570,8 +570,15 @@ namespace Elev8
 
 			lblAccelCalFinal.Text = string.Format( "{0}, {1}, {2}", prefs.AccelOffsetX, prefs.AccelOffsetY, prefs.AccelOffsetZ );
 
-			udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
-			udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
+			try {
+				udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
+			}
+			catch(Exception) {}
+
+			try {
+				udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
+			}
+			catch(Exception) { }
 
 
 			int Value = prefs.MaxRollPitch * (1024 * 90) / 32768;
@@ -587,13 +594,37 @@ namespace Elev8
 			Value = prefs.YawSpeed;
 			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
-			udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
-			udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
-			udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
-			udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
+			try {
+				udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
+			}
+			catch(Exception) { }
 
-			udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
-			udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
+			try {
+				udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
+			}
+			catch(Exception) { }
+
+			try {
+				udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
+			}
+			catch(Exception) { }
+
+			try {
+				udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
+			}
+			catch(Exception) { }
+
+
+			try {
+				udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
+			}
+			catch(Exception) { }
+
+			try {
+				udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
+			}
+			catch(Exception) { }
+
 
 			switch( prefs.ArmDelay )
 			{

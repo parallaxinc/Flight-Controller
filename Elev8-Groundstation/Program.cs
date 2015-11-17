@@ -15,7 +15,30 @@ namespace Elev8
 		{
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault( false );
-			Application.Run( new MainForm() );
+
+			Application.ThreadException += new System.Threading.ThreadExceptionEventHandler( Application_ThreadException );
+
+			try {
+				Application.Run( new MainForm() );
+			}
+
+			catch(Exception e)
+			{
+				ExceptionDump( e );
+			}
+		}
+
+
+		static void Application_ThreadException( object sender, System.Threading.ThreadExceptionEventArgs e )
+		{
+			ExceptionDump( e.Exception );
+		}
+
+
+		static void ExceptionDump( Exception e )
+		{
+			Clipboard.SetText( e.StackTrace );
+			MessageBox.Show( e.StackTrace, "Crash! - stack trace below" );
 		}
 	}
 }
