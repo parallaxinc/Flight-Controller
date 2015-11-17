@@ -19,6 +19,9 @@ namespace Elev8.Controls
 		string rightLabel = "";
 		int buffer = 2;
 
+		Brush barBrush = Brushes.LightGreen;
+		Color barColor = Color.LightGreen;
+
 
 		public ValueBar()
 		{
@@ -68,6 +71,11 @@ namespace Elev8.Controls
 			set { rightLabel = value; }
 		}
 
+		public Color BarColor
+		{
+			get { return barColor; }
+			set { barColor = value; barBrush = new SolidBrush( barColor ); Invalidate(); }
+		}
 
 
 		private void ValueBar_Paint( object sender, PaintEventArgs e )
@@ -94,7 +102,7 @@ namespace Elev8.Controls
 			}
 
 			g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-			g.FillRectangle( Brushes.LightGreen, l, 0.0f, width, (float)height );
+			g.FillRectangle( barBrush, l, 0.0f, width, (float)height );
 
 			System.Windows.Forms.ControlPaint.DrawBorder3D( g, 0, 0, ClientSize.Width, height );
 

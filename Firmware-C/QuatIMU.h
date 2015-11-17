@@ -4,21 +4,32 @@
 
 // These are created this way because I need to be able to convert the code to addresses easily at runtime
 
+#include "elev8-main.h"   // for RADIO struct
+
 void QuatIMU_Start(void);
 
 
-int QuatIMU_GetPitch(void);
-int QuatIMU_GetRoll(void);
 int QuatIMU_GetYaw(void);
+
+float QuatIMU_GetFloatYaw(void);
+float QuatIMU_GetFloatHeading(void);
+
 int QuatIMU_GetThrustFactor(void);
 
 int * QuatIMU_GetSensors(void);
 float * QuatIMU_GetMatrix(void);
-int * QuatIMU_GetFixedMatrix(void);
+
 float * QuatIMU_GetQuaternion(void);
 
 int QuatIMU_GetVerticalVelocityEstimate(void);
 int QuatIMU_GetAltitudeEstimate(void);
+
+int QuatIMU_GetPitchDifference(void);
+int QuatIMU_GetRollDifference(void);
+int QuatIMU_GetYawDifference(void);
+void QuatIMU_ResetDesiredYaw(void);
+void QuatIMU_GetDesiredQ( float * dest );
+
 
 void QuatIMU_SetInitialAltitudeGuess( int altiMM );
 
@@ -31,6 +42,11 @@ void QuatIMU_SetGyroZero( int x, int y, int z );
  
 
 void QuatIMU_Update( int * packetAddr );
+
+void QuatIMU_UpdateControls_AutoLevel( RADIO * Radio );
+void QuatIMU_UpdateControls_Manual( RADIO * Radio );
+
+
 int QuatIMU_WaitForCompletion(void);
 
 

@@ -988,15 +988,20 @@ CompareReversed
 '------------------------------------------------------------------------------
 ' FMin (a,b) = minimum of(fnumA, fnumB)
 '------------------------------------------------------------------------------
+_FMax
+                        sub     fNumA, fNumB  nr, wc
+                        jmp     #_FMinMax_entry
+
 _FMin
                         add     fNumA, fNumB  nr, wc
-                        
+  _FMinMax_entry
               if_nc     mov     :getResult, CompareNormal
               if_c      mov     :getResult, CompareReversed     
 
                         cmps    fnumA, fnumB wc         ' do the signed comparison, save result in flags C
   :getResult  if_nc     mov     fnumA, fnumB
 
+_FMax_ret
 _FMin_ret               ret
 
 
@@ -1005,7 +1010,6 @@ _FMin_ret               ret
 '                        mov     t1, fnumA               ' if both values...
 '                        and     t1, fnumB               '  are negative...
 '                        shl     t1, #1 wc               ' (bit 31 high)...
-
 
 
 
@@ -1681,6 +1685,7 @@ cmdSqr                  call    #_FSqr
 cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
+cmdFMax                 call    #_FMax
 cmdFrac                 call    #_Frac
 cmdMov                  nop
 
@@ -1710,8 +1715,9 @@ CON     'Instruction stream operand indices
   opSinCos              = 20
   opFAbs                = 21
   opFMin                = 22   
-  opFrac                = 23
-  opMov                 = 24   
+  opFMax                = 23
+  opFrac                = 24
+  opMov                 = 25   
 
 {{
 

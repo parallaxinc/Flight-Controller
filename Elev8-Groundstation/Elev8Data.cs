@@ -64,6 +64,19 @@ namespace Elev8
 		}
 	}
 
+	public class MotorData
+	{
+		public short FL, FR, BR, BL;	// front-left, front-right, back-right, back-left motor outputs
+
+		public void ReadFrom( Packet p )
+		{
+			FL = p.GetShort();
+			FR = p.GetShort();
+			BR = p.GetShort();
+			BL = p.GetShort();
+		}
+	}
+
 
 	public class SensorData
 	{

@@ -50,6 +50,7 @@ namespace Elev8
 		RadioData radio = new RadioData();
 		SensorData sensors = new SensorData();
 		Quaternion  q = new Quaternion();
+		MotorData motors = new MotorData();
 		ComputedData computed = new ComputedData();
 
 		PREFS prefs = new PREFS();
@@ -190,6 +191,7 @@ namespace Elev8
 			bool bRadioChanged = false;
 			bool bSensorsChanged = false;
 			bool bQuatChanged = false;
+			bool bMotorsChanged = false;
 			bool bComputedChanged = false;
 			bool bPrefsChanged = false;
 
@@ -232,7 +234,7 @@ namespace Elev8
 							break;
 
 						case 4:	// Compute values
-							computed.ReadFrom(p);
+							computed.ReadFrom( p );
 							bComputedChanged = true;
 
 							graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
@@ -243,10 +245,14 @@ namespace Elev8
 							SampleIndex = (SampleIndex + 1) % NumGraphDisplaySamples;
 							break;
 
+						case 5:	// Motor values
+							motors.ReadFrom( p );
+							bMotorsChanged = true;
+							break;
 
 						case 0x18:	// Settings
 							prefs.FromBytes( p.data );
-							if(prefs.CalculateChecksum() == prefs.Checksum) {
+							if( prefs.CalculateChecksum() == prefs.Checksum) {
 								//PrefsReceived = true;	// Global indicator of valid prefs
 								bPrefsChanged = true;	// local indicator, just to set up the UI
 							}
@@ -442,6 +448,13 @@ namespace Elev8
 				}
 			}
 
+			if(bMotorsChanged && tcTabs.SelectedTab == tpStatus) {
+				vbFrontLeft.Value = motors.FL;
+				vbFrontRight.Value = motors.FR;
+				vbBackRight.Value = motors.BR;
+				vbBackLeft.Value = motors.BL;
+			}
+
 			if(bComputedChanged)
 			{
 				aicAttitude.SetAttitudeIndicatorParameters(
@@ -570,15 +583,8 @@ namespace Elev8
 
 			lblAccelCalFinal.Text = string.Format( "{0}, {1}, {2}", prefs.AccelOffsetX, prefs.AccelOffsetY, prefs.AccelOffsetZ );
 
-			try {
-				udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
-			}
-			catch(Exception) {}
-
-			try {
-				udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
-			}
-			catch(Exception) { }
+			udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
+			udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
 
 
 			int Value = prefs.MaxRollPitch * (1024 * 90) / 32768;
@@ -594,37 +600,13 @@ namespace Elev8
 			Value = prefs.YawSpeed;
 			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
-			try {
-				udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
-			}
-			catch(Exception) { }
+			udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
+			udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
+			udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
+			udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
 
-			try {
-				udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
-			}
-			catch(Exception) { }
-
-			try {
-				udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
-			}
-			catch(Exception) { }
-
-			try {
-				udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
-			}
-			catch(Exception) { }
-
-
-			try {
-				udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
-			}
-			catch(Exception) { }
-
-			try {
-				udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
-			}
-			catch(Exception) { }
-
+			udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
+			udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
 
 			switch( prefs.ArmDelay )
 			{

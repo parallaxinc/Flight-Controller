@@ -18,7 +18,8 @@ namespace Elev8
 
 			Application.ThreadException += new System.Threading.ThreadExceptionEventHandler( Application_ThreadException );
 
-			try {
+			try
+			{
 				Application.Run( new MainForm() );
 			}
 

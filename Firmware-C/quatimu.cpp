@@ -22,18 +22,16 @@ enum IMU_VarLabels {
 
     ConstNull,                                   // Basically a placeholder for real zero / null
 
-    Roll, Pitch, Yaw,                            // Outputs, scaled units
+    Yaw,                                         // Current heading (yaw), scaled units
     ThrustFactor,
-
+    FloatYaw,                                    // Current heading (yaw) in floating point
+    HalfYaw,                                     // Heading / 2, used for quaternion construction
+    
     // Inputs
     gx, gy, gz,
     ax, ay, az,                                  // Sensor inputs
     mx, my, mz,
     alt, altRate,
-
-    fm00, fm01, fm02,
-    fm10, fm11, fm12,                            // Body orientation as a 3x3 matrix in fixed integer form (+/- 65536 == +/- 1.0)
-    fm20, fm21, fm22,
 
     // Integer constants used in computation
     const_0,
@@ -91,6 +89,23 @@ enum IMU_VarLabels {
     forceWX, forceWY, forceWZ,           // Current forces acting on craft, excluding gravity, in world frame
 
 
+    In_Elev, In_Aile, In_Rudd,          // Input values for user controls
+
+    csx, csy, csz,                      // cosines of user control values
+    snx, sny, snz,                      // sines of user control values
+
+    snycsx, snysnx,                     // working variables for control to quaternion code (re-used products)
+    csycsz, csysnz,
+
+    cqw, cqx, cqy, cqz,                 // Control Quaternion result
+    qrw, qrx, qry, qrz,                 // Rotation quaternion between CQ and current orientation (Q)
+
+    diffAxisX, diffAxisY, diffAxisZ,    // Axis around which QR rotates to get from Q to CQ
+    diffAngle,                          // Amount of rotation required to get from Q to CQ
+
+    PitchDiff, RollDiff, YawDiff,       // Difference between current orientation and desired
+    Heading,                            // Computed heading for control updates
+    
     // Float constants used in computation
     const_GyroScale,
     const_NegGyroScale,
@@ -117,6 +132,11 @@ enum IMU_VarLabels {
 
     const_velAccTrust,
     const_velAltiTrust,
+
+    const_YawRateScale,
+    const_ManualBankScale,
+    const_AutoBankScale,
+    const_TwoPI,
     
    IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
 };
@@ -184,16 +204,14 @@ void QuatIMU_Start(void)
   IMU_VARS[const_velAccTrust]       =    0.999f;
   IMU_VARS[const_velAltiTrust]      =    0.001f;
 
+  IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 180 deg/sec / UpdateRate * Deg2Rad * HalfAngle
+  IMU_VARS[const_ManualBankScale]   =    ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
+  IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
+
+  IMU_VARS[const_TwoPI]             =    2.0f * PI;
   QuatIMU_InitFunctions();
 }
 
-int QuatIMU_GetPitch(void) {
-  return ((int*)IMU_VARS)[ Pitch ];
-}
-
-int QuatIMU_GetRoll(void) {
-  return ((int*)IMU_VARS)[ Roll ];
-}
 
 int QuatIMU_GetYaw(void) {
   return ((int*)IMU_VARS)[ Yaw ];
@@ -210,10 +228,6 @@ int * QuatIMU_GetSensors(void) {
 float * QuatIMU_GetMatrix(void) {
   return &IMU_VARS[m00];
 }  
-
-int * QuatIMU_GetFixedMatrix(void) {
-  return (int*)&IMU_VARS[fm00];
-}
 
 float * QuatIMU_GetQuaternion(void) {
   return &IMU_VARS[qx];
@@ -232,6 +246,43 @@ void QuatIMU_SetInitialAltitudeGuess( int altiMM )
   //altitudeEstimate = F32_FDiv( F32_FFloat(altiMM) , const_m_to_mm );
     IMU_VARS[altitudeEstimate] = (float)altiMM / 1000.0;
 }  
+
+int QuatIMU_GetPitchDifference(void) {
+  return ((int*)IMU_VARS)[PitchDiff];
+}
+
+int QuatIMU_GetRollDifference(void) {
+  return ((int*)IMU_VARS)[RollDiff];
+}
+
+int QuatIMU_GetYawDifference(void) {
+  return ((int*)IMU_VARS)[YawDiff];
+}
+
+
+void QuatIMU_ResetDesiredYaw(void)
+{
+  IMU_VARS[Heading] = IMU_VARS[HalfYaw];   // Desired value = current computed value half-angle
+}
+
+float QuatIMU_GetFloatYaw(void)
+{
+  return IMU_VARS[FloatYaw];
+}
+
+float QuatIMU_GetFloatHeading(void)
+{
+  return IMU_VARS[Heading];
+}
+
+
+void QuatIMU_GetDesiredQ( float * dest )
+{
+  dest[0] = IMU_VARS[cqx];
+  dest[1] = IMU_VARS[cqy];
+  dest[2] = IMU_VARS[cqz];
+  dest[3] = IMU_VARS[cqw];
+}
 
 
 void QuatIMU_SetRollCorrection( float * addr )
@@ -301,29 +352,29 @@ void QuatIMU_AdjustStreamPointers( short * p )
   //fgx = gx / GyroScale + errCorrX
               
 short QuatUpdateCommands[] = {
-        F32_opFloat, gx, 0, rx,                            //rx = float(gx)
-        F32_opMul, rx, const_GyroScale, rx,          //rx /= GyroScale
-        F32_opAdd, rx, errCorrX, rx,               //rx += errCorrX
+        F32_opFloat, gx, 0, rx,                           //rx = float(gx)
+        F32_opMul, rx, const_GyroScale, rx,               //rx /= GyroScale
+        F32_opAdd, rx, errCorrX, rx,                      //rx += errCorrX
 
   //fgy = gy / GyroScale + errCorrY
-        F32_opFloat, gz,  0, ry,                           //ry = float(gz)
-        F32_opMul, ry, const_NegGyroScale, ry,       //ry /= GyroScale
-        F32_opAdd, ry, errCorrY, ry,               //ry += errCorrY
+        F32_opFloat, gz,  0, ry,                          //ry = float(gz)
+        F32_opMul, ry, const_NegGyroScale, ry,            //ry /= GyroScale
+        F32_opAdd, ry, errCorrY, ry,                      //ry += errCorrY
 
   //fgz = gz / GyroScale + errCorrZ
-        F32_opFloat, gy, 0, rz,                            //rz = float(gy)
-        F32_opMul, rz, const_NegGyroScale, rz,       //rz /= GyroScale
-        F32_opAdd, rz, errCorrZ, rz,               //rz += errCorrZ
+        F32_opFloat, gy, 0, rz,                           //rz = float(gy)
+        F32_opMul, rz, const_NegGyroScale, rz,            //rz /= GyroScale
+        F32_opAdd, rz, errCorrZ, rz,                      //rz += errCorrZ
 
   //rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5
-        F32_opSqr, rx, 0, rmag,                            //rmag = fgx*fgx
-        F32_opSqr, ry, 0, temp,                            //temp = fgy*fgy
-        F32_opAdd, rmag, temp, rmag,               //rmag += temp
-        F32_opSqr, rz, 0, temp,                            //temp = fgz*fgz
-        F32_opAdd, rmag, temp, rmag,               //rmag += temp
-        F32_opAdd, rmag, const_epsilon, rmag,        //rmag += 0.00000001
-        F32_opSqrt, rmag, 0, rmag,                         //rmag = Sqrt(rmag)                                                  
-        F32_opShift, rmag, const_neg1, rmag,         //rmag *= 0.5                                                  
+        F32_opSqr, rx, 0, rmag,                           //rmag = fgx*fgx
+        F32_opSqr, ry, 0, temp,                           //temp = fgy*fgy
+        F32_opAdd, rmag, temp, rmag,                      //rmag += temp
+        F32_opSqr, rz, 0, temp,                           //temp = fgz*fgz
+        F32_opAdd, rmag, temp, rmag,                      //rmag += temp
+        F32_opAdd, rmag, const_epsilon, rmag,             //rmag += 0.00000001
+        F32_opSqrt, rmag, 0, rmag,                        //rmag = Sqrt(rmag)                                                  
+        F32_opShift, rmag, const_neg1, rmag,              //rmag *= 0.5                                                  
   //8 instructions  (17)
 
   //cosr = Cos(rMag)
@@ -338,7 +389,7 @@ short QuatUpdateCommands[] = {
         F32_opAdd, qdw,  temp, qdw,                //qdw += temp
         F32_opMul, rz,  qz, temp,                  //temp = rz*qz
         F32_opAdd, qdw,  temp, qdw,                //qdw += temp
-        F32_opMul, qdw,  const_neghalf, qdw,         //qdw *= -0.5
+        F32_opMul, qdw,  const_neghalf, qdw,       //qdw *= -0.5
   //8 instructions  (28)
 
   //qdot.x =  (r.x*w + r.z*y - r.y*z) * 0.5
@@ -347,7 +398,7 @@ short QuatUpdateCommands[] = {
         F32_opAdd, qdx,  temp, qdx,                //qdx += temp
         F32_opMul, ry,  qz, temp,                  //temp = ry*qz
         F32_opSub, qdx,  temp, qdx,                //qdx -= temp
-        F32_opShift, qdx,  const_neg1, qdx,          //qdx *= 0.5
+        F32_opShift, qdx,  const_neg1, qdx,        //qdx *= 0.5
   //8 instructions  (36)
 
   //qdot.y =  (r.y*w - r.z*x + r.x*z) * 0.5
@@ -356,7 +407,7 @@ short QuatUpdateCommands[] = {
         F32_opSub, qdy,  temp, qdy,                //qdy -= temp
         F32_opMul, rx,  qz, temp,                  //temp = rx*qz
         F32_opAdd, qdy,  temp, qdy,                //qdy += temp
-        F32_opShift, qdy,  const_neg1, qdy,          //qdy *= 0.5
+        F32_opShift, qdy,  const_neg1, qdy,        //qdy *= 0.5
   //8 instructions  (44)
 
   //qdot.z =  (r.z*w + r.y*x - r.x*y) * 0.5
@@ -365,7 +416,7 @@ short QuatUpdateCommands[] = {
         F32_opAdd, qdz,  temp, qdz,                //qdz += temp
         F32_opMul, rx,  qy, temp,                  //temp = rx*qy
         F32_opSub, qdz,  temp, qdz,                //qdz -= temp
-        F32_opShift, qdz,  const_neg1, qdz,          //qdz *= 0.5
+        F32_opShift, qdz,  const_neg1, qdz,        //qdz *= 0.5
   //8 instructions  (52)
    
   //q.w = cosr * q.w + sinr * qdot.w
@@ -391,15 +442,15 @@ short QuatUpdateCommands[] = {
 
   //q = q.Normalize()
   //rmag = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w + 0.0000001)
-        F32_opSqr, qx,  0, rmag,                           //rmag = qx*qx 
-        F32_opSqr, qy,  0, temp,                           //temp = qy*qy 
+        F32_opSqr, qx,  0, rmag,                   //rmag = qx*qx 
+        F32_opSqr, qy,  0, temp,                   //temp = qy*qy 
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-        F32_opSqr, qz,  0, temp,                           //temp = qz*qz 
+        F32_opSqr, qz,  0, temp,                   //temp = qz*qz 
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-        F32_opSqr, qw,  0, temp,                           //temp = qw*qw 
+        F32_opSqr, qw,  0, temp,                   //temp = qw*qw 
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-        F32_opAdd, rmag,  const_epsilon, rmag,       //rmag += 0.0000001 
-        F32_opSqrt, rmag,  0, rmag,                        //sqrt(rmag) 
+        F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.0000001 
+        F32_opSqrt, rmag,  0, rmag,                //sqrt(rmag) 
   //9 instructions (73)
 
   //q /= rmag   
@@ -412,25 +463,16 @@ short QuatUpdateCommands[] = {
 
   //Now convert the updated quaternion to a rotation matrix 
 
-  //fx2 = qx * qx;
-  //fy2 = qy * qy;
-  //fz2 = qz * qz;
-        F32_opSqr, qx,  0, fx2,                            //fx2 = qx *qx
-        F32_opSqr, qy,  0, fy2,                            //fy2 = qy *qy
-        F32_opSqr, qz,  0, fz2,                            //fz2 = qz *qz
+        F32_opSqr, qx,  0, fx2,                    //fx2 = qx *qx
+        F32_opSqr, qy,  0, fy2,                    //fy2 = qy *qy
+        F32_opSqr, qz,  0, fz2,                    //fz2 = qz *qz
   //3 instructions (80)
 
-  //fwx = qw * qx;
-  //fwy = qw * qy;
-  //fwz = qw * qz;
         F32_opMul, qw,  qx, fwx,                   //fwx = qw *qx
         F32_opMul, qw,  qy, fwy,                   //fwy = qw *qy
         F32_opMul, qw,  qz, fwz,                   //fwz = qw *qz
   //3 instructions (83)
 
-  //fxy = qx * qy;
-  //fxz = qx * qz;
-  //fyz = qy * qz;
         F32_opMul, qx,  qy, fxy,                   //fxy = qx *qy
         F32_opMul, qx,  qz, fxz,                   //fxz = qx *qz
         F32_opMul, qy,  qz, fyz,                   //fyz = qy *qz
@@ -439,46 +481,46 @@ short QuatUpdateCommands[] = {
    
   //m00 = 1.0f - 2.0f * (y2 + z2)
         F32_opAdd, fy2,  fz2, temp,                //temp = fy2+fz2
-        F32_opShift, temp,  const_1, temp,           //temp *= 2.0
-        F32_opSub, const_F1,  temp, m00,             //m00 = 1.0 - temp
+        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
+        F32_opSub, const_F1,  temp, m00,           //m00 = 1.0 - temp
      
   //m01 =        2.0f * (fxy - fwz)
         F32_opSub, fxy,  fwz, temp,                //temp = fxy-fwz
-        F32_opShift, temp,  const_1, m01,            //m01 = 2.0 * temp
+        F32_opShift, temp,  const_1, m01,          //m01 = 2.0 * temp
 
   //m02 =        2.0f * (fxz + fwy)
         F32_opAdd, fxz,  fwy, temp,                //temp = fxz+fwy
-        F32_opShift, temp,  const_1, m02,            //m02 = 2.0 * temp
+        F32_opShift, temp,  const_1, m02,          //m02 = 2.0 * temp
   //7 instructions (93)
 
    
   //m10 =        2.0f * (fxy + fwz)
         F32_opAdd, fxy,  fwz, temp,                //temp = fxy-fwz
-        F32_opShift, temp,  const_1, m10,            //m10 = 2.0 * temp
+        F32_opShift, temp,  const_1, m10,          //m10 = 2.0 * temp
 
   //m11 = 1.0f - 2.0f * (x2 + z2)
         F32_opAdd, fx2,  fz2, temp,                //temp = fx2+fz2
-        F32_opShift, temp,  const_1, temp,           //temp *= 2.0
-        F32_opSub, const_F1,  temp, m11,             //m11 = 1.0 - temp
+        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
+        F32_opSub, const_F1,  temp, m11,           //m11 = 1.0 - temp
 
   //m12 =        2.0f * (fyz - fwx)
         F32_opSub, fyz,  fwx, temp,                //temp = fyz-fwx
-        F32_opShift, temp,  const_1, m12,            //m12 = 2.0 * temp
+        F32_opShift, temp,  const_1, m12,          //m12 = 2.0 * temp
   //7 instructions (100)
 
    
   //m20 =        2.0f * (fxz - fwy)
         F32_opSub, fxz,  fwy, temp,                //temp = fxz-fwz
-        F32_opShift, temp,  const_1, m20,            //m20 = 2.0 * temp
+        F32_opShift, temp,  const_1, m20,          //m20 = 2.0 * temp
 
   //m21 =        2.0f * (fyz + fwx)
         F32_opAdd, fyz,  fwx, temp,                //temp = fyz+fwx
-        F32_opShift, temp,  const_1, m21,            //m21 = 2.0 * temp
+        F32_opShift, temp,  const_1, m21,          //m21 = 2.0 * temp
 
   //m22 = 1.0f - 2.0f * (x2 + y2)
         F32_opAdd, fx2,  fy2, temp,                //temp = fx2+fy2
-        F32_opShift, temp,  const_1, temp,           //temp *= 2.0
-        F32_opSub, const_F1,  temp, m22,             //m22 = 1.0 - temp
+        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
+        F32_opSub, const_F1,  temp, m22,           //m22 = 1.0 - temp
   //7 instructions (107)
 
 
@@ -489,7 +531,7 @@ short QuatUpdateCommands[] = {
         F32_opFloat, ax,  0, fax,
         F32_opFloat, az,  0, fay,
         F32_opFloat, ay,  0, faz,
-        F32_opNeg, fax,  0, fax,
+        F32_opNeg,  fax,  0, fax,
 
 
 //Rotation correction of the accelerometer vector - rotate around the pitch and roll axes by the specified amounts
@@ -531,13 +573,13 @@ short QuatUpdateCommands[] = {
 //Compute length of the accelerometer vector to decide weighting                                   
 
   //rmag = facc.length
-        F32_opSqr, fax,  0, rmag,                          //rmag = fax*fax
-        F32_opSqr, fay,  0, temp,                          //temp = fay*fay
+        F32_opSqr, fax,  0, rmag,                  //rmag = fax*fax
+        F32_opSqr, fay,  0, temp,                  //temp = fay*fay
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp
-        F32_opSqr, faz,  0, temp,                          //temp = faz*faz
+        F32_opSqr, faz,  0, temp,                  //temp = faz*faz
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp
-        F32_opAdd, rmag,  const_epsilon, rmag,       //rmag += 0.00000001
-        F32_opSqrt, rmag,  0, rmag,                        //rmag = Sqrt(rmag)                                                  
+        F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.00000001
+        F32_opSqrt, rmag,  0, rmag,                //rmag = Sqrt(rmag)                                                  
 
   //facc /= rmag
         F32_opDiv, fax,  rmag, faxn,               //faxn = fax / rmag 
@@ -547,12 +589,12 @@ short QuatUpdateCommands[] = {
 
 
   //accWeight = 1.0 - FMin( FAbs( 2.0 - accLen * 2.0 ), 1.0 )
-        F32_opMul, rmag,  const_AccScale, rmag,      //rmag /= accScale (accelerometer to 1G units)
-        F32_opShift, rmag,  const_1, accWeight,      //accWeight = rmag * 2.0
-        F32_opSub, const_F2,  accWeight, accWeight,  //accWeight = 2.0 - accWeight
-        F32_opFAbs, accWeight,  0, accWeight,              //accWeight = FAbs(accWeight)
-        F32_opFMin, accWeight,  const_F1, accWeight, //accWeight = FMin( accWeight, 1.0 )
-        F32_opSub, const_F1,  accWeight, accWeight,  //accWeight = 1.0 - accWeight                                                
+        F32_opMul, rmag,  const_AccScale, rmag,    //rmag /= accScale (accelerometer to 1G units)
+        F32_opShift, rmag,  const_1, accWeight,    //accWeight = rmag * 2.0
+        F32_opSub, const_F2,  accWeight, accWeight,//accWeight = 2.0 - accWeight
+        F32_opFAbs, accWeight,  0, accWeight,      //accWeight = FAbs(accWeight)
+        F32_opFMin, accWeight, const_F1, accWeight,//accWeight = FMin( accWeight, 1.0 )
+        F32_opSub, const_F1,  accWeight, accWeight,//accWeight = 1.0 - accWeight                                                
 
    
 
@@ -583,31 +625,19 @@ short QuatUpdateCommands[] = {
         F32_opMul, errDiffZ,  accWeight, errCorrZ,  
 
 
-    //tx := Flt.ASin( Flt.FFloatDiv28( DCM.GetM12 ) )     //Convert to float, then divide by (float)(1<<28)
-    //tz := Flt.ASin( Flt.FFloatDiv28( DCM.GetM10 ) )     //Convert to float, then divide by (float)(1<<28) 
-
-    //XAngle := Flt.FRound( Flt.FMul( tx,  constant( 320000.0 / (PI / 2.0)) ) ) 
-    //ZAngle := Flt.FRound( Flt.FMul( tz,  constant(-320000.0 / (PI / 2.0)) ) )
-
-    //if( DCM.GetMatrixvalue(4) < 0 )                     //If the Y value of the Y axis is negative, we//re upside down
-    //  if( ||ZAngle > ||XAngle ) 
-    //    ZAngle := ZAngle 
-
     //For heading, I want an actual angular value, so this returns me an int between 0  65535, where 0 is forward
     //YAngle := Flt.FRound( Flt.FMul( Flt.Atan2( Flt.FFloat(DCM.GetM20), Flt.FFloat(DCM.GetM22)), constant(32768.0 / PI) ) )  65535 
 
-
-        F32_opASinCos, m12,  0, temp,  
-        F32_opMul, temp,  const_outAngleScale, temp,
-        F32_opTruncRound, temp,  const_0, Pitch,  
-    
-        F32_opASinCos, m10,  0, temp,  
-        F32_opMul, temp,  const_outNegAngleScale, temp, 
-        F32_opTruncRound, temp,  const_0, Roll,  
         
-        F32_opATan2, m20,  m22, temp,  
-        F32_opMul, temp,  const_outNegAngleScale, temp,    
-        F32_opTruncRound, temp,  const_0, Yaw,  
+        F32_opATan2, m20,  m22, FloatYaw,
+        F32_opNeg, FloatYaw, 0, FloatYaw,
+        F32_opMul, FloatYaw,  const_outAngleScale, temp,
+        F32_opTruncRound, temp,  const_0, Yaw,
+
+        // When switching between manual and auto, or just lifting off, I need to
+        // know the half-angle of the craft so I can use it as my initial Heading value
+        // to be fed into the quaternion construction code.  This HalfYaw value serves that purpose
+        F32_opShift, FloatYaw, const_neg1, HalfYaw,
 
 
         F32_opDiv, const_F1,  m11, temp,                          // 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
@@ -634,10 +664,10 @@ short QuatUpdateCommands[] = {
         F32_opMul, forceX,  m01, forceWY,  
    
         F32_opMul, forceY,  m11, temp,  
-        F32_opAdd, forceWY,  temp, forceWY,  
+        F32_opAdd, forceWY, temp, forceWY,  
 
         F32_opMul, forceZ,  m21, temp,  
-        F32_opAdd, forceWY,  temp, forceWY,  
+        F32_opAdd, forceWY, temp, forceWY,  
 
   //forceWY *= 9.8                                       //Convert to M/sec^2
         F32_opMul, forceWY,  const_GMetersPerSec, forceWY,  
@@ -664,10 +694,10 @@ short QuatUpdateCommands[] = {
   //altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
         F32_opMul, altitudeEstimate,  const_velAccTrust, altitudeEstimate, 
 
-        F32_opFloat, alt,  0, temp,                                   //temp := float(alt)
+        F32_opFloat, alt,  0, temp,                             //temp := float(alt)
         F32_opDiv, temp,  const_m_to_mm, temp,                  //temp /= 1000.0    (alt now in m)
         F32_opMul, temp,  const_velAltiTrust, temp,             //temp *= 0.0050
-        F32_opAdd, altitudeEstimate,  temp, altitudeEstimate, //altEstimate += temp 
+        F32_opAdd, altitudeEstimate,  temp, altitudeEstimate,   //altEstimate += temp 
 
 
         F32_opMul, altitudeEstimate,  const_m_to_mm, temp,      //temp = altEst * 1000.0    (temp now in mm)
@@ -676,37 +706,197 @@ short QuatUpdateCommands[] = {
         F32_opMul, velocityEstimate,  const_m_to_mm, temp,      //temp = velEst * 1000.0    (temp now in mm/sec)
         F32_opTruncRound, temp,  const_0, VelocityEstMM, 
 
-
-  //Create a fixed point version of the orientation matrix
-        F32_opShift, m00,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm00, 
-        F32_opShift, m01,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm01, 
-        F32_opShift, m02,  const_16, temp,     
-        F32_opTruncRound, temp,  const_0, fm02, 
-
-        F32_opShift, m10,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm10, 
-        F32_opShift, m11,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm11, 
-        F32_opShift, m12,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm12, 
-
-        F32_opShift, m20,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm20, 
-        F32_opShift, m21,  const_16, temp,   
-        F32_opTruncRound, temp,  const_0, fm21, 
-        F32_opShift, m22,  const_16, temp,
-        F32_opTruncRound, temp,  const_0, fm22,
         0, 0, 0, 0
         };
 //}
+
+// Will need preferences for:
+// YawRateScale
+// ManualBankScale
+// AutoBankScale
+
+// Need variables for:
+// In_Elev, In_Aile, In_Rudd,
+// csx, csy, csz
+// snx, sny, snz
+// snycsx, snysnx
+// csycsz, csysnz
+
+
+
+short UpdateControlCommands_Manual[] = {
+};
+
+
+short UpdateControlCommands_AutoLevel[] = {
+
+  // Convert radio inputs to float, scale them to get them into the range we want
+
+  F32_opFloat,  In_Elev, 0, In_Elev,                  // Elev to float
+  F32_opFloat,  In_Aile, 0, In_Aile,                  // Aile to float
+  F32_opFloat,  In_Rudd, 0, In_Rudd,                  // Rudd to float
+
+  F32_opMul,    In_Elev, const_AutoBankScale, rx,     // rx = (Elev scaled to bank angle)
+  F32_opMul,    In_Aile, const_AutoBankScale, rz,     // rz = (Aile scaled to bank angle)
+  F32_opNeg,    rz, 0, rz,                            // rz = -rz
+
+  F32_opMul,    In_Rudd, const_YawRateScale, In_Rudd, // Scale rudd by maximum yaw rate scale
+  F32_opAdd,    Heading, In_Rudd, Heading,            // Add scaled rudd to desired Heading   (may need to range check - keep in +/- PI ?)
+
+  // Keep Heading in the range of -2*PI to 2*PI
+  F32_opDiv,    Heading, const_TwoPI, temp,           // temp = Heading/TwoPI
+  F32_opTruncRound, temp, const_0, temp,              // temp = (int)(Heading/TwoPI)
+  F32_opFloat,  temp, 0, temp,                        // temp = (float)((int)(Heading/TwoPI))
+  F32_opMul,    temp, const_TwoPI, temp,              // temp is now the integer multiple of TwoPI in heading
+  F32_opSub,    Heading, temp, Heading,               // Remove the part that's out of range
+
+
+  // Compute sines and cosines of scaled control input values
+
+  F32_opSinCos, rx, snx, csx,                         // snx = Sin(rx), csx = Cos(rx)
+  F32_opSinCos, Heading, sny, csy,                    // sny = Sin(ry), csy = Cos(ry)   (ry is heading)
+  F32_opSinCos, rz, snz, csz,                         // snz = Sin(rz), csz = Cos(rz)
+
+  // Pre-compute some re-used terms to save computation time
+
+  F32_opMul,    sny, csx, snycsx,                     // snycsx = sny * csx
+  F32_opMul,    sny, snx, snysnx,                     // snysnx = sny * snx
+  F32_opMul,    csy, csz, csycsz,                     // csycsz = csy * csz
+  F32_opMul,    csy, snz, csysnz,                     // scssnz = csy * snz
+
+  // Compute the quaternion that represents our new desired orientation  ((CQ = Control Quaternion))
+
+  F32_opMul,    snycsx, snz, cqx,                     // cqx =  snycsx * snz + csycsz * snx
+  F32_opMul,    csycsz, snx, temp,
+  F32_opAdd,    cqx, temp, cqx,
+
+  F32_opMul,    snycsx, csz, cqy,                     // cqy =  snycsx * csz + csysnz * snx
+  F32_opMul,    csysnz, snx, temp,
+  F32_opAdd,    cqy, temp, cqy,
+
+  F32_opMul,    csysnz, csx, cqz,                     // cqz = -snysnx * csz + csysnz * csx
+  F32_opMul,    snysnx, csz, temp,
+  F32_opSub,    cqz, temp, cqz,
+
+  F32_opMul,    csycsz, csx, cqw,                     //cqw = -snysnx * snz + csycsz * csx
+  F32_opMul,    snysnx, snz, temp,
+  F32_opSub,    cqw, temp, cqw,
+
+  // Compute the quaternion which is the rotation from our current orientation to our desired one, IE QRot = rotation from (Q) to (CQ)
+  // Computation is QRot = CQ.Conjugate() * Q,  where Conjugate is just (w, -x, -y, -z)
+
+  // With all the appropriate sign flips, the formula becomes:
+
+  // qrx = -cqx * qw - cqy * qz + cqz * qy + cqw * qx;
+  // qry =  cqx * qz - cqy * qw - cqz * qx + cqw * qy;
+  // qrz = -cqx * qy + cqy * qx - cqz * qw + cqw * qz;
+  // qrw =  cqx * qx + cqy * qy + cqz * qz + cqw * qw;
+  
+  
+
+  // qrx = -cqx * qw - cqy * qz + cqz * qy + cqw * qx;
+
+  F32_opMul,    cqx, qw, qrx,           // qrx =  cqx*qw
+  F32_opNeg,    qrx, 0, qrx,            // qrx = -qrx
+  F32_opMul,    cqy, qz, temp,
+  F32_opSub,    qrx, temp, qrx,         // qrx -= cqy*qz
+  F32_opMul,    cqz, qy, temp,
+  F32_opAdd,    qrx, temp, qrx,         // qrx += cqz*qy
+  F32_opMul,    cqw, qx, temp,
+  F32_opAdd,    qrx, temp, qrx,         // qrx += cqw*qx
+
+
+  // qry =  cqx * qz - cqy * qw - cqz * qx + cqw * qy;
+
+  F32_opMul,    cqx, qz, qry,           // qry =  cqx*qz
+  F32_opMul,    cqy, qw, temp,
+  F32_opSub,    qry, temp, qry,         // qry -= cqy*qw
+  F32_opMul,    cqz, qx, temp,
+  F32_opSub,    qry, temp, qry,         // qry -= cqz*qx
+  F32_opMul,    cqw, qy, temp,
+  F32_opAdd,    qry, temp, qry,         // qry += cqw*qy
+
+  
+  // qrz = -cqx * qy + cqy * qx - cqz * qw + cqw * qz;
+
+  F32_opMul,    cqx, qy, qrz,           // qrz =  cqx*qy
+  F32_opNeg,    qrz, 0, qrz,            // qrz = -qrz
+  F32_opMul,    cqy, qx, temp,
+  F32_opAdd,    qrz, temp, qrz,         // qrz += cqy*qx
+  F32_opMul,    cqz, qw, temp,
+  F32_opSub,    qrz, temp, qrz,         // qrz -= cqz*qw
+  F32_opMul,    cqw, qz, temp,
+  F32_opAdd,    qrz, temp, qrz,         // qrz += cqw*qz
+
+
+  // qrw =  cqx * qx + cqy * qy + cqz * qz + cqw * qw;
+
+  F32_opMul,    cqx, qx, qrw,           // qrw =  cqx*qx
+  F32_opMul,    cqy, qy, temp,
+  F32_opAdd,    qrw, temp, qrw,         // qrw += cqy*qy
+  F32_opMul,    cqz, qz, temp,
+  F32_opAdd,    qrw, temp, qrw,         // qrw += cqz*qz
+  F32_opMul,    cqw, qw, temp,
+  F32_opAdd,    qrw, temp, qrw,         // qrw += cqw*qw
+
+
+
+  // float diffAngle = qrot.ToAngleAxis( out DiffAxis );
+
+  // Converts to:
+
+  // float diffAngle = 2.0f * Acos(qrw);
+  // float rmag = Sqrt( 1.0f - qrw*qrw );	  // assuming quaternion normalised then w is less than 1, so term always positive.
+  // rmag = min( rmag, 0.001 )
+  // DiffAxis.x = qrx / rmag; // normalise axis
+  // DiffAxis.y = qry / rmag;
+  // DiffAxis.z = qrz / rmag;
+  
+  // PitchDiff = DiffAxis.x * diffAngle
+  // RollDiff =  DiffAxis.z * diffAngle
+  // YawDiff =   DiffAxis.y * diffAngle
+
+
+  // float diffAngle = 2.0f * Acos(qrw);
+  F32_opASinCos, qrw, const_1, diffAngle,
+  F32_opShift,  diffAngle, const_1, diffAngle,         // diffAngle *= 2.0
+
+
+  // float rmag = Sqrt( 1.0f - qrw*qrw );	  // assuming quaternion normalised then w is less than 1, so term always positive.
+  F32_opMul,    qrw, qrw, temp,
+  F32_opSub,    const_F1, temp, temp,
+  F32_opSqrt,   temp, 0, rmag,
+
+  
+  // rmag = max( rmag, 0.001 )
+  F32_opAdd,    rmag, const_epsilon, rmag,
+  
+  F32_opDiv,    rmag, diffAngle, rmag,        // rmag = (1.0/rmag * diffAngle)  equivalent to rmag = (diffAngle / rmag)
+  F32_opShift,  rmag, const_16, rmag,         // rmag *= 65536
+
+  // Simplified this a little by changing  X / rmag * diffAngle into X * (1.0/rmag * diffAngle)
+  // PitchDiff = qrx / rmag * diffAngle
+  // RollDiff =  qry / rmag * diffAngle
+  // YawDiff =   qrz / rmag * diffAngle
+
+  F32_opMul,    qrx, rmag, PitchDiff,
+  F32_opMul,    qrz, rmag, RollDiff,
+  F32_opMul,    qry, rmag, YawDiff,
+
+
+  F32_opTruncRound, PitchDiff, const_0, PitchDiff,
+  F32_opTruncRound, RollDiff, const_0, RollDiff,
+  F32_opTruncRound, YawDiff, const_0, YawDiff,  
+
+  0, 0, 0, 0
+};
 
 
 
 void QuatIMU_InitFunctions(void)
 {
   QuatIMU_AdjustStreamPointers( QuatUpdateCommands );
+  QuatIMU_AdjustStreamPointers( UpdateControlCommands_AutoLevel );
 }
 
 
@@ -726,6 +916,18 @@ void QuatIMU_Update( int * packetAddr )
   cycleTimer = CNT;
   F32::RunStream( QuatUpdateCommands );
 }
+
+
+void QuatIMU_UpdateControls_AutoLevel( RADIO * Radio )
+{
+  ((int*)IMU_VARS)[In_Elev] = Radio->Elev;
+  ((int*)IMU_VARS)[In_Aile] = Radio->Aile;
+  ((int*)IMU_VARS)[In_Rudd] = Radio->Rudd;
+
+  cycleTimer = CNT;
+  F32::RunStream( UpdateControlCommands_AutoLevel );
+}
+
 
 int QuatIMU_WaitForCompletion(void)
 {

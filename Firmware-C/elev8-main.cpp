@@ -21,6 +21,8 @@
 #include "servo32_highres.h"
 
 fdserial *dbg;
+fdserial_st *dbg_st;
+char* dbg_txbuf;
 
 
 //Working variables for the flight controller
@@ -28,7 +30,7 @@ fdserial *dbg;
 //Receiver inputs
 static RADIO Radio;
 static long  iRudd;         //Integrated rudder input value
-
+static long  LoopCycles = 0;
 //Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
 static SENS sens;
 
@@ -42,7 +44,7 @@ static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for
 static char   Quat[16];       //Current quaternion from the IMU functions
 
 static char Mode;             //Debug communication mode
-static char NudgeMotor;       //Which motor to nudge during testing (-1 == no motor)
+static signed char NudgeMotor;       //Which motor to nudge during testing (-1 == no motor)
 
 static EVERYTHING_DATA Everything;   // Used to store data for the "Everything" transmit mode
 
@@ -53,7 +55,8 @@ static long  Pitch, Roll, Yaw, AltiEst, AscentEst;
 //Working variables - used to convert receiver inputs to desired ranges for the PIDs  
 static long  DesiredAltitude, DesiredAltitudeFractional;
 
-static long  RollDifference, PitchDifference;                 //Delta between current measured roll/pitch and desired roll/pitch                         
+static long  pdiff, rdiff, ydiff;
+static long  RollDifference, PitchDifference, YawDifference;  //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
 static long  GyroRPFilter, GyroYawFilter;   // Tunable damping values for gyro noise
@@ -104,10 +107,61 @@ const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
 
 
+
+// BEWARE - This function bypasses ALL safety checks for buffer throughput.
+// BE VERY CAREFUL that you don't send more than is possible at one time.
+static void TxUnsafe( char c ) {
+  dbg_txbuf[ dbg_st->tx_head ] = c;
+  dbg_st->tx_head = (dbg_st->tx_head+1) & FDSERIAL_BUFF_MASK;
+}
+
+static void TxBulkUnsafe( void * data , int Bytes )
+{
+  char * buf = (char *)data;
+  int head = dbg_st->tx_head;
+
+  while(Bytes > 0)
+  {
+    int bufRemain = (FDSERIAL_BUFF_MASK+1) - head;
+    if( bufRemain > Bytes ) bufRemain = Bytes;
+
+    memcpy( dbg_txbuf+head, buf, bufRemain );
+    Bytes -= bufRemain;
+    buf += bufRemain;
+    head = (head + bufRemain) & FDSERIAL_BUFF_MASK;
+  }  
+  dbg_st->tx_head = head;
+}
+
+// These versions are safe to call, and properly wait for the buffer to have space for data
+static void Tx( char c ) {
+  fdserial_txChar( dbg, c );
+}  
+
+static void TxBulk( const void * buf , int bytes )
+{
+  const char *data = (const char *)buf;
+  for( int i=0; i<bytes; i++ ) {
+    Tx( data[i] );
+  }    
+}
+
+static void TxInt( int x )
+{
+  static char nybbles[] = "0123456789ABCDEF";
+  int shift = 32-4;
+  do {
+    Tx( nybbles[ (x>>shift) & 0xf] );
+    shift -= 4;
+  } while( shift >= 0 );
+}
+
+
+
 int main()                                    // Main function
 {
   Initialize(); // Set up all the objects
-
+  
   //Prefs_Test();
 
   //Grab the first set of sensor readings (should be ready by now)
@@ -120,6 +174,11 @@ int main()                                    // Main function
   counter = 0;
   NudgeMotor = -1;
   loopTimer = CNT;
+
+  Motor[0] = Prefs.MinThrottle;
+  Motor[1] = Prefs.MinThrottle;
+  Motor[2] = Prefs.MinThrottle;
+  Motor[3] = Prefs.MinThrottle;
 
   Servo32_Set( PIN_MOTOR_FL, Prefs.MinThrottle );
   Servo32_Set( PIN_MOTOR_FR, Prefs.MinThrottle );
@@ -134,24 +193,36 @@ int main()                                    // Main function
     //Read ALL inputs from the sensors into local memory, starting at Temperature
     memcpy( &sens, Sensors_Address(), Sensors_ParamsSize );
 
-    QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~92000 cycles (without altimeter fusion or thrust angle compensation)
+    QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~125000 cycles
 
     AccelZSmooth += (sens.AccelZ - AccelZSmooth) * Prefs.AccelCorrectionFilter / 256;
 
     if( Prefs.UseSBUS )
     {
-      for( int i=0; i<8; i++ ) {
-        Radio.Channel(i) =  (SBUS::GetRC(Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
-      }
+      // Doing this expanded this way instead of in a loop saves about 10000 cycles
+      Radio.Channel(0) =  (SBUS::GetRC(Prefs.ChannelIndex(0)) - Prefs.ChannelCenter(0)) * Prefs.ChannelScale(0) / 1024;
+      Radio.Channel(1) =  (SBUS::GetRC(Prefs.ChannelIndex(1)) - Prefs.ChannelCenter(1)) * Prefs.ChannelScale(1) / 1024;
+      Radio.Channel(2) =  (SBUS::GetRC(Prefs.ChannelIndex(2)) - Prefs.ChannelCenter(2)) * Prefs.ChannelScale(2) / 1024;
+      Radio.Channel(3) =  (SBUS::GetRC(Prefs.ChannelIndex(3)) - Prefs.ChannelCenter(3)) * Prefs.ChannelScale(3) / 1024;
+      Radio.Channel(4) =  (SBUS::GetRC(Prefs.ChannelIndex(4)) - Prefs.ChannelCenter(4)) * Prefs.ChannelScale(4) / 1024;
+      Radio.Channel(5) =  (SBUS::GetRC(Prefs.ChannelIndex(5)) - Prefs.ChannelCenter(5)) * Prefs.ChannelScale(5) / 1024;
+      Radio.Channel(6) =  (SBUS::GetRC(Prefs.ChannelIndex(6)) - Prefs.ChannelCenter(6)) * Prefs.ChannelScale(6) / 1024;
+      Radio.Channel(7) =  (SBUS::GetRC(Prefs.ChannelIndex(7)) - Prefs.ChannelCenter(7)) * Prefs.ChannelScale(7) / 1024;
     }
     else
     {
-      for( int i=0; i<8; i++ ) {
-        Radio.Channel(i) =  (RC::GetRC( Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
-      }        
+      // Doing this expanded this way instead of in a loop saves about 10000 cycles
+      Radio.Channel(0) =  (RC::GetRC( Prefs.ChannelIndex(0)) - Prefs.ChannelCenter(0)) * Prefs.ChannelScale(0) / 1024;
+      Radio.Channel(1) =  (RC::GetRC( Prefs.ChannelIndex(1)) - Prefs.ChannelCenter(1)) * Prefs.ChannelScale(1) / 1024;
+      Radio.Channel(2) =  (RC::GetRC( Prefs.ChannelIndex(2)) - Prefs.ChannelCenter(2)) * Prefs.ChannelScale(2) / 1024;
+      Radio.Channel(3) =  (RC::GetRC( Prefs.ChannelIndex(3)) - Prefs.ChannelCenter(3)) * Prefs.ChannelScale(3) / 1024;
+      Radio.Channel(4) =  (RC::GetRC( Prefs.ChannelIndex(4)) - Prefs.ChannelCenter(4)) * Prefs.ChannelScale(4) / 1024;
+      Radio.Channel(5) =  (RC::GetRC( Prefs.ChannelIndex(5)) - Prefs.ChannelCenter(5)) * Prefs.ChannelScale(5) / 1024;
+      Radio.Channel(6) =  (RC::GetRC( Prefs.ChannelIndex(6)) - Prefs.ChannelCenter(6)) * Prefs.ChannelScale(6) / 1024;
+      Radio.Channel(7) =  (RC::GetRC( Prefs.ChannelIndex(7)) - Prefs.ChannelCenter(7)) * Prefs.ChannelScale(7) / 1024;
     }
 
-
+    
     //if( UsePing )
     //  PingCycle := counter & 15
     //  if( PingCycle == 0 )
@@ -186,7 +257,8 @@ int main()                                    // Main function
         FlightMode = NewFlightMode;
       }        
 
-      UpdateFlightLoop();            //~82000 cycles when in flight mode
+
+      UpdateFlightLoop();            //~72000 cycles when in flight mode
       //-------------------------------------------------
     }  
 
@@ -213,24 +285,41 @@ int main()                                    // Main function
     }
 
     All_LED( LEDModeColor );
+    QuatIMU_WaitForCompletion();    // Wait for the IMU to finish updating
 
+
+    QuatIMU_UpdateControls_AutoLevel( &Radio );   // Now update the control quaternion
     QuatIMU_WaitForCompletion();
 
-    Pitch = QuatIMU_GetPitch();
-    Roll  = QuatIMU_GetRoll();        //Yes, this puts these 1 cycle behind, but the flight loop gets to use current gyro values
-    Yaw   = QuatIMU_GetYaw();
+
+    pdiff = QuatIMU_GetPitchDifference();
+    rdiff = QuatIMU_GetRollDifference();
+    ydiff = QuatIMU_GetYawDifference();
+
+
+    //switch( counter & 3 )
+    //{
+    //  case 0: TxInt( pdiff );  Tx(32); break;
+    //  case 1: TxInt( rdiff );  Tx(32); break;
+    //  case 2: TxInt( ydiff );  Tx(13); break;
+    //}
+
+
+    //Pitch = QuatIMU_GetPitch();
+    //Roll  = QuatIMU_GetRoll();        //Yes, this puts these 1 cycle behind, but the flight loop gets to use current gyro values
+    //Yaw   = QuatIMU_GetYaw();
     AltiEst = QuatIMU_GetAltitudeEstimate();
     AscentEst = QuatIMU_GetVerticalVelocityEstimate();
 
     CheckDebugInput();
     DoDebugModeOutput();
 
-    Cycles = CNT - Cycles;
+    LoopCycles = CNT - Cycles;    // Record how long it took for one full iteration
 
     ++counter;
     loopTimer += Const_UpdateCycles;
     waitcnt( loopTimer );
-  }    
+  }
 }
 
 
@@ -255,6 +344,8 @@ void Initialize(void)
   GyroYawFilter = 192;
 
   dbg = fdserial_open( 31, 30, 0, 115200 );
+  dbg_st = (fdserial_st*)dbg->devst; // Cache a pointer to the FDSerial device structure
+  dbg_txbuf = (char*)dbg_st->buffptr + FDSERIAL_BUFF_MASK+1;  
 
   // Do this before settings are loaded, because Sensors_Start resets the drift coefficients to defaults
   Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
@@ -296,9 +387,10 @@ void Initialize(void)
   Servo32_Set( PIN_MOTOR_BL, 8000 );
   Servo32_Start();
 
+  // was 30000, 15000
 
-  RollPitch_P = 10000;           //Set here to allow an in-flight tuning baseline
-  RollPitch_D = 30000 * 250; 
+  RollPitch_P = 7000;           //Set here to allow an in-flight tuning baseline
+  RollPitch_D = 7000 * 250; 
 
 
   RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
@@ -317,7 +409,7 @@ void Initialize(void)
   PitchPID.SetDervativeFilter( 96 );
 
 
-  YawPID.Init( 5000,   0,  -3750000 , Const_UpdateRate );
+  YawPID.Init( 7000,   0,  3750000 , Const_UpdateRate );
   YawPID.SetPrecision( 12 );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetDervativeFilter( 96 );
@@ -437,27 +529,22 @@ void UpdateFlightLoop(void)
     }
     //------------------------------------------------------------------------
 
-     
-    //Rudder is integrated (accumulated)
-    iRudd += Radio.Rudd;
 
-
-    if( FlightMode == FlightMode_Manual )
-    {
-      RollDifference = Radio.Aile * Prefs.RollPitchSpeed / 64;
-      PitchDifference = -Radio.Elev * Prefs.RollPitchSpeed / 64;
-    }
-    else
+    //if( FlightMode == FlightMode_Manual )
+    //{
+    //  RollDifference = Radio.Aile * Prefs.RollPitchSpeed / 64;
+    //  PitchDifference = -Radio.Elev * Prefs.RollPitchSpeed / 64;
+    //}
+    //else
     {
       //Angular output from the IMU is +/- 65536 units, or 32768 = 90 degrees
       //Input range from the controls is +/- 1024 units - scale that to the desired pitch / roll angles
 
-      int DesiredRoll =  Radio.Aile * Prefs.MaxRollPitch;
-      int DesiredPitch = -Radio.Elev * Prefs.MaxRollPitch;
-
-      RollDifference = (DesiredRoll - Roll) >> 2;
-      PitchDifference = (DesiredPitch - Pitch) >> 2;
+      RollDifference = rdiff;
+      PitchDifference = pdiff;
+      YawDifference = -ydiff;
     }
+
 
     gr =  sens.GyroY - GyroZY;
     gp = -(sens.GyroX - GyroZX);
@@ -467,32 +554,20 @@ void UpdateFlightLoop(void)
     GyroPitch += ((gp - GyroPitch) * GyroRPFilter) >> 8;
     GyroYaw += ((gy - GyroYaw) * GyroYawFilter) >> 8;
 
-    //Yaw is different because we accumulate it - It's not specified absolutely like you can
-    //with pitch and roll, so scale the stick input down a bit
-    int DesiredYaw = iRudd * Prefs.YawSpeed / 256;
 
- 
+
     //Zero yaw target when throttle is off - makes for more stable liftoff
     if( Radio.Thro < -700 )
     {
+      QuatIMU_ResetDesiredYaw();
+
       DoIntegrate = 0;          //Disable PID integral term until throttle is applied      
-      DesiredYaw = Yaw;         //Desired = measured when the throttle is off
-      iRudd = Yaw * 256 / Prefs.YawSpeed;  //Make "measured yaw" match desired yaw until throttle is applied
     }      
     else {
       DoIntegrate = 1;
     }      
 
 
-    DesiredYaw &= YawMask;
-     
-    if( abs(DesiredYaw - Yaw) >= YawCircleHalf )
-    {
-      if( Yaw < YawCircleHalf )
-        DesiredYaw = DesiredYaw - YawCircle;
-      else
-        DesiredYaw = DesiredYaw + YawCircle;
-    }
 
     //Uncomment to allow partial PID tuning from the controller in flight
     /*
@@ -504,10 +579,14 @@ void UpdateFlightLoop(void)
     PitchPID.SetPGain( T1 )
     PitchPID.SetDGain( T2 )
     */
-     
+
+    //int filt = clamp( Radio.Aux2 >> 2, 0, 256 );
+    //RollPID.SetDervativeFilter( filt );
+    //PitchPID.SetDervativeFilter( filt );
+
     int RollOut = RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate );
     int PitchOut = PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate );
-    int YawOut = YawPID.Calculate_ForceD_NoD2( DesiredYaw , Yaw , GyroYaw, DoIntegrate );
+    int YawOut = YawPID.Calculate_NoD2( YawDifference, GyroYaw, DoIntegrate );
 
 
     int ThroMix = (Radio.Thro + 1024) >> 2;           // Approx 0 - 512
@@ -621,14 +700,14 @@ void UpdateFlightLEDColor(void)
 #endif
 
   if( LowBatt ) {
-    
-    int index = (counter >> 3) & 15;
 
-    if( index < 6 ) {
+    int index = (counter >> 3) & 7;
+
+    if( index < 4 ) {
       LEDModeColor = (LEDColorTable[FlightMode & 3] & LEDBrightMask) >> LEDBrightShift;
     }
     else {
-      LEDModeColor = (LED_Red & LEDBrightMask) >> LEDBrightShift;
+      LEDModeColor = ((LED_Red | (LED_Yellow & LED_Half)) & LEDBrightMask) >> LEDBrightShift;   // Fast flash orange for battery warning
     }
 
   }
@@ -663,10 +742,16 @@ void ArmFlightMode(void)
   
 void DisarmFlightMode(void)
 {
+  Motor[0] = Prefs.MinThrottle;
+  Motor[1] = Prefs.MinThrottle;
+  Motor[2] = Prefs.MinThrottle;
+  Motor[3] = Prefs.MinThrottle;
+
   Servo32_Set( PIN_MOTOR_FL, Prefs.MinThrottle );
   Servo32_Set( PIN_MOTOR_FR, Prefs.MinThrottle );
   Servo32_Set( PIN_MOTOR_BR, Prefs.MinThrottle );
   Servo32_Set( PIN_MOTOR_BL, Prefs.MinThrottle );
+
 
   FlightEnabled = 0;
   FlightEnableStep = 0;
@@ -693,24 +778,18 @@ static int GetDbgShort(void)
   return v;
 }  
 
-static void Tx( char c ) {
-  fdserial_txChar( dbg, c );
-}  
-
-static void TxBulk( void * data , int Bytes )
-{
-  char * buf = (char *)data;
-  for( int i=0; i<Bytes; i++ ) {
-    fdserial_txChar( dbg, buf[i] );
-  }    
-}  
-
 static void TxMode( int val )
 {
   Tx(0x77);
   Tx(0x77);
   Tx(val);
 }
+
+static void TxHeader( char Mode, char Len )
+{
+  int Header = 0x7777 | (Mode << 16) | (Len << 24);
+  TxBulkUnsafe( &Header, 4 );
+}  
 
 void CheckDebugInput(void)
 {
@@ -826,6 +905,10 @@ void CheckDebugInput(void)
       Prefs.Checksum = Prefs_CalculateChecksum( Prefs );
       TxBulk( &Prefs, size );
 
+      // Wait for the data to finish sending so our unsafe Tx functions don't overwrite it
+      while( fdserial_txEmpty(dbg) == 0 )
+        ;
+
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }
     else if( c == 0x19 )          //Store new settings
@@ -873,17 +956,18 @@ void DoDebugModeOutput(void)
       switch( phase )
       {
       case 0:
-        TxMode(1);  // Radio values
-        Tx(18);     // Packet payload is 18 bytes
-
-        TxBulk( &Radio , 16 );       // Radio struct is 16 bytes total
-        TxBulk( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
+        {
+        TxHeader( 1, 22 );            // Radio values, 22 byte payload
+        TxBulkUnsafe( &Radio , 16 );       // Radio struct is 16 bytes total
+        TxBulkUnsafe( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
+        }        
         break;
-    
+
       case 1:
-        TxMode(2);  // Sensor values
-        Tx(20);     // Payload is 20 bytes
-    
+        TxBulkUnsafe( &LoopCycles, 4 );    // Cycles required for one complete loop  (debug data takes a LONG time)
+        break;
+
+      case 2:
         TxData[0] = sens.Temperature;    //Copy the values we're interested in into a WORD array, for faster transmission                        
         TxData[1] = sens.GyroX;
         TxData[2] = sens.GyroY;
@@ -894,26 +978,36 @@ void DoDebugModeOutput(void)
         TxData[7] = sens.MagX;
         TxData[8] = sens.MagY;
         TxData[9] = sens.MagZ;
-        TxBulk( &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
+
+        TxHeader( 2, 20 );    // Sensor values, 20 byte payload
+        TxBulkUnsafe( &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
         break;
 
-      case 2:
-        TxMode(3);  // Quaternion data
-        Tx(16);     // Quaternion is 16 bytes
-        TxBulk( QuatIMU_GetQuaternion() , 16 );
+      case 4:
+        TxHeader( 3, 16 );  // Quaternion data, 16 byte payload
+        TxBulkUnsafe( QuatIMU_GetQuaternion() , 16 );
         break;
-        
-      case 3:
-        TxMode(4);  // ComputedData
-        Tx(24);
 
-        TxBulk( &Pitch, 4 );
-        TxBulk( &Roll, 4 );
-        TxBulk( &Yaw, 4 );
+      case 5: // Motor data
+        TxData[0] = Motor[0];
+        TxData[1] = Motor[1];
+        TxData[2] = Motor[2];
+        TxData[3] = Motor[3];
+        TxHeader( 5, 8 );   // 8 byte payload
+        TxBulkUnsafe( &TxData, 8 );
+        break;
 
-        TxBulk( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
-        TxBulk( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
-        TxBulk( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
+
+      case 6:
+        TxHeader( 4, 24 );  // Computed data, 24 byte payload
+
+        TxBulkUnsafe( &Pitch, 4 );
+        TxBulkUnsafe( &Roll, 4 );
+        TxBulkUnsafe( &Yaw, 4 );
+
+        TxBulkUnsafe( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
+        TxBulkUnsafe( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
+        TxBulkUnsafe( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         break;
     }
   }
