@@ -67,7 +67,7 @@ void Prefs_SetDefaults(void)
 
   Prefs.ThrottleTest = 1180 * 8;
 
-  Prefs.MinThrottle = 1040 * 8;     // Values are in 1/8us resolution, full range is 1000us to 2000us
+  Prefs.MinThrottle = 1040 * 8;     // Values are in 1/8us resolution, full range is 1000us to 2000us, however many ESCs behave abnormally at the extremes
   Prefs.MaxThrottle = 1960 * 8;
   Prefs.CenterThrottle = 1500 * 8;
   Prefs.MinThrottleArmed = 1120 * 8;

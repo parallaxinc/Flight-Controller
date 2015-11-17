@@ -971,10 +971,10 @@ void DoDebugModeOutput(void)
          
         fdserial_rxChar(dbg);
 
-        Servo32_Set(MotorIndex[0], Prefs.MinThrottle + 64);
-        Servo32_Set(MotorIndex[1], Prefs.MinThrottle + 64);
-        Servo32_Set(MotorIndex[2], Prefs.MinThrottle + 64);
-        Servo32_Set(MotorIndex[3], Prefs.MinThrottle + 64);
+        Servo32_Set(MotorIndex[0], Prefs.MinThrottle);  // Must add 64 to min throttle value (in this calibration code only) if using ESCs with BLHeli version 14.0 or 14.1
+        Servo32_Set(MotorIndex[1], Prefs.MinThrottle);
+        Servo32_Set(MotorIndex[2], Prefs.MinThrottle);
+        Servo32_Set(MotorIndex[3], Prefs.MinThrottle);
       }
     }        
     else if( NudgeMotor == 7 )                         //Motor off (after motor test)
