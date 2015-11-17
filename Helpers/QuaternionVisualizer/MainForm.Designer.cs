@@ -32,6 +32,7 @@
 			this.tmCommTimer = new System.Windows.Forms.Timer( this.components );
 			this.lblAngles = new System.Windows.Forms.Label();
 			this.ocCube = new Elev8.OrientationCube();
+			this.lblCycleCount = new System.Windows.Forms.Label();
 			this.SuspendLayout();
 			// 
 			// tmCommTimer
@@ -66,11 +67,21 @@
 			this.ocCube.MouseDown += new System.Windows.Forms.MouseEventHandler( this.ocCube_MouseDown );
 			this.ocCube.MouseUp += new System.Windows.Forms.MouseEventHandler( this.ocCube_MouseUp );
 			// 
+			// lblCycleCount
+			// 
+			this.lblCycleCount.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+			this.lblCycleCount.Location = new System.Drawing.Point( 476, 286 );
+			this.lblCycleCount.Name = "lblCycleCount";
+			this.lblCycleCount.Size = new System.Drawing.Size( 124, 16 );
+			this.lblCycleCount.TabIndex = 2;
+			this.lblCycleCount.Text = "-- cycles";
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF( 6F, 13F );
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size( 612, 311 );
+			this.Controls.Add( this.lblCycleCount );
 			this.Controls.Add( this.lblAngles );
 			this.Controls.Add( this.ocCube );
 			this.Name = "MainForm";
@@ -85,6 +96,7 @@
 		private System.Windows.Forms.Timer tmCommTimer;
 		private Elev8.OrientationCube ocCube;
 		private System.Windows.Forms.Label lblAngles;
+		private System.Windows.Forms.Label lblCycleCount;
 	}
 }
 

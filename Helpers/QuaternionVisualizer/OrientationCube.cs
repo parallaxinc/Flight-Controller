@@ -30,12 +30,14 @@ namespace Elev8
 
 		public float cubeWidth = 1, cubeDepth = 1, cubeHeight = 1;
 
-		Quaternion unitq = new Quaternion();
-		Matrix unit = new Matrix();
+		Quaternion follow = new Quaternion();
+		Matrix matFollow = new Matrix();
 
+		Matrix unit = new Matrix();
 		Matrix rot = new Matrix();
 
-		public float rx = -0.5f, ry = 0.5f;
+
+		public float rx = 0.0f, ry = 0.0f;
 
 		public Vector Velocities = new Vector();
 
@@ -199,7 +201,7 @@ namespace Elev8
 			cx[0] = CenterX * 2 / 4;
 			cx[1] = CenterX + CenterX * 2 / 4;
 
-			DrawShape( g, rot, Color.LightGray, QuadPt, QuadLine );
+			DrawShape( g, rot.Mul( matFollow ), Color.LightGray, QuadPt, QuadLine );
 
 			DrawShape( g, rot.Mul( mat ), Color.DarkGray, QuadPt, QuadLine );
 		}
@@ -287,12 +289,18 @@ namespace Elev8
 		void ComputeAngularVelocities()
 		{
 			Vector Axis;
-			float angle = quat.ToAngleAxis(out Axis);
+
+			Quaternion qrot = follow.Conjugate() * quat;
+			float angle = qrot.ToAngleAxis( out Axis );
 
 			Vector angularDisplacement = Axis * angle; // * Mathf.Deg2Rad;
 			//Vector angularSpeed = angularDisplacement / Time.deltaTime;
 
-			Velocities = angularDisplacement;
+			Velocities = angularDisplacement;	// It's possible for this to accumulate extra spins, apparently - will need to be clamped -PI to +PI
+
+
+			follow = follow.Slerp( quat, 0.05f );
+			matFollow.From( follow );
 		}
 	}
 }

@@ -23,6 +23,7 @@ namespace Elev8
 			z = _z;
 		}
 
+
 		public float Length()
 		{
 			float len = (float)Math.Sqrt( w * w + x * x + y * y + z * z );
@@ -38,15 +39,70 @@ namespace Elev8
 			return new Quaternion( w * len, x * len, y * len, z * len );
 		}
 
+
+		public static Quaternion operator * (Quaternion q1, Quaternion q2)
+		{
+			Quaternion r = new Quaternion();
+
+			r.x =  q1.x * q2.w + q1.y * q2.z - q1.z * q2.y + q1.w * q2.x;
+			r.y = -q1.x * q2.z + q1.y * q2.w + q1.z * q2.x + q1.w * q2.y;
+			r.z =  q1.x * q2.y - q1.y * q2.x + q1.z * q2.w + q1.w * q2.z;
+			r.w = -q1.x * q2.x - q1.y * q2.y - q1.z * q2.z + q1.w * q2.w;
+
+			return r;
+		}
+
+
+		public static Quaternion operator + (Quaternion q1, Quaternion q2)
+		{
+			return new Quaternion( q1.w + q2.w, q1.x + q2.x, q1.y + q2.y, q1.z + q2.z );
+		}
+
+
+		public static Quaternion operator * ( Quaternion q, float s )
+		{
+			return new Quaternion( q.w * s, q.x * s, q.y * s, q.z * s );
+		}
+
+
+		public void FromAxisAngle(float xx, float yy, float zz, float a)
+		{
+			// Here we calculate the sin( theta / 2) once for optimization
+			float sn = (float)Math.Sin( a / 2.0f );
+
+			// Calculate the x, y and z of the quaternion
+			x = xx * sn;
+			y = yy * sn;
+			z = zz * sn;
+
+			// Calcualte the w value by cos( theta / 2 )
+			w = (float)Math.Cos( a / 2.0f );
+
+			Quaternion r = Normalize();		// Not required if (xx,yy,zz) is normalized)
+			x = r.x;
+			y = r.y;
+			z = r.z;
+			w = r.w;
+		}
+
+
 		public float DotProduct( Quaternion q )
 		{
 			return w*q.w + x*q.x + y*q.y + z*q.z;
 		}
 
+
 		public Quaternion Conjugate()
 		{
 			return new Quaternion( w, -x, -y, -z );
 		}
+
+
+		public Quaternion To( Quaternion b )
+		{
+			return this * b.Conjugate();
+		}
+
 
 		public Quaternion Slerp( Quaternion To, float Tween )
 		{
@@ -100,25 +156,21 @@ namespace Elev8
 			return r;
 		}
 
+
 		// Returns an angle and an axis that represents the rotation of the quaternion
 		public float ToAngleAxis( out Vector Axis )
 		{
-			float angle = 2.0f * (float)Math.Acos(w);
+			float tw = Math.Min( w, 1.0f );
+			float angle = 2.0f * (float)Math.Acos( tw );
 			Axis = new Vector();
 
-			float s = (float)Math.Sqrt( 1.0f - w*w );	// assuming quaternion normalised then w is less than 1, so term always positive.
-			if(s < 0.001f)								// test to avoid divide by zero, s is always positive due to sqrt
-			{
-				 // if s close to zero then direction of axis not important
-				 Axis.x = x; // if it is important that axis is normalised then replace with x=1; y=z=0;
-				 Axis.y = y;
-				 Axis.z = z;
-			}
-			else {
-				Axis.x = x / s; // normalise axis
-				Axis.y = y / s;
-				Axis.z = z / s;
-		   }
+			float s = (float)Math.Sqrt( 1.0f - tw*tw );	// assuming quaternion normalised then w is less than 1, so term always positive.
+			s = Math.Max( s, 0.001f );					// prevent divide by zero
+
+			Axis.x = x / s; // normalise axis
+			Axis.y = y / s;
+			Axis.z = z / s;
+
 			return angle;
 		}
 	};
