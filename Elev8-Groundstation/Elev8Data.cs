@@ -11,6 +11,8 @@ namespace Elev8
 		public short Thro, Aile, Elev, Rudd;
 		public short Gear, Aux1, Aux2, Aux3;						// Radio values = 16 bytes
 		public short BatteryVolts;                                  // Battery Monitor = 2 bytes
+		public int LoopCycles;
+		public float DebugFloat;
 
 		// Array index operator, allowing access to the channels by index value
 		public short this[int i]
@@ -61,6 +63,8 @@ namespace Elev8
 			Aux2 = p.GetShort();
 			Aux3 = p.GetShort();
 			BatteryVolts = p.GetShort();
+			LoopCycles = p.GetInt();
+			DebugFloat = p.GetFloat();
 		}
 	}
 

@@ -989,7 +989,7 @@ CompareReversed
 ' FMin (a,b) = minimum of(fnumA, fnumB)
 '------------------------------------------------------------------------------
 _FMax
-                        sub     fNumA, fNumB  nr, wc
+                        sub     fNumB, fNumA  nr, wc
                         jmp     #_FMinMax_entry
 
 _FMin

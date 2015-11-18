@@ -27,9 +27,12 @@ int QuatIMU_GetAltitudeEstimate(void);
 int QuatIMU_GetPitchDifference(void);
 int QuatIMU_GetRollDifference(void);
 int QuatIMU_GetYawDifference(void);
-void QuatIMU_ResetDesiredYaw(void);
-void QuatIMU_GetDesiredQ( float * dest );
 
+void QuatIMU_ResetDesiredYaw(void);
+void QuatIMU_ResetDesiredOrientation(void);
+
+void QuatIMU_GetDesiredQ( float * dest );
+void QuatIMU_GetDebugFloat( float * dest );
 
 void QuatIMU_SetInitialAltitudeGuess( int altiMM );
 
@@ -43,8 +46,8 @@ void QuatIMU_SetGyroZero( int x, int y, int z );
 
 void QuatIMU_Update( int * packetAddr );
 
-void QuatIMU_UpdateControls_AutoLevel( RADIO * Radio );
-void QuatIMU_UpdateControls_Manual( RADIO * Radio );
+void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode );
+void QuatIMU_ComputeOrientationChange(void);
 
 
 int QuatIMU_WaitForCompletion(void);

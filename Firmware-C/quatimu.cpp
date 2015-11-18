@@ -26,6 +26,8 @@ enum IMU_VarLabels {
     ThrustFactor,
     FloatYaw,                                    // Current heading (yaw) in floating point
     HalfYaw,                                     // Heading / 2, used for quaternion construction
+
+    DebugFloat,                                  // value used for debugging - sent to groundstation
     
     // Inputs
     gx, gy, gz,
@@ -38,6 +40,7 @@ enum IMU_VarLabels {
     const_1,
     const_neg1,
     const_neg12,
+    const_11,
     const_16,
 
 
@@ -112,8 +115,10 @@ enum IMU_VarLabels {
 
     const_F1,
     const_F2,
+    const_NegF1,
 
     const_epsilon,
+    
     const_half,
     const_neghalf,
 
@@ -134,8 +139,9 @@ enum IMU_VarLabels {
     const_velAltiTrust,
 
     const_YawRateScale,
-    const_ManualBankScale,
+    const_ManualYawScale,
     const_AutoBankScale,
+    const_ManualBankScale,
     const_TwoPI,
     
    IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
@@ -178,12 +184,14 @@ void QuatIMU_Start(void)
   ((int*)IMU_VARS)[const_1]         =    1;
   ((int*)IMU_VARS)[const_neg1]      =   -1;
   ((int*)IMU_VARS)[const_neg12]     =   -12;              //Used to subtract from acc exponent, equivalent to /= 4096.0
+  ((int*)IMU_VARS)[const_11]        =    11;              //Used to add to exponents, equivalent to *= 4096.0
   ((int*)IMU_VARS)[const_16]        =    16;              //Used to add to exponents, equivalent to *= 65536.0
 
   IMU_VARS[const_F1]                =    1.0f;
   IMU_VARS[const_F2]                =    2.0f;
-
-  IMU_VARS[const_epsilon]           =    0.0000000001f;    //Added to vector length value before inverting (1/X) to insure no divide-by-zero problems
+  IMU_VARS[const_NegF1]             =    -1.0f;
+  
+  IMU_VARS[const_epsilon]           =    0.00000001f;     //Added to vector length value before inverting (1/X) to insure no divide-by-zero problems
   IMU_VARS[const_half]              =    0.5f;
   IMU_VARS[const_neghalf]           =   -0.5f;
 
@@ -204,9 +212,11 @@ void QuatIMU_Start(void)
   IMU_VARS[const_velAccTrust]       =    0.999f;
   IMU_VARS[const_velAltiTrust]      =    0.001f;
 
-  IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 180 deg/sec / UpdateRate * Deg2Rad * HalfAngle
-  IMU_VARS[const_ManualBankScale]   =    ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
+  IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
+
+  IMU_VARS[const_ManualYawScale]   =     2.0f;
+  IMU_VARS[const_ManualBankScale]   =    1.0f;
 
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
   QuatIMU_InitFunctions();
@@ -265,6 +275,16 @@ void QuatIMU_ResetDesiredYaw(void)
   IMU_VARS[Heading] = IMU_VARS[HalfYaw];   // Desired value = current computed value half-angle
 }
 
+
+void QuatIMU_ResetDesiredOrientation(void)
+{
+  IMU_VARS[cqw] = IMU_VARS[qw];
+  IMU_VARS[cqx] = IMU_VARS[qx];
+  IMU_VARS[cqy] = IMU_VARS[qy];
+  IMU_VARS[cqz] = IMU_VARS[qz];
+}
+
+
 float QuatIMU_GetFloatYaw(void)
 {
   return IMU_VARS[FloatYaw];
@@ -284,6 +304,10 @@ void QuatIMU_GetDesiredQ( float * dest )
   dest[3] = IMU_VARS[cqw];
 }
 
+void QuatIMU_GetDebugFloat( float * dest )
+{
+  dest[0] = IMU_VARS[DebugFloat];
+}
 
 void QuatIMU_SetRollCorrection( float * addr )
 {
@@ -710,25 +734,34 @@ short QuatUpdateCommands[] = {
         };
 //}
 
-// Will need preferences for:
-// YawRateScale
-// ManualBankScale
-// AutoBankScale
-
-// Need variables for:
-// In_Elev, In_Aile, In_Rudd,
-// csx, csy, csz
-// snx, sny, snz
-// snycsx, snysnx
-// csycsz, csysnz
 
 
+short UpdateControls_Manual[] = {
 
-short UpdateControlCommands_Manual[] = {
+  // float xrot = (float)radio.Elev * const_ManualBankScale;	// Individual scalars for channel sensitivity
+  // float yrot = (float)radio.Rudd * const_ManualBankScale;
+  // float zrot = (float)radio.Aile * -const_ManualBankScale;
+
+  F32_opFloat,  In_Elev, 0, In_Elev,                  // Elev to float
+  F32_opFloat,  In_Aile, 0, In_Aile,                  // Aile to float
+  F32_opFloat,  In_Rudd, 0, In_Rudd,                  // Rudd to float
+
+  F32_opMul,    In_Elev, const_ManualBankScale, rx,   // rx = (Elev scaled to incremental update angle)
+  F32_opMul,    In_Aile, const_ManualBankScale, rz,   // rz = (Aile scaled to incremental update angle)
+  F32_opMul,    In_Rudd, const_ManualYawScale, ry,    // Scale rudd by maximum yaw rate scale
+
+  F32_opNeg,    rx, 0, rx,
+  F32_opNeg,    ry, 0, ry,
+
+  F32_opTruncRound, rx, const_0, PitchDiff,
+  F32_opTruncRound, rz, const_0, RollDiff,
+  F32_opTruncRound, ry, const_0, YawDiff,
+
+  0, 0, 0, 0,
 };
 
 
-short UpdateControlCommands_AutoLevel[] = {
+short UpdateControlQuaternion_AutoLevel[] = {
 
   // Convert radio inputs to float, scale them to get them into the range we want
 
@@ -782,8 +815,14 @@ short UpdateControlCommands_AutoLevel[] = {
   F32_opMul,    snysnx, snz, temp,
   F32_opSub,    cqw, temp, cqw,
 
-  // Compute the quaternion which is the rotation from our current orientation to our desired one, IE QRot = rotation from (Q) to (CQ)
-  // Computation is QRot = CQ.Conjugate() * Q,  where Conjugate is just (w, -x, -y, -z)
+
+  //---------------------------------------------------------------------------
+  // Compute the quaternion which is the rotation from our current orientation (Q)
+  // to our desired one (CQ)
+  //
+  // IE, QR = rotation from (Q) to (CQ)
+  // Computation is QR = CQ.Conjugate() * Q,  where Conjugate is just (w, -x, -y, -z)
+  //---------------------------------------------------------------------------
 
   // With all the appropriate sign flips, the formula becomes:
 
@@ -840,7 +879,7 @@ short UpdateControlCommands_AutoLevel[] = {
   F32_opAdd,    qrw, temp, qrw,         // qrw += cqw*qw
 
 
-
+  
   // float diffAngle = qrot.ToAngleAxis( out DiffAxis );
 
   // Converts to:
@@ -858,21 +897,30 @@ short UpdateControlCommands_AutoLevel[] = {
 
 
   // float diffAngle = 2.0f * Acos(qrw);
-  F32_opASinCos, qrw, const_1, diffAngle,
+  F32_opFMin,   qrw, const_F1, qrw,        // clamp qrw to -1.0 to +1.0 range
+  F32_opNeg,    qrw, 0, qrw,
+  F32_opFMin,   qrw, const_F1, qrw,        // clamp qrw to -1.0 to +1.0 range
+  F32_opNeg,    qrw, 0, qrw,
+
+  F32_opASinCos, qrw, const_0, diffAngle,
   F32_opShift,  diffAngle, const_1, diffAngle,         // diffAngle *= 2.0
 
-
   // float rmag = Sqrt( 1.0f - qrw*qrw );	  // assuming quaternion normalised then w is less than 1, so term always positive.
-  F32_opMul,    qrw, qrw, temp,
+  F32_opSqr,    qrw, 0, temp,
   F32_opSub,    const_F1, temp, temp,
+
+  F32_opNeg,    temp, 0, temp,
+  F32_opFMin,   temp, 0, temp,              // make sure temp is >= 0.0 (don't have FMax, so negate, use FMin, negate again)
+  F32_opNeg,    temp, 0, temp,
+
   F32_opSqrt,   temp, 0, rmag,
 
+  F32_opMov,    rmag, 0, DebugFloat,
   
-  // rmag = max( rmag, 0.001 )
+  // rmag = max( rmag, 0.0000001 )
   F32_opAdd,    rmag, const_epsilon, rmag,
-  
-  F32_opDiv,    rmag, diffAngle, rmag,        // rmag = (1.0/rmag * diffAngle)  equivalent to rmag = (diffAngle / rmag)
-  F32_opShift,  rmag, const_16, rmag,         // rmag *= 65536
+  F32_opDiv,    diffAngle, rmag, rmag,        // rmag = (1.0/rmag * diffAngle)  equivalent to rmag = (diffAngle / rmag)
+  F32_opShift,  rmag, const_11, rmag,         // rmag *= 2048
 
   // Simplified this a little by changing  X / rmag * diffAngle into X * (1.0/rmag * diffAngle)
   // PitchDiff = qrx / rmag * diffAngle
@@ -896,7 +944,8 @@ short UpdateControlCommands_AutoLevel[] = {
 void QuatIMU_InitFunctions(void)
 {
   QuatIMU_AdjustStreamPointers( QuatUpdateCommands );
-  QuatIMU_AdjustStreamPointers( UpdateControlCommands_AutoLevel );
+  QuatIMU_AdjustStreamPointers( UpdateControls_Manual );
+  QuatIMU_AdjustStreamPointers( UpdateControlQuaternion_AutoLevel );
 }
 
 
@@ -917,15 +966,39 @@ void QuatIMU_Update( int * packetAddr )
   F32::RunStream( QuatUpdateCommands );
 }
 
+inline static int abs( int v )
+{
+  return (v < 0) ? -v : v;
+}
 
-void QuatIMU_UpdateControls_AutoLevel( RADIO * Radio )
+void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
 {
   ((int*)IMU_VARS)[In_Elev] = Radio->Elev;
   ((int*)IMU_VARS)[In_Aile] = Radio->Aile;
   ((int*)IMU_VARS)[In_Rudd] = Radio->Rudd;
 
+  /*
+  if( abs(IMU_VARS[In_Elev]) < 10 ) {
+    IMU_VARS[In_Elev] = 0;
+  }
+
+  if( abs(IMU_VARS[In_Aile]) < 10 ) {
+    IMU_VARS[In_Aile] = 0;
+  }
+
+  if( abs(IMU_VARS[In_Rudd]) < 10 ) {
+    IMU_VARS[In_Rudd] = 0;
+  }
+  */
+
   cycleTimer = CNT;
-  F32::RunStream( UpdateControlCommands_AutoLevel );
+
+  if( ManualMode ) {
+    F32::RunStream( UpdateControls_Manual );
+  }
+  else {
+    F32::RunStream( UpdateControlQuaternion_AutoLevel );
+  }
 }
 
 

@@ -348,6 +348,8 @@ namespace Elev8
 					vbVoltage2.Value = radio.BatteryVolts;
 					vbVoltage2.RightLabel = vbVoltage.RightLabel;
 
+					lblCycles.Text = string.Format( "{0} cycles", radio.LoopCycles );
+					//lblCycles.Text = string.Format( "{0}", radio.DebugFloat );
 
 					if(RadioMode == RADIO_MODE.Mode2)	// North American
 					{
@@ -457,9 +459,19 @@ namespace Elev8
 
 			if(bComputedChanged)
 			{
-				aicAttitude.SetAttitudeIndicatorParameters(
-					(double)computed.Pitch / (3768.0 / 10.0),
-					(double)computed.Roll / (-32768.0 / 90.0) );
+				// TODO: Need to compute this properly from quaternion
+				//aicAttitude.SetAttitudeIndicatorParameters(
+				//	(double)computed.Pitch / (3768.0 / 10.0),
+				//	(double)computed.Roll / (-32768.0 / 90.0) );
+
+				vbPitchOut.RightLabel = computed.Pitch.ToString();
+				vbPitchOut.Value = computed.Pitch;
+
+				vbRollOut.RightLabel = computed.Roll.ToString();
+				vbRollOut.Value = computed.Roll;
+
+				vbYawOut.RightLabel = computed.Yaw.ToString();
+				vbYawOut.Value = computed.Yaw;
 
 				aicAltimeter.SetAlimeterParameters( (float)computed.AltiEst / 1000.0f );
 				aicHeading.SetHeadingIndicatorParameters( (computed.Yaw & ((1 << 17) - 1)) / (65536 / 180) );

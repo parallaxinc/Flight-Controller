@@ -49,8 +49,7 @@ static signed char NudgeMotor;       //Which motor to nudge during testing (-1 =
 static EVERYTHING_DATA Everything;   // Used to store data for the "Everything" transmit mode
 
 
-//Current IMU values for orientation estimate
-static long  Pitch, Roll, Yaw, AltiEst, AscentEst;
+static long  AltiEst, AscentEst;
 
 //Working variables - used to convert receiver inputs to desired ranges for the PIDs  
 static long  DesiredAltitude, DesiredAltitudeFractional;
@@ -93,12 +92,6 @@ static long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
 // PIDs for roll, pitch, yaw, altitude
 static IntPID  RollPID, PitchPID, YawPID, AscentPID;
-
-
-//Values used to when conditioning heading and desired heading to be within 180 degrees of each other 
-const int YawCircle = 0x20000;           //IMU Yaw output reading is from 0 to YawCircle-1 (change here and in IMU if desired)
-const int YawMask = YawCircle - 1;
-const int YawCircleHalf = YawCircle >> 1;
 
 
 // Used to attenuate the brightness of the LEDs, if desired.  A shift of zero is full brightness
@@ -251,11 +244,18 @@ int main()                                    // Main function
 
       if( NewFlightMode != FlightMode )
       {
+        if( NewFlightMode == FlightMode_Manual ) {
+          QuatIMU_ResetDesiredOrientation();  // Grab the current orientation as your desired orientation so the transition is smooth
+        }
+        else {
+          QuatIMU_ResetDesiredYaw();          // Sync the heading when switching from manual to auto-level
+        }
+
         if( NewFlightMode == FlightMode_Automatic )
           DesiredAltitude = AltiEst;
 
         FlightMode = NewFlightMode;
-      }        
+      }
 
 
       UpdateFlightLoop();            //~72000 cycles when in flight mode
@@ -288,7 +288,7 @@ int main()                                    // Main function
     QuatIMU_WaitForCompletion();    // Wait for the IMU to finish updating
 
 
-    QuatIMU_UpdateControls_AutoLevel( &Radio );   // Now update the control quaternion
+    QuatIMU_UpdateControls( &Radio , FlightMode == FlightMode_Manual );   // Now update the control quaternion
     QuatIMU_WaitForCompletion();
 
 
@@ -305,9 +305,6 @@ int main()                                    // Main function
     //}
 
 
-    //Pitch = QuatIMU_GetPitch();
-    //Roll  = QuatIMU_GetRoll();        //Yes, this puts these 1 cycle behind, but the flight loop gets to use current gyro values
-    //Yaw   = QuatIMU_GetYaw();
     AltiEst = QuatIMU_GetAltitudeEstimate();
     AscentEst = QuatIMU_GetVerticalVelocityEstimate();
 
@@ -389,30 +386,32 @@ void Initialize(void)
 
   // was 30000, 15000
 
-  RollPitch_P = 7000;           //Set here to allow an in-flight tuning baseline
+  RollPitch_P = 8000;           //Set here to allow an in-flight tuning baseline
   RollPitch_D = 7000 * 250; 
 
 
-  RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
+  RollPID.Init( RollPitch_P, 70000,  RollPitch_D , Const_UpdateRate );
   RollPID.SetPrecision( 12 );
   RollPID.SetMaxOutput( 3000 );
   RollPID.SetPIMax( 100 );
   RollPID.SetMaxIntegral( 1900 );
-  RollPID.SetDervativeFilter( 96 );
+  RollPID.SetDervativeFilter( 128 );    // was 96
 
 
-  PitchPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
+  PitchPID.Init( RollPitch_P, 70000,  RollPitch_D , Const_UpdateRate );
   PitchPID.SetPrecision( 12 );
   PitchPID.SetMaxOutput( 3000 );
   PitchPID.SetPIMax( 100 );
   PitchPID.SetMaxIntegral( 1900 );
-  PitchPID.SetDervativeFilter( 96 );
+  PitchPID.SetDervativeFilter( 128 );
 
 
-  YawPID.Init( 7000,   0,  3750000 , Const_UpdateRate );
+  YawPID.Init( 7000,   200000,  3750000 , Const_UpdateRate );
   YawPID.SetPrecision( 12 );
   YawPID.SetMaxOutput( 5000 );
-  YawPID.SetDervativeFilter( 96 );
+  YawPID.SetPIMax( 100 );
+  YawPID.SetMaxIntegral( 1900 );
+  YawPID.SetDervativeFilter( 192 );
 
 
   //Altitude hold PID object
@@ -556,16 +555,18 @@ void UpdateFlightLoop(void)
 
 
 
-    //Zero yaw target when throttle is off - makes for more stable liftoff
     if( Radio.Thro < -700 )
     {
-      QuatIMU_ResetDesiredYaw();
+      if( FlightMode != FlightMode_Manual ) {
+        // Zero yaw target when throttle is off - makes for more stable liftoff
+        QuatIMU_ResetDesiredYaw();
+      }        
 
       DoIntegrate = 0;          //Disable PID integral term until throttle is applied      
     }      
     else {
       DoIntegrate = 1;
-    }      
+    }
 
 
 
@@ -631,7 +632,7 @@ void UpdateFlightLoop(void)
     }      
     //-------------------------------------------
 
-     
+
     //X configuration
     Motor[OUT_FL] = ThroOut + (((+PitchOut + RollOut - YawOut) * ThroMix) >> 7);
     Motor[OUT_FR] = ThroOut + (((+PitchOut - RollOut + YawOut) * ThroMix) >> 7);
@@ -957,7 +958,7 @@ void DoDebugModeOutput(void)
       {
       case 0:
         {
-        TxHeader( 1, 22 );            // Radio values, 22 byte payload
+        TxHeader( 1, 26 );            // Radio values, 22 byte payload
         TxBulkUnsafe( &Radio , 16 );       // Radio struct is 16 bytes total
         TxBulkUnsafe( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
         }        
@@ -965,6 +966,9 @@ void DoDebugModeOutput(void)
 
       case 1:
         TxBulkUnsafe( &LoopCycles, 4 );    // Cycles required for one complete loop  (debug data takes a LONG time)
+
+        QuatIMU_GetDebugFloat( (float*)TxData );  // This is just a debug value, used for testing outputs with the IMU running
+        TxBulkUnsafe( TxData, 4 );
         break;
 
       case 2:
@@ -986,6 +990,10 @@ void DoDebugModeOutput(void)
       case 4:
         TxHeader( 3, 16 );  // Quaternion data, 16 byte payload
         TxBulkUnsafe( QuatIMU_GetQuaternion() , 16 );
+
+        // Uncomment to send the desired orientation quat instead of the measured orientation
+        //QuatIMU_GetDesiredQ( (float*)TxData );
+        //TxBulkUnsafe( TxData, 16 );
         break;
 
       case 5: // Motor data
@@ -1001,9 +1009,9 @@ void DoDebugModeOutput(void)
       case 6:
         TxHeader( 4, 24 );  // Computed data, 24 byte payload
 
-        TxBulkUnsafe( &Pitch, 4 );
-        TxBulkUnsafe( &Roll, 4 );
-        TxBulkUnsafe( &Yaw, 4 );
+        TxBulkUnsafe( &PitchDifference, 4 );
+        TxBulkUnsafe( &RollDifference, 4 );
+        TxBulkUnsafe( &YawDifference, 4 );
 
         TxBulkUnsafe( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
         TxBulkUnsafe( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp

@@ -69,8 +69,10 @@ namespace QuaternionVisualizer
 						case 1:	// Radio data
 							radio.ReadFrom( p );
 
+							lblCycleCount.Text = string.Format( "{0} cycles", radio.CycleCount );
+
 							//bRadioChanged = true;
-							UpdateRadio();
+							//UpdateRadio();
 							break;
 
 						case 2:	// Sensor values
@@ -85,7 +87,7 @@ namespace QuaternionVisualizer
 							q.z = p.GetFloat();
 							q.w = p.GetFloat();
 
-							if(radio.Gear > -300 && radio.Gear < 300)
+							//if(radio.Gear > -300 && radio.Gear < 300)
 							{
 								ocCube.Quat = q;
 							}
@@ -161,7 +163,6 @@ namespace QuaternionVisualizer
 			float UpdateRate = 250.0f / 8.0f;
 
 			float RateScale = ((MaxRate / UpdateRate) / RadioScale) * Deg2Rad * 0.5f;	// Quaternions use half-angles, so mult everything by 0.5
-			lblCycleCount.Text = string.Format( "{0} cycles", radio.CycleCount );
 
 			if(radio.Gear < -300)
 			{
