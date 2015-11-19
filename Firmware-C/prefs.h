@@ -14,9 +14,9 @@ typedef struct {
   char  UseSBUS;
   char  UsePing;
   char  UseBattMon;
-  char  unused;
+  char  DisableMotors;
 
-  char  LowVoltageBuzzer;
+  char  LowVoltageAlarm;
   char  LowVoltageAscentLimit;
   char  unused2;
   char  unused3;
@@ -29,7 +29,7 @@ typedef struct {
   short YawSpeed;
 
   short VoltageOffset;    // Used to correct the difference between measured and actual voltage
-  short LowVoltageAlarm;  // default is 1050 (10.50v)
+  short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
 
   short ArmDelay;
   short DisarmDelay;

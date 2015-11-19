@@ -148,13 +148,16 @@ enum IMU_VarLabels {
 };
 
 
-// The type doesn't matter much here - everything is a 32 bit value.  I define an array of floats, but the memory is
-// cast to whatever type it needs to be for the variable being stored there.  Most of them are floats, but some are integer.
+// The type doesn't matter much here - everything is a 32 bit value.  This is mostly an array of floats, but some are integer.
+// Using a union of both allows me to freely use any slot in the array as either float or integer.
 // The whole reason this struct exists is that the GCC linker can't down-cast a pointer to a 16-bit value, and I don't want to
-// waste an extra 16 bits per entry in the QuatUpdateCommands array.  I store an index into the IMU_VARS array at compile time,
+// waste an extra 16 bits per entry in the command arrays.  I store an index into the IMU_VARS array at compile time,
 // and then the UpdateStreamPointers function converts it to a real 16-bit memory address at runtime.
 
-static float IMU_VARS[ IMU_VARS_SIZE ];
+static union {
+  float IMU_VARS[ IMU_VARS_SIZE ];
+  int   INT_VARS[ IMU_VARS_SIZE ];
+};
 
 
 #define PI  3.151592654
@@ -180,12 +183,12 @@ void QuatIMU_Start(void)
   IMU_VARS[const_GyroScale]         =    1.0f / (float)GyroScale;    
   IMU_VARS[const_NegGyroScale]      =   -1.0f / (float)GyroScale;
 
-  ((int*)IMU_VARS)[const_0]         =    0;
-  ((int*)IMU_VARS)[const_1]         =    1;
-  ((int*)IMU_VARS)[const_neg1]      =   -1;
-  ((int*)IMU_VARS)[const_neg12]     =   -12;              //Used to subtract from acc exponent, equivalent to /= 4096.0
-  ((int*)IMU_VARS)[const_11]        =    11;              //Used to add to exponents, equivalent to *= 4096.0
-  ((int*)IMU_VARS)[const_16]        =    16;              //Used to add to exponents, equivalent to *= 65536.0
+  INT_VARS[const_0]                 =    0;
+  INT_VARS[const_1]                 =    1;
+  INT_VARS[const_neg1]              =   -1;
+  INT_VARS[const_neg12]             =   -12;              //Used to subtract from acc exponent, equivalent to /= 4096.0
+  INT_VARS[const_11]                =    11;              //Used to add to exponents, equivalent to *= 4096.0
+  INT_VARS[const_16]                =    16;              //Used to add to exponents, equivalent to *= 65536.0
 
   IMU_VARS[const_F1]                =    1.0f;
   IMU_VARS[const_F2]                =    2.0f;
@@ -215,24 +218,25 @@ void QuatIMU_Start(void)
   IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
 
-  IMU_VARS[const_ManualYawScale]   =     2.0f;
+  IMU_VARS[const_ManualYawScale]    =    2.0f;
   IMU_VARS[const_ManualBankScale]   =    1.0f;
 
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
+
   QuatIMU_InitFunctions();
 }
 
 
 int QuatIMU_GetYaw(void) {
-  return ((int*)IMU_VARS)[ Yaw ];
+  return INT_VARS[ Yaw ];
 }
 
 int QuatIMU_GetThrustFactor(void) {
-  return ((int*)IMU_VARS)[ ThrustFactor ];
+  return INT_VARS[ ThrustFactor ];
 }
 
 int * QuatIMU_GetSensors(void) {
-  return (int*)&IMU_VARS[gx];
+  return &INT_VARS[gx];
 }
 
 float * QuatIMU_GetMatrix(void) {
@@ -244,29 +248,29 @@ float * QuatIMU_GetQuaternion(void) {
 }
 
 int QuatIMU_GetVerticalVelocityEstimate(void) {
-  return ((int*)IMU_VARS)[ VelocityEstMM ];
+  return INT_VARS[ VelocityEstMM ];
 }
 
 int QuatIMU_GetAltitudeEstimate(void) {
-  return ((int*)IMU_VARS)[ AltitudeEstMM ];
+  return INT_VARS[ AltitudeEstMM ];
 }
 
 void QuatIMU_SetInitialAltitudeGuess( int altiMM )
 {
   //altitudeEstimate = F32_FDiv( F32_FFloat(altiMM) , const_m_to_mm );
     IMU_VARS[altitudeEstimate] = (float)altiMM / 1000.0;
-}  
+}
 
 int QuatIMU_GetPitchDifference(void) {
-  return ((int*)IMU_VARS)[PitchDiff];
+  return INT_VARS[PitchDiff];
 }
 
 int QuatIMU_GetRollDifference(void) {
-  return ((int*)IMU_VARS)[RollDiff];
+  return INT_VARS[RollDiff];
 }
 
 int QuatIMU_GetYawDifference(void) {
-  return ((int*)IMU_VARS)[YawDiff];
+  return INT_VARS[YawDiff];
 }
 
 
@@ -776,11 +780,11 @@ short UpdateControlQuaternion_AutoLevel[] = {
   F32_opMul,    In_Rudd, const_YawRateScale, In_Rudd, // Scale rudd by maximum yaw rate scale
   F32_opAdd,    Heading, In_Rudd, Heading,            // Add scaled rudd to desired Heading   (may need to range check - keep in +/- PI ?)
 
-  // Keep Heading in the range of -2*PI to 2*PI
-  F32_opDiv,    Heading, const_TwoPI, temp,           // temp = Heading/TwoPI
-  F32_opTruncRound, temp, const_0, temp,              // temp = (int)(Heading/TwoPI)
-  F32_opFloat,  temp, 0, temp,                        // temp = (float)((int)(Heading/TwoPI))
-  F32_opMul,    temp, const_TwoPI, temp,              // temp is now the integer multiple of TwoPI in heading
+  // Keep Heading in the range of -PI to PI
+  F32_opDiv,    Heading, const_TwoPI, temp,           // temp = Heading/PI
+  F32_opTruncRound, temp, const_0, temp,              // temp = (int)(Heading/PI)
+  F32_opFloat,  temp, 0, temp,                        // temp = (float)((int)(Heading/PI))
+  F32_opMul,    temp, const_TwoPI, temp,              // temp is now the integer multiple of PI in heading
   F32_opSub,    Heading, temp, Heading,               // Remove the part that's out of range
 
 
@@ -811,7 +815,7 @@ short UpdateControlQuaternion_AutoLevel[] = {
   F32_opMul,    snysnx, csz, temp,
   F32_opSub,    cqz, temp, cqz,
 
-  F32_opMul,    csycsz, csx, cqw,                     //cqw = -snysnx * snz + csycsz * csx
+  F32_opMul,    csycsz, csx, cqw,                     // cqw = -snysnx * snz + csycsz * csx
   F32_opMul,    snysnx, snz, temp,
   F32_opSub,    cqw, temp, cqw,
 
@@ -879,7 +883,14 @@ short UpdateControlQuaternion_AutoLevel[] = {
   F32_opAdd,    qrw, temp, qrw,         // qrw += cqw*qw
 
 
-  
+  F32_opCmp,    qrw, const_0, temp,     // qrw < 0?
+
+  // Conditionally negate QR if QR.w < 0
+  F32_opCNeg,   qrw, temp, qrw,
+  F32_opCNeg,   qrx, temp, qrx,
+  F32_opCNeg,   qry, temp, qry,
+  F32_opCNeg,   qrz, temp, qrz,
+
   // float diffAngle = qrot.ToAngleAxis( out DiffAxis );
 
   // Converts to:
@@ -905,6 +916,9 @@ short UpdateControlQuaternion_AutoLevel[] = {
   F32_opASinCos, qrw, const_0, diffAngle,
   F32_opShift,  diffAngle, const_1, diffAngle,         // diffAngle *= 2.0
 
+  F32_opMov,    diffAngle, 0, DebugFloat,
+
+  
   // float rmag = Sqrt( 1.0f - qrw*qrw );	  // assuming quaternion normalised then w is less than 1, so term always positive.
   F32_opSqr,    qrw, 0, temp,
   F32_opSub,    const_F1, temp, temp,
@@ -915,8 +929,7 @@ short UpdateControlQuaternion_AutoLevel[] = {
 
   F32_opSqrt,   temp, 0, rmag,
 
-  F32_opMov,    rmag, 0, DebugFloat,
-  
+
   // rmag = max( rmag, 0.0000001 )
   F32_opAdd,    rmag, const_epsilon, rmag,
   F32_opDiv,    diffAngle, rmag, rmag,        // rmag = (1.0/rmag * diffAngle)  equivalent to rmag = (diffAngle / rmag)
@@ -978,16 +991,16 @@ void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
   ((int*)IMU_VARS)[In_Rudd] = Radio->Rudd;
 
   /*
-  if( abs(IMU_VARS[In_Elev]) < 10 ) {
-    IMU_VARS[In_Elev] = 0;
+  if( abs(INT_VARS[In_Elev]) < 10 ) {
+    INT_VARS[In_Elev] = 0;
   }
 
-  if( abs(IMU_VARS[In_Aile]) < 10 ) {
-    IMU_VARS[In_Aile] = 0;
+  if( abs(INT_VARS[In_Aile]) < 10 ) {
+    INT_VARS[In_Aile] = 0;
   }
 
-  if( abs(IMU_VARS[In_Rudd]) < 10 ) {
-    IMU_VARS[In_Rudd] = 0;
+  if( abs(INT_VARS[In_Rudd]) < 10 ) {
+    INT_VARS[In_Rudd] = 0;
   }
   */
 

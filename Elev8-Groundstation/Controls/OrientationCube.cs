@@ -91,7 +91,12 @@ namespace Elev8
 		}
 
 		Quaternion quat = new Quaternion();
+		Quaternion quat2 = new Quaternion();
+
 		Matrix mat = new Matrix();
+		Matrix mat2 = new Matrix();
+
+		bool bQuat2Valid = false;
 
 		public float CubeWidth
 		{
@@ -117,6 +122,18 @@ namespace Elev8
 			set {
 				quat = value;
 				mat.From( quat );
+
+				Invalidate();
+			}
+		}
+
+		public Quaternion Quat2
+		{
+			set
+			{
+				quat2 = value;
+				mat2.From( quat2 );
+				bQuat2Valid = true;
 
 				Invalidate();
 			}
@@ -185,6 +202,10 @@ namespace Elev8
 			float[] cx = new float[2];
 			cx[0] = CenterX * 2 / 4;
 			cx[1] = CenterX + CenterX * 2 / 4;
+
+			if(bQuat2Valid) {
+				DrawShape( g, mat2, Color.LightGray, QuadPt, QuadLine );
+			}
 
 			//DrawCube( g, mat, Color.Black );
 			DrawShape( g, mat, Color.Black, QuadPt, QuadLine );

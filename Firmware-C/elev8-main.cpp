@@ -244,19 +244,17 @@ int main()                                    // Main function
 
       if( NewFlightMode != FlightMode )
       {
-        if( NewFlightMode == FlightMode_Manual ) {
-          QuatIMU_ResetDesiredOrientation();  // Grab the current orientation as your desired orientation so the transition is smooth
-        }
-        else {
+        if( NewFlightMode != FlightMode_Manual ) {
+          QuatIMU_ResetDesiredOrientation();
           QuatIMU_ResetDesiredYaw();          // Sync the heading when switching from manual to auto-level
         }
 
-        if( NewFlightMode == FlightMode_Automatic )
+        if( NewFlightMode == FlightMode_Automatic ) {
           DesiredAltitude = AltiEst;
+        }
 
         FlightMode = NewFlightMode;
       }
-
 
       UpdateFlightLoop();            //~72000 cycles when in flight mode
       //-------------------------------------------------
@@ -290,7 +288,6 @@ int main()                                    // Main function
 
     QuatIMU_UpdateControls( &Radio , FlightMode == FlightMode_Manual );   // Now update the control quaternion
     QuatIMU_WaitForCompletion();
-
 
     pdiff = QuatIMU_GetPitchDifference();
     rdiff = QuatIMU_GetRollDifference();
@@ -387,10 +384,10 @@ void Initialize(void)
   // was 30000, 15000
 
   RollPitch_P = 8000;           //Set here to allow an in-flight tuning baseline
-  RollPitch_D = 7000 * 250; 
+  RollPitch_D = 8000 * 250;
 
 
-  RollPID.Init( RollPitch_P, 70000,  RollPitch_D , Const_UpdateRate );
+  RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
   RollPID.SetPrecision( 12 );
   RollPID.SetMaxOutput( 3000 );
   RollPID.SetPIMax( 100 );
@@ -398,7 +395,7 @@ void Initialize(void)
   RollPID.SetDervativeFilter( 128 );    // was 96
 
 
-  PitchPID.Init( RollPitch_P, 70000,  RollPitch_D , Const_UpdateRate );
+  PitchPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
   PitchPID.SetPrecision( 12 );
   PitchPID.SetMaxOutput( 3000 );
   PitchPID.SetPIMax( 100 );
@@ -555,14 +552,17 @@ void UpdateFlightLoop(void)
 
 
 
-    if( Radio.Thro < -700 )
+    if( Radio.Thro < -800 )
     {
-      if( FlightMode != FlightMode_Manual ) {
+      // When throttle is essentially zero, disable all control authority
+
+      if( FlightMode != FlightMode_Manual )
+      {
         // Zero yaw target when throttle is off - makes for more stable liftoff
         QuatIMU_ResetDesiredYaw();
-      }        
+      }
 
-      DoIntegrate = 0;          //Disable PID integral term until throttle is applied      
+      DoIntegrate = 0;          // Disable PID integral terms until throttle is applied      
     }      
     else {
       DoIntegrate = 1;
@@ -648,33 +648,35 @@ void UpdateFlightLoop(void)
     Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
     Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
 
-    //Copy new Ouput array into servo values
-    Servo32_Set( PIN_MOTOR_FL, Motor[0] );
-    Servo32_Set( PIN_MOTOR_FR, Motor[1] );
-    Servo32_Set( PIN_MOTOR_BR, Motor[2] );
-    Servo32_Set( PIN_MOTOR_BL, Motor[3] );
+    if( Prefs.DisableMotors == 0 ) {
+      //Copy new Ouput array into servo values
+      Servo32_Set( PIN_MOTOR_FL, Motor[0] );
+      Servo32_Set( PIN_MOTOR_FR, Motor[1] );
+      Servo32_Set( PIN_MOTOR_BR, Motor[2] );
+      Servo32_Set( PIN_MOTOR_BL, Motor[3] );
+    }
   }
 
 #if defined( __PINS_V3_H__ )
     // Battery alarm at low voltage
-    if( Prefs.UseBattMon != 0 && Prefs.LowVoltageBuzzer )
+    if( Prefs.UseBattMon != 0 && Prefs.LowVoltageAlarm != 0 )
     {
-      if( (BatteryVolts < Prefs.LowVoltageAlarm) && BatteryVolts > 200 && ((counter & 127) < 32) )  // Make sure the voltage is above the (0 + VoltageOffset) range
+      // If we want to use the PING sensor *and* use a timer for the alarm, we'll need to
+      // move the freq generator onto another cog.  Currently the battery monitor uses CTRB
+      // to count charge time.  Ideally the PING sensor would use CTRA to count return time,
+      // so we can have one or the other in the main thread, but not both.
+
+      if( (BatteryVolts < Prefs.LowVoltageAlarmThreshold) && (BatteryVolts > 200) && ((counter & 63) == 1) )  // Make sure the voltage is above the (0 + VoltageOffset) range
       {
-        int ctr = CNT;
-        int loop = 2;
-        int d = (80000000/2) / 5000;
-    
-        for( int i=0; i<loop; i++ )
-        {
-          OUTA ^= (1<<PIN_BUZZER_1);
-          ctr += d;
-          waitcnt( ctr );
-        }
+        BeepOn( 'A' , PIN_BUZZER_1, 5000 );
+      }
+      else if( (counter & 63) > 32 )
+      {
+        BeepOff( 'A' );
       }        
     }      
 #endif
-}  
+}
 
 
 static int LEDColorTable[] = {
@@ -695,7 +697,7 @@ void UpdateFlightLEDColor(void)
   int LowBatt = 0;
 
 #if defined( __PINS_V3_H__ )
-  if( Prefs.UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarm) && BatteryVolts > 200 ) {   // Make sure the voltage is above the (0 + VoltageOffset) range
+  if( Prefs.UseBattMon != 0 && (BatteryVolts < Prefs.LowVoltageAlarmThreshold) && BatteryVolts > 200 ) {   // Make sure the voltage is above the (0 + VoltageOffset) range
     LowBatt = 1;
   }    
 #endif
@@ -936,7 +938,7 @@ void CheckDebugInput(void)
       }        
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }      
-  }    
+  }
 
   if( c == 0xff ) {
     fdserial_txChar( dbg, 0xE8);    //Simple ping-back to tell the application we have the right comm port
@@ -990,10 +992,6 @@ void DoDebugModeOutput(void)
       case 4:
         TxHeader( 3, 16 );  // Quaternion data, 16 byte payload
         TxBulkUnsafe( QuatIMU_GetQuaternion() , 16 );
-
-        // Uncomment to send the desired orientation quat instead of the measured orientation
-        //QuatIMU_GetDesiredQ( (float*)TxData );
-        //TxBulkUnsafe( TxData, 16 );
         break;
 
       case 5: // Motor data
@@ -1016,6 +1014,14 @@ void DoDebugModeOutput(void)
         TxBulkUnsafe( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
         TxBulkUnsafe( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
         TxBulkUnsafe( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
+        break;
+
+      case 7:
+        TxHeader( 6, 16 );  // Desired Quaternion data, 16 byte payload
+
+        // Uncomment to send the desired orientation quat instead of the measured orientation
+        QuatIMU_GetDesiredQ( (float*)TxData );
+        TxBulkUnsafe( TxData, 16 );
         break;
     }
   }

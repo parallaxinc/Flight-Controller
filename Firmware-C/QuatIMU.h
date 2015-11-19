@@ -47,7 +47,6 @@ void QuatIMU_SetGyroZero( int x, int y, int z );
 void QuatIMU_Update( int * packetAddr );
 
 void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode );
-void QuatIMU_ComputeOrientationChange(void);
 
 
 int QuatIMU_WaitForCompletion(void);

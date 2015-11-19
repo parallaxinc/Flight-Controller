@@ -50,9 +50,9 @@ void Prefs_SetDefaults(void)
   Prefs.MagScaleOfs[3] = 1024;
   Prefs.MagScaleOfs[5] = 1024;
 
-  Prefs.LowVoltageAlarm = 1050;
+  Prefs.LowVoltageAlarmThreshold = 1050;
 
-  Prefs.LowVoltageBuzzer = 1;
+  Prefs.LowVoltageAlarm = 1;
   Prefs.LowVoltageAscentLimit = 0;
 
   Prefs.ThrustCorrectionScale = 256;  // 0 to 256  =  0 to 1

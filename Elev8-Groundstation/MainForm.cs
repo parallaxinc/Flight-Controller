@@ -49,7 +49,8 @@ namespace Elev8
 
 		RadioData radio = new RadioData();
 		SensorData sensors = new SensorData();
-		Quaternion  q = new Quaternion();
+		Quaternion q = new Quaternion();
+		Quaternion cq = new Quaternion();	// Control (target) quaternion
 		MotorData motors = new MotorData();
 		ComputedData computed = new ComputedData();
 
@@ -191,6 +192,7 @@ namespace Elev8
 			bool bRadioChanged = false;
 			bool bSensorsChanged = false;
 			bool bQuatChanged = false;
+			bool bTargetQuatChanged = false;
 			bool bMotorsChanged = false;
 			bool bComputedChanged = false;
 			bool bPrefsChanged = false;
@@ -248,6 +250,14 @@ namespace Elev8
 						case 5:	// Motor values
 							motors.ReadFrom( p );
 							bMotorsChanged = true;
+							break;
+
+						case 6:	// Control quaternion
+							cq.x = p.GetFloat();
+							cq.y = p.GetFloat();
+							cq.z = p.GetFloat();
+							cq.w = p.GetFloat();
+							bTargetQuatChanged = true;
 							break;
 
 						case 0x18:	// Settings
@@ -345,8 +355,6 @@ namespace Elev8
 					vbVoltage.Value = radio.BatteryVolts;
 					vbVoltage.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
 
-					vbVoltage2.Value = radio.BatteryVolts;
-					vbVoltage2.RightLabel = vbVoltage.RightLabel;
 
 					lblCycles.Text = string.Format( "{0} cycles", radio.LoopCycles );
 					//lblCycles.Text = string.Format( "{0}", radio.DebugFloat );
@@ -439,14 +447,37 @@ namespace Elev8
 					vbR_Channel8.RightLabel = radio.Aux3.ToString();
 					vbR_Channel8.Value = radio.Aux3;
 				}
+				else if(tcTabs.SelectedTab == tpSystemSetup)
+				{
+					vbVoltage2.Value = radio.BatteryVolts;
+					vbVoltage2.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
+				}
 			}
 
 			if(bQuatChanged) {
 				if(tcTabs.SelectedTab == tpStatus) {
 					ocOrientation.Quat = q;
+
+					Matrix m = new Matrix();
+					m.From( q );
+
+					double roll = Math.Asin( m.m[1,0] ) * (180.0/Math.PI);
+					double pitch = Math.Asin( m.m[1,2] ) * (180.0 / Math.PI);
+
+					aicAttitude.SetAttitudeIndicatorParameters( pitch, roll );
 				}
 				else if(tcTabs.SelectedTab == tpAccelCalibration) {
 					ocAccelOrient.Quat = q;
+				}
+			}
+
+			if(bTargetQuatChanged)
+			{
+				if(tcTabs.SelectedTab == tpStatus) {
+					ocOrientation.Quat2 = cq;
+				}
+				else if(tcTabs.SelectedTab == tpAccelCalibration) {
+					ocAccelOrient.Quat2 = cq;
 				}
 			}
 
@@ -459,11 +490,6 @@ namespace Elev8
 
 			if(bComputedChanged)
 			{
-				// TODO: Need to compute this properly from quaternion
-				//aicAttitude.SetAttitudeIndicatorParameters(
-				//	(double)computed.Pitch / (3768.0 / 10.0),
-				//	(double)computed.Roll / (-32768.0 / 90.0) );
-
 				vbPitchOut.RightLabel = computed.Pitch.ToString();
 				vbPitchOut.Value = computed.Pitch;
 
@@ -617,8 +643,11 @@ namespace Elev8
 			udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
 			udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
 
-			udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
+			udLowVoltageAlarmThreshold.Value = (decimal)((float)prefs.LowVoltageAlarmThreshold / 100.0f);
 			udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
+			cbLowVoltageAlarm.Checked = (prefs.LowVoltageAlarm != 0);
+
+			cbDisableMotors.Checked = (prefs.DisableMotors == 1);
 
 			switch( prefs.ArmDelay )
 			{
@@ -1173,14 +1202,29 @@ namespace Elev8
 			prefs.MaxThrottle = (short)(udHighThrottle.Value * 8);
 
 			prefs.UseBattMon = cbUseBatteryMonitor.Checked ? (char)1 : (char)0;
-			prefs.LowVoltageAlarm = (short)(udLowVoltageAlarm.Value * 100);
+			prefs.LowVoltageAlarmThreshold = (short)(udLowVoltageAlarmThreshold.Value * 100);
 			prefs.VoltageOffset = (short)(udVoltageOffset.Value * 100);
+			prefs.LowVoltageAlarm = (char)(cbLowVoltageAlarm.Checked ? 1 : 0);
 
 			prefs.ArmDelay = DelayTable[cbArmingDelay.SelectedIndex];
 			prefs.DisarmDelay = DelayTable[cbDisarmDelay.SelectedIndex];
 
+			prefs.DisableMotors = (char)(cbDisableMotors.Checked ? 1 : 0);
 
 			UpdateElev8Preferences();
+		}
+
+
+		private void cbDisableMotors_CheckedChanged( object sender, EventArgs e )
+		{
+			if(cbDisableMotors.Checked)
+			{
+				cbDisableMotors.BackColor = Color.Pink;
+			}
+			else
+			{
+				cbDisableMotors.BackColor = Color.Transparent;
+			}
 		}
 	}
 }

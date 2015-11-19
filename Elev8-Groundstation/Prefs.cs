@@ -20,9 +20,9 @@ namespace Elev8
 		public char UseSBUS;
 		public char UsePing;
 		public char UseBattMon;
-		public char unused;
+		public char DisableMotors;
 
-		public char LowVoltageBuzzer;
+		public char LowVoltageAlarm;
 		public char LowVoltageAscentLimit;
 		public char unused2;
 		public char unused3;
@@ -35,7 +35,7 @@ namespace Elev8
 		public short YawSpeed;
 
 		public short VoltageOffset;
-		public short LowVoltageAlarm;  // default is 1050 (10.50v)
+		public short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
 
 		public short ArmDelay;
 		public short DisarmDelay;
