@@ -976,7 +976,7 @@ _FCmp_ret               ret
 
 
 '------------------------------------------------------------------------------
-'These are only here so we can copy them into _FMin / _FMax
+'These are only here so we can copy them into _FMin
 
 CompareNormal
               if_nc     mov     fnumA, fnumB    
@@ -988,29 +988,16 @@ CompareReversed
 '------------------------------------------------------------------------------
 ' FMin (a,b) = minimum of(fnumA, fnumB)
 '------------------------------------------------------------------------------
-_FMax
-                        sub     fNumB, fNumA  nr, wc
-                        jmp     #_FMinMax_entry
-
 _FMin
                         add     fNumA, fNumB  nr, wc
-  _FMinMax_entry
+
               if_nc     mov     :getResult, CompareNormal
               if_c      mov     :getResult, CompareReversed     
 
                         cmps    fnumA, fnumB wc         ' do the signed comparison, save result in flags C
   :getResult  if_nc     mov     fnumA, fnumB
 
-_FMax_ret
 _FMin_ret               ret
-
-
-'------------------------------------------------------------------------------
-'_FMax
-'                        mov     t1, fnumA               ' if both values...
-'                        and     t1, fnumB               '  are negative...
-'                        shl     t1, #1 wc               ' (bit 31 high)...
-
 
 
 '------------------------------------------------------------------------------
@@ -1287,7 +1274,17 @@ _Frac                   call    #_Unpack                ' get fraction
                         andn    fnumA, Bit31
 _Frac_ret               ret
 
- 
+
+'------------------------------------------------------------------------------
+' Conditional negate
+'fnumA = (fnumB < 0) ? -fnumA : fnumA
+'------------------------------------------------------------------------------
+_CNeg
+                        test    fnumB, Bit31 wc          ' check for fnumB < 0
+              if_c      xor     fnumA, Bit31
+_CNeg_ret               ret
+
+
 '------------------------------------------------------------------------------
 ' input:   fnumA        32-bit floating point value
 '          fnumB        32-bit floating point value 
@@ -1685,8 +1682,8 @@ cmdSqr                  call    #_FSqr
 cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
-cmdFMax                 call    #_FMax
 cmdFrac                 call    #_Frac
+cmdCNeg                 call    #_CNeg
 cmdMov                  nop
 
 cmdRunCommandStream     call    #_RunCommandStream
@@ -1715,8 +1712,8 @@ CON     'Instruction stream operand indices
   opSinCos              = 20
   opFAbs                = 21
   opFMin                = 22   
-  opFMax                = 23
-  opFrac                = 24
+  opFrac                = 23
+  opCNeg                = 24
   opMov                 = 25   
 
 {{

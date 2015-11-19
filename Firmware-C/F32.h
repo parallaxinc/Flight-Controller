@@ -85,8 +85,8 @@ PUB FShift(a, b)
 #define F32_opSinCos               20
 #define F32_opFAbs                 21
 #define F32_opFMin                 22   
-#define F32_opFMax                 23
-#define F32_opFrac                 24
+#define F32_opFrac                 23
+#define F32_opCNeg                 24
 #define F32_opMov                  25
 #define F32_opRunStream            26
 
