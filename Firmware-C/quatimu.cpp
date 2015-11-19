@@ -24,10 +24,6 @@ enum IMU_VarLabels {
 
     Yaw,                                         // Current heading (yaw), scaled units
     ThrustFactor,
-    FloatYaw,                                    // Current heading (yaw) in floating point
-    HalfYaw,                                     // Heading / 2, used for quaternion construction
-
-    DebugFloat,                                  // value used for debugging - sent to groundstation
     
     // Inputs
     gx, gy, gz,
@@ -73,6 +69,11 @@ enum IMU_VarLabels {
     
     temp,                                        // temp value for use in equations
 
+    FloatYaw,                                    // Current heading (yaw) in floating point
+    HalfYaw,                                     // Heading / 2, used for quaternion construction
+
+    DebugFloat,                                  // value used for debugging - sent to groundstation
+
     axRot, ayRot, azRot,
     accWeight,
 
@@ -81,7 +82,7 @@ enum IMU_VarLabels {
     accPitchCorrSin,
     accPitchCorrCos,
 
-      //Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
+    //Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
     velocityEstimate,
     altitudeVelocity,
     altitudeEstimate,
@@ -271,6 +272,19 @@ int QuatIMU_GetRollDifference(void) {
 
 int QuatIMU_GetYawDifference(void) {
   return INT_VARS[YawDiff];
+}
+
+
+void QuatIMU_SetAutoLevelRates( float MaxRollPitch , float YawRate )
+{
+  IMU_VARS[const_AutoBankScale] = MaxRollPitch; // (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
+  IMU_VARS[const_YawRateScale]  = YawRate;      // ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
+}
+
+void QuatIMU_SetManualRates( float RollPitchRate, float YawRate )
+{
+  IMU_VARS[const_ManualBankScale] = RollPitchRate;
+  IMU_VARS[const_ManualYawScale] = YawRate;
 }
 
 

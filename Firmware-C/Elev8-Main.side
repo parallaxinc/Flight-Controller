@@ -41,4 +41,4 @@ prefs.h
 >-enable_pruning
 >-fno-rtti
 >-ltiny
->BOARD::QUICKSTART
+>BOARD::C3F

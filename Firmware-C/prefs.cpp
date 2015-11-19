@@ -32,6 +32,8 @@ void Prefs_Save(void)
   EEPROM::FromRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );  //Copy from DAT to EEPROM, address 32768
 }
 
+#define PI  3.151592654
+
 
 void Prefs_SetDefaults(void)
 {
@@ -50,27 +52,28 @@ void Prefs_SetDefaults(void)
   Prefs.MagScaleOfs[3] = 1024;
   Prefs.MagScaleOfs[5] = 1024;
 
+  Prefs.AutoLevelRollPitch = (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;          // 45 deg/ControlScale * Deg2Rad * HalfAngle
+  Prefs.AutoLevelYawRate = ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/ControlScale / UpdateRate * Deg2Rad * HalfAngle
+  Prefs.ManualRollPitchRate = 1.0f;
+  Prefs.ManualYawRate = 2.0f;
+
+
   Prefs.LowVoltageAlarmThreshold = 1050;
 
   Prefs.LowVoltageAlarm = 1;
   Prefs.LowVoltageAscentLimit = 0;
-
-  Prefs.ThrustCorrectionScale = 256;  // 0 to 256  =  0 to 1
-  Prefs.AccelCorrectionFilter = 16;   // 0 to 256  =  0 to 1
-
-  Prefs.ArmDelay = 250;
-  Prefs.DisarmDelay = 125;
-
-  Prefs.MaxRollPitch = 10;    // Range is roughly 0 to 30, equals 0 to 90 degrees)
-  Prefs.RollPitchSpeed = 64;
-  Prefs.YawSpeed = 40;
-
   Prefs.ThrottleTest = 1180 * 8;
 
   Prefs.MinThrottle = 1040 * 8;     // Values are in 1/8us resolution, full range is 1000us to 2000us, however many ESCs behave abnormally at the extremes
   Prefs.MaxThrottle = 1960 * 8;
   Prefs.CenterThrottle = 1500 * 8;
   Prefs.MinThrottleArmed = 1120 * 8;
+
+  Prefs.ArmDelay = 250;
+  Prefs.DisarmDelay = 125;
+
+  Prefs.ThrustCorrectionScale = 256;  // 0 to 256  =  0 to 1
+  Prefs.AccelCorrectionFilter = 16;   // 0 to 256  =  0 to 1
 
   Prefs.ThroChannel = 0;      //Standard radio channel mappings
   Prefs.AileChannel = 1;

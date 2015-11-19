@@ -54,7 +54,6 @@ static long  AltiEst, AscentEst;
 //Working variables - used to convert receiver inputs to desired ranges for the PIDs  
 static long  DesiredAltitude, DesiredAltitudeFractional;
 
-static long  pdiff, rdiff, ydiff;
 static long  RollDifference, PitchDifference, YawDifference;  //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
@@ -289,17 +288,9 @@ int main()                                    // Main function
     QuatIMU_UpdateControls( &Radio , FlightMode == FlightMode_Manual );   // Now update the control quaternion
     QuatIMU_WaitForCompletion();
 
-    pdiff = QuatIMU_GetPitchDifference();
-    rdiff = QuatIMU_GetRollDifference();
-    ydiff = QuatIMU_GetYawDifference();
-
-
-    //switch( counter & 3 )
-    //{
-    //  case 0: TxInt( pdiff );  Tx(32); break;
-    //  case 1: TxInt( rdiff );  Tx(32); break;
-    //  case 2: TxInt( ydiff );  Tx(13); break;
-    //}
+    PitchDifference = QuatIMU_GetPitchDifference();
+    RollDifference = QuatIMU_GetRollDifference();
+    YawDifference = -QuatIMU_GetYawDifference();
 
 
     AltiEst = QuatIMU_GetAltitudeEstimate();
@@ -384,12 +375,12 @@ void Initialize(void)
   // was 30000, 15000
 
   RollPitch_P = 8000;           //Set here to allow an in-flight tuning baseline
-  RollPitch_D = 8000 * 250;
+  RollPitch_D = 8000 * 250;     //TODO : Try tuning this  (higher?)
 
 
   RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
   RollPID.SetPrecision( 12 );
-  RollPID.SetMaxOutput( 3000 );
+  RollPID.SetMaxOutput( 3000 );   // TODO: Try tuning this (higher?)
   RollPID.SetPIMax( 100 );
   RollPID.SetMaxIntegral( 1900 );
   RollPID.SetDervativeFilter( 128 );    // was 96
@@ -524,22 +515,6 @@ void UpdateFlightLoop(void)
       FlightEnableStep = 0;
     }
     //------------------------------------------------------------------------
-
-
-    //if( FlightMode == FlightMode_Manual )
-    //{
-    //  RollDifference = Radio.Aile * Prefs.RollPitchSpeed / 64;
-    //  PitchDifference = -Radio.Elev * Prefs.RollPitchSpeed / 64;
-    //}
-    //else
-    {
-      //Angular output from the IMU is +/- 65536 units, or 32768 = 90 degrees
-      //Input range from the controls is +/- 1024 units - scale that to the desired pitch / roll angles
-
-      RollDifference = rdiff;
-      PitchDifference = pdiff;
-      YawDifference = -ydiff;
-    }
 
 
     gr =  sens.GyroY - GyroZY;
@@ -827,7 +802,9 @@ void CheckDebugInput(void)
       {
         //Reset gyro drift settings
         Sensors_ResetDriftValues();
-      }      
+      }
+      /*
+      // These are now done by simply updating the prefs
       else if( c == 0x12 )
       {
         //Write new gyro drift settings - followed by 6 WORD values
@@ -844,7 +821,7 @@ void CheckDebugInput(void)
         ApplyPrefs();                                                        //Apply the settings changes
         Prefs_Save();
         loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
-      }
+      }*/
       else if( c == 0x13 )
       {
         for( int i=0; i<8; i++ ) {
@@ -865,6 +842,8 @@ void CheckDebugInput(void)
         //Reset accel offset settings
         Sensors_ResetAccelOffsetValues();
       }
+      /*
+      // These are now done by simply updating the prefs
       else if( c == 0x16 )
       {
         //Write new accelerometer offset settings - followed by 3 WORD values
@@ -893,6 +872,7 @@ void CheckDebugInput(void)
         Prefs_Save();
         loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
       }
+      */
     }      
   }  
 
@@ -926,6 +906,7 @@ void CheckDebugInput(void)
         Prefs_Save();
 
         if( Prefs_Load() ) {
+          BeepOff( 'A' );   // turn off the alarm beeper if it was on
           Beep2();
           ApplyPrefs();
         }
@@ -937,7 +918,17 @@ void CheckDebugInput(void)
         Beep();
       }        
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
-    }      
+    }
+    else if( c == 0x1a )    // default prefs - wipe
+    {
+      if( fdserial_rxTime(dbg, 50) == 0x1a )
+      {
+        Prefs_SetDefaults();
+        Prefs_Save();
+        Beep3();
+      }
+      loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
+    }
   }
 
   if( c == 0xff ) {
@@ -1112,6 +1103,9 @@ void ApplyPrefs(void)
 
   QuatIMU_SetRollCorrection( &Prefs.RollCorrect[0] );
   QuatIMU_SetPitchCorrection( &Prefs.PitchCorrect[0] );
+
+  QuatIMU_SetAutoLevelRates( Prefs.AutoLevelRollPitch , Prefs.AutoLevelYawRate );
+  QuatIMU_SetManualRates( Prefs.ManualRollPitchRate , Prefs.ManualYawRate );
 
 #ifdef FORCE_SBUS
   Prefs.UseSBUS = 1;

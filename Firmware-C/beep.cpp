@@ -83,28 +83,23 @@ void Beep3(void)
   Beep();
 }
 
-
-static int fraction( int a, int b, int shift)
+// Return the lower 32 bits of a 32.32 division of (a.0) by (b.0)
+static int fraction( int a, int b )
 {
-  int f;
+  int f = 0;
 
-  if(shift > 0)                         // if shift, pre-shift a or b left
-    a <<= shift;                        // to maintain significant bits while 
-  if(shift < 0)                         // insuring proper result
-    b <<= -shift;
-
+  a <<= 1;                              // to maintain significant bits
   for( int i=0; i<32; i++ )             // perform long division of a/b
   {
     f <<= 1;
-    if( a >= b )
-    {
+    if( a >= b ) {
       a -= b;
       f++;
     }      
     a <<= 1;
   }
   return f;
-}  
+}
 
 
 void BeepOn(int CtrAB, int Pin, int Freq)
@@ -114,9 +109,8 @@ void BeepOn(int CtrAB, int Pin, int Freq)
   //Freq = Freq #> 0 <# 500_000         // limit frequency range
   
   ctr = 4 << 26;                        // ..set NCO mode
-  s = 1;                                // ..shift = 1
 
-  frq = fraction(Freq, CLKFREQ, s);     // Compute FRQA/FRQB value
+  frq = fraction(Freq, CLKFREQ);        // Compute FRQA/FRQB value
   ctr |= Pin;                           // set PINA to complete CTRA/CTRB value
 
   if(CtrAB == 'A' )
@@ -124,7 +118,6 @@ void BeepOn(int CtrAB, int Pin, int Freq)
      CTRA = ctr;                        // set CTRA
      FRQA = frq;                        // set FRQA                   
   }
-
   else if( CtrAB == 'B' )
   {
      CTRB = ctr;                        // set CTRB

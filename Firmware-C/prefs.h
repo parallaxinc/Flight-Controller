@@ -11,6 +11,11 @@ typedef struct {
   float RollCorrect[2];
   float PitchCorrect[2];
 
+  float AutoLevelRollPitch;
+  float AutoLevelYawRate;
+  float ManualRollPitchRate;
+  float ManualYawRate;
+
   char  UseSBUS;
   char  UsePing;
   char  UseBattMon;
@@ -18,28 +23,20 @@ typedef struct {
 
   char  LowVoltageAlarm;
   char  LowVoltageAscentLimit;
-  char  unused2;
-  char  unused3;
-
-  short  ThrustCorrectionScale;  // 0 to 256  =  0 to 1
-  short  AccelCorrectionFilter;  // 0 to 256  =  0 to 1
-
-  short MaxRollPitch;
-  short RollPitchSpeed;
-  short YawSpeed;
-
-  short VoltageOffset;    // Used to correct the difference between measured and actual voltage
-  short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
-
-  short ArmDelay;
-  short DisarmDelay;
-
   short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
 
   short MinThrottle;      // Minimum motor output value
   short MaxThrottle;      // Maximum motor output value
   short CenterThrottle;   // Mid-point motor output value
   short MinThrottleArmed; // Minimum throttle output value when armed - MUST be equal or greater than MinThrottle
+  short ArmDelay;
+  short DisarmDelay;
+
+  short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
+  short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
+
+  short VoltageOffset;    // Used to correct the difference between measured and actual voltage
+  short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
 
   char  ThroChannel;      // Radio inputs to use for each value
   char  AileChannel;

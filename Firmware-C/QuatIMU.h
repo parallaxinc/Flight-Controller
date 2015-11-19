@@ -39,18 +39,17 @@ void QuatIMU_SetInitialAltitudeGuess( int altiMM );
 void QuatIMU_SetRollCorrection( float * addr );
 void QuatIMU_SetPitchCorrection( float * addr );
 
+void QuatIMU_SetAutoLevelRates( float MaxRollPitch , float YawRate );
+void QuatIMU_SetManualRates( float RollPitchRate, float YawRate );
 
 void QuatIMU_InitFunctions(void);
 void QuatIMU_SetGyroZero( int x, int y, int z );
  
 
 void QuatIMU_Update( int * packetAddr );
-
 void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode );
 
-
 int QuatIMU_WaitForCompletion(void);
-
 
 void QuatIMU_AdjustStreamPointers( int * p );
 

@@ -17,6 +17,11 @@ namespace Elev8
 		public float RollCorrectSin, RollCorrectCos;
 		public float PitchCorrectSin, PitchCorrectCos;
 
+		public float AutoLevelRollPitch;
+		public float AutoLevelYawRate;
+		public float ManualRollPitchRate;
+		public float ManualYawRate;
+
 		public char UseSBUS;
 		public char UsePing;
 		public char UseBattMon;
@@ -24,28 +29,21 @@ namespace Elev8
 
 		public char LowVoltageAlarm;
 		public char LowVoltageAscentLimit;
-		public char unused2;
-		public char unused3;
-
-		public short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
-		public short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
-
-		public short MaxRollPitch;
-		public short RollPitchSpeed;
-		public short YawSpeed;
-
-		public short VoltageOffset;
-		public short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
-
-		public short ArmDelay;
-		public short DisarmDelay;
-
 		public short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
 
 		public short MinThrottle;      // Minimum motor output value
 		public short MaxThrottle;      // Maximum motor output value
 		public short CenterThrottle;   // Mid-point motor output value
 		public short MinThrottleArmed; // Minimum throttle output value when armed - MUST be equal or greater than MinThrottle
+		public short ArmDelay;
+		public short DisarmDelay;
+
+		public short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
+		public short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
+
+		public short VoltageOffset;
+		public short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
+
 
 		public char ThroChannel;      // Radio inputs to use for each value
 		public char AileChannel;

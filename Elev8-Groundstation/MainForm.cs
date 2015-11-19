@@ -624,19 +624,29 @@ namespace Elev8
 			udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
 			udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
 
-
-			int Value = prefs.MaxRollPitch * (1024 * 90) / 32768;
-			tbRollPitchAngle.Value = Value;
-			lblRollPitchAngle.Text = Value.ToString() + " deg";
+			int Value;
 
 
-			tbRollPitchSpeed.Value = prefs.RollPitchSpeed;
-			Value = prefs.RollPitchSpeed;
-			lblRollPitchSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
+			//tbRollPitchManual.Value = prefs.RollPitchSpeed;
+			//Value = prefs.RollPitchSpeed;
+			//lblRollPitchManual.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
-			tbYawSpeed.Value = prefs.YawSpeed;
-			Value = prefs.YawSpeed;
-			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
+			float Source = prefs.AutoLevelRollPitch;
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f;
+			tbRollPitchAuto.Value = (int)(Source + 0.5f);
+
+			Source = prefs.AutoLevelYawRate;
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
+			tbYawSpeedAuto.Value = (int)(Source + 0.5f) / 10;
+
+			Source = prefs.ManualRollPitchRate;
+			tbRollPitchManual.Value = (int)(Source * 50.0f + 0.5f);
+
+			Source = prefs.ManualYawRate;
+			tbYawSpeedManual.Value = (int)(Source * 50.0f + 0.5f);
+
+			//Value = prefs.YawSpeed;
+			//lblYawSpeedAuto.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
 			udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
 			udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
@@ -673,7 +683,7 @@ namespace Elev8
 
 			Value = prefs.ThrustCorrectionScale;
 			tbThrustCorrection.Value = Value;
-			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			//lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.000" );
 
 			InternalChange = false;
 		}
@@ -1140,51 +1150,66 @@ namespace Elev8
 			UpdateElev8Preferences();
 		}
 
+
 		private void tbRollPitchAngle_ValueChanged( object sender, EventArgs e )
 		{
-			int Value = tbRollPitchAngle.Value;
-			int Scale = ((32768 * Value) + (1024*45)) / (1024 * 90);
+			int Value = tbRollPitchAuto.Value;
+			float Scale = ((float)Value / 1024.0f) * ((float)Math.PI/180.0f) * 0.5f;
 
 			lblRollPitchAngle.Text = Value.ToString() + " deg";
 		}
 
-		private void tbRollPitchSpeed_ValueChanged( object sender, EventArgs e )
+		private void tbYawSpeedAuto_ValueChanged( object sender, EventArgs e )
 		{
-			int Value = tbRollPitchSpeed.Value;
-			lblRollPitchSpeed.Text = ((float)Value / 64.0f).ToString("0.00");
+			int Value = tbYawSpeedAuto.Value * 10;
+			float Scale = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			lblYawSpeedAuto.Text = Value.ToString() + " deg/s";
 		}
 
-		private void tbYawSpeed_Scroll( object sender, EventArgs e )
+
+		private void tbRollPitchManual_ValueChanged( object sender, EventArgs e )
 		{
-			int Value = tbYawSpeed.Value;
-			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
+			float Value = (float)tbRollPitchManual.Value / 50.0f;
+			lblRollPitchManual.Text = Value.ToString("0.00");
 		}
 
-		private void tbAccelCorrectionFilter_Scroll( object sender, EventArgs e )
+		private void tbYawSpeedManual_ValueChanged( object sender, EventArgs e )
+		{
+			float Value = (float)tbYawSpeedManual.Value / 50.0f;
+			lblYawSpeedManual.Text = Value.ToString("0.00");
+		}
+
+
+		private void tbAccelCorrectionFilter_ValueChanged( object sender, EventArgs e )
 		{
 			int Value = tbAccelCorrectionFilter.Value;
 			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
 		}
 
-		private void tbThrustCorrection_Scroll( object sender, EventArgs e )
+		private void tbThrustCorrection_ValueChanged( object sender, EventArgs e )
 		{
 			int Value = tbThrustCorrection.Value;
-			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.000" );
 		}
 
 
 		private void btnUploadRollPitch_Click( object sender, EventArgs e )
 		{
-			int Value = tbRollPitchAngle.Value;
-			int Scale = ((32768 * Value) + (1024 * 45)) / (1024 * 90);
+			int Value = tbRollPitchAuto.Value;
+			float Rate = ((float)Value / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			prefs.AutoLevelRollPitch = Rate;
 
-			prefs.MaxRollPitch = (short)Scale;
+			Value = tbYawSpeedAuto.Value * 10;
+			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			prefs.AutoLevelYawRate = Rate;
 
-			Value = tbRollPitchSpeed.Value;
-			prefs.RollPitchSpeed = (short)Value;
+			Value = tbRollPitchManual.Value;
+			Rate = (float)Value / 50.0f;
+			prefs.ManualRollPitchRate = Rate;
 
-			Value = tbYawSpeed.Value;
-			prefs.YawSpeed = (short)Value;
+			Value = tbYawSpeedManual.Value;
+			Rate = (float)Value / 50.0f;
+			prefs.ManualYawRate = Rate;
 
 			prefs.AccelCorrectionFilter = (short)tbAccelCorrectionFilter.Value;
 			prefs.ThrustCorrectionScale = (short)tbThrustCorrection.Value;
@@ -1225,6 +1250,23 @@ namespace Elev8
 			{
 				cbDisableMotors.BackColor = Color.Transparent;
 			}
+		}
+
+
+		private void btnFactoryDefaultPrefs_Click( object sender, EventArgs e )
+		{
+			byte[] bytes = new byte[2];
+			txBuffer[0] = 0x1A;	// Reset prefs
+			txBuffer[1] = 0x1A;	// Reset prefs
+			comm.Send( txBuffer, 2 );
+
+			// Query prefs (forces to be applied to UI)
+			txBuffer[0] = 0x18;
+			comm.Send( txBuffer, 1 );
+
+			// Put the Elev8 back into read "sensor mode"
+			txBuffer[0] = 0x2;	// Sensor mode
+			comm.Send( txBuffer, 1 );
 		}
 	}
 }
