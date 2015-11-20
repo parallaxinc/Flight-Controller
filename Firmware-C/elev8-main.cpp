@@ -138,10 +138,10 @@ static void TxBulk( const void * buf , int bytes )
   }    
 }
 
-static void TxInt( int x )
+static void TxInt( int x , int Digits )
 {
   static char nybbles[] = "0123456789ABCDEF";
-  int shift = 32-4;
+  int shift = 32 - (4 + (Digits<<2));
   do {
     Tx( nybbles[ (x>>shift) & 0xf] );
     shift -= 4;
@@ -332,8 +332,13 @@ void Initialize(void)
   dbg_st = (fdserial_st*)dbg->devst; // Cache a pointer to the FDSerial device structure
   dbg_txbuf = (char*)dbg_st->buffptr + FDSERIAL_BUFF_MASK+1;  
 
+  All_LED( LED_Red & LED_Half );                         //LED red on startup
+
   // Do this before settings are loaded, because Sensors_Start resets the drift coefficients to defaults
   Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
+
+  F32::Start();
+  QuatIMU_Start();
 
   InitializePrefs();
 
@@ -344,11 +349,6 @@ void Initialize(void)
     RC::Start();
   }
 
-  F32::Start();
-
-  All_LED( LED_Red & LED_Half );                         //LED red on startup
-
-  QuatIMU_Start();
 
   // Wait 4 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
   BatteryMonitorDelay = (Const_UpdateRate * 4) & ~15;
@@ -375,12 +375,12 @@ void Initialize(void)
   // was 30000, 15000
 
   RollPitch_P = 8000;           //Set here to allow an in-flight tuning baseline
-  RollPitch_D = 8000 * 250;     //TODO : Try tuning this  (higher?)
+  RollPitch_D = 20000 * 250;
 
 
   RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
   RollPID.SetPrecision( 12 );
-  RollPID.SetMaxOutput( 3000 );   // TODO: Try tuning this (higher?)
+  RollPID.SetMaxOutput( 3000 );
   RollPID.SetPIMax( 100 );
   RollPID.SetMaxIntegral( 1900 );
   RollPID.SetDervativeFilter( 128 );    // was 96
@@ -394,7 +394,7 @@ void Initialize(void)
   PitchPID.SetDervativeFilter( 128 );
 
 
-  YawPID.Init( 7000,   200000,  3750000 , Const_UpdateRate );
+  YawPID.Init( 8000,   000000,  0 , Const_UpdateRate );
   YawPID.SetPrecision( 12 );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetPIMax( 100 );
@@ -641,7 +641,7 @@ void UpdateFlightLoop(void)
       // to count charge time.  Ideally the PING sensor would use CTRA to count return time,
       // so we can have one or the other in the main thread, but not both.
 
-      if( (BatteryVolts < Prefs.LowVoltageAlarmThreshold) && (BatteryVolts > 200) && ((counter & 63) == 1) )  // Make sure the voltage is above the (0 + VoltageOffset) range
+      if( (BatteryVolts < Prefs.LowVoltageAlarmThreshold) && (BatteryVolts > 200) && ((counter & 63) == 0) )  // Make sure the voltage is above the (0 + VoltageOffset) range
       {
         BeepOn( 'A' , PIN_BUZZER_1, 5000 );
       }

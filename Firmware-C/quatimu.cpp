@@ -144,6 +144,8 @@ enum IMU_VarLabels {
     const_AutoBankScale,
     const_ManualBankScale,
     const_TwoPI,
+
+    const_OutControlScale,
     
    IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
 };
@@ -223,6 +225,7 @@ void QuatIMU_Start(void)
   IMU_VARS[const_ManualBankScale]   =    1.0f;
 
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
+  IMU_VARS[const_OutControlScale]   =    4096.0f;
 
   QuatIMU_InitFunctions();
 }
@@ -947,7 +950,7 @@ short UpdateControlQuaternion_AutoLevel[] = {
   // rmag = max( rmag, 0.0000001 )
   F32_opAdd,    rmag, const_epsilon, rmag,
   F32_opDiv,    diffAngle, rmag, rmag,        // rmag = (1.0/rmag * diffAngle)  equivalent to rmag = (diffAngle / rmag)
-  F32_opShift,  rmag, const_11, rmag,         // rmag *= 2048
+  F32_opMul,    rmag, const_OutControlScale, rmag,    // rmag *= 4096
 
   // Simplified this a little by changing  X / rmag * diffAngle into X * (1.0/rmag * diffAngle)
   // PitchDiff = qrx / rmag * diffAngle

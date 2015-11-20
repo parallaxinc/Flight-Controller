@@ -66,7 +66,7 @@ namespace Elev8
 
 		ComboBox[] channelAssignControls = new ComboBox[8];
 
-		string[] GraphNames = new string[] { "GX", "GY", "GZ", "AX", "AY", "AZ", "MX", "MY", "MZ", "Alt", "Pitch", "Roll", "Yaw", "Voltage" };
+		string[] GraphNames = new string[] { "GX", "GY", "GZ", "AX", "AY", "AZ", "MX", "MY", "MZ", "Alt", "PitchDiff", "RollDiff", "YawDiff", "Voltage" };
 		Color[] GraphColors = new Color[] {Color.Red, Color.Green, Color.Blue, Color.DarkRed, Color.DarkGreen, Color.DarkBlue,
 			Color.LightGreen, Color.LightSalmon, Color.LightBlue, Color.Gray, Color.DarkGoldenrod, Color.Cyan, Color.Orange, Color.Purple };
 
@@ -640,21 +640,31 @@ namespace Elev8
 			tbYawSpeedAuto.Value = (int)(Source + 0.5f) / 10;
 
 			Source = prefs.ManualRollPitchRate;
-			tbRollPitchManual.Value = (int)(Source * 50.0f + 0.5f);
+			tbRollPitchManual.Value = (int)(Source * 20.0f + 0.5f);
 
 			Source = prefs.ManualYawRate;
-			tbYawSpeedManual.Value = (int)(Source * 50.0f + 0.5f);
+			tbYawSpeedManual.Value = (int)(Source * 20.0f + 0.5f);
 
 			//Value = prefs.YawSpeed;
 			//lblYawSpeedAuto.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
-			udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
-			udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
-			udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
-			udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
+			try {udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);}
+			catch{};
+			try { udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed / 8); }
+			catch { };
+			try { udHighThrottle.Value = (decimal)(prefs.MaxThrottle / 8); }
+			catch { };
 
-			udLowVoltageAlarmThreshold.Value = (decimal)((float)prefs.LowVoltageAlarmThreshold / 100.0f);
-			udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
+			try { udTestThrottle.Value = (decimal)(prefs.ThrottleTest / 8); }
+			catch { };
+
+
+			try { udLowVoltageAlarmThreshold.Value = (decimal)((float)prefs.LowVoltageAlarmThreshold / 100.0f); }
+			catch { };
+
+			try { udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f); }
+			catch { };
+
 			cbLowVoltageAlarm.Checked = (prefs.LowVoltageAlarm != 0);
 
 			cbDisableMotors.Checked = (prefs.DisableMotors == 1);
@@ -679,7 +689,7 @@ namespace Elev8
 
 			Value = prefs.AccelCorrectionFilter;
 			tbAccelCorrectionFilter.Value = Value;
-			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.000" );
 
 			Value = prefs.ThrustCorrectionScale;
 			tbThrustCorrection.Value = Value;
@@ -1169,13 +1179,13 @@ namespace Elev8
 
 		private void tbRollPitchManual_ValueChanged( object sender, EventArgs e )
 		{
-			float Value = (float)tbRollPitchManual.Value / 50.0f;
+			float Value = (float)tbRollPitchManual.Value / 20.0f;
 			lblRollPitchManual.Text = Value.ToString("0.00");
 		}
 
 		private void tbYawSpeedManual_ValueChanged( object sender, EventArgs e )
 		{
-			float Value = (float)tbYawSpeedManual.Value / 50.0f;
+			float Value = (float)tbYawSpeedManual.Value / 20.0f;
 			lblYawSpeedManual.Text = Value.ToString("0.00");
 		}
 
@@ -1183,7 +1193,7 @@ namespace Elev8
 		private void tbAccelCorrectionFilter_ValueChanged( object sender, EventArgs e )
 		{
 			int Value = tbAccelCorrectionFilter.Value;
-			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.000" );
 		}
 
 		private void tbThrustCorrection_ValueChanged( object sender, EventArgs e )
@@ -1204,11 +1214,11 @@ namespace Elev8
 			prefs.AutoLevelYawRate = Rate;
 
 			Value = tbRollPitchManual.Value;
-			Rate = (float)Value / 50.0f;
+			Rate = (float)Value / 20.0f;
 			prefs.ManualRollPitchRate = Rate;
 
 			Value = tbYawSpeedManual.Value;
-			Rate = (float)Value / 50.0f;
+			Rate = (float)Value / 20.0f;
 			prefs.ManualYawRate = Rate;
 
 			prefs.AccelCorrectionFilter = (short)tbAccelCorrectionFilter.Value;

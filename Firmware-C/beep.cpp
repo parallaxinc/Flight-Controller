@@ -46,8 +46,9 @@ void BeepHz( int Hz , int Delay )
       ctr += d;
       waitcnt( ctr );
     }
-    OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));
-  }    
+  }
+
+  OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2)); // Make sure the pin is off when we're done so counters can still toggle it
 }    
 
 
@@ -95,7 +96,7 @@ static int fraction( int a, int b )
     if( a >= b ) {
       a -= b;
       f++;
-    }      
+    }
     a <<= 1;
   }
   return f;
@@ -107,7 +108,7 @@ void BeepOn(int CtrAB, int Pin, int Freq)
   int s, d, ctr, frq;
 
   //Freq = Freq #> 0 <# 500_000         // limit frequency range
-  
+
   ctr = 4 << 26;                        // ..set NCO mode
 
   frq = fraction(Freq, CLKFREQ);        // Compute FRQA/FRQB value
@@ -130,7 +131,6 @@ void BeepOff( int CtrAB )
 {
   if( CtrAB == 'A' )
     CTRA = 0;
-  else if (CtrAB == 'B' ) {
+  else if (CtrAB == 'B' )
     CTRB = 0;
-  }    
 }

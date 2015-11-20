@@ -103,6 +103,7 @@
 			this.cbChannel4 = new System.Windows.Forms.ComboBox();
 			this.cbChannel1 = new System.Windows.Forms.ComboBox();
 			this.tpSystemSetup = new System.Windows.Forms.TabPage();
+			this.btnFactoryDefaultPrefs = new System.Windows.Forms.Button();
 			this.cbLowVoltageAlarm = new System.Windows.Forms.CheckBox();
 			this.label16 = new System.Windows.Forms.Label();
 			this.cbArmingDelay = new System.Windows.Forms.ComboBox();
@@ -185,7 +186,6 @@
 			this.comboBox7 = new System.Windows.Forms.ComboBox();
 			this.comboBox8 = new System.Windows.Forms.ComboBox();
 			this.tlToolTip = new System.Windows.Forms.ToolTip( this.components );
-			this.btnFactoryDefaultPrefs = new System.Windows.Forms.Button();
 			this.vbRollOut = new Elev8.Controls.ValueBar();
 			this.vbYawOut = new Elev8.Controls.ValueBar();
 			this.vbPitchOut = new Elev8.Controls.ValueBar();
@@ -732,12 +732,11 @@
 			// 
 			// lblYawSpeedManual
 			// 
-			this.lblYawSpeedManual.AutoSize = true;
 			this.lblYawSpeedManual.Location = new System.Drawing.Point( 469, 295 );
 			this.lblYawSpeedManual.Name = "lblYawSpeedManual";
-			this.lblYawSpeedManual.Size = new System.Drawing.Size( 28, 13 );
+			this.lblYawSpeedManual.Size = new System.Drawing.Size( 34, 13 );
 			this.lblYawSpeedManual.TabIndex = 85;
-			this.lblYawSpeedManual.Text = "1.00";
+			this.lblYawSpeedManual.Text = "00.00";
 			// 
 			// label14
 			// 
@@ -751,15 +750,15 @@
 			// tbYawSpeedManual
 			// 
 			this.tbYawSpeedManual.LargeChange = 10;
-			this.tbYawSpeedManual.Location = new System.Drawing.Point( 356, 279 );
+			this.tbYawSpeedManual.Location = new System.Drawing.Point( 354, 279 );
 			this.tbYawSpeedManual.Maximum = 100;
-			this.tbYawSpeedManual.Minimum = 8;
+			this.tbYawSpeedManual.Minimum = 10;
 			this.tbYawSpeedManual.Name = "tbYawSpeedManual";
 			this.tbYawSpeedManual.Size = new System.Drawing.Size( 110, 45 );
 			this.tbYawSpeedManual.TabIndex = 83;
-			this.tbYawSpeedManual.TickFrequency = 5;
+			this.tbYawSpeedManual.TickFrequency = 10;
 			this.tlToolTip.SetToolTip( this.tbYawSpeedManual, "How quickly the craft will change heading.  Larger numbers are faster." );
-			this.tbYawSpeedManual.Value = 50;
+			this.tbYawSpeedManual.Value = 30;
 			this.tbYawSpeedManual.ValueChanged += new System.EventHandler( this.tbYawSpeedManual_ValueChanged );
 			// 
 			// lblAccelCorrectionFilter
@@ -773,9 +772,9 @@
 			// 
 			// label13
 			// 
-			this.label13.Location = new System.Drawing.Point( 496, 228 );
+			this.label13.Location = new System.Drawing.Point( 505, 228 );
 			this.label13.Name = "label13";
-			this.label13.Size = new System.Drawing.Size( 73, 45 );
+			this.label13.Size = new System.Drawing.Size( 66, 45 );
 			this.label13.TabIndex = 81;
 			this.label13.Text = "Vertical Disturbance Correction";
 			this.label13.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -804,9 +803,9 @@
 			// 
 			// label17
 			// 
-			this.label17.Location = new System.Drawing.Point( 496, 279 );
+			this.label17.Location = new System.Drawing.Point( 505, 279 );
 			this.label17.Name = "label17";
-			this.label17.Size = new System.Drawing.Size( 73, 45 );
+			this.label17.Size = new System.Drawing.Size( 66, 45 );
 			this.label17.TabIndex = 78;
 			this.label17.Text = "Thrust Angle Correction";
 			this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -870,8 +869,9 @@
 			// 
 			// tbYawSpeedAuto
 			// 
+			this.tbYawSpeedAuto.LargeChange = 10;
 			this.tbYawSpeedAuto.Location = new System.Drawing.Point( 101, 279 );
-			this.tbYawSpeedAuto.Maximum = 54;
+			this.tbYawSpeedAuto.Maximum = 72;
 			this.tbYawSpeedAuto.Minimum = 5;
 			this.tbYawSpeedAuto.Name = "tbYawSpeedAuto";
 			this.tbYawSpeedAuto.Size = new System.Drawing.Size( 110, 45 );
@@ -893,12 +893,11 @@
 			// 
 			// lblRollPitchManual
 			// 
-			this.lblRollPitchManual.AutoSize = true;
 			this.lblRollPitchManual.Location = new System.Drawing.Point( 469, 244 );
 			this.lblRollPitchManual.Name = "lblRollPitchManual";
-			this.lblRollPitchManual.Size = new System.Drawing.Size( 28, 13 );
+			this.lblRollPitchManual.Size = new System.Drawing.Size( 34, 13 );
 			this.lblRollPitchManual.TabIndex = 70;
-			this.lblRollPitchManual.Text = "0.60";
+			this.lblRollPitchManual.Text = "00.00";
 			// 
 			// lblRollPitchAngle
 			// 
@@ -921,13 +920,13 @@
 			// tbRollPitchManual
 			// 
 			this.tbRollPitchManual.LargeChange = 10;
-			this.tbRollPitchManual.Location = new System.Drawing.Point( 356, 228 );
+			this.tbRollPitchManual.Location = new System.Drawing.Point( 354, 228 );
 			this.tbRollPitchManual.Maximum = 100;
-			this.tbRollPitchManual.Minimum = 8;
+			this.tbRollPitchManual.Minimum = 10;
 			this.tbRollPitchManual.Name = "tbRollPitchManual";
 			this.tbRollPitchManual.Size = new System.Drawing.Size( 110, 45 );
 			this.tbRollPitchManual.TabIndex = 21;
-			this.tbRollPitchManual.TickFrequency = 5;
+			this.tbRollPitchManual.TickFrequency = 10;
 			this.tlToolTip.SetToolTip( this.tbRollPitchManual, "Speed the craft will tilt when given a full-stick command in manual mode (larger " +
 					"numbers are faster)" );
 			this.tbRollPitchManual.Value = 30;
@@ -944,7 +943,6 @@
 			// 
 			// tbRollPitchAuto
 			// 
-			this.tbRollPitchAuto.LargeChange = 15;
 			this.tbRollPitchAuto.Location = new System.Drawing.Point( 101, 228 );
 			this.tbRollPitchAuto.Maximum = 85;
 			this.tbRollPitchAuto.Minimum = 10;
@@ -1201,10 +1199,21 @@
 			this.tpSystemSetup.TabIndex = 4;
 			this.tpSystemSetup.Text = "System Setup";
 			// 
+			// btnFactoryDefaultPrefs
+			// 
+			this.btnFactoryDefaultPrefs.Location = new System.Drawing.Point( 574, 330 );
+			this.btnFactoryDefaultPrefs.Name = "btnFactoryDefaultPrefs";
+			this.btnFactoryDefaultPrefs.Size = new System.Drawing.Size( 139, 23 );
+			this.btnFactoryDefaultPrefs.TabIndex = 40;
+			this.btnFactoryDefaultPrefs.Text = "Factory Default Prefs";
+			this.btnFactoryDefaultPrefs.UseVisualStyleBackColor = true;
+			this.btnFactoryDefaultPrefs.Click += new System.EventHandler( this.btnFactoryDefaultPrefs_Click );
+			// 
 			// cbLowVoltageAlarm
 			// 
 			this.cbLowVoltageAlarm.AutoSize = true;
-			this.cbLowVoltageAlarm.Location = new System.Drawing.Point( 243, 109 );
+			this.cbLowVoltageAlarm.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.cbLowVoltageAlarm.Location = new System.Drawing.Point( 244, 106 );
 			this.cbLowVoltageAlarm.Name = "cbLowVoltageAlarm";
 			this.cbLowVoltageAlarm.Size = new System.Drawing.Size( 152, 17 );
 			this.cbLowVoltageAlarm.TabIndex = 39;
@@ -1261,7 +1270,7 @@
 			// label10
 			// 
 			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point( 261, 84 );
+			this.label10.Location = new System.Drawing.Point( 261, 83 );
 			this.label10.Name = "label10";
 			this.label10.Size = new System.Drawing.Size( 74, 13 );
 			this.label10.TabIndex = 15;
@@ -1275,7 +1284,7 @@
             0,
             0,
             65536} );
-			this.udVoltageOffset.Location = new System.Drawing.Point( 341, 82 );
+			this.udVoltageOffset.Location = new System.Drawing.Point( 341, 81 );
 			this.udVoltageOffset.Maximum = new decimal( new int[] {
             2,
             0,
@@ -1295,7 +1304,7 @@
 			// label12
 			// 
 			this.label12.AutoSize = true;
-			this.label12.Location = new System.Drawing.Point( 240, 133 );
+			this.label12.Location = new System.Drawing.Point( 260, 127 );
 			this.label12.Name = "label12";
 			this.label12.Size = new System.Drawing.Size( 111, 13 );
 			this.label12.TabIndex = 13;
@@ -1304,7 +1313,7 @@
 			// label9
 			// 
 			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point( 240, 60 );
+			this.label9.Location = new System.Drawing.Point( 240, 59 );
 			this.label9.Name = "label9";
 			this.label9.Size = new System.Drawing.Size( 95, 13 );
 			this.label9.TabIndex = 10;
@@ -1328,7 +1337,7 @@
             0,
             0,
             65536} );
-			this.udLowVoltageAlarmThreshold.Location = new System.Drawing.Point( 341, 58 );
+			this.udLowVoltageAlarmThreshold.Location = new System.Drawing.Point( 341, 57 );
 			this.udLowVoltageAlarmThreshold.Maximum = new decimal( new int[] {
             168,
             0,
@@ -1352,7 +1361,8 @@
 			// cbUseBatteryMonitor
 			// 
 			this.cbUseBatteryMonitor.AutoSize = true;
-			this.cbUseBatteryMonitor.Location = new System.Drawing.Point( 243, 35 );
+			this.cbUseBatteryMonitor.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.cbUseBatteryMonitor.Location = new System.Drawing.Point( 263, 38 );
 			this.cbUseBatteryMonitor.Name = "cbUseBatteryMonitor";
 			this.cbUseBatteryMonitor.Size = new System.Drawing.Size( 133, 17 );
 			this.cbUseBatteryMonitor.TabIndex = 8;
@@ -2147,16 +2157,6 @@
 			this.comboBox8.Name = "comboBox8";
 			this.comboBox8.Size = new System.Drawing.Size( 40, 21 );
 			this.comboBox8.TabIndex = 43;
-			// 
-			// btnFactoryDefaultPrefs
-			// 
-			this.btnFactoryDefaultPrefs.Location = new System.Drawing.Point( 574, 330 );
-			this.btnFactoryDefaultPrefs.Name = "btnFactoryDefaultPrefs";
-			this.btnFactoryDefaultPrefs.Size = new System.Drawing.Size( 139, 23 );
-			this.btnFactoryDefaultPrefs.TabIndex = 40;
-			this.btnFactoryDefaultPrefs.Text = "Factory Default Prefs";
-			this.btnFactoryDefaultPrefs.UseVisualStyleBackColor = true;
-			this.btnFactoryDefaultPrefs.Click += new System.EventHandler( this.btnFactoryDefaultPrefs_Click );
 			// 
 			// vbRollOut
 			// 

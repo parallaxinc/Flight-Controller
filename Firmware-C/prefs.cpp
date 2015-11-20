@@ -39,7 +39,7 @@ void Prefs_SetDefaults(void)
 {
   memset( &Prefs, 0, sizeof(Prefs) );
 
-  Prefs.UseBattMon = 0;
+  Prefs.UseBattMon = 1;
 
   Prefs.RollCorrect[0] = 0.0f;                         //Sin of roll correction angle
   Prefs.RollCorrect[1] = 1.0f;                         //Cos of roll correction angle
@@ -52,9 +52,9 @@ void Prefs_SetDefaults(void)
   Prefs.MagScaleOfs[3] = 1024;
   Prefs.MagScaleOfs[5] = 1024;
 
-  Prefs.AutoLevelRollPitch = (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;          // 45 deg/ControlScale * Deg2Rad * HalfAngle
+  Prefs.AutoLevelRollPitch = (35.0f / 1024.0f) * (PI/180.0f) * 0.5f;          // 35 deg/ControlScale * Deg2Rad * HalfAngle
   Prefs.AutoLevelYawRate = ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/ControlScale / UpdateRate * Deg2Rad * HalfAngle
-  Prefs.ManualRollPitchRate = 1.0f;
+  Prefs.ManualRollPitchRate = 1.5f;
   Prefs.ManualYawRate = 2.0f;
 
 
@@ -67,7 +67,7 @@ void Prefs_SetDefaults(void)
   Prefs.MinThrottle = 1040 * 8;     // Values are in 1/8us resolution, full range is 1000us to 2000us, however many ESCs behave abnormally at the extremes
   Prefs.MaxThrottle = 1960 * 8;
   Prefs.CenterThrottle = 1500 * 8;
-  Prefs.MinThrottleArmed = 1120 * 8;
+  Prefs.MinThrottleArmed = 1140 * 8;
 
   Prefs.ArmDelay = 250;
   Prefs.DisarmDelay = 125;
