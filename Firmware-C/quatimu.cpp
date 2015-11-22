@@ -22,7 +22,7 @@ enum IMU_VarLabels {
 
     ConstNull,                                   // Basically a placeholder for real zero / null
 
-    Yaw,                                         // Current heading (yaw), scaled units
+    //Yaw,                                         // Current heading (yaw), scaled units
     ThrustFactor,
     
     // Inputs
@@ -74,7 +74,7 @@ enum IMU_VarLabels {
 
     DebugFloat,                                  // value used for debugging - sent to groundstation
 
-    axRot, ayRot, azRot,
+    axRot, ayRot, azRot,                         // rotated accelerometer vector, used for computing altitude affects from acceleration
     accWeight,
 
     accRollCorrSin,                              // used to correct the accelerometer vector angle offset
@@ -107,9 +107,9 @@ enum IMU_VarLabels {
     diffAxisX, diffAxisY, diffAxisZ,    // Axis around which QR rotates to get from Q to CQ
     diffAngle,                          // Amount of rotation required to get from Q to CQ
 
-    PitchDiff, RollDiff, YawDiff,       // Difference between current orientation and desired
+    PitchDiff, RollDiff, YawDiff,       // Difference between current orientation and desired, scaled outputs
     Heading,                            // Computed heading for control updates
-    
+
     // Float constants used in computation
     const_GyroScale,
     const_NegGyroScale,
@@ -212,11 +212,11 @@ void QuatIMU_Start(void)
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
   IMU_VARS[const_m_to_mm]           =    1000.0f;
 
-  IMU_VARS[const_velAccScale]       =    0.9995f;
-  IMU_VARS[const_velAltiScale]      =    0.0005f;
+  IMU_VARS[const_velAccScale]       =    0.9985f;     // was 0.9995     - Used to generate the vertical velocity estimate
+  IMU_VARS[const_velAltiScale]      =    0.0015f;     // was 0.0005
 
-  IMU_VARS[const_velAccTrust]       =    0.999f;
-  IMU_VARS[const_velAltiTrust]      =    0.001f;
+  IMU_VARS[const_velAccTrust]       =    0.9990f;      // was 0.9990    - used to generate the absolute altitude estimate
+  IMU_VARS[const_velAltiTrust]      =    0.0010f;      // was 0.0010
 
   IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
@@ -231,9 +231,9 @@ void QuatIMU_Start(void)
 }
 
 
-int QuatIMU_GetYaw(void) {
-  return INT_VARS[ Yaw ];
-}
+//int QuatIMU_GetYaw(void) {
+//  return INT_VARS[ Yaw ];
+//}
 
 int QuatIMU_GetThrustFactor(void) {
   return INT_VARS[ ThrustFactor ];
@@ -670,14 +670,10 @@ short QuatUpdateCommands[] = {
         F32_opMul, errDiffZ,  accWeight, errCorrZ,  
 
 
-    //For heading, I want an actual angular value, so this returns me an int between 0  65535, where 0 is forward
-    //YAngle := Flt.FRound( Flt.FMul( Flt.Atan2( Flt.FFloat(DCM.GetM20), Flt.FFloat(DCM.GetM22)), constant(32768.0 / PI) ) )  65535 
-
+  // compute heading using Atan2 and the Z vector of the orientation matrix
         
         F32_opATan2, m20,  m22, FloatYaw,
         F32_opNeg, FloatYaw, 0, FloatYaw,
-        F32_opMul, FloatYaw,  const_outAngleScale, temp,
-        F32_opTruncRound, temp,  const_0, Yaw,
 
         // When switching between manual and auto, or just lifting off, I need to
         // know the half-angle of the craft so I can use it as my initial Heading value
@@ -714,12 +710,12 @@ short QuatUpdateCommands[] = {
         F32_opMul, forceZ,  m21, temp,  
         F32_opAdd, forceWY, temp, forceWY,  
 
-  //forceWY *= 9.8                                       //Convert to M/sec^2
+  //forceWY *= 9.8                                                //Convert to M/sec^2
         F32_opMul, forceWY,  const_GMetersPerSec, forceWY,  
 
 
 
-        F32_opMul, forceWY,  const_UpdateScale, temp,            //temp := forceWY / UpdateRate
+        F32_opMul, forceWY,  const_UpdateScale, temp,             //temp := forceWY / UpdateRate
         F32_opAdd, velocityEstimate,  temp, velocityEstimate,     //velEstimate += forceWY / UpdateRate
 
   
@@ -733,7 +729,7 @@ short QuatUpdateCommands[] = {
         F32_opAdd, velocityEstimate,  temp, velocityEstimate,   
 
   //altitudeEstimate += velocityEstimate / UpdateRate
-        F32_opMul, velocityEstimate,  const_UpdateScale, temp , 
+        F32_opMul, velocityEstimate,  const_UpdateScale, temp,
         F32_opAdd, altitudeEstimate,  temp, altitudeEstimate,   
 
   //altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
@@ -979,8 +975,6 @@ void QuatIMU_InitFunctions(void)
 }
 
 
-static int cycleTimer;
-
 
 void QuatIMU_Update( int * packetAddr )
 {
@@ -992,7 +986,6 @@ void QuatIMU_Update( int * packetAddr )
   ((int*)IMU_VARS)[gy] -= zy;
   ((int*)IMU_VARS)[gz] -= zz;
 
-  cycleTimer = CNT;
   F32::RunStream( QuatUpdateCommands );
 }
 
@@ -1001,27 +994,19 @@ inline static int abs( int v )
   return (v < 0) ? -v : v;
 }
 
+// Maps an input from (-N .. 0 .. +N) to output zero when the absolute input value is < db, removes the range from the output so it doesn't pop
+static int Deadband( int v , int db )
+{
+  if( v > db ) return v - db;
+  if( v < -db ) return v + db;
+  return 0;
+}
+
 void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
 {
-  ((int*)IMU_VARS)[In_Elev] = Radio->Elev;
-  ((int*)IMU_VARS)[In_Aile] = Radio->Aile;
-  ((int*)IMU_VARS)[In_Rudd] = Radio->Rudd;
-
-  /*
-  if( abs(INT_VARS[In_Elev]) < 10 ) {
-    INT_VARS[In_Elev] = 0;
-  }
-
-  if( abs(INT_VARS[In_Aile]) < 10 ) {
-    INT_VARS[In_Aile] = 0;
-  }
-
-  if( abs(INT_VARS[In_Rudd]) < 10 ) {
-    INT_VARS[In_Rudd] = 0;
-  }
-  */
-
-  cycleTimer = CNT;
+  ((int*)IMU_VARS)[In_Elev] = Deadband( Radio->Elev, 24 );
+  ((int*)IMU_VARS)[In_Aile] = Deadband( Radio->Aile, 24 );
+  ((int*)IMU_VARS)[In_Rudd] = Deadband( Radio->Rudd, 24 );
 
   if( ManualMode ) {
     F32::RunStream( UpdateControls_Manual );
@@ -1032,8 +1017,7 @@ void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
 }
 
 
-int QuatIMU_WaitForCompletion(void)
+void QuatIMU_WaitForCompletion(void)
 {
   F32::WaitStream();    // Wait for the stream to complete
-  return CNT - cycleTimer;
 }

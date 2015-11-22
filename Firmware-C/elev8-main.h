@@ -27,13 +27,8 @@ void All_LED( int Color );
 
 enum MODE {
   MODE_None = 0,
-  MODE_RadioTest = 1,
   MODE_SensorTest = 2,
   MODE_MotorTest = 3,
-  MODE_IMUTest = 4,
-  MODE_IMUComp = 5,
-  MODE_VibrationTest = 6,
-  MODE_Everything = 7,
 };
 
 enum FLIGHTMODE {
@@ -49,21 +44,6 @@ struct RADIO {
 
   short & Channel(int i) { return (&Thro)[i]; }
 };
-
-
-struct EVERYTHING_DATA
-{
-  short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;         // Radio values = 16 bytes
-  short BatteryVolts;                                           // Battery Monitor = 2 bytes
-  short padding;                                                // curently unused
-
-  short Temp, GyroX, GyroY, GyroZ, AccelX, AccelY, AccelZ, MagX, MagY, MagZ;  // IMU sensors = 20 bytes
-
-  long  Alt, AltRate, Pressure;                                 // Altimeter = 12 bytes
-  long  Pitch, Roll, Yaw;                                       // IMU = 12 bytes
-
-  char Quaternion[16];                                          // Quaternion = 16 bytes
-};                                                              // 80 bytes total
 
 
 //LED Brightness values - AND with color values to dim them

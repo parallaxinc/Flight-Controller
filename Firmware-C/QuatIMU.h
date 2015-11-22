@@ -49,7 +49,7 @@ void QuatIMU_SetGyroZero( int x, int y, int z );
 void QuatIMU_Update( int * packetAddr );
 void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode );
 
-int QuatIMU_WaitForCompletion(void);
+void QuatIMU_WaitForCompletion(void);
 
 void QuatIMU_AdjustStreamPointers( int * p );
 
