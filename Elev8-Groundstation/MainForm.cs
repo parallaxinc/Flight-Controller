@@ -66,11 +66,11 @@ namespace Elev8
 
 		ComboBox[] channelAssignControls = new ComboBox[8];
 
-		string[] GraphNames = new string[] { "GX", "GY", "GZ", "AX", "AY", "AZ", "MX", "MY", "MZ", "Alt", "PitchDiff", "RollDiff", "YawDiff", "Voltage" };
+		string[] GraphNames = new string[] { "GX", "GY", "GZ", "AX", "AY", "AZ", "MX", "MY", "MZ", "AltBaro", "AltEsti", "Pitch", "Roll", "Yaw", "Voltage" };
 		Color[] GraphColors = new Color[] {Color.Red, Color.Green, Color.Blue, Color.DarkRed, Color.DarkGreen, Color.DarkBlue,
-			Color.LightGreen, Color.LightSalmon, Color.LightBlue, Color.Gray, Color.DarkGoldenrod, Color.Cyan, Color.Orange, Color.Purple };
+			Color.LightGreen, Color.LightSalmon, Color.LightBlue, Color.DarkGray, Color.Gray, Color.DarkGoldenrod, Color.Cyan, Color.Orange, Color.Purple };
 
-		DataSource[] graphSources = new DataSource[14];
+		DataSource[] graphSources = new DataSource[15];
 		const int NumGraphDisplaySamples = 512;
 		int SampleIndex = 0;
 
@@ -107,7 +107,7 @@ namespace Elev8
 			plotSensors.SetDisplayRangeX( 0, NumGraphDisplaySamples );
 
 
-			for(int i = 0; i < 14; i++)
+			for(int i = 0; i < 15; i++)
 			{
 				graphSources[i] = new DataSource();
 				graphSources[i].Name = GraphNames[i];
@@ -117,29 +117,42 @@ namespace Elev8
 
 				graphSources[i].Length = NumGraphDisplaySamples;
                 plotSensors.PanelLayout = PlotterGraphPaneEx.LayoutMode.NORMAL;
-                graphSources[i].AutoScaleY = false;
+				graphSources[i].AutoScaleY = true;
 
-				if(i < 6)
+				if(i < 6)		// GX,GY,GZ, AX,AY,AZ
 				{
 					graphSources[i].SetDisplayRangeY( -16384, 16384 );
 					graphSources[i].SetGridDistanceY( 4096 );
 					graphSources[i].AutoScaleY = true;
 				}
-				else if(i < 9)
+				else if(i < 9)	// MX,MY,MZ
 				{
 					graphSources[i].SetDisplayRangeY( -4096, 32000 );
 					graphSources[i].SetGridDistanceY( 1024 );
 					graphSources[i].AutoScaleY = true;
 				}
-				else if(i == 13)
+				else if(i == 9 || i == 10 )	// Altitude, m
 				{
-					graphSources[i].SetDisplayRangeY( 0, 2400 );
-					graphSources[i].SetGridDistanceY( 100 );
+					graphSources[i].SetDisplayRangeY( -3000, 8000 );
+					graphSources[i].SetGridDistanceY( 5 );
+					graphSources[i].AutoScaleY = true;
+				}
+				else if(i < 14)	// Pitch, Roll, Yaw
+				{
+					graphSources[i].SetDisplayRangeY( -180, 180 );
+					graphSources[i].SetGridDistanceY( 30 );
+				}
+				else if(i == 14)	// Voltage
+				{
+					graphSources[i].SetDisplayRangeY( 0, 24 );
+					graphSources[i].SetGridDistanceY( 2 );
+					graphSources[i].AutoScaleY = true;
 				}
 				else
 				{
 					graphSources[i].SetDisplayRangeY( -65536, 65536 );
 					graphSources[i].SetGridDistanceY( 16384 );
+					graphSources[i].AutoScaleY = true;
 				}
 				graphSources[i].GraphColor = GraphColors[i];
 
@@ -147,8 +160,6 @@ namespace Elev8
 				//graphSources[i].OnRenderYAxisLabel = RenderYLabel;
 				//graphSources[i].OnRenderXAxisLabel += RenderXLabel;
 			}
-
-			graphSources[9].AutoScaleY = true;	// altitude
 
 			comm.Start();
 		}
@@ -207,7 +218,7 @@ namespace Elev8
 						case 1:	// Radio data
 							radio.ReadFrom( p );
 
-							graphSources[13].Samples[SampleIndex].y = radio.BatteryVolts;
+							graphSources[14].Samples[SampleIndex].y = (float)radio.BatteryVolts / 100.0f;
 							bRadioChanged = true;
 							break;
 
@@ -228,11 +239,25 @@ namespace Elev8
 							break;
 
 						case 3:	// Quaternion
+							{
 							q.x = p.GetFloat();
 							q.y = p.GetFloat();
 							q.z = p.GetFloat();
 							q.w = p.GetFloat();
+
+							Matrix m = new Matrix();
+							m.From( q );
+
+							double roll = Math.Asin( m.m[1, 0] ) * (180.0 / Math.PI);
+							double pitch = Math.Asin( m.m[1, 2] ) * (180.0 / Math.PI);
+							double yaw = -Math.Atan2( m.m[2, 0], m.m[2, 2] ) * (180.0 / Math.PI);
+
+							graphSources[11].Samples[SampleIndex].y = (float)pitch;
+							graphSources[12].Samples[SampleIndex].y = (float)roll;
+							graphSources[13].Samples[SampleIndex].y = (float)yaw;
+
 							bQuatChanged = true;
+							}
 							break;
 
 						case 4:	// Compute values
@@ -240,9 +265,7 @@ namespace Elev8
 							bComputedChanged = true;
 
 							graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
-							graphSources[10].Samples[SampleIndex].y = computed.Pitch;
-							graphSources[11].Samples[SampleIndex].y = computed.Roll;
-							graphSources[12].Samples[SampleIndex].y = computed.Yaw;
+							graphSources[10].Samples[SampleIndex].y = (float)computed.AltiEst / 1000.0f;
 
 							SampleIndex = (SampleIndex + 1) % NumGraphDisplaySamples;
 							break;
@@ -344,6 +367,9 @@ namespace Elev8
 
 				else if( tcTabs.SelectedTab == tpAccelCalibration )
 				{
+					gAccelXCal.Value = sensors.AccelX;
+					gAccelYCal.Value = sensors.AccelY;
+					gAccelZCal.Value = sensors.AccelZ;
 				}
 			}
 
@@ -463,8 +489,12 @@ namespace Elev8
 
 					double roll = Math.Asin( m.m[1,0] ) * (180.0/Math.PI);
 					double pitch = Math.Asin( m.m[1,2] ) * (180.0 / Math.PI);
+					double yaw = -Math.Atan2( m.m[2, 0], m.m[2, 2] ) * (180.0/Math.PI);
+
+					int YawVal = ((int)yaw + 360) % 360;	// Make sure the number is in the range of 0 to 359 for the display
 
 					aicAttitude.SetAttitudeIndicatorParameters( pitch, roll );
+					aicHeading.SetHeadingIndicatorParameters( YawVal );
 				}
 				else if(tcTabs.SelectedTab == tpAccelCalibration) {
 					ocAccelOrient.Quat = q;
@@ -500,7 +530,7 @@ namespace Elev8
 				vbYawOut.Value = computed.Yaw;
 
 				aicAltimeter.SetAlimeterParameters( (float)computed.AltiEst / 1000.0f );
-				aicHeading.SetHeadingIndicatorParameters( (computed.Yaw & ((1 << 17) - 1)) / (65536 / 180) );
+				//aicHeading.SetHeadingIndicatorParameters( (computed.Yaw & ((1 << 17) - 1)) / (65536 / 180) );
 			}
 
 			if(bPrefsChanged) {
