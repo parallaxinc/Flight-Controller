@@ -108,6 +108,7 @@ int Prefs_CalculateChecksum(PREFS & PrefsStruct )
 }
 
 
+/*
 extern fdserial * dbg;
 
 static int tGetC( void ) {
@@ -132,7 +133,6 @@ static void tPutHex( int x, int len ) {
     tPutHexNibble( (x>>(4*i)) & 15 );
   }    
 }
-
 
 void Prefs_Test( void )
 {
@@ -176,3 +176,4 @@ void Prefs_Test( void )
 
   tGetC();
 }
+*/
