@@ -1,6 +1,5 @@
 
 #include <propeller.h>
-#include <simpletools.h>
 #include "eeprom.h"
 
 /*

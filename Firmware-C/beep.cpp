@@ -46,8 +46,9 @@ void BeepHz( int Hz , int Delay )
       ctr += d;
       waitcnt( ctr );
     }
-    OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));
-  }    
+  }
+
+  OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2)); // Make sure the pin is off when we're done so counters can still toggle it
 }    
 
 
@@ -81,4 +82,55 @@ void Beep3(void)
   Beep();
   waitcnt( 5000000 + CNT );
   Beep();
+}
+
+// Return the lower 32 bits of a 32.32 division of (a.0) by (b.0)
+static int fraction( int a, int b )
+{
+  int f = 0;
+
+  a <<= 1;                              // to maintain significant bits
+  for( int i=0; i<32; i++ )             // perform long division of a/b
+  {
+    f <<= 1;
+    if( a >= b ) {
+      a -= b;
+      f++;
+    }
+    a <<= 1;
+  }
+  return f;
+}
+
+
+void BeepOn(int CtrAB, int Pin, int Freq)
+{
+  int s, d, ctr, frq;
+
+  //Freq = Freq #> 0 <# 500_000         // limit frequency range
+
+  ctr = 4 << 26;                        // ..set NCO mode
+
+  frq = fraction(Freq, CLKFREQ);        // Compute FRQA/FRQB value
+  ctr |= Pin;                           // set PINA to complete CTRA/CTRB value
+
+  if(CtrAB == 'A' )
+  {
+     CTRA = ctr;                        // set CTRA
+     FRQA = frq;                        // set FRQA                   
+  }
+  else if( CtrAB == 'B' )
+  {
+     CTRB = ctr;                        // set CTRB
+     FRQB = frq;                        // set FRQB                   
+  }
+  DIRA |= (1<<Pin);                    // make pin output
+}
+
+void BeepOff( int CtrAB )
+{
+  if( CtrAB == 'A' )
+    CTRA = 0;
+  else if (CtrAB == 'B' )
+    CTRB = 0;
 }

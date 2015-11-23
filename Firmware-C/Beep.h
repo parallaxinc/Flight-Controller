@@ -10,5 +10,7 @@ void Beep(void);
 void Beep2(void);
 void Beep3(void);
 
+void BeepOn(int CtrAB, int Pin, int Freq);
+void BeepOff(int CtrAB);
 
 #endif

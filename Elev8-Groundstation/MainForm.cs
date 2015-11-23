@@ -49,7 +49,9 @@ namespace Elev8
 
 		RadioData radio = new RadioData();
 		SensorData sensors = new SensorData();
-		Quaternion  q = new Quaternion();
+		Quaternion q = new Quaternion();
+		Quaternion cq = new Quaternion();	// Control (target) quaternion
+		MotorData motors = new MotorData();
 		ComputedData computed = new ComputedData();
 
 		PREFS prefs = new PREFS();
@@ -64,11 +66,11 @@ namespace Elev8
 
 		ComboBox[] channelAssignControls = new ComboBox[8];
 
-		string[] GraphNames = new string[] { "GX", "GY", "GZ", "AX", "AY", "AZ", "MX", "MY", "MZ", "Alt", "Pitch", "Roll", "Yaw", "Voltage" };
+		string[] GraphNames = new string[] { "GX", "GY", "GZ", "AX", "AY", "AZ", "MX", "MY", "MZ", "AltBaro", "AltEsti", "Pitch", "Roll", "Yaw", "Voltage" };
 		Color[] GraphColors = new Color[] {Color.Red, Color.Green, Color.Blue, Color.DarkRed, Color.DarkGreen, Color.DarkBlue,
-			Color.LightGreen, Color.LightSalmon, Color.LightBlue, Color.Gray, Color.DarkGoldenrod, Color.Cyan, Color.Orange, Color.Purple };
+			Color.LightGreen, Color.LightSalmon, Color.LightBlue, Color.DarkGray, Color.Gray, Color.DarkGoldenrod, Color.Cyan, Color.Orange, Color.Purple };
 
-		DataSource[] graphSources = new DataSource[14];
+		DataSource[] graphSources = new DataSource[15];
 		const int NumGraphDisplaySamples = 512;
 		int SampleIndex = 0;
 
@@ -105,7 +107,7 @@ namespace Elev8
 			plotSensors.SetDisplayRangeX( 0, NumGraphDisplaySamples );
 
 
-			for(int i = 0; i < 14; i++)
+			for(int i = 0; i < 15; i++)
 			{
 				graphSources[i] = new DataSource();
 				graphSources[i].Name = GraphNames[i];
@@ -115,29 +117,42 @@ namespace Elev8
 
 				graphSources[i].Length = NumGraphDisplaySamples;
                 plotSensors.PanelLayout = PlotterGraphPaneEx.LayoutMode.NORMAL;
-                graphSources[i].AutoScaleY = false;
+				graphSources[i].AutoScaleY = true;
 
-				if(i < 6)
+				if(i < 6)		// GX,GY,GZ, AX,AY,AZ
 				{
 					graphSources[i].SetDisplayRangeY( -16384, 16384 );
 					graphSources[i].SetGridDistanceY( 4096 );
 					graphSources[i].AutoScaleY = true;
 				}
-				else if(i < 9)
+				else if(i < 9)	// MX,MY,MZ
 				{
 					graphSources[i].SetDisplayRangeY( -4096, 32000 );
 					graphSources[i].SetGridDistanceY( 1024 );
 					graphSources[i].AutoScaleY = true;
 				}
-				else if(i == 13)
+				else if(i == 9 || i == 10 )	// Altitude, m
 				{
-					graphSources[i].SetDisplayRangeY( 0, 2400 );
-					graphSources[i].SetGridDistanceY( 100 );
+					graphSources[i].SetDisplayRangeY( -3000, 8000 );
+					graphSources[i].SetGridDistanceY( 5 );
+					graphSources[i].AutoScaleY = true;
+				}
+				else if(i < 14)	// Pitch, Roll, Yaw
+				{
+					graphSources[i].SetDisplayRangeY( -180, 180 );
+					graphSources[i].SetGridDistanceY( 30 );
+				}
+				else if(i == 14)	// Voltage
+				{
+					graphSources[i].SetDisplayRangeY( 0, 24 );
+					graphSources[i].SetGridDistanceY( 2 );
+					graphSources[i].AutoScaleY = true;
 				}
 				else
 				{
 					graphSources[i].SetDisplayRangeY( -65536, 65536 );
 					graphSources[i].SetGridDistanceY( 16384 );
+					graphSources[i].AutoScaleY = true;
 				}
 				graphSources[i].GraphColor = GraphColors[i];
 
@@ -145,8 +160,6 @@ namespace Elev8
 				//graphSources[i].OnRenderYAxisLabel = RenderYLabel;
 				//graphSources[i].OnRenderXAxisLabel += RenderXLabel;
 			}
-
-			graphSources[9].AutoScaleY = true;	// altitude
 
 			comm.Start();
 		}
@@ -190,6 +203,8 @@ namespace Elev8
 			bool bRadioChanged = false;
 			bool bSensorsChanged = false;
 			bool bQuatChanged = false;
+			bool bTargetQuatChanged = false;
+			bool bMotorsChanged = false;
 			bool bComputedChanged = false;
 			bool bPrefsChanged = false;
 
@@ -203,7 +218,7 @@ namespace Elev8
 						case 1:	// Radio data
 							radio.ReadFrom( p );
 
-							graphSources[13].Samples[SampleIndex].y = radio.BatteryVolts;
+							graphSources[14].Samples[SampleIndex].y = (float)radio.BatteryVolts / 100.0f;
 							bRadioChanged = true;
 							break;
 
@@ -224,29 +239,53 @@ namespace Elev8
 							break;
 
 						case 3:	// Quaternion
+							{
 							q.x = p.GetFloat();
 							q.y = p.GetFloat();
 							q.z = p.GetFloat();
 							q.w = p.GetFloat();
+
+							Matrix m = new Matrix();
+							m.From( q );
+
+							double roll = Math.Asin( m.m[1, 0] ) * (180.0 / Math.PI);
+							double pitch = Math.Asin( m.m[1, 2] ) * (180.0 / Math.PI);
+							double yaw = -Math.Atan2( m.m[2, 0], m.m[2, 2] ) * (180.0 / Math.PI);
+
+							graphSources[11].Samples[SampleIndex].y = (float)pitch;
+							graphSources[12].Samples[SampleIndex].y = (float)roll;
+							graphSources[13].Samples[SampleIndex].y = (float)yaw;
+
 							bQuatChanged = true;
+							}
 							break;
 
 						case 4:	// Compute values
-							computed.ReadFrom(p);
+							computed.ReadFrom( p );
 							bComputedChanged = true;
 
 							graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
-							graphSources[10].Samples[SampleIndex].y = computed.Pitch;
-							graphSources[11].Samples[SampleIndex].y = computed.Roll;
-							graphSources[12].Samples[SampleIndex].y = computed.Yaw;
+							graphSources[10].Samples[SampleIndex].y = (float)computed.AltiEst / 1000.0f;
 
 							SampleIndex = (SampleIndex + 1) % NumGraphDisplaySamples;
 							break;
 
+						case 5:	// Motor values
+							motors.ReadFrom( p );
+							bMotorsChanged = true;
+							break;
+
+						case 6:	// Control quaternion
+							cq.x = p.GetFloat();
+							cq.y = p.GetFloat();
+							cq.z = p.GetFloat();
+							cq.w = p.GetFloat();
+							bTargetQuatChanged = true;
+							break;
 
 						case 0x18:	// Settings
 							prefs.FromBytes( p.data );
-							if(prefs.CalculateChecksum() == prefs.Checksum) {
+							if( prefs.CalculateChecksum() == prefs.Checksum) {
 								//PrefsReceived = true;	// Global indicator of valid prefs
 								bPrefsChanged = true;	// local indicator, just to set up the UI
 							}
@@ -328,6 +367,9 @@ namespace Elev8
 
 				else if( tcTabs.SelectedTab == tpAccelCalibration )
 				{
+					gAccelXCal.Value = sensors.AccelX;
+					gAccelYCal.Value = sensors.AccelY;
+					gAccelZCal.Value = sensors.AccelZ;
 				}
 			}
 
@@ -339,9 +381,9 @@ namespace Elev8
 					vbVoltage.Value = radio.BatteryVolts;
 					vbVoltage.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
 
-					vbVoltage2.Value = radio.BatteryVolts;
-					vbVoltage2.RightLabel = vbVoltage.RightLabel;
 
+					lblCycles.Text = string.Format( "{0} cycles", radio.LoopCycles );
+					//lblCycles.Text = string.Format( "{0}", radio.DebugFloat );
 
 					if(RadioMode == RADIO_MODE.Mode2)	// North American
 					{
@@ -431,25 +473,64 @@ namespace Elev8
 					vbR_Channel8.RightLabel = radio.Aux3.ToString();
 					vbR_Channel8.Value = radio.Aux3;
 				}
+				else if(tcTabs.SelectedTab == tpSystemSetup)
+				{
+					vbVoltage2.Value = radio.BatteryVolts;
+					vbVoltage2.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
+				}
 			}
 
 			if(bQuatChanged) {
 				if(tcTabs.SelectedTab == tpStatus) {
 					ocOrientation.Quat = q;
+
+					Matrix m = new Matrix();
+					m.From( q );
+
+					double roll = Math.Asin( m.m[1,0] ) * (180.0/Math.PI);
+					double pitch = Math.Asin( m.m[1,2] ) * (180.0 / Math.PI);
+					double yaw = -Math.Atan2( m.m[2, 0], m.m[2, 2] ) * (180.0/Math.PI);
+
+					int YawVal = ((int)yaw + 360) % 360;	// Make sure the number is in the range of 0 to 359 for the display
+
+					aicAttitude.SetAttitudeIndicatorParameters( pitch, roll );
+					aicHeading.SetHeadingIndicatorParameters( YawVal );
 				}
 				else if(tcTabs.SelectedTab == tpAccelCalibration) {
 					ocAccelOrient.Quat = q;
 				}
 			}
 
+			if(bTargetQuatChanged)
+			{
+				if(tcTabs.SelectedTab == tpStatus) {
+					ocOrientation.Quat2 = cq;
+				}
+				else if(tcTabs.SelectedTab == tpAccelCalibration) {
+					ocAccelOrient.Quat2 = cq;
+				}
+			}
+
+			if(bMotorsChanged && tcTabs.SelectedTab == tpStatus) {
+				vbFrontLeft.Value = motors.FL;
+				vbFrontRight.Value = motors.FR;
+				vbBackRight.Value = motors.BR;
+				vbBackLeft.Value = motors.BL;
+			}
+
 			if(bComputedChanged)
 			{
-				aicAttitude.SetAttitudeIndicatorParameters(
-					(double)computed.Pitch / (3768.0 / 10.0),
-					(double)computed.Roll / (-32768.0 / 90.0) );
+				vbPitchOut.RightLabel = computed.Pitch.ToString();
+				vbPitchOut.Value = computed.Pitch;
+
+				vbRollOut.RightLabel = computed.Roll.ToString();
+				vbRollOut.Value = computed.Roll;
+
+				vbYawOut.RightLabel = computed.Yaw.ToString();
+				vbYawOut.Value = computed.Yaw;
 
 				aicAltimeter.SetAlimeterParameters( (float)computed.AltiEst / 1000.0f );
-				aicHeading.SetHeadingIndicatorParameters( (computed.Yaw & ((1 << 17) - 1)) / (65536 / 180) );
+				//aicHeading.SetHeadingIndicatorParameters( (computed.Yaw & ((1 << 17) - 1)) / (65536 / 180) );
 			}
 
 			if(bPrefsChanged) {
@@ -523,6 +604,18 @@ namespace Elev8
 			}
 		}
 
+		void AttemptSetValue( TrackBar tb, int value )
+		{
+			if( value < tb.Minimum  || value > tb.Maximum ) return;
+			tb.Value = value;
+		}
+
+		void AttemptSetValue( NumericUpDown ud, decimal value )
+		{
+			if(value < ud.Minimum || value > ud.Maximum) return;
+			ud.Value = value;
+		}
+
 
 		void ConfigureUIFromPreferences()
 		{
@@ -570,61 +663,44 @@ namespace Elev8
 
 			lblAccelCalFinal.Text = string.Format( "{0}, {1}, {2}", prefs.AccelOffsetX, prefs.AccelOffsetY, prefs.AccelOffsetZ );
 
-			try {
-				udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
-			}
-			catch(Exception) {}
+			AttemptSetValue( udRollCorrection, (decimal)(RollAngle * 180.0 / Math.PI) );
+			AttemptSetValue( udPitchCorrection, (decimal)(PitchAngle * 180.0 / Math.PI) );
 
-			try {
-				udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
-			}
-			catch(Exception) { }
+			int Value;
 
 
-			int Value = prefs.MaxRollPitch * (1024 * 90) / 32768;
-			tbRollPitchAngle.Value = Value;
-			lblRollPitchAngle.Text = Value.ToString() + " deg";
+			float Source = prefs.AutoLevelRollPitch;
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f;
+			AttemptSetValue( tbRollPitchAuto, (int)(Source + 0.5f) );
+
+			Source = prefs.AutoLevelYawRate;
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
+			AttemptSetValue( tbYawSpeedAuto, (int)(Source + 0.5f) / 10 );
+
+			Source = prefs.ManualRollPitchRate;
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
+			AttemptSetValue( tbRollPitchManual, (int)(Source * 20.0f + 0.5f) );
+
+			Source = prefs.ManualYawRate;
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
+			AttemptSetValue( tbYawSpeedManual, (int)(Source * 20.0f + 0.5f) );
+
+			//Value = prefs.YawSpeed;
+			//lblYawSpeedAuto.Text = ((float)Value / 64.0f).ToString( "0.00" );
+
+			AttemptSetValue( udLowThrottle, (decimal)(prefs.MinThrottle / 8) );
+			AttemptSetValue( udArmedLowThrottle, (decimal)(prefs.MinThrottleArmed / 8) );
+			AttemptSetValue( udHighThrottle, (decimal)(prefs.MaxThrottle / 8) );
+			AttemptSetValue( udTestThrottle, (decimal)(prefs.ThrottleTest / 8) );
 
 
-			tbRollPitchSpeed.Value = prefs.RollPitchSpeed;
-			Value = prefs.RollPitchSpeed;
-			lblRollPitchSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
-			tbYawSpeed.Value = prefs.YawSpeed;
-			Value = prefs.YawSpeed;
-			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
+			AttemptSetValue( udLowVoltageAlarmThreshold, (decimal)((float)prefs.LowVoltageAlarmThreshold / 100.0f) );
+			AttemptSetValue( udVoltageOffset, (decimal)((float)prefs.VoltageOffset / 100.0f) );
 
-			try {
-				udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);
-			}
-			catch(Exception) { }
+			cbLowVoltageAlarm.Checked = (prefs.LowVoltageAlarm != 0);
 
-			try {
-				udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed/8);
-			}
-			catch(Exception) { }
-
-			try {
-				udHighThrottle.Value = (decimal)(prefs.MaxThrottle/8);
-			}
-			catch(Exception) { }
-
-			try {
-				udTestThrottle.Value = (decimal)(prefs.ThrottleTest/8);
-			}
-			catch(Exception) { }
-
-
-			try {
-				udLowVoltageAlarm.Value = (decimal)((float)prefs.LowVoltageAlarm / 100.0f);
-			}
-			catch(Exception) { }
-
-			try {
-				udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f);
-			}
-			catch(Exception) { }
-
+			cbDisableMotors.Checked = (prefs.DisableMotors == 1);
 
 			switch( prefs.ArmDelay )
 			{
@@ -646,11 +722,11 @@ namespace Elev8
 
 			Value = prefs.AccelCorrectionFilter;
 			tbAccelCorrectionFilter.Value = Value;
-			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.000" );
 
 			Value = prefs.ThrustCorrectionScale;
 			tbThrustCorrection.Value = Value;
-			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			//lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.000" );
 
 			InternalChange = false;
 		}
@@ -1117,51 +1193,68 @@ namespace Elev8
 			UpdateElev8Preferences();
 		}
 
+
 		private void tbRollPitchAngle_ValueChanged( object sender, EventArgs e )
 		{
-			int Value = tbRollPitchAngle.Value;
-			int Scale = ((32768 * Value) + (1024*45)) / (1024 * 90);
+			int Value = tbRollPitchAuto.Value;
+			float Scale = ((float)Value / 1024.0f) * ((float)Math.PI/180.0f) * 0.5f;
 
 			lblRollPitchAngle.Text = Value.ToString() + " deg";
 		}
 
-		private void tbRollPitchSpeed_ValueChanged( object sender, EventArgs e )
+		private void tbYawSpeedAuto_ValueChanged( object sender, EventArgs e )
 		{
-			int Value = tbRollPitchSpeed.Value;
-			lblRollPitchSpeed.Text = ((float)Value / 64.0f).ToString("0.00");
+			int Value = tbYawSpeedAuto.Value * 10;
+			float Scale = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			lblYawSpeedAuto.Text = Value.ToString() + " deg/s";
 		}
 
-		private void tbYawSpeed_Scroll( object sender, EventArgs e )
+
+		private void tbRollPitchManual_ValueChanged( object sender, EventArgs e )
 		{
-			int Value = tbYawSpeed.Value;
-			lblYawSpeed.Text = ((float)Value / 64.0f).ToString( "0.00" );
+			int Value = tbRollPitchManual.Value * 10;
+			float Scale = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			lblRollPitchManual.Text = Value.ToString() + " deg/s";
 		}
 
-		private void tbAccelCorrectionFilter_Scroll( object sender, EventArgs e )
+		private void tbYawSpeedManual_ValueChanged( object sender, EventArgs e )
+		{
+			int Value = tbYawSpeedManual.Value * 10;
+			float Scale = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			lblYawSpeedManual.Text = Value.ToString() + " deg/s";
+		}
+
+
+		private void tbAccelCorrectionFilter_ValueChanged( object sender, EventArgs e )
 		{
 			int Value = tbAccelCorrectionFilter.Value;
-			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			lblAccelCorrectionFilter.Text = ((float)Value / 256.0f).ToString( "0.000" );
 		}
 
-		private void tbThrustCorrection_Scroll( object sender, EventArgs e )
+		private void tbThrustCorrection_ValueChanged( object sender, EventArgs e )
 		{
 			int Value = tbThrustCorrection.Value;
-			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.00" );
+			lblThrustCorrection.Text = ((float)Value / 256.0f).ToString( "0.000" );
 		}
 
 
 		private void btnUploadRollPitch_Click( object sender, EventArgs e )
 		{
-			int Value = tbRollPitchAngle.Value;
-			int Scale = ((32768 * Value) + (1024 * 45)) / (1024 * 90);
+			int Value = tbRollPitchAuto.Value;
+			float Rate = ((float)Value / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			prefs.AutoLevelRollPitch = Rate;
 
-			prefs.MaxRollPitch = (short)Scale;
+			Value = tbYawSpeedAuto.Value * 10;
+			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			prefs.AutoLevelYawRate = Rate;
 
-			Value = tbRollPitchSpeed.Value;
-			prefs.RollPitchSpeed = (short)Value;
+			Value = tbRollPitchManual.Value * 10;
+			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			prefs.ManualRollPitchRate = Rate;
 
-			Value = tbYawSpeed.Value;
-			prefs.YawSpeed = (short)Value;
+			Value = tbYawSpeedManual.Value * 10;
+			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			prefs.ManualYawRate = Rate;
 
 			prefs.AccelCorrectionFilter = (short)tbAccelCorrectionFilter.Value;
 			prefs.ThrustCorrectionScale = (short)tbThrustCorrection.Value;
@@ -1179,14 +1272,46 @@ namespace Elev8
 			prefs.MaxThrottle = (short)(udHighThrottle.Value * 8);
 
 			prefs.UseBattMon = cbUseBatteryMonitor.Checked ? (char)1 : (char)0;
-			prefs.LowVoltageAlarm = (short)(udLowVoltageAlarm.Value * 100);
+			prefs.LowVoltageAlarmThreshold = (short)(udLowVoltageAlarmThreshold.Value * 100);
 			prefs.VoltageOffset = (short)(udVoltageOffset.Value * 100);
+			prefs.LowVoltageAlarm = (char)(cbLowVoltageAlarm.Checked ? 1 : 0);
 
 			prefs.ArmDelay = DelayTable[cbArmingDelay.SelectedIndex];
 			prefs.DisarmDelay = DelayTable[cbDisarmDelay.SelectedIndex];
 
+			prefs.DisableMotors = (char)(cbDisableMotors.Checked ? 1 : 0);
 
 			UpdateElev8Preferences();
+		}
+
+
+		private void cbDisableMotors_CheckedChanged( object sender, EventArgs e )
+		{
+			if(cbDisableMotors.Checked)
+			{
+				cbDisableMotors.BackColor = Color.Pink;
+			}
+			else
+			{
+				cbDisableMotors.BackColor = Color.Transparent;
+			}
+		}
+
+
+		private void btnFactoryDefaultPrefs_Click( object sender, EventArgs e )
+		{
+			byte[] bytes = new byte[2];
+			txBuffer[0] = 0x1A;	// Reset prefs
+			txBuffer[1] = 0x1A;	// Reset prefs
+			comm.Send( txBuffer, 2 );
+
+			// Query prefs (forces to be applied to UI)
+			txBuffer[0] = 0x18;
+			comm.Send( txBuffer, 1 );
+
+			// Put the Elev8 back into read "sensor mode"
+			txBuffer[0] = 0x2;	// Sensor mode
+			comm.Send( txBuffer, 1 );
 		}
 	}
 }

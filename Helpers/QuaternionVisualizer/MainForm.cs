@@ -27,6 +27,9 @@ namespace QuaternionVisualizer
 		PointF originalRot = new PointF();
 		bool dragging = false;
 
+		Quaternion desired = new Quaternion();
+
+
 		public MainForm()
 		{
 			InitializeComponent();
@@ -66,7 +69,10 @@ namespace QuaternionVisualizer
 						case 1:	// Radio data
 							radio.ReadFrom( p );
 
+							lblCycleCount.Text = string.Format( "{0} cycles", radio.CycleCount );
+
 							//bRadioChanged = true;
+							//UpdateRadio();
 							break;
 
 						case 2:	// Sensor values
@@ -81,7 +87,10 @@ namespace QuaternionVisualizer
 							q.z = p.GetFloat();
 							q.w = p.GetFloat();
 
-							ocCube.Quat = q;
+							//if(radio.Gear > -300 && radio.Gear < 300)
+							{
+								ocCube.Quat = q;
+							}
 
 							bQuatChanged = true;
 							break;
@@ -140,6 +149,93 @@ namespace QuaternionVisualizer
 			ocCube.rx = rx;
 			ocCube.ry = ry;
 			ocCube.Invalidate();
+		}
+
+		static float heading = 0.0f;
+
+
+		private void UpdateRadio()
+		{
+			const float RadioScale = 1024.0f;
+			const float Deg2Rad = 3.141592654f / 180.0f;
+
+			float MaxRate = 180.0f;	// degrees per second
+			float UpdateRate = 250.0f / 8.0f;
+
+			float RateScale = ((MaxRate / UpdateRate) / RadioScale) * Deg2Rad * 0.5f;	// Quaternions use half-angles, so mult everything by 0.5
+
+			if(radio.Gear < -300)
+			{
+				// Manual mode
+
+				float xrot = (float)radio.Elev * RateScale;	// Individual scalars for channel sensitivity
+				float yrot = (float)radio.Rudd * RateScale;
+				float zrot = (float)radio.Aile * -RateScale;
+	
+				// Take Aile/Elev/Rudd and create an incremental quaternion
+				Quaternion qrot = new Quaternion( 0, xrot, yrot, zrot );
+
+				// rotate the current desired orientation by it
+				desired = desired + (desired * qrot);	// Overall scale (meant as time increment)
+				desired = desired.Normalize();
+
+				// Need to extract "heading" from the IMU in case we switch to auto again
+
+				ocCube.Quat = desired;
+			}
+			else if(radio.Gear > 300)
+			{
+				// Auto-level
+
+				float MaxBank = 45.0f;
+				float ScaleMult = (MaxBank / RadioScale) * Deg2Rad * 0.5f;	// Quaternions use half-angles, so mult everything by 0.5
+
+				heading += (float)radio.Rudd * RateScale;
+
+				float rx = (float)radio.Elev *  ScaleMult;	// Individual scalars for channel sensitivity
+				float ry = heading;
+				float rz = (float)radio.Aile * -ScaleMult;
+
+				// Convert Aile/Elev/heading directly into desired orientation quaternion
+
+				float csx = (float)Math.Cos(rx);
+				float csy = (float)Math.Cos(ry);
+				float csz = (float)Math.Cos(rz);
+				float snx = (float)Math.Sin(rx);
+				float sny = (float)Math.Sin(ry);
+				float snz = (float)Math.Sin(rz);
+
+
+				//Quaternion qz = new Quaternion( csz, 0, 0, snz );
+				//Quaternion qy = new Quaternion( csy, 0, sny, 0 );
+				//Quaternion qx = new Quaternion( csx, snx, 0, 0 );
+				//desired = qy * qz * qx;
+
+
+				// Simplifies to:
+
+				float snycsx = sny * csx;
+				float snysnx = sny * snx;
+				float csycsz = csy * csz;
+				float csysnz = csy * snz;
+
+				desired.x =  snycsx * snz + csycsz * snx;
+				desired.y =  snycsx * csz + csysnz * snx;
+				desired.z =  csysnz * csx - snysnx * csz;
+				desired.w =  csycsz * csx - snysnx * snz;
+
+				ocCube.Quat = desired;
+			}
+
+			// Compute rotation from current orientation to desired
+
+			// Vector Axis;
+			// Quaternion qrot = follow.To( quat );
+			// float angle = qrot.ToAngleAxis( out Axis );
+
+			// Vector Velocities = Axis * angle;
+
+			// apply through PIDs
 		}
 	}
 }

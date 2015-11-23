@@ -976,7 +976,7 @@ _FCmp_ret               ret
 
 
 '------------------------------------------------------------------------------
-'These are only here so we can copy them into _FMin / _FMax
+'These are only here so we can copy them into _FMin
 
 CompareNormal
               if_nc     mov     fnumA, fnumB    
@@ -990,7 +990,7 @@ CompareReversed
 '------------------------------------------------------------------------------
 _FMin
                         add     fNumA, fNumB  nr, wc
-                        
+
               if_nc     mov     :getResult, CompareNormal
               if_c      mov     :getResult, CompareReversed     
 
@@ -998,15 +998,6 @@ _FMin
   :getResult  if_nc     mov     fnumA, fnumB
 
 _FMin_ret               ret
-
-
-'------------------------------------------------------------------------------
-'_FMax
-'                        mov     t1, fnumA               ' if both values...
-'                        and     t1, fnumB               '  are negative...
-'                        shl     t1, #1 wc               ' (bit 31 high)...
-
-
 
 
 '------------------------------------------------------------------------------
@@ -1283,7 +1274,17 @@ _Frac                   call    #_Unpack                ' get fraction
                         andn    fnumA, Bit31
 _Frac_ret               ret
 
- 
+
+'------------------------------------------------------------------------------
+' Conditional negate
+'fnumA = (fnumB < 0) ? -fnumA : fnumA
+'------------------------------------------------------------------------------
+_CNeg
+                        test    fnumB, Bit31 wc          ' check for fnumB < 0
+              if_c      xor     fnumA, Bit31
+_CNeg_ret               ret
+
+
 '------------------------------------------------------------------------------
 ' input:   fnumA        32-bit floating point value
 '          fnumB        32-bit floating point value 
@@ -1682,6 +1683,7 @@ cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
 cmdFrac                 call    #_Frac
+cmdCNeg                 call    #_CNeg
 cmdMov                  nop
 
 cmdRunCommandStream     call    #_RunCommandStream
@@ -1711,7 +1713,8 @@ CON     'Instruction stream operand indices
   opFAbs                = 21
   opFMin                = 22   
   opFrac                = 23
-  opMov                 = 24   
+  opCNeg                = 24
+  opMov                 = 25   
 
 {{
 

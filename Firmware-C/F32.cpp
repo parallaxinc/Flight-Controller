@@ -7,6 +7,19 @@
 static struct F32_DATA {
   volatile long  f32_cmd;
   int  TempCommand, StreamAddr; // These have to be contiguous in memory, which is why they're in a struct
+
+  union {
+    struct {
+      volatile float fresult;   // These values have to be in this order for the F32 cog to get them
+      volatile float fa;        // and marked volatile so switching between int / float versions of the memory
+      volatile float fb;        // won't trip up the compiler.
+    };
+    struct {     
+      volatile int result;
+      volatile int a;
+      volatile int b;
+    };      
+  };
 } v;
 
 static short* CommandAddr[4];
@@ -111,6 +124,47 @@ void F32::Call_ptr(void)
 }
 */
 
+
+/*  // FDIV is currently unused
+float F32::FDiv(float _a, float _b)
+{
+//  Division: result = a / b
+//  Parameters:
+//    a        32-bit floating point value
+//    b        32-bit floating point value
+//  Returns:   32-bit floating point value
+
+  v.fa = _a;
+  v.fb = _b;
+
+  v.result = cmdCallTableAddr[ F32_opDiv ];
+  v.f32_cmd = (int)&v.result;
+
+  while(v.f32_cmd)
+    ;
+
+  return v.fresult;
+}  
+*/
+
+
+float F32::FFloat( int n )
+{
+//  Convert integer to floating point.
+//  Parameters:
+//    n        32-bit integer value
+//  Returns:   32-bit floating point value
+
+  v.a = n;
+
+  v.result = cmdCallTableAddr[ F32_opFloat ];
+  v.f32_cmd = (int)&v.result;
+
+  while(v.f32_cmd)
+    ;
+
+  return v.fresult;
+}
 
 
 #if 0

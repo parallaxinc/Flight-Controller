@@ -156,7 +156,7 @@ int IntPID::Calculate_ForceD( int SetPoint , int Measured , int Deriv , int DoIn
 }
 */
 
-
+/*
 int IntPID::Calculate_ForceD_NoD2( int SetPoint , int Measured , int Deriv , int DoIntegrate )
 {
   // Proportional error is Desired - Measured
@@ -182,8 +182,8 @@ int IntPID::Calculate_ForceD_NoD2( int SetPoint , int Measured , int Deriv , int
     IError = clamp( IError, -MaxIntegral , MaxIntegral );
   }     
   return Output;
-}  
-
+}
+*/
 
 
 /*
