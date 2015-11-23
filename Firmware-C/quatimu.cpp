@@ -127,11 +127,9 @@ enum IMU_VarLabels {
     const_AccScale,
     const_outAngleScale,
     const_outNegAngleScale,
-    const_ThrustScale,
-    const_GMetersPerSec,
-    const_AltiVelScale,
+    const_ThrustShift,
+    const_G_mm_PerSec,
     const_UpdateScale,
-    const_m_to_mm,
 
     const_velAccScale,
     const_velAltiScale,
@@ -145,7 +143,7 @@ enum IMU_VarLabels {
     const_ManualBankScale,
     const_TwoPI,
     
-    const_OutControlScale,
+    const_OutControlShift,
     
    IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
 };
@@ -206,11 +204,9 @@ void QuatIMU_Start(void)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
   IMU_VARS[const_outAngleScale]     =    65536.0f / PI;               
   IMU_VARS[const_outNegAngleScale]  =    -65536.0f / PI;               
-  IMU_VARS[const_ThrustScale]       =    256.0f;
-  IMU_VARS[const_GMetersPerSec]     =    9.80665f;
-  IMU_VARS[const_AltiVelScale]      =    1.0/1000.0f;      //Convert mm to m
+  INT_VARS[const_ThrustShift]       =    8;
+  IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
-  IMU_VARS[const_m_to_mm]           =    1000.0f;
 
   IMU_VARS[const_velAccScale]       =    0.9985f;     // was 0.9995     - Used to generate the vertical velocity estimate
   IMU_VARS[const_velAltiScale]      =    0.0015f;     // was 0.0005
@@ -225,7 +221,7 @@ void QuatIMU_Start(void)
   IMU_VARS[const_ManualBankScale]   =   ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
-  IMU_VARS[const_OutControlScale]   =    4096.0f;
+  INT_VARS[const_OutControlShift]   =    12;
 
   QuatIMU_InitFunctions();
 }
@@ -261,8 +257,7 @@ int QuatIMU_GetAltitudeEstimate(void) {
 
 void QuatIMU_SetInitialAltitudeGuess( int altiMM )
 {
-  //altitudeEstimate = F32_FDiv( F32_FFloat(altiMM) , const_m_to_mm );
-    IMU_VARS[altitudeEstimate] = (float)altiMM / 1000.0;
+  IMU_VARS[altitudeEstimate] = F32::FFloat(altiMM);
 }
 
 int QuatIMU_GetPitchDifference(void) {
@@ -506,7 +501,7 @@ short QuatUpdateCommands[] = {
   //4 instructions (77)
 
 
-  //Now convert the updated quaternion to a rotation matrix 
+  //Now convert the updated quaternion to a rotation matrix
 
         F32_opSqr, qx,  0, fx2,                    //fx2 = qx *qx
         F32_opSqr, qy,  0, fy2,                    //fy2 = qy *qy
@@ -523,22 +518,24 @@ short QuatUpdateCommands[] = {
         F32_opMul, qy,  qz, fyz,                   //fyz = qy *qz
   //3 instructions (86)
 
+
+  // m00 and m02 results are never actually used in the code, so they're commented out here
    
   //m00 = 1.0f - 2.0f * (y2 + z2)
-        F32_opAdd, fy2,  fz2, temp,                //temp = fy2+fz2
-        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
-        F32_opSub, const_F1,  temp, m00,           //m00 = 1.0 - temp
-     
+//        F32_opAdd, fy2,  fz2, temp,                //temp = fy2+fz2
+//        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
+//        F32_opSub, const_F1,  temp, m00,           //m00 = 1.0 - temp
+
   //m01 =        2.0f * (fxy - fwz)
         F32_opSub, fxy,  fwz, temp,                //temp = fxy-fwz
         F32_opShift, temp,  const_1, m01,          //m01 = 2.0 * temp
 
   //m02 =        2.0f * (fxz + fwy)
-        F32_opAdd, fxz,  fwy, temp,                //temp = fxz+fwy
-        F32_opShift, temp,  const_1, m02,          //m02 = 2.0 * temp
+//        F32_opAdd, fxz,  fwy, temp,                //temp = fxz+fwy
+//        F32_opShift, temp,  const_1, m02,          //m02 = 2.0 * temp
   //7 instructions (93)
 
-   
+
   //m10 =        2.0f * (fxy + fwz)
         F32_opAdd, fxy,  fwz, temp,                //temp = fxy-fwz
         F32_opShift, temp,  const_1, m10,          //m10 = 2.0 * temp
@@ -641,7 +638,7 @@ short QuatUpdateCommands[] = {
         F32_opFMin, accWeight, const_F1, accWeight,//accWeight = FMin( accWeight, 1.0 )
         F32_opSub, const_F1,  accWeight, accWeight,//accWeight = 1.0 - accWeight                                                
 
-   
+
 
   //errDiffX = fayn * m12 - fazn * m11
         F32_opMul, fayn,  m12, errDiffX, 
@@ -682,7 +679,7 @@ short QuatUpdateCommands[] = {
 
 
         F32_opDiv, const_F1,  m11, temp,                          // 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
-        F32_opMul, temp,  const_ThrustScale, temp,                // *= 256.0  
+        F32_opShift, temp,  const_ThrustShift, temp,              // *= 256.0  
         F32_opTruncRound, temp,  const_0, ThrustFactor,  
 
 
@@ -710,17 +707,14 @@ short QuatUpdateCommands[] = {
         F32_opMul, forceZ,  m21, temp,  
         F32_opAdd, forceWY, temp, forceWY,  
 
-  //forceWY *= 9.8                                                //Convert to M/sec^2
-        F32_opMul, forceWY,  const_GMetersPerSec, forceWY,  
-
-
+  //forceWY *= 9.8 * 1000.0                                       //Convert to mm/sec^2
+        F32_opMul, forceWY,  const_G_mm_PerSec, forceWY,
 
         F32_opMul, forceWY,  const_UpdateScale, temp,             //temp := forceWY / UpdateRate
         F32_opAdd, velocityEstimate,  temp, velocityEstimate,     //velEstimate += forceWY / UpdateRate
-
+  
   
         F32_opFloat, altRate,  0, altitudeVelocity,                //AltVelocity = float(altRate)
-        F32_opMul, altitudeVelocity,  const_AltiVelScale, altitudeVelocity,   //Convert from mm/sec to m/sec   
 
 
   //VelocityEstimate := (VelocityEstimate * 0.9950) + (altVelocity * 0.0050)
@@ -732,20 +726,16 @@ short QuatUpdateCommands[] = {
         F32_opMul, velocityEstimate,  const_UpdateScale, temp,
         F32_opAdd, altitudeEstimate,  temp, altitudeEstimate,   
 
-  //altitudeEstimate := (altitudeEstimate * 0.9950) * (alti / 1000.0) * 0.0050
+  //altitudeEstimate := (altitudeEstimate * 0.9950) * alti * 0.0050
         F32_opMul, altitudeEstimate,  const_velAccTrust, altitudeEstimate, 
 
-        F32_opFloat, alt,  0, temp,                             //temp := float(alt)
-        F32_opDiv, temp,  const_m_to_mm, temp,                  //temp /= 1000.0    (alt now in m)
+        F32_opFloat, alt,  0, temp,                             //temp := float(alt)  (alt in mm)
         F32_opMul, temp,  const_velAltiTrust, temp,             //temp *= 0.0050
         F32_opAdd, altitudeEstimate,  temp, altitudeEstimate,   //altEstimate += temp 
 
 
-        F32_opMul, altitudeEstimate,  const_m_to_mm, temp,      //temp = altEst * 1000.0    (temp now in mm)
-        F32_opTruncRound, temp,  const_0, AltitudeEstMM, 
-
-        F32_opMul, velocityEstimate,  const_m_to_mm, temp,      //temp = velEst * 1000.0    (temp now in mm/sec)
-        F32_opTruncRound, temp,  const_0, VelocityEstMM, 
+        F32_opTruncRound, altitudeEstimate,  const_0, AltitudeEstMM,  // output integer values for PIDs
+        F32_opTruncRound, velocityEstimate,  const_0, VelocityEstMM,
 
         0, 0, 0, 0
         };
@@ -1015,7 +1005,7 @@ short UpdateControls_ComputeOrientationChange[] = {
   // rmag = max( rmag, 0.0000001 )
   F32_opAdd,    rmag, const_epsilon, rmag,
   F32_opDiv,    diffAngle, rmag, rmag,        // rmag = (1.0/rmag * diffAngle)  equivalent to rmag = (diffAngle / rmag)
-  F32_opMul,    rmag, const_OutControlScale, rmag,    // rmag *= 4096
+  F32_opShift,  rmag, const_OutControlShift, rmag,    // rmag *= 4096
 
   // Simplified this a little by changing  X / rmag * diffAngle into X * (1.0/rmag * diffAngle)
   // PitchDiff = qrx / rmag * diffAngle
