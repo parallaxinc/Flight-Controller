@@ -143,16 +143,17 @@ static void TxBulk( const void * buf , int bytes )
   }    
 }
 
+/*  // Only used for debugging
 static void TxInt( int x , int Digits )
 {
   static char nybbles[] = "0123456789ABCDEF";
-  int shift = 32 - (4 + (Digits<<2));
+  int shift = 32 - ((9-Digits)<<2);
   do {
     Tx( nybbles[ (x>>shift) & 0xf] );
     shift -= 4;
   } while( shift >= 0 );
 }
-
+*/
 
 
 int main()                                    // Main function
@@ -419,6 +420,8 @@ static int abs(int v) {
 
 void FindGyroZero(void)
 {
+  // TODO: Actually wait until the numbers stop moving first, THEN get an average
+
   GyroZX = 128;
   GyroZY = 128;
   GyroZZ = 128;
