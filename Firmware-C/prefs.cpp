@@ -52,10 +52,10 @@ void Prefs_SetDefaults(void)
   Prefs.MagScaleOfs[3] = 1024;
   Prefs.MagScaleOfs[5] = 1024;
 
-  Prefs.AutoLevelRollPitch = (35.0f / 1024.0f) * (PI/180.0f) * 0.5f;          // 35 deg/ControlScale * Deg2Rad * HalfAngle
-  Prefs.AutoLevelYawRate = ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/ControlScale / UpdateRate * Deg2Rad * HalfAngle
-  Prefs.ManualRollPitchRate = 1.5f;
-  Prefs.ManualYawRate = 2.0f;
+  Prefs.AutoLevelRollPitch =    (35.0f / 1024.0f) * (PI/180.0f) * 0.5f;          // 35 deg/ControlScale * Deg2Rad * HalfAngle
+  Prefs.AutoLevelYawRate =    ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 180 deg/ControlScale / UpdateRate * Deg2Rad * HalfAngle
+  Prefs.ManualRollPitchRate = ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
+  Prefs.ManualYawRate =       ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
 
 
   Prefs.LowVoltageAlarmThreshold = 1050;

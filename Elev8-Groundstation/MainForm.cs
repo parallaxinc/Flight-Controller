@@ -604,6 +604,18 @@ namespace Elev8
 			}
 		}
 
+		void AttemptSetValue( TrackBar tb, int value )
+		{
+			if( value < tb.Minimum  || value > tb.Maximum ) return;
+			tb.Value = value;
+		}
+
+		void AttemptSetValue( NumericUpDown ud, decimal value )
+		{
+			if(value < ud.Minimum || value > ud.Maximum) return;
+			ud.Value = value;
+		}
+
 
 		void ConfigureUIFromPreferences()
 		{
@@ -651,49 +663,40 @@ namespace Elev8
 
 			lblAccelCalFinal.Text = string.Format( "{0}, {1}, {2}", prefs.AccelOffsetX, prefs.AccelOffsetY, prefs.AccelOffsetZ );
 
-			udRollCorrection.Value = (decimal)(RollAngle * 180.0 / Math.PI);
-			udPitchCorrection.Value = (decimal)(PitchAngle * 180.0 / Math.PI);
+			AttemptSetValue( udRollCorrection, (decimal)(RollAngle * 180.0 / Math.PI) );
+			AttemptSetValue( udPitchCorrection, (decimal)(PitchAngle * 180.0 / Math.PI) );
 
 			int Value;
 
 
-			//tbRollPitchManual.Value = prefs.RollPitchSpeed;
-			//Value = prefs.RollPitchSpeed;
-			//lblRollPitchManual.Text = ((float)Value / 64.0f).ToString( "0.00" );
-
 			float Source = prefs.AutoLevelRollPitch;
 			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f;
-			tbRollPitchAuto.Value = (int)(Source + 0.5f);
+			AttemptSetValue( tbRollPitchAuto, (int)(Source + 0.5f) );
 
 			Source = prefs.AutoLevelYawRate;
 			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
-			tbYawSpeedAuto.Value = (int)(Source + 0.5f) / 10;
+			AttemptSetValue( tbYawSpeedAuto, (int)(Source + 0.5f) / 10 );
 
 			Source = prefs.ManualRollPitchRate;
-			tbRollPitchManual.Value = (int)(Source * 20.0f + 0.5f);
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
+			AttemptSetValue( tbRollPitchManual, (int)(Source * 20.0f + 0.5f) );
 
 			Source = prefs.ManualYawRate;
-			tbYawSpeedManual.Value = (int)(Source * 20.0f + 0.5f);
+			Source = (Source * 2.0f) / ((float)Math.PI / 180.0f) * 1024.0f * 250.0f;
+			AttemptSetValue( tbYawSpeedManual, (int)(Source * 20.0f + 0.5f) );
 
 			//Value = prefs.YawSpeed;
 			//lblYawSpeedAuto.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
-			try {udLowThrottle.Value = (decimal)(prefs.MinThrottle / 8);}
-			catch{};
-			try { udArmedLowThrottle.Value = (decimal)(prefs.MinThrottleArmed / 8); }
-			catch { };
-			try { udHighThrottle.Value = (decimal)(prefs.MaxThrottle / 8); }
-			catch { };
-
-			try { udTestThrottle.Value = (decimal)(prefs.ThrottleTest / 8); }
-			catch { };
+			AttemptSetValue( udLowThrottle, (decimal)(prefs.MinThrottle / 8) );
+			AttemptSetValue( udArmedLowThrottle, (decimal)(prefs.MinThrottleArmed / 8) );
+			AttemptSetValue( udHighThrottle, (decimal)(prefs.MaxThrottle / 8) );
+			AttemptSetValue( udTestThrottle, (decimal)(prefs.ThrottleTest / 8) );
 
 
-			try { udLowVoltageAlarmThreshold.Value = (decimal)((float)prefs.LowVoltageAlarmThreshold / 100.0f); }
-			catch { };
 
-			try { udVoltageOffset.Value = (decimal)((float)prefs.VoltageOffset / 100.0f); }
-			catch { };
+			AttemptSetValue( udLowVoltageAlarmThreshold, (decimal)((float)prefs.LowVoltageAlarmThreshold / 100.0f) );
+			AttemptSetValue( udVoltageOffset, (decimal)((float)prefs.VoltageOffset / 100.0f) );
 
 			cbLowVoltageAlarm.Checked = (prefs.LowVoltageAlarm != 0);
 
@@ -1209,14 +1212,16 @@ namespace Elev8
 
 		private void tbRollPitchManual_ValueChanged( object sender, EventArgs e )
 		{
-			float Value = (float)tbRollPitchManual.Value / 20.0f;
-			lblRollPitchManual.Text = Value.ToString("0.00");
+			int Value = tbRollPitchManual.Value * 10;
+			float Scale = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			lblRollPitchManual.Text = Value.ToString() + " deg/s";
 		}
 
 		private void tbYawSpeedManual_ValueChanged( object sender, EventArgs e )
 		{
-			float Value = (float)tbYawSpeedManual.Value / 20.0f;
-			lblYawSpeedManual.Text = Value.ToString("0.00");
+			int Value = tbYawSpeedManual.Value * 10;
+			float Scale = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
+			lblYawSpeedManual.Text = Value.ToString() + " deg/s";
 		}
 
 
@@ -1243,12 +1248,12 @@ namespace Elev8
 			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
 			prefs.AutoLevelYawRate = Rate;
 
-			Value = tbRollPitchManual.Value;
-			Rate = (float)Value / 20.0f;
+			Value = tbRollPitchManual.Value * 10;
+			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
 			prefs.ManualRollPitchRate = Rate;
 
-			Value = tbYawSpeedManual.Value;
-			Rate = (float)Value / 20.0f;
+			Value = tbYawSpeedManual.Value * 10;
+			Rate = (((float)Value / 250.0f) / 1024.0f) * ((float)Math.PI / 180.0f) * 0.5f;
 			prefs.ManualYawRate = Rate;
 
 			prefs.AccelCorrectionFilter = (short)tbAccelCorrectionFilter.Value;

@@ -59,6 +59,7 @@
 			this.aicHeading = new Elev8.HeadingIndicator();
 			this.aicAltimeter = new Elev8.Altimeter();
 			this.tpSensors = new System.Windows.Forms.TabPage();
+			this.cbAltiBaro = new System.Windows.Forms.CheckBox();
 			this.plotSensors = new GraphLib.PlotterDisplayEx();
 			this.cbVoltage = new System.Windows.Forms.CheckBox();
 			this.cbYaw = new System.Windows.Forms.CheckBox();
@@ -239,7 +240,6 @@
 			this.valueBar8 = new Elev8.Controls.ValueBar();
 			this.radioStick1 = new Elev8.RadioStick();
 			this.radioStick2 = new Elev8.RadioStick();
-			this.cbAltiBaro = new System.Windows.Forms.CheckBox();
 			this.stMainStatus.SuspendLayout();
 			this.tcTabs.SuspendLayout();
 			this.tpStatus.SuspendLayout();
@@ -654,6 +654,18 @@
 			this.tpSensors.TabIndex = 1;
 			this.tpSensors.Text = "Sensors";
 			// 
+			// cbAltiBaro
+			// 
+			this.cbAltiBaro.AutoSize = true;
+			this.cbAltiBaro.Location = new System.Drawing.Point( 8, 197 );
+			this.cbAltiBaro.Name = "cbAltiBaro";
+			this.cbAltiBaro.Size = new System.Drawing.Size( 71, 17 );
+			this.cbAltiBaro.TabIndex = 15;
+			this.cbAltiBaro.Tag = "10";
+			this.cbAltiBaro.Text = "Alti (Baro)";
+			this.cbAltiBaro.UseVisualStyleBackColor = true;
+			this.cbAltiBaro.CheckedChanged += new System.EventHandler( this.cbGraphLegend_CheckedChanged );
+			// 
 			// plotSensors
 			// 
 			this.plotSensors.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
@@ -1040,11 +1052,11 @@
 			// 
 			// lblYawSpeedManual
 			// 
-			this.lblYawSpeedManual.Location = new System.Drawing.Point( 469, 295 );
+			this.lblYawSpeedManual.Location = new System.Drawing.Point( 459, 295 );
 			this.lblYawSpeedManual.Name = "lblYawSpeedManual";
-			this.lblYawSpeedManual.Size = new System.Drawing.Size( 34, 13 );
+			this.lblYawSpeedManual.Size = new System.Drawing.Size( 58, 13 );
 			this.lblYawSpeedManual.TabIndex = 85;
-			this.lblYawSpeedManual.Text = "00.00";
+			this.lblYawSpeedManual.Text = "180 deg/s";
 			// 
 			// label14
 			// 
@@ -1057,16 +1069,16 @@
 			// 
 			// tbYawSpeedManual
 			// 
-			this.tbYawSpeedManual.LargeChange = 10;
+			this.tbYawSpeedManual.LargeChange = 3;
 			this.tbYawSpeedManual.Location = new System.Drawing.Point( 354, 279 );
-			this.tbYawSpeedManual.Maximum = 100;
-			this.tbYawSpeedManual.Minimum = 10;
+			this.tbYawSpeedManual.Maximum = 72;
+			this.tbYawSpeedManual.Minimum = 5;
 			this.tbYawSpeedManual.Name = "tbYawSpeedManual";
-			this.tbYawSpeedManual.Size = new System.Drawing.Size( 110, 45 );
+			this.tbYawSpeedManual.Size = new System.Drawing.Size( 99, 45 );
 			this.tbYawSpeedManual.TabIndex = 83;
 			this.tbYawSpeedManual.TickFrequency = 10;
 			this.tlToolTip.SetToolTip( this.tbYawSpeedManual, "How quickly the craft will change heading.  Larger numbers are faster." );
-			this.tbYawSpeedManual.Value = 30;
+			this.tbYawSpeedManual.Value = 18;
 			this.tbYawSpeedManual.ValueChanged += new System.EventHandler( this.tbYawSpeedManual_ValueChanged );
 			// 
 			// lblAccelCorrectionFilter
@@ -1080,7 +1092,7 @@
 			// 
 			// label13
 			// 
-			this.label13.Location = new System.Drawing.Point( 505, 228 );
+			this.label13.Location = new System.Drawing.Point( 520, 228 );
 			this.label13.Name = "label13";
 			this.label13.Size = new System.Drawing.Size( 66, 45 );
 			this.label13.TabIndex = 81;
@@ -1090,10 +1102,10 @@
 			// tbAccelCorrectionFilter
 			// 
 			this.tbAccelCorrectionFilter.LargeChange = 16;
-			this.tbAccelCorrectionFilter.Location = new System.Drawing.Point( 575, 228 );
+			this.tbAccelCorrectionFilter.Location = new System.Drawing.Point( 589, 228 );
 			this.tbAccelCorrectionFilter.Maximum = 256;
 			this.tbAccelCorrectionFilter.Name = "tbAccelCorrectionFilter";
-			this.tbAccelCorrectionFilter.Size = new System.Drawing.Size( 97, 45 );
+			this.tbAccelCorrectionFilter.Size = new System.Drawing.Size( 83, 45 );
 			this.tbAccelCorrectionFilter.TabIndex = 80;
 			this.tbAccelCorrectionFilter.TickFrequency = 16;
 			this.tlToolTip.SetToolTip( this.tbAccelCorrectionFilter, "Smaller numbers mean vertical disturbance correction is softer.  (0 is disabled)" );
@@ -1111,7 +1123,7 @@
 			// 
 			// label17
 			// 
-			this.label17.Location = new System.Drawing.Point( 505, 279 );
+			this.label17.Location = new System.Drawing.Point( 520, 279 );
 			this.label17.Name = "label17";
 			this.label17.Size = new System.Drawing.Size( 66, 45 );
 			this.label17.TabIndex = 78;
@@ -1121,10 +1133,10 @@
 			// tbThrustCorrection
 			// 
 			this.tbThrustCorrection.LargeChange = 32;
-			this.tbThrustCorrection.Location = new System.Drawing.Point( 575, 279 );
+			this.tbThrustCorrection.Location = new System.Drawing.Point( 589, 279 );
 			this.tbThrustCorrection.Maximum = 512;
 			this.tbThrustCorrection.Name = "tbThrustCorrection";
-			this.tbThrustCorrection.Size = new System.Drawing.Size( 97, 45 );
+			this.tbThrustCorrection.Size = new System.Drawing.Size( 83, 45 );
 			this.tbThrustCorrection.TabIndex = 77;
 			this.tbThrustCorrection.TickFrequency = 32;
 			this.tlToolTip.SetToolTip( this.tbThrustCorrection, "Compensates for loss of thrust when the craft is tilted.  (0 is disabled)" );
@@ -1162,7 +1174,7 @@
 			// 
 			// tbYawSpeedAuto
 			// 
-			this.tbYawSpeedAuto.LargeChange = 10;
+			this.tbYawSpeedAuto.LargeChange = 3;
 			this.tbYawSpeedAuto.Location = new System.Drawing.Point( 101, 279 );
 			this.tbYawSpeedAuto.Maximum = 72;
 			this.tbYawSpeedAuto.Minimum = 5;
@@ -1186,11 +1198,11 @@
 			// 
 			// lblRollPitchManual
 			// 
-			this.lblRollPitchManual.Location = new System.Drawing.Point( 469, 244 );
+			this.lblRollPitchManual.Location = new System.Drawing.Point( 459, 244 );
 			this.lblRollPitchManual.Name = "lblRollPitchManual";
-			this.lblRollPitchManual.Size = new System.Drawing.Size( 34, 13 );
+			this.lblRollPitchManual.Size = new System.Drawing.Size( 58, 13 );
 			this.lblRollPitchManual.TabIndex = 70;
-			this.lblRollPitchManual.Text = "00.00";
+			this.lblRollPitchManual.Text = "180 deg/s";
 			// 
 			// lblRollPitchAngle
 			// 
@@ -1212,17 +1224,17 @@
 			// 
 			// tbRollPitchManual
 			// 
-			this.tbRollPitchManual.LargeChange = 10;
+			this.tbRollPitchManual.LargeChange = 3;
 			this.tbRollPitchManual.Location = new System.Drawing.Point( 354, 228 );
-			this.tbRollPitchManual.Maximum = 100;
-			this.tbRollPitchManual.Minimum = 10;
+			this.tbRollPitchManual.Maximum = 72;
+			this.tbRollPitchManual.Minimum = 5;
 			this.tbRollPitchManual.Name = "tbRollPitchManual";
-			this.tbRollPitchManual.Size = new System.Drawing.Size( 110, 45 );
+			this.tbRollPitchManual.Size = new System.Drawing.Size( 99, 45 );
 			this.tbRollPitchManual.TabIndex = 21;
 			this.tbRollPitchManual.TickFrequency = 10;
 			this.tlToolTip.SetToolTip( this.tbRollPitchManual, "Speed the craft will tilt when given a full-stick command in manual mode (larger " +
 					"numbers are faster)" );
-			this.tbRollPitchManual.Value = 30;
+			this.tbRollPitchManual.Value = 18;
 			this.tbRollPitchManual.ValueChanged += new System.EventHandler( this.tbRollPitchManual_ValueChanged );
 			// 
 			// label2
@@ -2365,7 +2377,7 @@
 			// 
 			// gAccelXCal
 			// 
-			this.gAccelXCal.AverageCount = 325;
+			this.gAccelXCal.AverageCount = 200;
 			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
 			this.gAccelXCal.Location = new System.Drawing.Point( 6, 19 );
 			this.gAccelXCal.Name = "gAccelXCal";
@@ -2376,7 +2388,7 @@
 			// 
 			// gAccelYCal
 			// 
-			this.gAccelYCal.AverageCount = 325;
+			this.gAccelYCal.AverageCount = 200;
 			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
 			this.gAccelYCal.Location = new System.Drawing.Point( 103, 19 );
 			this.gAccelYCal.Name = "gAccelYCal";
@@ -2387,7 +2399,7 @@
 			// 
 			// gAccelZCal
 			// 
-			this.gAccelZCal.AverageCount = 325;
+			this.gAccelZCal.AverageCount = 200;
 			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
 			this.gAccelZCal.Location = new System.Drawing.Point( 200, 19 );
 			this.gAccelZCal.Name = "gAccelZCal";
@@ -2814,18 +2826,6 @@
 			this.radioStick2.Size = new System.Drawing.Size( 150, 150 );
 			this.radioStick2.TabIndex = 33;
 			this.radioStick2.Text = "radioStick1";
-			// 
-			// cbAltiBaro
-			// 
-			this.cbAltiBaro.AutoSize = true;
-			this.cbAltiBaro.Location = new System.Drawing.Point( 8, 197 );
-			this.cbAltiBaro.Name = "cbAltiBaro";
-			this.cbAltiBaro.Size = new System.Drawing.Size( 71, 17 );
-			this.cbAltiBaro.TabIndex = 15;
-			this.cbAltiBaro.Tag = "10";
-			this.cbAltiBaro.Text = "Alti (Baro)";
-			this.cbAltiBaro.UseVisualStyleBackColor = true;
-			this.cbAltiBaro.CheckedChanged += new System.EventHandler( this.cbGraphLegend_CheckedChanged );
 			// 
 			// MainForm
 			// 

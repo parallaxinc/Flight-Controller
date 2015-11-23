@@ -235,8 +235,10 @@ int main()                                    // Main function
 
       if( NewFlightMode != FlightMode )
       {
-        if( NewFlightMode != FlightMode_Manual ) {
+        if( NewFlightMode == FlightMode_Manual ) {
           QuatIMU_ResetDesiredOrientation();
+        }
+        else {
           QuatIMU_ResetDesiredYaw();          // Sync the heading when switching from manual to auto-level
         }
 
@@ -320,7 +322,9 @@ void Initialize(void)
   GyroRPFilter = 192;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
   GyroYawFilter = 192;
 
-  dbg = fdserial_open( 31, 30, 0, 115200 );
+  dbg = fdserial_open( 31, 30, 0, 115200 );   // USB
+  //dbg = fdserial_open( 24, 25, 0, 57600 );     // XBee - V2 board (packets contain dropped bytes, likely need to reduce rate, add checksum)
+
   dbg_st = (fdserial_st*)dbg->devst; // Cache a pointer to the FDSerial device structure
   dbg_txbuf = (char*)dbg_st->buffptr + FDSERIAL_BUFF_MASK+1;  
 
@@ -519,8 +523,10 @@ void UpdateFlightLoop(void)
     {
       // When throttle is essentially zero, disable all control authority
 
-      if( FlightMode != FlightMode_Manual )
-      {
+      if( FlightMode == FlightMode_Manual ) {
+        QuatIMU_ResetDesiredOrientation();
+      }
+      else {
         // Zero yaw target when throttle is off - makes for more stable liftoff
         QuatIMU_ResetDesiredYaw();
       }
@@ -1004,7 +1010,7 @@ void DoDebugModeOutput(void)
   {
     if( NudgeMotor < 4 )
     {
-      Servo32_Set(MotorPin[NudgeMotor], 9500);       //Motor test - 1/8 throttle
+      Servo32_Set(MotorPin[NudgeMotor], 9500);       //Motor test - 1/8 throttle - TODO - Make this use Prefs.TestThrottle value, or calc 1/8th from range
     }
     else if( NudgeMotor == 4 )                         //Buzzer test
     {

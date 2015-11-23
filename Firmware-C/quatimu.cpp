@@ -144,7 +144,7 @@ enum IMU_VarLabels {
     const_AutoBankScale,
     const_ManualBankScale,
     const_TwoPI,
-
+    
     const_OutControlScale,
     
    IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
@@ -221,9 +221,9 @@ void QuatIMU_Start(void)
   IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
 
-  IMU_VARS[const_ManualYawScale]    =    2.0f;
-  IMU_VARS[const_ManualBankScale]   =    1.0f;
-
+  IMU_VARS[const_ManualYawScale]    =   ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
+  IMU_VARS[const_ManualBankScale]   =   ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
+  
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
   IMU_VARS[const_OutControlScale]   =    4096.0f;
 
@@ -763,19 +763,83 @@ short UpdateControls_Manual[] = {
   F32_opFloat,  In_Aile, 0, In_Aile,                  // Aile to float
   F32_opFloat,  In_Rudd, 0, In_Rudd,                  // Rudd to float
 
-  F32_opMul,    In_Elev, const_ManualBankScale, rx,   // rx = (Elev scaled to incremental update angle)
-  F32_opMul,    In_Aile, const_ManualBankScale, rz,   // rz = (Aile scaled to incremental update angle)
-  F32_opMul,    In_Rudd, const_ManualYawScale, ry,    // Scale rudd by maximum yaw rate scale
+  F32_opMul,    In_Elev, const_ManualBankScale, rx,// rx = (Elev scaled to incremental update angle)
+  F32_opMul,    In_Aile, const_ManualBankScale, rz,// rz = (Aile scaled to incremental update angle)
+  F32_opMul,    In_Rudd, const_ManualYawScale, ry, // Scale rudd by maximum yaw rate scale
 
-  F32_opNeg,    rx, 0, rx,
-  F32_opNeg,    ry, 0, ry,
+  F32_opNeg,    rz, 0, rz,
 
-  F32_opTruncRound, rx, const_0, PitchDiff,
-  F32_opTruncRound, rz, const_0, RollDiff,
-  F32_opTruncRound, ry, const_0, YawDiff,
 
-  0, 0, 0, 0,
+  // QR = CQ * Quaternion(0,rx,ry,rz)
+
+  // Expands to ( * qw zero terms removed):
+  // qrx =             cqy * rz - cqz * ry + cqw * rx;
+  // qry = -cqx * rz            + cqz * rx + cqw * ry;
+  // qrz =  cqx * ry - cqy * rx            + cqw * rz;
+  // qrw = -cqx * rx - cqy * ry - cqz * rz;
+
+  // qrx =             cqy * rz - cqz * ry + cqw * rx;
+  F32_opMul,    cqy, rz, qrx,           // qrx =  cqy*rz
+  F32_opMul,    cqz, ry, temp,
+  F32_opSub,    qrx, temp, qrx,         // qrx -= cqz*ry
+  F32_opMul,    cqw, rx, temp,
+  F32_opAdd,    qrx, temp, qrx,         // qrx += cqw*rx
+
+
+  // qry = -cqx * rz            + cqz * rx + cqw * ry;
+  F32_opMul,    cqx, rz, qry,           // qry =  cqx*rz
+  F32_opNeg,    qry, 0, qry,            // qry = -qry
+  F32_opMul,    cqz, rx, temp,
+  F32_opAdd,    qry, temp, qry,         // qry += cqz*rx
+  F32_opMul,    cqw, ry, temp,
+  F32_opAdd,    qry, temp, qry,         // qry += cqw*ry
+
+
+  // qrz =  cqx * ry - cqy * rx            + cqw * rz;
+  F32_opMul,    cqx, ry, qrz,           // qrz =  cqx*ry
+  F32_opMul,    cqy, rx, temp,
+  F32_opSub,    qrz, temp, qrz,         // qrz -= cqy*rx
+  F32_opMul,    cqw, rz, temp,
+  F32_opAdd,    qrz, temp, qrz,         // qrz += cqw*rz
+
+
+  // qrw = -cqx * rx - cqy * ry - cqz * rz;
+  F32_opMul,    cqx, rx, qrw,           // qrw =  cqx*rx
+  F32_opNeg,    qrw, 0, qrw,            // qrw = -qrw
+  F32_opMul,    cqy, ry, temp,
+  F32_opSub,    qrw, temp, qrw,         // qrw -= cqy*ry
+  F32_opMul,    cqz, rz, temp,
+  F32_opSub,    qrw, temp, qrw,         // qrw -= cqz*rz
+
+  
+  // CQ = CQ + QR;
+  F32_opAdd,    cqw, qrw, cqw,          // cqw += qrw
+  F32_opAdd,    cqx, qrx, cqx,          // cqx += qrx
+  F32_opAdd,    cqy, qry, cqy,          // cqy += qry
+  F32_opAdd,    cqz, qrz, cqz,          // cqz += qrz
+  
+  
+  // CQ.Normalize();
+  //rmag = sqrt(cqx*cqx + cqy*cqy + cqz*cqz + cqw*cqw + 0.0000001)
+  F32_opSqr, cqx,  0, rmag,                  //rmag = cqx*cqx 
+  F32_opSqr, cqy,  0, temp,                  //temp = cqy*cqy 
+  F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
+  F32_opSqr, cqz,  0, temp,                  //temp = cqz*cqz 
+  F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
+  F32_opSqr, cqw,  0, temp,                  //temp = cqw*cqw 
+  F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
+  F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.0000001 
+  F32_opSqrt, rmag,  0, rmag,                //sqrt(rmag) 
+
+  //cq /= rmag   
+  F32_opDiv, cqw,  rmag, cqw,                //cqw /= rmag 
+  F32_opDiv, cqx,  rmag, cqx,                //cqx /= rmag 
+  F32_opDiv, cqy,  rmag, cqy,                //cqy /= rmag 
+  F32_opDiv, cqz,  rmag, cqz,                //cqz /= rmag 
+  
+  0,0,0,0,
 };
+
 
 
 short UpdateControlQuaternion_AutoLevel[] = {
@@ -832,6 +896,11 @@ short UpdateControlQuaternion_AutoLevel[] = {
   F32_opMul,    snysnx, snz, temp,
   F32_opSub,    cqw, temp, cqw,
 
+  0,0,0,0,
+};
+
+
+short UpdateControls_ComputeOrientationChange[] = {
 
   //---------------------------------------------------------------------------
   // Compute the quaternion which is the rotation from our current orientation (Q)
@@ -972,6 +1041,7 @@ void QuatIMU_InitFunctions(void)
   QuatIMU_AdjustStreamPointers( QuatUpdateCommands );
   QuatIMU_AdjustStreamPointers( UpdateControls_Manual );
   QuatIMU_AdjustStreamPointers( UpdateControlQuaternion_AutoLevel );
+  QuatIMU_AdjustStreamPointers( UpdateControls_ComputeOrientationChange );
 }
 
 
@@ -1014,6 +1084,9 @@ void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
   else {
     F32::RunStream( UpdateControlQuaternion_AutoLevel );
   }
+
+  F32::WaitStream();
+  F32::RunStream( UpdateControls_ComputeOrientationChange );
 }
 
 
