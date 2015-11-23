@@ -38,3 +38,5 @@ P6, P7 - Buzzer:
 
 
 P8 - LED
+
+24,25 - XBEE
