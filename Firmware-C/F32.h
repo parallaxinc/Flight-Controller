@@ -17,6 +17,9 @@ public:
 
 	static void RunStream( short * a );
 	static void WaitStream(void);
+
+  static float FFloat( int n );
+  static float FDiv( float a, float b );
 };
 
 
@@ -63,31 +66,31 @@ PUB FShift(a, b)
 
 
 //Instruction stream operand indices
-#define F32_opAdd                  1
-#define F32_opSub                  2
-#define F32_opMul                  3
-#define F32_opDiv                  4
-#define F32_opFloat                5
-#define F32_opTruncRound           6
-#define F32_opSqrt                 7
-#define F32_opCmp                  8
-#define F32_opSin                  9
-#define F32_opCos                  10
-#define F32_opTan                  11
-#define F32_opLog2                 12
-#define F32_opExp2                 13
-#define F32_opPow                  14
-#define F32_opASinCos              15
-#define F32_opATan2                16
-#define F32_opShift                17
-#define F32_opNeg                  18
-#define F32_opSqr                  19
-#define F32_opSinCos               20
-#define F32_opFAbs                 21
-#define F32_opFMin                 22   
-#define F32_opFrac                 23
-#define F32_opCNeg                 24
-#define F32_opMov                  25
+#define F32_opAdd                  1    // result = a + b
+#define F32_opSub                  2    // result = a - b
+#define F32_opMul                  3    // result = a * b
+#define F32_opDiv                  4    // result = a / b
+#define F32_opFloat                5    // result = (float)a
+#define F32_opTruncRound           6    // if(b==0) result = (int)a, else result = (int)round(a)
+#define F32_opSqrt                 7    // result = Sqrt(a)
+#define F32_opCmp                  8    // if(a>b) result = 1;  if(a<b) result = -1; else result = 0;
+#define F32_opSin                  9    // result = Sin(a)
+#define F32_opCos                  10   // result = Cos(a)
+#define F32_opTan                  11   // result = Tan(a)
+#define F32_opLog2                 12   // result = Log2(a)
+#define F32_opExp2                 13   // result = Exp2(a)
+#define F32_opPow                  14   // result = Pow(a,b)  (ie a to the power of b)
+#define F32_opASinCos              15   // if(b==0) result = ACos(a) else result = ASin(a)
+#define F32_opATan2                16   // result = ATan2(a,b)
+#define F32_opShift                17   // result = a  x  pow(2, (float)b)  (works like a binary shift, but on floats)
+#define F32_opNeg                  18   // result = -a
+#define F32_opSqr                  19   // result = a*a   (faster than doing opMul(a,a)
+#define F32_opSinCos               20   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
+#define F32_opFAbs                 21   // result = FAbs(a)
+#define F32_opFMin                 22   // if(a<b) result = a  else result = b
+#define F32_opFrac                 23   // result = fractional portion of a  (portion after the decimal point)
+#define F32_opCNeg                 24   // if(b<0)  a = -a  else  a = a
+#define F32_opMov                  25   // result = a
 #define F32_opRunStream            26
 
 
