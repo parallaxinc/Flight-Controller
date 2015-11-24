@@ -54,11 +54,14 @@ void BeepHz( int Hz , int Delay )
 
 void BeepTune(void)
 {
-  BeepHz( 1174, 150 );           //D5
-  BeepHz( 1318, 150 );           //E5
+//  BeepHz( 1174, 150 );           //D5
+//  BeepHz( 1318, 150 );           //E5
+//  BeepHz( 1046, 150 );           //C5
+//  BeepHz(  522, 150 );           //C4
+//  BeepHz(  784, 300 );           //G4
+
   BeepHz( 1046, 150 );           //C5
-  BeepHz(  522, 150 );           //C4
-  BeepHz(  784, 300 );           //G4
+  BeepHz( 1318, 300 );           //E5
 }
 
 
