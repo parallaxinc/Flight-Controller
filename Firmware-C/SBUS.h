@@ -4,7 +4,7 @@
 class SBUS
 {
 public:
-	static void Start( int InputPin , short Center );
+	static void Start( int InputPin );
 	static void Stop(void);
 
 	//static short Get( int i );
