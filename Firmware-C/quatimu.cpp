@@ -13,6 +13,18 @@
 static int  zx, zy, zz;                          // Gyro zero readings
 
 
+// TODO:
+// Test feasibility of making F32 instruction streams byte-based instead of short-based.
+// operations would use memory space relative to a block of 32-bit quantities, and that
+// memory block would be passed in as the second argument to the stream execute
+// Stream processor would need (index<<2)+dataBase for data, and (index<<2)+opBase for opcodes
+// don't currently have enough code space for this in the COG, but it would save a bunch of RAM
+// at a small cost in code cycles.  Worth doing?
+
+// (current quat stream is ~175 ops, or 1400 bytes. Would save 700, probably about 1kb or so total for all streams)
+
+
+
 // Working variables for the IMU code, in a struct so the compiler doesn't screw up the order,
 // or remove some of them due to overly aggressive (IE wrong) optimization.
 

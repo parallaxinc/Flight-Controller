@@ -41,7 +41,6 @@ static SENS sens;
 
 static long  GyroZX, GyroZY, GyroZZ;  // Gyro zero values
 
-static long  AccelXSmooth, AccelYSmooth;
 static long  AccelZSmooth;            // Smoothed (filtered) accelerometer Z value (used for height fluctuation damping)
 
 //Debug output mode, working variables  
@@ -78,7 +77,7 @@ static short CompassConfigStep;       //Compass configure mode counter
 static char FlightEnabled;            //Flight arm/disarm flag
 static char FlightMode;
 
-static int  BatteryMonitorDelay;      //Can't start discharging the battery monitor cap until the ESCs are armed or the noise messes them up
+static short BatteryMonitorDelay;     //Can't start discharging the battery monitor cap until the ESCs are armed or the noise messes them up
 
 static char MotorPin[4];            //Motor index to pin index table
 
@@ -188,9 +187,6 @@ int main()                                    // Main function
     memcpy( &sens, Sensors_Address(), Sensors_ParamsSize );
 
     QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~125000 cycles
-
-    AccelXSmooth += (sens.AccelX - AccelXSmooth) * Prefs.AccelCorrectionFilter / 256;
-    AccelYSmooth += (sens.AccelY - AccelYSmooth) * Prefs.AccelCorrectionFilter / 256;
     AccelZSmooth += (sens.AccelZ - AccelZSmooth) * Prefs.AccelCorrectionFilter / 256;
 
     if( Prefs.UseSBUS )
@@ -340,15 +336,14 @@ void Initialize(void)
   InitializePrefs();
 
   if( Prefs.UseSBUS ) {
-    SBUS::Start( PIN_RC_0 , 1024 ); // Doesn't matter - it'll be compensated for by the channel scaling/offset code
+    SBUS::Start( PIN_RC_0 ); // Doesn't matter - it'll be compensated for by the channel scaling/offset code
   }
   else {
     RC::Start();
   }
 
-
-  // Wait 4 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
-  BatteryMonitorDelay = (Const_UpdateRate * 4) & ~15;
+  // Wait 2 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
+  BatteryMonitorDelay = (Const_UpdateRate * 2) & ~15;
 
 #ifdef __PINS_V3_H__
   Battery::Init( PIN_VBATT );
@@ -365,10 +360,8 @@ void Initialize(void)
   }    
   Servo32_Start();
 
-  // was 30000, 15000
-
   RollPitch_P = 8000;           //Set here to allow an in-flight tuning baseline
-  RollPitch_D = 20000 * 250;
+  RollPitch_D = 20000 * Const_UpdateRate;
 
 
   RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
@@ -387,7 +380,7 @@ void Initialize(void)
   PitchPID.SetDervativeFilter( 128 );
 
 
-  YawPID.Init( 8000,  200 * 250,  0 , Const_UpdateRate );
+  YawPID.Init( 15000,  200 * Const_UpdateRate,  10000 * Const_UpdateRate , Const_UpdateRate );
   YawPID.SetPrecision( 12 );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetPIMax( 100 );
@@ -396,7 +389,7 @@ void Initialize(void)
 
 
   //Altitude hold PID object
-  AscentPID.Init( 600, 1250 * 250, 0, Const_UpdateRate );
+  AscentPID.Init( 600, 1250 * Const_UpdateRate, 0, Const_UpdateRate );
   AscentPID.SetPrecision( 14 );
   AscentPID.SetMaxOutput( 3000 );
   AscentPID.SetPIMax( 100 );
@@ -417,28 +410,82 @@ static int abs(int v) {
   return v;
 }
 
+static int max( int a, int b ) { return a > b ? a : b; }
+static int min( int a, int b ) { return a < b ? a : b; }
+
+
 
 void FindGyroZero(void)
 {
-  // TODO: Actually wait until the numbers stop moving first, THEN get an average
+  // The idea here is that it's VERY hard for someone to hold a thing perfectly still.
+  // If we detect variation in the gyro, keep waiting until it settles down, or "too long" has elapsed.
 
-  GyroZX = 128;
-  GyroZY = 128;
-  GyroZZ = 128;
-  waitcnt( CNT + Const_ClockFreq/4 );
-  
-  for( int i=0; i<256; i++ )
-  {
-    GyroZX += Sensors_In(1);  // GyroX
-    GyroZY += Sensors_In(2);  // GyroY
-    GyroZZ += Sensors_In(3);  // GyroZ
+  int vmin[3], vmax[3], avg[3];     // min, max, avg readings for each gyro axis
+  int best[3], bestvar = -1;        // best set of readings found so far, and the variance for them
 
-    waitcnt( CNT + Const_ClockFreq/2000 );
-  }
+  int TryCounter = 0;
+  const int MinTries = 2, MaxTries = 64;
 
-  GyroZX /= 256;
-  GyroZY /= 256;
-  GyroZZ /= 256;
+  // Wait for any buzzer vibration to stop.  Yes, this is actually necessary, it can be that sensitive.
+  waitcnt( CNT + Const_ClockFreq/50 );
+
+  do {
+    // Take an initial sensor reading for each axis as a starting point, and zero the average
+    for( int a=0; a<3; a++) {
+      vmin[a] = vmax[a] = Sensors_In(1+a);
+      avg[a] = 0;
+    }      
+
+    // take a bunch of readings over about 1/10th of a second, keeping track of the min, max, and sum (average)
+    for( int i=0; i<64; i++ )
+    {
+      for( int a=0; a<3; a++) {
+        int v = Sensors_In(1+a);
+        vmin[a] = min(vmin[a], v);
+        vmax[a] = max(vmax[a], v);
+        avg[a] += v;
+      }
+
+      waitcnt( CNT + Const_ClockFreq/500 );
+    }
+
+    // Compute the mid-point between the min & max, and how different that is from the average (variation)
+    int maxVar = 0;
+    for( int a=0; a<3; a++)
+    {
+      avg[a] /= 64;
+
+      // range is the difference between min and max over the sample period.
+      // I measured this as ~15 units on all axis when totally still
+      int range = vmax[a] - vmin[a];
+
+      // variation is how centered the average is between the min and max.
+      // if the craft is perfectly still, this *should* be zero or VERY close.
+      int var = (vmax[a]+vmin[a])/2 - avg[a];
+
+      maxVar = max( maxVar, abs(var) );
+    }
+
+    if( (bestvar == -1) || (maxVar < bestvar) ) {
+      best[0] = avg[0];
+      best[1] = avg[1];
+      best[2] = avg[2];
+      bestvar = maxVar;
+    }
+
+    // Every 4th loop, beep at the user to tell them what's happening
+    if( (TryCounter & 3) == 3 ) {
+      BeepHz( 4000, 80 );
+    }
+
+    TryCounter++;
+
+    // Run at least MinTries iterations, wait until max variance is 2 or less, give up after MaxTries
+  } while( TryCounter < MaxTries && (bestvar > 2 || TryCounter < MinTries) );
+
+  GyroZX = best[0];
+  GyroZY = best[1];
+  GyroZZ = best[2];
 
   QuatIMU_SetGyroZero( GyroZX, GyroZY, GyroZZ );
 }
@@ -541,9 +588,9 @@ void UpdateFlightLoop(void)
     }
 
 
-    int RollOut = RollPID.Calculate_NoD2( RollDifference , GyroRoll , DoIntegrate );
-    int PitchOut = PitchPID.Calculate_NoD2( PitchDifference , GyroPitch , DoIntegrate );
-    int YawOut = YawPID.Calculate_NoD2( YawDifference, GyroYaw, DoIntegrate );
+    int RollOut = RollPID.Calculate( RollDifference , GyroRoll , DoIntegrate );
+    int PitchOut = PitchPID.Calculate( PitchDifference , GyroPitch , DoIntegrate );
+    int YawOut = YawPID.Calculate( YawDifference, GyroYaw, DoIntegrate );
 
 
     int ThroMix = (Radio.Thro + 1024) >> 2;           // Approx 0 - 512
@@ -583,7 +630,7 @@ void UpdateFlightLoop(void)
         AscentPID.SetIGain( T2 * 250 );
         */
 
-        AltiThrust = AscentPID.Calculate_NoD2( DesiredAltitude , AltiEst , DoIntegrate );
+        AltiThrust = AscentPID.Calculate( DesiredAltitude , AltiEst , DoIntegrate );
         ThroOut = Prefs.CenterThrottle + AltiThrust + (Radio.Thro << 1);
       }
       else
@@ -711,7 +758,7 @@ void ArmFlightMode(void)
   DesiredAltitude = AltiEst;
   loopTimer = CNT;
 }
-  
+
 void DisarmFlightMode(void)
 {
   for( int i=0; i<4; i++ ) {
