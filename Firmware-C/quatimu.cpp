@@ -13,18 +13,6 @@
 static int  zx, zy, zz;                          // Gyro zero readings
 
 
-// TODO:
-// Test feasibility of making F32 instruction streams byte-based instead of short-based.
-// operations would use memory space relative to a block of 32-bit quantities, and that
-// memory block would be passed in as the second argument to the stream execute
-// Stream processor would need (index<<2)+dataBase for data, and (index<<2)+opBase for opcodes
-// don't currently have enough code space for this in the COG, but it would save a bunch of RAM
-// at a small cost in code cycles.  Worth doing?
-
-// (current quat stream is ~175 ops, or 1400 bytes. Would save 700, probably about 1kb or so total for all streams)
-
-
-
 // Working variables for the IMU code, in a struct so the compiler doesn't screw up the order,
 // or remove some of them due to overly aggressive (IE wrong) optimization.
 
@@ -156,8 +144,8 @@ enum IMU_VarLabels {
     const_TwoPI,
     
     const_OutControlShift,
-    
-   IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
+
+    IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
 };
 
 
@@ -359,42 +347,46 @@ void QuatIMU_SetGyroZero( int x, int y, int z )
 
 
 /*
-  'Quaternion update as C code  
+  'Quaternion update as C code
+
+  'This code computes the current incremental rotation from the gyro in radians
+  'The rotation is converted into quaternion form, multiplied by the inverse of
+  'the current orientation.  The rotations are added, and the result is normalized.
+
+  'The math is functionally idential to what happens in UpdateControls_Manual.
+
+  'For a good primer on quaternion math, see here:
+  '  http://mathinfo.univ-reims.fr/IMG/pdf/Rotating_Objects_Using_Quaternions.pdf
+
   {
-  fgx = gx / GyroScale + errCorrX
-  fgy = gy / GyroScale + errCorrY
-  fgz = gz / GyroScale + errCorrZ
+  rx = gx / GyroScale + errCorrX
+  ry = gy / GyroScale + errCorrY
+  rz = gz / GyroScale + errCorrZ
 
-  rmag = sqrt(fgx * fgx + fgy * fgy + fgz * fgz + 0.0000000001) / 2.0 
+  rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) / 2.0 
 
-  
   cosr = Cos(rMag)
   sinr = Sin(rMag) / rMag
-   
-  qdot.w = -(r.x * x + r.y * y + r.z * z) / 2.0
-  qdot.x =  (r.x * w + r.z * y - r.y * z) / 2.0
-  qdot.y =  (r.y * w - r.z * x + r.x * z) / 2.0
-  qdot.z =  (r.z * w + r.y * x - r.x * y) / 2.0
-   
-  q.w = cosr * q.w + sinr * qdot.w
-  q.x = cosr * q.x + sinr * qdot.x
-  q.y = cosr * q.y + sinr * qdot.y
-  q.z = cosr * q.z + sinr * qdot.z
+
+  qdot.w = -(rx * qx + ry * qy + rz * qz) / 2.0
+  qdot.x =  (rx * qw + rz * qy - ry * qz) / 2.0
+  qdot.y =  (ry * qw - rz * qx + rx * qz) / 2.0
+  qdot.z =  (rz * qw + ry * qx - rx * qy) / 2.0
+
+  qw = cosr * qw + sinr * qdot.w
+  qx = cosr * qx + sinr * qdot.x
+  qy = cosr * qy + sinr * qdot.y
+  qz = cosr * qz + sinr * qdot.z
    
   q = q.Normalize()
   }
 */
 
 
-void QuatIMU_AdjustStreamPointers( short * p )
+void QuatIMU_AdjustStreamPointers( unsigned char * p )
 {
-    while( p[0] != 0 )
-    {
-        p[0] = (short)(int)F32::GetCommandPtr( p[0] );             // Convert the instruction index into the address of a jump table instruction
-        if( p[1] != 0 )  p[1] = (short)(int)(IMU_VARS + p[1]);
-        if( p[2] != 0 )  p[2] = (short)(int)(IMU_VARS + p[2]);
-        if( p[3] != 0 )  p[3] = (short)(int)(IMU_VARS + p[3]);
-       
+    while( p[0] != 0 ) {
+        p[0] <<= 2;   // Pre-shift the instruction index (saves a shift in the FPU).  Too many floats required to do it to them too.
         p += 4;
     }
 }   
@@ -403,7 +395,12 @@ void QuatIMU_AdjustStreamPointers( short * p )
 
   //fgx = gx / GyroScale + errCorrX
               
-short QuatUpdateCommands[] = {
+unsigned char QuatUpdateCommands[] = {
+
+  //--------------------------------------------------------------
+  // Convert the gyro rates to radians, add in the previous cycle error corrections
+  //--------------------------------------------------------------
+  
         F32_opFloat, gx, 0, rx,                           //rx = float(gx)
         F32_opMul, rx, const_GyroScale, rx,               //rx /= GyroScale
         F32_opAdd, rx, errCorrX, rx,                      //rx += errCorrX
@@ -418,11 +415,16 @@ short QuatUpdateCommands[] = {
         F32_opMul, rz, const_NegGyroScale, rz,            //rz /= GyroScale
         F32_opAdd, rz, errCorrZ, rz,                      //rz += errCorrZ
 
+
+  //--------------------------------------------------------------
+  // Update the orientation quaternion
+  //--------------------------------------------------------------
+
   //rmag = sqrt(rx * rx + ry * ry + rz * rz + 0.0000000001) * 0.5
-        F32_opSqr, rx, 0, rmag,                           //rmag = fgx*fgx
-        F32_opSqr, ry, 0, temp,                           //temp = fgy*fgy
+        F32_opMul, rx, rx, rmag,                          //rmag = fgx*fgx
+        F32_opMul, ry, ry, temp,                          //temp = fgy*fgy
         F32_opAdd, rmag, temp, rmag,                      //rmag += temp
-        F32_opSqr, rz, 0, temp,                           //temp = fgz*fgz
+        F32_opMul, rz, rz, temp,                          //temp = fgz*fgz
         F32_opAdd, rmag, temp, rmag,                      //rmag += temp
         F32_opAdd, rmag, const_epsilon, rmag,             //rmag += 0.00000001
         F32_opSqrt, rmag, 0, rmag,                        //rmag = Sqrt(rmag)                                                  
@@ -494,12 +496,12 @@ short QuatUpdateCommands[] = {
 
   //q = q.Normalize()
   //rmag = sqrt(q.x*q.x + q.y*q.y + q.z*q.z + q.w*q.w + 0.0000001)
-        F32_opSqr, qx,  0, rmag,                   //rmag = qx*qx 
-        F32_opSqr, qy,  0, temp,                   //temp = qy*qy 
+        F32_opMul, qx, qx, rmag,                   //rmag = qx*qx 
+        F32_opMul, qy, qy, temp,                   //temp = qy*qy 
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-        F32_opSqr, qz,  0, temp,                   //temp = qz*qz 
+        F32_opMul, qz, qz, temp,                   //temp = qz*qz 
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-        F32_opSqr, qw,  0, temp,                   //temp = qw*qw 
+        F32_opMul, qw, qw, temp,                   //temp = qw*qw 
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
         F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.0000001 
         F32_opSqrt, rmag,  0, rmag,                //sqrt(rmag) 
@@ -513,11 +515,13 @@ short QuatUpdateCommands[] = {
   //4 instructions (77)
 
 
+  //--------------------------------------------------------------
   //Now convert the updated quaternion to a rotation matrix
+  //--------------------------------------------------------------
 
-        F32_opSqr, qx,  0, fx2,                    //fx2 = qx *qx
-        F32_opSqr, qy,  0, fy2,                    //fy2 = qy *qy
-        F32_opSqr, qz,  0, fz2,                    //fz2 = qz *qz
+        F32_opMul, qx, qx, fx2,                    //fx2 = qx *qx
+        F32_opMul, qy, qy, fy2,                    //fy2 = qy *qy
+        F32_opMul, qz, qz, fz2,                    //fz2 = qz *qz
   //3 instructions (80)
 
         F32_opMul, qw,  qx, fwx,                   //fwx = qw *qx
@@ -578,6 +582,10 @@ short QuatUpdateCommands[] = {
   //7 instructions (107)
 
 
+  //--------------------------------------------------------------
+  // Get the accelerometer vector, correct the orientation by any
+  // user specified rotation offset
+  //--------------------------------------------------------------
 
   //fax =  packet.ax;           // Acceleration in X (left/right)
   //fay =  packet.az;           // Acceleration in Y (up/down)
@@ -622,15 +630,18 @@ short QuatUpdateCommands[] = {
         F32_opMov, axRot,  0, faz,          
         F32_opMov, ayRot,  0, fay,          
 
-
-
-//Compute length of the accelerometer vector to decide weighting                                   
+  //--------------------------------------------------------------
+  // Compute length of the accelerometer vector and normalize it.
+  // Use the computed length to decide weighting, IE how likely is
+  // it a good reading to use to correct our rotation estimate.
+  // If it's too long/short, weight it less.
+  //--------------------------------------------------------------
 
   //rmag = facc.length
-        F32_opSqr, fax,  0, rmag,                  //rmag = fax*fax
-        F32_opSqr, fay,  0, temp,                  //temp = fay*fay
+        F32_opMul, fax,fax, rmag,                  //rmag = fax*fax
+        F32_opMul, fay,fay, temp,                  //temp = fay*fay
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp
-        F32_opSqr, faz,  0, temp,                  //temp = faz*faz
+        F32_opMul, faz,faz, temp,                  //temp = faz*faz
         F32_opAdd, rmag,  temp, rmag,              //rmag += temp
         F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.00000001
         F32_opSqrt, rmag,  0, rmag,                //rmag = Sqrt(rmag)                                                  
@@ -651,6 +662,14 @@ short QuatUpdateCommands[] = {
         F32_opSub, const_F1,  accWeight, accWeight,//accWeight = 1.0 - accWeight                                                
 
 
+  //--------------------------------------------------------------
+  // Compute the cross product of our normalized accelerometer vector
+  // and our current orientation "up" vector.  If they're identical,
+  // the cross product will be zeros.  Any difference produces an
+  // axis of rotation between the two vectors, and the magnitude of
+  // the vector is the amount to rotate to align them.
+  //--------------------------------------------------------------
+
 
   //errDiffX = fayn * m12 - fazn * m11
         F32_opMul, fayn,  m12, errDiffX, 
@@ -670,8 +689,12 @@ short QuatUpdateCommands[] = {
   //accWeight *= const_ErrScale   
         F32_opMul, const_ErrScale,  accWeight, accWeight,
 
-  //Test: Does ErrCorr need to be rotated into the local frame from the world frame?
-
+  //--------------------------------------------------------------
+  // Scale the resulting difference by the weighting factor.  This
+  // gets mixed in with the gyro values on the next update to pull
+  // the "up" part of our rotation back into alignment with gravity
+  // over time.
+  //--------------------------------------------------------------
 
   //errCorr = errDiff * accWeight
         F32_opMul, errDiffX,  accWeight, errCorrX,  
@@ -696,7 +719,13 @@ short QuatUpdateCommands[] = {
 
 
 
-  //Compute the running height estimate
+  //--------------------------------------------------------------
+  // Compute the running height estimate - this is a fusion of the
+  // height computed directly from barometric pressure, and and
+  // running estimate of vertical velocity computed from the
+  // accelerometer, integrated to produce a height estimate.
+  // The two different values are used to correct each other.
+  //--------------------------------------------------------------
 
   //force := acc / 4096.0
         F32_opShift, fax,  const_neg12, forceX,
@@ -755,7 +784,7 @@ short QuatUpdateCommands[] = {
 
 
 
-short UpdateControls_Manual[] = {
+unsigned char UpdateControls_Manual[] = {
 
   // float xrot = (float)radio.Elev * const_ManualBankScale;	// Individual scalars for channel sensitivity
   // float yrot = (float)radio.Rudd * const_ManualBankScale;
@@ -823,12 +852,12 @@ short UpdateControls_Manual[] = {
   
   // CQ.Normalize();
   //rmag = sqrt(cqx*cqx + cqy*cqy + cqz*cqz + cqw*cqw + 0.0000001)
-  F32_opSqr, cqx,  0, rmag,                  //rmag = cqx*cqx 
-  F32_opSqr, cqy,  0, temp,                  //temp = cqy*cqy 
+  F32_opMul, cqx,cqx, rmag,                  //rmag = cqx*cqx 
+  F32_opMul, cqy,cqy, temp,                  //temp = cqy*cqy 
   F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-  F32_opSqr, cqz,  0, temp,                  //temp = cqz*cqz 
+  F32_opMul, cqz,cqz, temp,                  //temp = cqz*cqz 
   F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
-  F32_opSqr, cqw,  0, temp,                  //temp = cqw*cqw 
+  F32_opMul, cqw,cqw, temp,                  //temp = cqw*cqw 
   F32_opAdd, rmag,  temp, rmag,              //rmag += temp 
   F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.0000001 
   F32_opSqrt, rmag,  0, rmag,                //sqrt(rmag) 
@@ -844,7 +873,7 @@ short UpdateControls_Manual[] = {
 
 
 
-short UpdateControlQuaternion_AutoLevel[] = {
+unsigned char UpdateControlQuaternion_AutoLevel[] = {
 
   // Convert radio inputs to float, scale them to get them into the range we want
 
@@ -902,7 +931,7 @@ short UpdateControlQuaternion_AutoLevel[] = {
 };
 
 
-short UpdateControls_ComputeOrientationChange[] = {
+unsigned char UpdateControls_ComputeOrientationChange[] = {
 
   //---------------------------------------------------------------------------
   // Compute the quaternion which is the rotation from our current orientation (Q)
@@ -918,8 +947,8 @@ short UpdateControls_ComputeOrientationChange[] = {
   // qry =  cqx * qz - cqy * qw - cqz * qx + cqw * qy;
   // qrz = -cqx * qy + cqy * qx - cqz * qw + cqw * qz;
   // qrw =  cqx * qx + cqy * qy + cqz * qz + cqw * qw;
-  
-  
+
+
 
   // qrx = -cqx * qw - cqy * qz + cqz * qy + cqw * qx;
 
@@ -1004,7 +1033,7 @@ short UpdateControls_ComputeOrientationChange[] = {
 
   
   // float rmag = Sqrt( 1.0f - qrw*qrw );	  // assuming quaternion normalised then w is less than 1, so term always positive.
-  F32_opSqr,    qrw, 0, temp,
+  F32_opMul,    qrw, qrw, temp,
   F32_opSub,    const_F1, temp, temp,
 
   F32_opNeg,    temp, 0, temp,
@@ -1058,7 +1087,7 @@ void QuatIMU_Update( int * packetAddr )
   ((int*)IMU_VARS)[gy] -= zy;
   ((int*)IMU_VARS)[gz] -= zz;
 
-  F32::RunStream( QuatUpdateCommands );
+  F32::RunStream( QuatUpdateCommands , IMU_VARS );
 }
 
 inline static int abs( int v )
@@ -1081,14 +1110,14 @@ void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
   ((int*)IMU_VARS)[In_Rudd] = Deadband( Radio->Rudd, 24 );
 
   if( ManualMode ) {
-    F32::RunStream( UpdateControls_Manual );
+    F32::RunStream( UpdateControls_Manual , IMU_VARS );
   }
   else {
-    F32::RunStream( UpdateControlQuaternion_AutoLevel );
+    F32::RunStream( UpdateControlQuaternion_AutoLevel , IMU_VARS );
   }
 
   F32::WaitStream();
-  F32::RunStream( UpdateControls_ComputeOrientationChange );
+  F32::RunStream( UpdateControls_ComputeOrientationChange , IMU_VARS );
 }
 
 

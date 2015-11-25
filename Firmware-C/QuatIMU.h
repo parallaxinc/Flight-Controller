@@ -51,6 +51,6 @@ void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode );
 
 void QuatIMU_WaitForCompletion(void);
 
-void QuatIMU_AdjustStreamPointers( int * p );
+void QuatIMU_AdjustStreamPointers( unsigned char * p );
 
 #endif

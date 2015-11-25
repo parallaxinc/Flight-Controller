@@ -703,7 +703,12 @@ DAT
 ' Main control loop
 '----------------------------
                         org     0                       ' (try to keep 2 or fewer instructions between rd/wrlong)
-f32_entry               rdlong  ret_ptr, par wz         ' wait for command to be non-zero, and store it in the call location
+f32_entry
+                        mov     t1, par
+                        add     t1, #4
+                        rdlong  commandBase, t1         ' cache the pointer to the command table                        
+
+f32_loop                rdlong  ret_ptr, par wz         ' wait for command to be non-zero, and store it in the call location
               if_z      jmp     #f32_entry
 
                         rdlong  :execCmd, ret_ptr       ' get the pointer to the return value ("@result")
@@ -719,7 +724,7 @@ f32_entry               rdlong  ret_ptr, par wz         ' wait for command to be
 
 :finishCmd              wrlong  fnumA, ret_ptr          ' store the result (2 longs before fnumB)
                         wrlong  outb, par               ' clear command status (outb is initialized to 0)
-                        jmp     #f32_entry              ' wait for next command
+                        jmp     #f32_loop               ' wait for next command
 
 
 
@@ -766,17 +771,6 @@ _FAdd_ret               ret
 
 
 '----------------------------
-' square
-' fnumA *= fnumA
-'----------------------------
-_FSqr                   call    #_Unpack
-              if_c      jmp     #_FSqr_ret
-                        mov     expB, expA            
-                        mov     manB, manA
-                        mov     flagA, #0                                 
-                        jmp     #_FSqr_ent
-
-'----------------------------
 ' multiplication
 ' fnumA *= fnumB
 '----------------------------
@@ -784,20 +778,27 @@ _FMul                   call    #_Unpack2               ' unpack two variables
               if_c      jmp     #_FMul_ret              ' check for NaN
 
                         xor     flagA, flagB            ' get sign of result
-_FSqr_ent               add     expA, expB              ' add exponents
+                        add     expA, expB              ' add exponents
 
                         '{ new method: 4 * (4 * 24 + 10) = 424 counts for this block,
                         ' worst case.  But, it is within the window of the calling Spin
                         ' repeat loop, so un-noticable.  And the best case scenario is
                         ' better.
-                        neg     t1, manA                ' isolate the low bit of manA
-                        and     t1, manA
-                        neg     t2, manB                ' isolate the low bit of manB
-                        and     t2, manB
-                        cmp     t1, t2 wc               ' who has the greater low bit?  After reversal, this will go to 0 faster.
-              if_c      mov     t1, manA wz             ' if t1 is 0, we'll just skip through everything              '
-              if_nc     mov     t1, manB wz             ' ditto, only t1 is manB
-              if_nc     mov     manB, manA              ' and in this case we wanted manA to be the multiplier mask
+
+      '-------------------------------------------------------------------------------------------------------------------
+      ' This block costs more instructions than it's worth to me, so I just arbitrarily use the first argument as the "driver"  (JD)
+      ' 
+      '                  neg     t1, manA                ' isolate the low bit of manA
+      '                  and     t1, manA
+      '                  neg     t2, manB                ' isolate the low bit of manB
+      '                  and     t2, manB
+      '                  cmp     t1, t2 wc               ' who has the greater low bit?  After reversal, this will go to 0 faster.
+      '        if_c      mov     t1, manA wz             ' if t1 is 0, we'll just skip through everything
+      '        if_nc     mov     t1, manB wz             ' ditto, only t1 is manB
+      '        if_nc     mov     manB, manA              ' and in this case we wanted manA to be the multiplier mask
+      '-------------------------------------------------------------------------------------------------------------------
+
+                        mov     t1, manA wz             ' Arbitrarily choose the first argument as the multiplier
 
                         mov     manA, #0                ' manA is my new accumulator
                         rev     manB, #32-30            ' start by right aligning the reverse of the B mantissa
@@ -821,7 +822,6 @@ _FSqr_ent               add     expA, expB              ' add exponents
                         '}
 
                         call    #_Pack
-_FSqr_ret
 _FMul_ret               ret
 
 
@@ -1586,29 +1586,38 @@ _FltAbs_ret             ret
 _RunCommandStream
                         'Run commands until a zero
 
-                        mov     cmdAddr, fnumA 
+                        mov     cmdAddr, fnumA
+                        mov     varBase, fnumB 
 :LoadVariables
-                        rdword  t1, cmdAddr     wz
+                        rdbyte  t1, cmdAddr     wz
               if_z      jmp     #:FinishedStream
-                        rdlong  :execute, t1   
-                        add     cmdAddr, #2
+                        add     t1, commandBase
+                        rdlong  :execute, t1
 
-                        rdword  t1, cmdAddr             ' fnumA addr is the next word
-                        add     cmdAddr, #2
+                        add     cmdAddr, #1
 
-                        rdword  t2, cmdAddr             ' fnumB addr is the next word
-                        add     cmdAddr, #2                        
+                        rdbyte  t1, cmdAddr             ' fnumA addr is the next byte
+                        shl     t1, #2
+                        add     t1, varBase
+                        add     cmdAddr, #1
+
+                        rdbyte  t2, cmdAddr             ' fnumB addr is the next word
+                        shl     t2, #2
+                        add     t2, varBase
+                        add     cmdAddr, #1
 
                         rdlong  fnumA, t1               ' Get actual value
                         rdlong  fnumB, t2               ' Get actual value
 
 :execute                nop                             ' execute command, which was replaced by getCommand
 
-                        rdword  t1, cmdAddr             ' Get address to write the destination
-                        add     cmdAddr, #2                        
+                        rdbyte  t1, cmdAddr             ' Get address to write the destination
+                        shl     t1, #2
+                        add     t1, varBase
+                        add     cmdAddr, #1
                         wrlong  fnumA, t1               ' store the result
                         
-                        jmp     #:LoadVariables                        
+                        jmp     #:LoadVariables
 :FinishedStream
                         
 _RunCommandStream_ret   ret
@@ -1652,6 +1661,8 @@ flagB                   res     1
 expB                    res     1
 manB                    res     1
 cmdAddr                 res     1
+commandBase             res     1
+varBase                 res     1
 
 fit 496 ' A cog has 496 longs available, the last 16 (to make it up to 512) are register shadows.
 
@@ -1678,7 +1689,6 @@ cmdASinCos              call    #_ASinCos
 cmdATan2                call    #_ATan2
 cmdShift                call    #_Shift
 cmdNeg                  call    #_FltNeg
-cmdSqr                  call    #_FSqr
 cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
@@ -1708,13 +1718,12 @@ CON     'Instruction stream operand indices
   opATan2               = 16
   opShift               = 17
   opNeg                 = 18
-  opSqr                 = 19
-  opSinCos              = 20
-  opFAbs                = 21
-  opFMin                = 22   
-  opFrac                = 23
-  opCNeg                = 24
-  opMov                 = 25   
+  opSinCos              = 19
+  opFAbs                = 20
+  opFMin                = 21   
+  opFrac                = 22
+  opCNeg                = 23
+  opMov                 = 24   
 
 {{
 

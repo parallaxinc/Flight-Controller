@@ -8,14 +8,7 @@ public:
 	static int  Start(void);
 	static void Stop(void);
 
-	static void StartStream( int index, short * baseAddr );
-
-	static void AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr );
-	static void EndStream( int index );
-
-	static int* GetCommandPtr( int fp_op );
-
-	static void RunStream( short * a );
+	static void RunStream( unsigned char * a, float * b );
 	static void WaitStream(void);
 
   static float FFloat( int n );
@@ -84,14 +77,13 @@ PUB FShift(a, b)
 #define F32_opATan2                16   // result = ATan2(a,b)
 #define F32_opShift                17   // result = a  x  pow(2, (float)b)  (works like a binary shift, but on floats)
 #define F32_opNeg                  18   // result = -a
-#define F32_opSqr                  19   // result = a*a   (faster than doing opMul(a,a)
-#define F32_opSinCos               20   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
-#define F32_opFAbs                 21   // result = FAbs(a)
-#define F32_opFMin                 22   // if(a<b) result = a  else result = b
-#define F32_opFrac                 23   // result = fractional portion of a  (portion after the decimal point)
-#define F32_opCNeg                 24   // if(b<0)  a = -a  else  a = a
-#define F32_opMov                  25   // result = a
-#define F32_opRunStream            26
+#define F32_opSinCos               19   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
+#define F32_opFAbs                 20   // result = FAbs(a)
+#define F32_opFMin                 21   // if(a<b) result = a  else result = b
+#define F32_opFrac                 22   // result = fractional portion of a  (portion after the decimal point)
+#define F32_opCNeg                 23   // if(b<0)  a = -a  else  a = a
+#define F32_opMov                  24   // result = a
+#define F32_opRunStream            25
 
 
 /*

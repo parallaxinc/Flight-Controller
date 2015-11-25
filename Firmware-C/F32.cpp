@@ -6,7 +6,9 @@
 
 static struct F32_DATA {
   volatile long  f32_cmd;
-  int  TempCommand, StreamAddr; // These have to be contiguous in memory, which is why they're in a struct
+  int * cmdCallTableAddr;
+
+  int  TempCommand, StreamAddr, VarAddr; // These have to be contiguous in memory, which is why they're in a struct
 
   union {
     struct {
@@ -18,12 +20,11 @@ static struct F32_DATA {
       volatile int result;
       volatile int a;
       volatile int b;
-    };      
+    };
   };
 } v;
 
 static short* CommandAddr[4];
-static int* cmdCallTableAddr = 0;
 static char cog;
 
 
@@ -43,7 +44,7 @@ int F32::Start(void)
   while( driverMem[i] != 0x12345678 )
     i++;
 
-  cmdCallTableAddr = (int *)driverMem + i + 1;
+  v.cmdCallTableAddr = (int *)driverMem + i + 1;
 
   load_cog_driver(f32_driver, &v.f32_cmd);
   return cog;
@@ -59,46 +60,13 @@ void F32::Stop(void)
   }
 }
 
-/*
-void F32::StartStream( int index, short* baseAddr )
-{
-  CommandAddr[index] = baseAddr;
-}
 
-
-void F32::AddCommand( int index, int fp_op, void* a_addr, void* b_addr, void* out_addr )
-{
-  short *addr = CommandAddr[index];
-  addr[0] = (fp_op << 2) + (int)cmdCallTableAddr;  //This is a pointer into the JMPRET instruction table
-  addr[1] = (short)(int)a_addr;
-  addr[2] = (short)(int)b_addr;                    //Prop memory addresses are only 16 bit
-  addr[3] = (short)(int)out_addr;                  //casting the ptr to int, then to short suppresses warnings
-
-  CommandAddr[index] = addr + 4;
-}
-
-void F32::EndStream( int index )
-{
-  short *addr = CommandAddr[index];
-  addr[0] = 0;					         //Use zero to indicate end-of-stream 
-  CommandAddr[index]++;
-
-  //return CommandAddr[index];      //Allows the caller to figure out how much space this actually took
-}
-*/
-
-
-int* F32::GetCommandPtr( int fp_op )
-{
-  return cmdCallTableAddr + fp_op;
-}
-      
-
-void F32::RunStream( short * a )
+void F32::RunStream( unsigned char * a , float * b )
 {
   //Can't use the stack for these, because they might be different by the time the COG gets to them
-  v.TempCommand = cmdCallTableAddr[ F32_opRunStream ];
+  v.TempCommand = v.cmdCallTableAddr[ F32_opRunStream ];
   v.StreamAddr = (int)a;
+  v.VarAddr = (int)b;
   v.f32_cmd = (int)&v.TempCommand;
 }
 
@@ -108,21 +76,6 @@ void F32::WaitStream(void)
 	while( v.f32_cmd )
 		;
 }
-
-/*
-void F32::Cmd_ptr(void)
-{
-//  return the Hub address of f32_Cmd, so other code can call F32 functions directly
-	return &f32_cmd;
-}
-
-
-void F32::Call_ptr(void)
-{
-//  return the Hub address of the dispatch table, so other code can call F32 functions directly
-	//return &cmdCallTable;
-}
-*/
 
 
 /*  // FDIV is currently unused
@@ -157,7 +110,7 @@ float F32::FFloat( int n )
 
   v.a = n;
 
-  v.result = cmdCallTableAddr[ F32_opFloat ];
+  v.result = v.cmdCallTableAddr[ F32_opFloat ];
   v.f32_cmd = (int)&v.result;
 
   while(v.f32_cmd)
