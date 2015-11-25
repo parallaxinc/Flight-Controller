@@ -49,10 +49,10 @@ namespace Elev8
 			SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint |
 				ControlStyles.AllPaintingInWmPaint, true);
 
-			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Altimeter_Background.bmp" ) );
-			bmpSmallNeedle = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.SmallNeedleAltimeter.bmp" ) );
-			bmpLongNeedle = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.LongNeedleAltimeter.bmp" ) );
-			bmpScroll = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Bandeau_Dérouleur.bmp" ) );
+			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Altimeter_Background.png" ) );
+			bmpSmallNeedle = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.SmallNeedleAltimeter.png" ) );
+			bmpLongNeedle = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.LongNeedleAltimeter.png" ) );
+			bmpScroll = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Bandeau_Dérouleur.png" ) );
 
 			bmpCadran.MakeTransparent( Color.Yellow );
 			bmpLongNeedle.MakeTransparent( Color.Yellow );

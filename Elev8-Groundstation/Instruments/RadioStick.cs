@@ -47,7 +47,7 @@ namespace Elev8
 			SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint |
 				ControlStyles.AllPaintingInWmPaint, true);
 
-			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.RadioStick_Background.bmp" ) );
+			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.RadioStick_Background.png" ) );
 			bmpCadran.MakeTransparent( Color.Yellow );
 
 			stickPen = new Pen( Color.DimGray, StickDiam * 2 / 3 );

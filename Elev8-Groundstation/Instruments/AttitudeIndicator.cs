@@ -52,9 +52,9 @@ namespace Elev8
 				ControlStyles.AllPaintingInWmPaint, true);
 
 			// Images
-			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Horizon_Background.bmp" ) );
-			bmpBoule = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Horizon_GroundSky.bmp" ) );
-			bmpAvion = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Maquette_Avion.bmp" ) );
+			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Horizon_Background.png" ) );
+			bmpBoule = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Horizon_GroundSky.png" ) );
+			bmpAvion = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.Maquette_Avion.png" ) );
 
 			bmpCadran.MakeTransparent( Color.Yellow );
 			bmpAvion.MakeTransparent( Color.Yellow );

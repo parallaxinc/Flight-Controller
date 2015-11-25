@@ -46,9 +46,9 @@ namespace Elev8
 			SetStyle(ControlStyles.DoubleBuffer | ControlStyles.UserPaint |
 				ControlStyles.AllPaintingInWmPaint, true);
 
-			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.HeadingIndicator_Background.bmp" ) );
-			bmpHedingWeel = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.HeadingWeel.bmp" ) );
-			bmpAircaft = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.HeadingIndicator_Aircraft.bmp" ) );
+			bmpCadran = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.HeadingIndicator_Background.png" ) );
+			bmpHedingWeel = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.HeadingWeel.png" ) );
+			bmpAircaft = new Bitmap( GetEmbeddedResourceStream( "Elev8.Instruments.HeadingIndicator_Aircraft.png" ) );
 
 			bmpCadran.MakeTransparent( Color.Yellow );
 			bmpHedingWeel.MakeTransparent( Color.Yellow );
