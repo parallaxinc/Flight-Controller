@@ -30,6 +30,14 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release_Generic|AnyCPU' ">
+    <OutputPath>bin\Release_Generic\</OutputPath>
+    <DefineConstants>TRACE;GENERIC</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="FTD2XX_NET, Version=1.0.14.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -53,6 +61,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Connection_Serial.cs" />
     <Compile Include="Controls\ValueBar.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -220,20 +229,20 @@
       <DependentUpon>PrintPreviewForm.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="Instruments\Horizon_Background.bmp" />
-    <EmbeddedResource Include="Instruments\Horizon_GroundSky.bmp" />
+    <EmbeddedResource Include="Instruments\Horizon_Background.png" />
+    <EmbeddedResource Include="Instruments\Horizon_GroundSky.png" />
     <Content Include="GraphLib\GraphLib.csproj" />
     <Content Include="Icon_Clockwise.png" />
     <Content Include="Icon_Counter-clockwise.png" />
-    <EmbeddedResource Include="Instruments\RadioStick_Background.bmp" />
-    <EmbeddedResource Include="Instruments\HeadingIndicator_Aircraft.bmp" />
-    <EmbeddedResource Include="Instruments\HeadingIndicator_Background.bmp" />
-    <EmbeddedResource Include="Instruments\HeadingWeel.bmp" />
-    <EmbeddedResource Include="Instruments\Altimeter_Background.bmp" />
-    <EmbeddedResource Include="Instruments\Bandeau_Dérouleur.bmp" />
-    <EmbeddedResource Include="Instruments\LongNeedleAltimeter.bmp" />
-    <EmbeddedResource Include="Instruments\SmallNeedleAltimeter.bmp" />
-    <EmbeddedResource Include="Instruments\Maquette_Avion.bmp" />
+    <EmbeddedResource Include="Instruments\RadioStick_Background.png" />
+    <EmbeddedResource Include="Instruments\HeadingIndicator_Aircraft.png" />
+    <EmbeddedResource Include="Instruments\HeadingIndicator_Background.png" />
+    <EmbeddedResource Include="Instruments\HeadingWeel.png" />
+    <EmbeddedResource Include="Instruments\Altimeter_Background.png" />
+    <EmbeddedResource Include="Instruments\Bandeau_Dérouleur.png" />
+    <EmbeddedResource Include="Instruments\LongNeedleAltimeter.png" />
+    <EmbeddedResource Include="Instruments\SmallNeedleAltimeter.png" />
+    <EmbeddedResource Include="Instruments\Maquette_Avion.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

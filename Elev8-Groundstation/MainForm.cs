@@ -16,7 +16,11 @@ namespace Elev8
 {
 	public partial class MainForm : Form
 	{
-		Connection_FTDI comm = new Connection_FTDI();
+#if GENERIC
+		Connection comm = new Connection_Serial();
+#else
+		Connection comm = new Connection_FTDI();
+#endif
 		CommStatus status = CommStatus.Initializing;
 
 		const int OneG = 4096;
