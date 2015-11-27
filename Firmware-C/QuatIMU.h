@@ -7,7 +7,7 @@
 #include "elev8-main.h"   // for RADIO struct
 
 void QuatIMU_Start(void);
-
+void QuatIMU_SetErrScaleMode( int IsStartup );
 
 int QuatIMU_GetYaw(void);
 

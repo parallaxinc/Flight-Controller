@@ -347,9 +347,9 @@
 			// lblCycles
 			// 
 			this.lblCycles.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblCycles.Location = new System.Drawing.Point( 584, 336 );
+			this.lblCycles.Location = new System.Drawing.Point( 425, 336 );
 			this.lblCycles.Name = "lblCycles";
-			this.lblCycles.Size = new System.Drawing.Size( 134, 17 );
+			this.lblCycles.Size = new System.Drawing.Size( 293, 17 );
 			this.lblCycles.TabIndex = 41;
 			this.lblCycles.Text = "0 cycles";
 			this.lblCycles.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;

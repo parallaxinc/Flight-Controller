@@ -10,6 +10,11 @@
 #define AccToG  (float)(Const_OneG)                            //Accelerometer per G @ 8g sensitivity = ~0.24414 mg/bit 
 #define GyroScale  (GyroToDeg * RadToDeg * (float)Const_UpdateRate)
 
+
+const float Startup_ErrScale = 1.0f/32.0f;      // Converge quickly on startup
+const float Running_ErrScale = 1.0f/512.0f;     // Converge more slowly once up & running
+
+
 static int  zx, zy, zz;                          // Gyro zero readings
 
 
@@ -200,7 +205,7 @@ void QuatIMU_Start(void)
   IMU_VARS[const_neghalf]           =   -0.5f;
 
 
-  IMU_VARS[const_ErrScale]          =    1.0f/512.0f;       //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
+  IMU_VARS[const_ErrScale]          =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
   IMU_VARS[const_outAngleScale]     =    65536.0f / PI;               
   IMU_VARS[const_outNegAngleScale]  =    -65536.0f / PI;               
@@ -208,8 +213,8 @@ void QuatIMU_Start(void)
   IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
 
-  IMU_VARS[const_velAccScale]       =    0.9985f;     // was 0.9995     - Used to generate the vertical velocity estimate
-  IMU_VARS[const_velAltiScale]      =    0.0015f;     // was 0.0005
+  IMU_VARS[const_velAccScale]       =    0.9990f;     // was 0.9995     - Used to generate the vertical velocity estimate
+  IMU_VARS[const_velAltiScale]      =    0.0010f;     // was 0.0005
 
   IMU_VARS[const_velAccTrust]       =    0.9990f;      // was 0.9990    - used to generate the absolute altitude estimate
   IMU_VARS[const_velAltiTrust]      =    0.0010f;      // was 0.0010
@@ -225,6 +230,18 @@ void QuatIMU_Start(void)
 
   QuatIMU_InitFunctions();
 }
+
+
+void QuatIMU_SetErrScaleMode( int IsStartup )
+{
+  if( IsStartup ) {
+    IMU_VARS[const_ErrScale] = Startup_ErrScale;
+  }
+  else {
+    IMU_VARS[const_ErrScale] = Running_ErrScale;
+  }
+}
+
 
 
 //int QuatIMU_GetYaw(void) {

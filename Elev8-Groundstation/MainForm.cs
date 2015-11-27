@@ -500,7 +500,7 @@ namespace Elev8
 
 			if(bDebugChanged)
 			{
-				lblCycles.Text = string.Format( "{0} cycles", debugData.LoopCycles );
+				lblCycles.Text = string.Format( "CPU Cycles: {0} (min)   {1} (max)   {2} (avg)", debugData.MinCycles, debugData.MaxCycles, debugData.AvgCycles );
 				//lblCycles.Text = string.Format( "{0}", debugData.DebugFloat );
 			}
 
@@ -1063,7 +1063,7 @@ namespace Elev8
 			if(tagString == null) return;
 
 			int tagIndex = int.Parse( tagString );
-			if(tagIndex < 1 || tagIndex > 14) return;
+			if(tagIndex < 1 || tagIndex > 15) return;
 
 			bool newState = cbSender.Checked;
 			graphSources[tagIndex - 1].Active = newState;

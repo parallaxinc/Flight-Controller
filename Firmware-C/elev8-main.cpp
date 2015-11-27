@@ -37,8 +37,17 @@ const int AltiThrottleDeadband = 100;
 
 //Receiver inputs
 static RADIO Radio;
-static long  iRudd;         //Integrated rudder input value
-static long  LoopCycles = 0;
+
+static int  LoopCycles = 0;
+static int  CycleCount[8];   // Number of cycles an update loop takes, recorded over 8 cycles so we can get min/max/avg
+
+static struct CYCLESTATS {
+ int MinCycles;
+ int MaxCycles;
+ int AvgCycles;
+} Stats;
+
+
 //Sensor inputs, in order of outputs from the Sensors cog, so they can be bulk copied for speed
 static SENS sens;
 
@@ -80,7 +89,7 @@ static char FlightEnabled;            //Flight arm/disarm flag
 static char FlightMode;
 static char IsHolding;                // Are we currently in altitude hold? (hover mode)
 
-static short BatteryMonitorDelay;     //Can't start discharging the battery monitor cap until the ESCs are armed or the noise messes them up
+static short StartupDelay;            //Used to change convergence rates for IMU, enable battery monitor
 
 static char MotorPin[4];            //Motor index to pin index table
 
@@ -220,9 +229,13 @@ int main()                                    // Main function
 
     if( Prefs.UseBattMon )
     {
-      if( BatteryMonitorDelay > 0 ) {
-        BatteryMonitorDelay--;  // Count down until the startup delay has passed
+      if( StartupDelay > 0 ) {
+        StartupDelay--;       // Count down until the startup delay has passed
         LEDModeColor = LED_Blue;
+        
+        if( StartupDelay == 0 ) { // Did we JUST hit zero?
+          QuatIMU_SetErrScaleMode(0);   // No longer in power-up (fast-convergence) mode
+        }          
       }
       else
       {
@@ -258,6 +271,7 @@ int main()                                    // Main function
     DoDebugModeOutput();
 
     LoopCycles = CNT - Cycles;    // Record how long it took for one full iteration
+    CycleCount[counter & 7] = LoopCycles;
 
     ++counter;
     loopTimer += Const_UpdateCycles;
@@ -298,6 +312,7 @@ void Initialize(void)
 
   F32::Start();
   QuatIMU_Start();
+  QuatIMU_SetErrScaleMode(1);   // Start with the IMU in fast-converge mode (takes ~3 instead of ~26 seconds to converge)
 
   InitializePrefs();
 
@@ -309,7 +324,8 @@ void Initialize(void)
   }
 
   // Wait 2 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
-  BatteryMonitorDelay = (Const_UpdateRate * 2) & ~15;
+  // Also used to reduce convergence rate for the IMU (starts up with a high convergence rate)
+  StartupDelay = (Const_UpdateRate * 2) & ~15;
 
 #ifdef __PINS_V3_H__
   Battery::Init( PIN_VBATT );
@@ -490,6 +506,22 @@ void FindGyroZero(void)
   QuatIMU_SetGyroZero( GyroZX, GyroZY, GyroZZ );
 }
 
+
+void UpdateCycleStats(void)
+{
+  // Prime the initial values
+  Stats.MinCycles = CycleCount[0];
+  Stats.MaxCycles = CycleCount[0];
+  Stats.AvgCycles = CycleCount[0];
+
+  for( int i=1; i<8; i++ )
+  {
+    Stats.MinCycles = min( Stats.MinCycles, CycleCount[i] );
+    Stats.MaxCycles = max( Stats.MinCycles, CycleCount[i] );
+    Stats.AvgCycles += CycleCount[i];
+  }
+  Stats.AvgCycles >>= 3;
+}
 
 void UpdateFlightLoop(void)
 {
@@ -970,8 +1002,10 @@ void DoDebugModeOutput(void)
         break;
 
       case 1:
-        Comm.StartPacket( 7, 8 );                 // Debug values, 8 byte payload
-        Comm.AddPacketData( &LoopCycles, 4 );     // Cycles required for one complete loop  (debug data takes a LONG time)
+        UpdateCycleStats();
+        Comm.StartPacket( 7, 20 );                // Debug values, 20 byte payload
+        Comm.AddPacketData( &Stats, 12 );         // Stats on update cycle counts (sending debug data takes a long time)
+        Comm.AddPacketData( &counter, 4 );        // Send the counter (sequence timestamp)
 
         QuatIMU_GetDebugFloat( (float*)TxData );  // This is just a debug value, used for testing outputs with the IMU running
         Comm.AddPacketData( TxData, 4 );

@@ -102,12 +102,16 @@ namespace Elev8
 
 	public class DebugValues
 	{
-		public int LoopCycles;
+		public int MinCycles, MaxCycles, AvgCycles;
+		public int Counter;
 		public float DebugFloat;
 
 		public void ReadFrom( Packet p )
 		{
-			LoopCycles = p.GetInt();
+			MinCycles = p.GetInt();
+			MaxCycles = p.GetInt();
+			AvgCycles = p.GetInt();
+			Counter = p.GetInt();		// basically a sequence value
 			DebugFloat = p.GetFloat();
 		}
 	};
