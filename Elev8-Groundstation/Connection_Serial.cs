@@ -26,6 +26,8 @@ namespace Elev8
 
 		Packet[] packetsArray = new Packet[256];
 		Packet currentPacket = null;
+		UInt16 currentChecksum;
+
 		int head = 0;
 		int tail = 0;
 		
@@ -122,59 +124,126 @@ namespace Elev8
 
 		private void ProcessByte( byte b )
 		{
-			if(sigByteIndex < 2)
+			if(sigByteIndex < 2 )
 			{
-				if(b == 0x77)
+				if( sigByteIndex == 0 )
 				{
-					sigByteIndex++;
-					packetByteIndex = 0;
+					if(b == 0x55)
+					{
+						sigByteIndex++;
+						packetByteIndex = 0;
+					}
 					return;
 				}
-				else
+
+
+				if(sigByteIndex == 1)
 				{
-					sigByteIndex = 0;
-					packetByteIndex = 0;
+					if(b == 0xAA)
+					{
+						sigByteIndex++;
+						packetByteIndex = 0;
+					}
+					else
+					{
+						sigByteIndex = 0;
+					}
 					return;
 				}
 			}
+
 
 			switch( packetByteIndex )
 			{
 				case 0:
 					currentPacket = new Packet();
 					currentPacket.mode = b;
+					if(b > 0x20) {	// No such mode - bad data
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
 					packetByteIndex++;
+
+					currentChecksum = Checksum( 0, 0x55 );
+					currentChecksum = Checksum( currentChecksum, 0xAA );
+					currentChecksum = Checksum( currentChecksum, b );
 					return;
 
 				case 1:
-					currentPacket.len = b;
+					if(b > 0x04) {	// unreasonable packet size (> 1kb)
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
+					currentPacket.len = (short)(b << 8);
+					currentChecksum = Checksum( currentChecksum, b );
+					packetByteIndex++;
+					return;
+
+				case 2:
+					currentPacket.len |= (short)b;
+					currentChecksum = Checksum( currentChecksum, b );
+
+					currentPacket.len -= 5;
+					if(currentPacket.len < 1) {	// Can't have a zero length packet - bad data
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
 					currentPacket.data = new byte[currentPacket.len];
 					packetByteIndex++;
 					return;
 
 				default:
-					currentPacket.data[packetByteIndex-2] = b;
+					currentPacket.data[packetByteIndex-3] = b;
 					break;
 			}
 
 			packetByteIndex++;
-			if(packetByteIndex == (currentPacket.data.Length + 2))
+			if(packetByteIndex == (currentPacket.data.Length + 3))	// length + header bytes
 			{
 				sigByteIndex = 0;
 				packetByteIndex = 0;
-				packetsArray[head] = currentPacket;
 
-				lock(packetsArray)
+				// Validate the checksum
+				// only keep the packet if they match
+				int len = currentPacket.data.Length - 2;
+
+				UInt16 check = Checksum( currentChecksum, currentPacket.data, len );
+				UInt16 sourceCheck = (UInt16)(currentPacket.data[len] | (currentPacket.data[len + 1] << 8));
+
+				if( check == sourceCheck )
 				{
-					head = (head+1) % packetsArray.Length;
+					packetsArray[head] = currentPacket;
 
-					if(tail == head) {
-						tail = (tail + 1) % packetsArray.Length;		// Throw away oldest data if we fill the buffer
+					lock(packetsArray)
+					{
+						head = (head+1) % packetsArray.Length;
+
+						if(tail == head) {
+							tail = (tail + 1) % packetsArray.Length;		// Throw away oldest data if we fill the buffer
+						}
 					}
 				}
 			}
 		}
 
+
+		UInt16 Checksum( UInt16 crc, byte [] buf, int Length)
+		{
+			for(int i = 0; i < Length; i++)
+			{
+				crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ buf[i]);
+			}
+			return crc;
+		}
+
+		UInt16 Checksum( UInt16 crc, byte val )
+		{
+			crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ val);
+			return crc;
+		}
 
 		public Packet GetPacket()
 		{
