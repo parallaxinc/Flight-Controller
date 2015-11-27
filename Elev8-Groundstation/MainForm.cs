@@ -57,6 +57,7 @@ namespace Elev8
 		Quaternion cq = new Quaternion();	// Control (target) quaternion
 		MotorData motors = new MotorData();
 		ComputedData computed = new ComputedData();
+		DebugValues debugData = new DebugValues();
 
 		PREFS prefs = new PREFS();
 
@@ -64,6 +65,7 @@ namespace Elev8
 
 		bool InternalChange = false;
 		byte[] txBuffer = new byte[10];
+		int Heartbeat = 0;
 
 		//bool PrefsReceived = false;
 
@@ -196,6 +198,16 @@ namespace Elev8
 		private void tmCommTimer_Tick( object sender, EventArgs e )
 		{
 			UpdateStatus();
+
+			if(comm.Connected) {
+				Heartbeat++;
+				if(Heartbeat == 10) {
+					Heartbeat = 0;
+					txBuffer[0] = (byte)Mode.SensorTest;
+					comm.Send( txBuffer, 1 );		// Ping it to tell it we're still here
+				}
+			}
+
 			ProcessPackets();
 
 			CheckCalibrateControls();
@@ -205,6 +217,7 @@ namespace Elev8
 		void ProcessPackets()
 		{
 			bool bRadioChanged = false;
+			bool bDebugChanged = false;
 			bool bSensorsChanged = false;
 			bool bQuatChanged = false;
 			bool bTargetQuatChanged = false;
@@ -285,6 +298,11 @@ namespace Elev8
 							cq.z = p.GetFloat();
 							cq.w = p.GetFloat();
 							bTargetQuatChanged = true;
+							break;
+
+						case 7:	// Debug data
+							debugData.ReadFrom( p );
+							bDebugChanged = true;
 							break;
 
 						case 0x18:	// Settings
@@ -385,10 +403,6 @@ namespace Elev8
 					vbVoltage.Value = radio.BatteryVolts;
 					vbVoltage.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
 
-
-					lblCycles.Text = string.Format( "{0} cycles", radio.LoopCycles );
-					//lblCycles.Text = string.Format( "{0}", radio.DebugFloat );
-
 					if(RadioMode == RADIO_MODE.Mode2)	// North American
 					{
 						rsLeft.SetParameters( radio.Rudd, radio.Thro );
@@ -482,6 +496,12 @@ namespace Elev8
 					vbVoltage2.Value = radio.BatteryVolts;
 					vbVoltage2.RightLabel = ((float)radio.BatteryVolts / 100.0f).ToString( "0.00" );
 				}
+			}
+
+			if(bDebugChanged)
+			{
+				lblCycles.Text = string.Format( "{0} cycles", debugData.LoopCycles );
+				//lblCycles.Text = string.Format( "{0}", debugData.DebugFloat );
 			}
 
 			if(bQuatChanged) {
@@ -934,11 +954,13 @@ namespace Elev8
 			prefs.Checksum = prefs.CalculateChecksum();
 			byte[] prefBytes = prefs.ToBytes();
 
-			byte[] totalBytes = new byte[prefBytes.Length + 1];
-			totalBytes[0] = 0x19;	// Store new settings
-			prefBytes.CopyTo( totalBytes, 1 );
+			txBuffer[0] = 0x19;	// Store new settings
+			comm.Send( txBuffer, 1 );
 
-			comm.Send( totalBytes, totalBytes.Length );
+			// Wait a moment for the Elev8 to go into waiting (prevents overrunning the receive buffer)
+			Thread.Sleep( 10 );
+
+			comm.Send( prefBytes, prefBytes.Length );
 
 			// Query prefs (forces to be applied to UI)
 			txBuffer[0] = 0x18;

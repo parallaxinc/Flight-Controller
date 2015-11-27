@@ -38,6 +38,9 @@
 #define PIN_BUZZER_2  11
 
 
+#define XBEE_TX       22  // There's a solid chance I have these backwards.  Haven't tested yet
+#define XBEE_RX       21
+
 
 #define PIN_RC_0_MASK  (1<<PIN_RC_0)
 #define PIN_RC_1_MASK  (1<<PIN_RC_1)

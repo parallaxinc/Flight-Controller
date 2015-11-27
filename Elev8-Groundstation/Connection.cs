@@ -18,7 +18,8 @@ namespace Elev8
 
 	public class Packet
 	{
-		public byte mode, len;
+		public byte mode;
+		public short len;
 		public byte[] data;
 		public byte index = 0;
 

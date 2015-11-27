@@ -46,7 +46,7 @@ int F32::Start(void)
 
   v.cmdCallTableAddr = (int *)driverMem + i + 1;
 
-  load_cog_driver(f32_driver, &v.f32_cmd);
+  cog = load_cog_driver(f32_driver, &v.f32_cmd);
   return cog;
 }
 

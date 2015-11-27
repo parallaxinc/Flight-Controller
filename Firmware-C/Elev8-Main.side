@@ -32,6 +32,11 @@ quatimu.cpp
 quatimu.h
 prefs.cpp
 prefs.h
+serial_4x.cpp
+serial_4x.h
+serial_4x_driver.spin
+commlink.cpp
+commlink.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

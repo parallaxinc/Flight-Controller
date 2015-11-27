@@ -3,30 +3,34 @@
 */
 
 #include <propeller.h>
-#include <fdserial.h>
 
-#include "battery.h"
-#include "beep.h"
-#include "constants.h"
-#include "eeprom.h"
-#include "elev8-main.h"
-#include "f32.h"
-#include "intpid.h"
-#include "pins.h"
-#include "prefs.h"
-#include "quatimu.h"
-#include "rc.h"
-#include "sbus.h"
-#include "sensors.h"
-#include "servo32_highres.h"
+#include "battery.h"            // Battery monitor functions (charge time to voltage)
+#include "beep.h"               // Piezo beeper functions
+#include "commlink.h"           // GroundStation communication link
+#include "constants.h"          // Project-wide constants, like clock rate, update frequency
+#include "elev8-main.h"         // Main thread functions and defines                            (Main thread takes 1 COG)
+#include "f32.h"                // 32 bit IEEE floating point math and stream processor         (1 COG)
+#include "intpid.h"             // Integer PID functions
+#include "pins.h"               // Pin assignments for the hardware
+#include "prefs.h"              // User preferences storage
+#include "quatimu.h"            // Quaternion IMU and control functions
+#include "rc.h"                 // High precision 8-port R/C PWM input driver                   (1 COG, if enabled)
+#include "sbus.h"               // S-BUS (Futaba 1-wire receiver) driver                        (1 COG, if enabled)
+#include "sensors.h"            // Sensors (gyro,accel,mag,baro) + LEDs driver                  (1 COG)
+#include "serial_4x.h"          // 4 port simultaneous serial I/O                               (1 COG)
+#include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
-fdserial *dbg;
-fdserial_st *dbg_st;
-char* dbg_txbuf;
+
+// TODO: Might want to consider accelerating the comms by caching the buffer pointers, etc.
+
+COMMLINK Comm;          // Communication protocol for Elev8
+
+short UsbPulse = 0;     // Periodically, the GroundStation will ping the FC to say it's still there - these are countdowns
+short XBeePulse = 0;
 
 
 // Potential new settings values
-const int AltiThrottleDeadband = 150;
+const int AltiThrottleDeadband = 100;
 
 
 //Working variables for the flight controller
@@ -53,10 +57,8 @@ static signed char NudgeMotor;        // Which motor to nudge during testing (-1
 
 static char AccelAssistZFactor  = 32; // 0 to 64 == 0 to 1.0
 
-static long  AltiEst, AscentEst;
-
-//Working variables - used to convert receiver inputs to desired ranges for the PIDs  
-static long  DesiredAltitude, DesiredAltitudeFractional;
+static long  AltiEst, AscentEst;                              // altitude estimate and ascent rate estimate
+static long  DesiredAltitude, DesiredAscentRate;              // desired values for altitude and ascent rate
 
 static long  RollDifference, PitchDifference, YawDifference;  //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
@@ -76,6 +78,7 @@ static short CompassConfigStep;       //Compass configure mode counter
 
 static char FlightEnabled;            //Flight arm/disarm flag
 static char FlightMode;
+static char IsHolding;                // Are we currently in altitude hold? (hover mode)
 
 static short BatteryMonitorDelay;     //Can't start discharging the battery monitor cap until the ESCs are armed or the noise messes them up
 
@@ -94,7 +97,7 @@ static char calib_step;
 static long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
 // PIDs for roll, pitch, yaw, altitude
-static IntPID  RollPID, PitchPID, YawPID, AscentPID;
+static IntPID  RollPID, PitchPID, YawPID, AltPID, AscentPID;
 
 
 // Used to attenuate the brightness of the LEDs, if desired.  A shift of zero is full brightness
@@ -102,45 +105,6 @@ const int LEDBrightShift = 0;
 const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
 
-
-
-// BEWARE - This function bypasses ALL safety checks for buffer throughput.
-// BE VERY CAREFUL that you don't send more than is possible at one time.
-static void TxUnsafe( char c ) {
-  dbg_txbuf[ dbg_st->tx_head ] = c;
-  dbg_st->tx_head = (dbg_st->tx_head+1) & FDSERIAL_BUFF_MASK;
-}
-
-static void TxBulkUnsafe( void * data , int Bytes )
-{
-  char * buf = (char *)data;
-  int head = dbg_st->tx_head;
-
-  while(Bytes > 0)
-  {
-    int bufRemain = (FDSERIAL_BUFF_MASK+1) - head;
-    if( bufRemain > Bytes ) bufRemain = Bytes;
-
-    memcpy( dbg_txbuf+head, buf, bufRemain );
-    Bytes -= bufRemain;
-    buf += bufRemain;
-    head = (head + bufRemain) & FDSERIAL_BUFF_MASK;
-  }  
-  dbg_st->tx_head = head;
-}
-
-// These versions are safe to call, and properly wait for the buffer to have space for data
-static void Tx( char c ) {
-  fdserial_txChar( dbg, c );
-}  
-
-static void TxBulk( const void * buf , int bytes )
-{
-  const char *data = (const char *)buf;
-  for( int i=0; i<bytes; i++ ) {
-    Tx( data[i] );
-  }    
-}
 
 /*  // Only used for debugging
 static void TxInt( int x , int Digits )
@@ -243,6 +207,9 @@ int main()                                    // Main function
           DesiredAltitude = AltiEst;
         }
 
+        // ANY flight mode change means you're not currently holding altitude
+        IsHolding = 0;
+
         FlightMode = NewFlightMode;
       }
 
@@ -319,11 +286,10 @@ void Initialize(void)
   GyroRPFilter = 192;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
   GyroYawFilter = 192;
 
-  dbg = fdserial_open( 31, 30, 0, 115200 );   // USB
-  //dbg = fdserial_open( 24, 25, 0, 57600 );     // XBee - V2 board (packets contain dropped bytes, likely need to reduce rate, add checksum)
+  InitSerial();
 
-  dbg_st = (fdserial_st*)dbg->devst; // Cache a pointer to the FDSerial device structure
-  dbg_txbuf = (char*)dbg_st->buffptr + FDSERIAL_BUFF_MASK+1;  
+  //dbg = fdserial_open( 31, 30, 0, 115200 );   // USB
+  //dbg = fdserial_open( 24, 25, 0, 57600 );     // XBee - V2 board (packets contain dropped bytes, likely need to reduce rate, add checksum)
 
   All_LED( LED_Red & LED_Half );                         //LED red on startup
 
@@ -388,16 +354,50 @@ void Initialize(void)
   YawPID.SetDervativeFilter( 192 );
 
 
-  //Altitude hold PID object
-  AscentPID.Init( 600, 1250 * Const_UpdateRate, 0, Const_UpdateRate );
-  AscentPID.SetPrecision( 14 );
-  AscentPID.SetMaxOutput( 3000 );
-  AscentPID.SetPIMax( 100 );
-  AscentPID.SetMaxIntegral( 3000 );
-  AscentPID.SetDervativeFilter( 128 );
+  // TODO: Need to get an XBee or a logger going here, 'cause I need to see what's happening inside these objects
+  // data logs would be very helpful for tuning these.  The cascaded controllers are kind of magically weird.
 
+ 
+  // Altitude hold PID object
+  // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
+  AltPID.Init( 600, 500 * Const_UpdateRate, 0, Const_UpdateRate );
+  AltPID.SetPrecision( 14 );
+  AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
+  AltPID.SetPIMax( 1000 );
+  AltPID.SetMaxIntegral( 4000 );
+
+
+  // Vertical rate PID object
+  // The vertical rate PID object manages vertical speed in alt hold mode
+  AscentPID.Init( 1100, 0 * Const_UpdateRate, 0 * Const_UpdateRate , Const_UpdateRate );
+  AscentPID.SetPrecision( 12 );
+  AscentPID.SetMaxOutput( 4000 );   // Limit of the control rate applied to the throttle
+  AscentPID.SetPIMax( 500 );
+  AscentPID.SetMaxIntegral( 2000 );
+
+  
   FindGyroZero();
 }
+
+static char RXBuf1[32], TXBuf1[64];
+static char RXBuf2[32], TXBuf2[64];
+static char RXBuf3[128],TXBuf3[4];  // GPS?
+static char RXBuf4[4],  TXBuf4[4];  // Unused
+
+void InitSerial(void)
+{
+  S4_Initialize();
+
+  S4_Define_Port(0, 115200,      30, TXBuf1, sizeof(TXBuf1),      31, RXBuf1, sizeof(RXBuf1));
+  S4_Define_Port(1,  57600, XBEE_TX, TXBuf2, sizeof(TXBuf2), XBEE_RX, RXBuf2, sizeof(RXBuf2));
+
+  // Unused ports get a pin value of 32
+  S4_Define_Port(2,   9600, 32, TXBuf3, sizeof(TXBuf3), 32, RXBuf3, sizeof(RXBuf3));
+  S4_Define_Port(3,   2400, 32, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
+
+  S4_Start();
+}
+
 
 static int clamp( int v, int min, int max ) {
   v = (v < min) ? min : v;
@@ -604,36 +604,53 @@ void UpdateFlightLoop(void)
     {
       if( FlightMode == FlightMode_Automatic )
       {
+        int AdjustedThrottle = 0;
+
         // Throttle has to be off zero by a bit - deadband around zero helps keep it still
         if( abs(Radio.Thro) > AltiThrottleDeadband )
         {
+          IsHolding = 0;    // No longer attempting to hold a hover
+
           // Remove the deadband area from center stick so we don't get a hiccup as you transition out of it
-          int AdjustedThrottle = (Radio.Thro > 0) ? (Radio.Thro - AltiThrottleDeadband) : (Radio.Thro + AltiThrottleDeadband);
+          AdjustedThrottle = (Radio.Thro > 0) ? (Radio.Thro - AltiThrottleDeadband) : (Radio.Thro + AltiThrottleDeadband);
 
-          // radio range is +/- 1024.  I'm keeping 8 bits of fractional precision, which
-          // means incrementing by 1 unit per update at 250hz would result in 1 unit per
-          // second of full-unit change.  Since our altitude units are millimeters, a full
-          // throttle push would be 1024 units per second, or rougly 1 meter per second max rate.
-          // I multiply the throttle by 4 to give a 4 m/sec ascent/descent rate
+          DesiredAscentRate = AdjustedThrottle * 6000 / (1024 - AltiThrottleDeadband);
+        }
+        else
+        {
+          // Are we just entering altitude hold mode?
+          if( IsHolding == 0 ) {
+            IsHolding = 1;
+            DesiredAltitude = AltiEst;  // Start with our current altitude as the hold height
+            AltPID.ResetIntegralError();
+          }
 
-          DesiredAltitudeFractional += AdjustedThrottle << 2;
-          DesiredAltitude += (DesiredAltitudeFractional >> 8);
-          DesiredAltitudeFractional -= (DesiredAltitudeFractional & 0xFFFFFF00);
+          // in-flight PID tuning
+          //T1 = 1024 + Radio.Aux2;             // Left side control
+          //T2 = 1250 + Radio.Aux3;             // Right side control
+
+          //AltPID.SetPGain( T1 );
+          //AltPID.SetIGain( T2 * 250 );
+
+
+          // Use a PID object to compute velocity requirements for the AscentPID object
+          DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
         }
 
-        /*
+
         // in-flight PID tuning
-        T1 = 2048 + (Radio.Aux2<<1);            // Left side control
-        T2 = 1250 + Radio.Aux3;                 // Right side control
+        T1 = 1024 + Radio.Aux2;             // Left side control
+        T2 = 1024 + Radio.Aux3;             // Right side control
 
-        AscentPID.SetDGain( T1 * 250);
+        AscentPID.SetPGain( T1 );
         AscentPID.SetIGain( T2 * 250 );
-        */
 
-        AltiThrust = AscentPID.Calculate( DesiredAltitude , AltiEst , DoIntegrate );
-        ThroOut = Prefs.CenterThrottle + AltiThrust + (Radio.Thro << 1);
+
+        AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
+        ThroOut = Prefs.CenterThrottle + AltiThrust + AdjustedThrottle; // Feed in a bit of the user throttle to help with quick throttle changes
       }
-      else
+
+      if( AccelAssistZFactor > 0 )
       {
         // Accelerometer assist    
         if( abs(Radio.Aile) < 300 && abs(Radio.Elev) < 300 && ThroMix > 32) { //Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
@@ -641,11 +658,14 @@ void UpdateFlightLoop(void)
         }
       }
 
-      //Tilt compensated thrust assist
-      ThrustMul = 256 + ((QuatIMU_GetThrustFactor() - 256) * Prefs.ThrustCorrectionScale) / 256;
-      ThrustMul = clamp( ThrustMul, 256 , 384 );    //Limit the effect of the thrust modifier
-      ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
-    }      
+      if( Prefs.ThrustCorrectionScale > 0 )
+      {
+        // Tilt compensated thrust assist
+        ThrustMul = 256 + ((QuatIMU_GetThrustFactor() - 256) * Prefs.ThrustCorrectionScale) / 256;
+        ThrustMul = clamp( ThrustMul, 256 , 384 );    //Limit the effect of the thrust modifier
+        ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
+      }        
+    }
     //-------------------------------------------
 
 
@@ -732,7 +752,7 @@ void UpdateFlightLEDColor(void)
   }
   else {
     int index = (counter >> 3) & 15;
-    if( index < 3 ) {
+    if( index < 3 || IsHolding ) {  // Temporary, so I can tell
       LEDModeColor = (LEDColorTable[FlightMode & 3] & LEDBrightMask) >> LEDBrightShift;
     }    
     else {
@@ -785,41 +805,34 @@ void DoCompassCalibrate(void)
   // Placeholder
 }
 
-static int GetDbgShort(void)
-{
-  short v = (fdserial_rxChar(dbg) << 8) | fdserial_rxChar(dbg);
-  return v;
-}  
-
-static void TxMode( int val )
-{
-  Tx(0x77);
-  Tx(0x77);
-  Tx(val);
-}
-
-static void TxHeader( char Mode, char Len )
-{
-  int Header = 0x7777 | (Mode << 16) | (Len << 24);
-  TxBulkUnsafe( &Header, 4 );
-}  
 
 void CheckDebugInput(void)
 {
-  struct FROM_HOST {
-    int gsx, gsy, gsz, gox, goy, goz, aox, aoy, aoz, rollOfsSin, rollOfsCos, pitchOfsSin, pitchOfsCos;
-  } host;
   int i;
 
-  int c = fdserial_rxCheck(dbg);
-  if( c < 0 ) return;
+  char port = 0;
+  int c = S4_Check(0);
+  if(c < 0) {
+    c = S4_Check(1);
+    if(c < 0)
+      return;
+    port = 1;
+  }
 
   if( c <= MODE_MotorTest ) {
     Mode = c;
+    if( port == 0 ) {
+      UsbPulse = 500;   // send USB data for the next two seconds (we'll get another heartbeat before then)
+      XBeePulse = 0;
+    }      
+    if( port == 1 ) {
+      UsbPulse = 0;
+      XBeePulse = 500;  // send XBee data for the next two seconds (we'll get another heartbeat before then)
+    }      
     return;
   }
 
-  if( (c & 0xF8) == 0x08 ) {  //Nudge one of the motors
+  if( port == 0 && (c & 0xF8) == 0x08 ) {  //Nudge one of the motors (ONLY allowed over USB)
       NudgeMotor = c & 7;  //Nudge the motor selected by the configuration app
       return;
   }
@@ -838,25 +851,6 @@ void CheckDebugInput(void)
         //Reset gyro drift settings
         Sensors_ResetDriftValues();
       }
-      /*
-      // These are now done by simply updating the prefs
-      else if( c == 0x12 )
-      {
-        //Write new gyro drift settings - followed by 6 WORD values
-        host.gsx = GetDbgShort();
-        host.gsy = GetDbgShort();
-        host.gsz = GetDbgShort();
-        host.gox = GetDbgShort();
-        host.goy = GetDbgShort();
-        host.goz = GetDbgShort();
-
-        //Copy the values into the settings object
-        memcpy( &Prefs.DriftScale[0], &host.gsx, 6*sizeof(int) );
-
-        ApplyPrefs();                                                        //Apply the settings changes
-        Prefs_Save();
-        loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
-      }*/
       else if( c == 0x13 )
       {
         for( int i=0; i<8; i++ ) {
@@ -877,55 +871,21 @@ void CheckDebugInput(void)
         //Reset accel offset settings
         Sensors_ResetAccelOffsetValues();
       }
-      /*
-      // These are now done by simply updating the prefs
-      else if( c == 0x16 )
-      {
-        //Write new accelerometer offset settings - followed by 3 WORD values
-        host.aox = GetDbgShort();
-        host.aoy = GetDbgShort();
-        host.aoz = GetDbgShort();
 
-        //Copy the values into the settings object
-        memcpy( &Prefs.AccelOffset[0], &host.aox, 3*sizeof(int) );
-        
-        ApplyPrefs();                                                           //Apply the settings changes
-        Prefs_Save();
-        loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
-      }
-      else if( c == 0x17 )
-      {
-        //Write new accelerometer rotation settings - followed by 4 FLOAT values (Sin.Cos, Sin,Cos)
-        for( i=0; i<16; i++ ) {
-          ((char *)&host.rollOfsSin)[i] = fdserial_rxChar(dbg);
-        }
-
-        //Copy the values into the settings object
-        memcpy( &Prefs.RollCorrect[0], &host.rollOfsSin, 4*sizeof(int) );
-        
-        ApplyPrefs();                                                           //Apply the settings changes
-        Prefs_Save();
-        loopTimer = CNT;                                                        //Reset the loop counter in case we took too long 
-      }
-      */
     }      
-  }  
+  }
 
 
   if( (c & 0xf8) == 0x18 )        //Query or modify all settings
   {
     if( c == 0x18 )               //Query current settings
     {
-      TxMode( 0x18 );
-      int size = sizeof(Prefs);
-      Tx( size );   // Note that this will only work up to a packet size of 255 bytes - could always transmit two length bytes, perhaps?
-
       Prefs.Checksum = Prefs_CalculateChecksum( Prefs );
-      TxBulk( &Prefs, size );
+      int size = sizeof(Prefs);
 
-      // Wait for the data to finish sending so our unsafe Tx functions don't overwrite it
-      while( fdserial_txEmpty(dbg) == 0 )
-        ;
+      Comm.StartPacket( 0, 0x18 , size );
+      Comm.AddPacketData( 0, &Prefs, size );
+      Comm.EndPacket(port);
 
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }
@@ -933,7 +893,7 @@ void CheckDebugInput(void)
     {
       PREFS TempPrefs;
       for( int i=0; i<sizeof(Prefs); i++ ) {
-        ((char *)&TempPrefs)[i] = fdserial_rxTime(dbg, 50);   // wait up to 40ms per byte - Should be plenty
+        ((char *)&TempPrefs)[i] = S4_Get_Timed(port, 50);   // wait up to 50ms per byte - Should be plenty
       }
 
       if( Prefs_CalculateChecksum( TempPrefs ) == TempPrefs.Checksum ) {
@@ -956,7 +916,7 @@ void CheckDebugInput(void)
     }
     else if( c == 0x1a )    // default prefs - wipe
     {
-      if( fdserial_rxTime(dbg, 50) == 0x1a )
+      if( S4_Get_Timed(port, 50) == 0x1a )
       {
         Prefs_SetDefaults();
         Prefs_Save();
@@ -967,16 +927,33 @@ void CheckDebugInput(void)
   }
 
   if( c == 0xff ) {
-    fdserial_txChar( dbg, 0xE8);    //Simple ping-back to tell the application we have the right comm port
+    S4_Put(port, 0xE8);     //Simple ping-back to tell the application we have the right comm port
   }
 }
 
 void DoDebugModeOutput(void)
 {
-  int loop, addr, i;
+  int loop, addr, i, phase;
+  char port = 0;
+
+  if( UsbPulse > 0 ) {
+    if( --UsbPulse == 0 ) {
+      Mode = MODE_None;
+      return;
+    }
+    phase = counter & 7;    // Translates to 31.25 full updates per second, at 250hz
+  }
+  else if( XBeePulse > 0 )
+  {
+    if( --UsbPulse == 0 ) {
+      Mode = MODE_None;
+      return;
+    }
+    port = 1;
+    phase = ((counter >> 1) & 7) | ((counter & 1) << 16);    // Translates to ~15 full updates per second, at 250hz
+  }    
 
   if( Mode == MODE_None ) return;
-  int phase = counter & 7;    // Translates to 31.25 full updates per second, at 250hz
 
   switch( Mode )
   {
@@ -985,22 +962,25 @@ void DoDebugModeOutput(void)
       switch( phase )
       {
       case 0:
-        {
-        TxHeader( 1, 26 );            // Radio values, 22 byte payload
-        TxBulkUnsafe( &Radio , 16 );       // Radio struct is 16 bytes total
-        TxBulkUnsafe( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
-        }        
+        Comm.StartPacket( 1, 18 );               // Radio values, 22 byte payload
+        Comm.AddPacketData( &Radio , 16 );       // Radio struct is 16 bytes total
+        Comm.AddPacketData( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
+        Comm.EndPacket();
+        Comm.SendPacket(port);
         break;
 
       case 1:
-        TxBulkUnsafe( &LoopCycles, 4 );    // Cycles required for one complete loop  (debug data takes a LONG time)
+        Comm.StartPacket( 7, 8 );                 // Debug values, 8 byte payload
+        Comm.AddPacketData( &LoopCycles, 4 );     // Cycles required for one complete loop  (debug data takes a LONG time)
 
         QuatIMU_GetDebugFloat( (float*)TxData );  // This is just a debug value, used for testing outputs with the IMU running
-        TxBulkUnsafe( TxData, 4 );
+        Comm.AddPacketData( TxData, 4 );
+        Comm.EndPacket();
+        Comm.SendPacket(port);
         break;
 
       case 2:
-        TxData[0] = sens.Temperature;    //Copy the values we're interested in into a WORD array, for faster transmission                        
+        TxData[0] = sens.Temperature;       //Copy the values we're interested in into a WORD array, for faster transmission                        
         TxData[1] = sens.GyroX;
         TxData[2] = sens.GyroY;
         TxData[3] = sens.GyroZ;
@@ -1011,13 +991,13 @@ void DoDebugModeOutput(void)
         TxData[8] = sens.MagY;
         TxData[9] = sens.MagZ;
 
-        TxHeader( 2, 20 );    // Sensor values, 20 byte payload
-        TxBulkUnsafe( &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
+        Comm.BuildPacket( 2, &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
+        Comm.SendPacket(port);
         break;
 
       case 4:
-        TxHeader( 3, 16 );  // Quaternion data, 16 byte payload
-        TxBulkUnsafe( QuatIMU_GetQuaternion() , 16 );
+        Comm.BuildPacket( 3, QuatIMU_GetQuaternion(), 16 );  // Quaternion data, 16 byte payload
+        Comm.SendPacket(port);
         break;
 
       case 5: // Motor data
@@ -1025,29 +1005,29 @@ void DoDebugModeOutput(void)
         TxData[1] = Motor[1];
         TxData[2] = Motor[2];
         TxData[3] = Motor[3];
-        TxHeader( 5, 8 );   // 8 byte payload
-        TxBulkUnsafe( &TxData, 8 );
+        Comm.BuildPacket( 5, &TxData, 8 );   // 8 byte payload
+        Comm.SendPacket(port);
         break;
 
 
       case 6:
-        TxHeader( 4, 24 );  // Computed data, 24 byte payload
+        Comm.StartPacket( 4, 24 );   // Computed data, 24 byte payload
 
-        TxBulkUnsafe( &PitchDifference, 4 );
-        TxBulkUnsafe( &RollDifference, 4 );
-        TxBulkUnsafe( &YawDifference, 4 );
+        Comm.AddPacketData( &PitchDifference, 4 );
+        Comm.AddPacketData( &RollDifference, 4 );
+        Comm.AddPacketData( &YawDifference, 4 );
 
-        TxBulkUnsafe( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
-        TxBulkUnsafe( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
-        TxBulkUnsafe( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
+        Comm.AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
+        Comm.AddPacketData( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
+        Comm.AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
+        Comm.EndPacket();
+        Comm.SendPacket(port);
         break;
 
       case 7:
-        TxHeader( 6, 16 );  // Desired Quaternion data, 16 byte payload
-
-        // Uncomment to send the desired orientation quat instead of the measured orientation
         QuatIMU_GetDesiredQ( (float*)TxData );
-        TxBulkUnsafe( TxData, 16 );
+        Comm.BuildPacket( 6, TxData, 16 );   // Desired Quaternion data, 16 byte payload
+        Comm.SendPacket(port);
         break;
       }
     }
@@ -1096,13 +1076,13 @@ void DoDebugModeOutput(void)
       waitcnt( CNT + 5000000 );
       BeepHz(4500, 100);
 
-      if( fdserial_rxChar(dbg) == 0xFF )  //Safety check - Allow the user to break out by sending anything else                  
+      if( S4_Get(0) == 0xFF )  //Safety check - Allow the user to break out by sending anything else                  
       {
         for( int i=0; i<4; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MaxThrottle);
         }
 
-        fdserial_rxChar(dbg);
+        S4_Get(0);
 
         for( int i=0; i<4; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MinThrottle);  // Must add 64 to min throttle value (in this calibration code only) if using ESCs with BLHeli version 14.0 or 14.1
@@ -1114,7 +1094,7 @@ void DoDebugModeOutput(void)
       for( int i=0; i<4; i++ ) {
         Servo32_Set(MotorPin[i], Prefs.MinThrottle);
       }
-    }        
+    }
     NudgeMotor = -1;
     loopTimer = CNT;
   }

@@ -8,6 +8,11 @@ static int clamp( int v, int min, int max ) {
   return v;
 }
 
+static int abs(int v) {
+  v = (v<0) ? -v : v;
+  return v;
+}
+
 
 void IntPID::Init( int PGain, int IGain, int DGain, short _SampleRate )
 {
@@ -50,23 +55,41 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     PClamped = clamp( PClamped, -PMax, PMax );
   }
 
-  int Output = ((Kp * PClamped) + (Kd * DError) + (Ki * IError) + RoundOffset) >> Precision;
+  int Output = (Kp * PClamped);
+  if( Kd ) {
+    Output += (Kd * DError);
+  }
+
+  if( Ki ) {
+    Output += (Ki * IError);
+  }
+
+  Output = (Output + RoundOffset) >> Precision;
   
   //Accumulate Integral error *or* Limit output. 
   //Stop accumulating when output saturates 
 
-  Output = clamp( Output, -MaxOutput, MaxOutput );
-     
-  if( DoIntegrate )
+  if( abs(Output) > MaxOutput ) {
+    //if( DoIntegrate && Ki ) {
+    //  int Over = ((abs(Output) - MaxOutput) << Precision) / Ki;
+    //  if( Output > 0 )
+    //    IError -= Over;
+    //  else
+    //    IError += Over;
+    //}
+
+    Output = clamp( Output, -MaxOutput, MaxOutput );
+  }    
+
+  if( DoIntegrate && Ki != 0 )
   {
     PClamped = PError;
-    if( PIMax > 0 )
-    {
+    if( PIMax > 0 ) {
       PClamped = clamp( PClamped, -PIMax, PIMax );
-     
-      IError += PClamped;
-      IError = clamp( IError, -MaxIntegral, MaxIntegral );
-	 }
+    }
+
+    IError += PClamped;
+    IError = clamp( IError, -MaxIntegral, MaxIntegral );
   }
      
   return Output;

@@ -27,6 +27,8 @@ namespace Elev8
 
 		Packet[] packetsArray = new Packet[256];
 		Packet currentPacket = null;
+		UInt16 currentChecksum;
+
 		int head = 0;
 		int tail = 0;
 		
@@ -122,59 +124,127 @@ namespace Elev8
 
 		private void ProcessByte( byte b )
 		{
-			if(sigByteIndex < 2)
+			if(sigByteIndex < 2 )
 			{
-				if(b == 0x77)
+				if( sigByteIndex == 0 )
 				{
-					sigByteIndex++;
-					packetByteIndex = 0;
+					if(b == 0x55)
+					{
+						sigByteIndex++;
+						packetByteIndex = 0;
+					}
 					return;
 				}
-				else
+
+
+				if(sigByteIndex == 1)
 				{
-					sigByteIndex = 0;
-					packetByteIndex = 0;
+					if(b == 0xAA)
+					{
+						sigByteIndex++;
+						packetByteIndex = 0;
+					}
+					else
+					{
+						sigByteIndex = 0;
+					}
 					return;
 				}
 			}
+
 
 			switch( packetByteIndex )
 			{
 				case 0:
 					currentPacket = new Packet();
 					currentPacket.mode = b;
+					if(b > 0x20) {	// No such mode - bad data
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
 					packetByteIndex++;
+
+					currentChecksum = Checksum( 0, 0x55 );
+					currentChecksum = Checksum( currentChecksum, 0xAA );
+					currentChecksum = Checksum( currentChecksum, b );
 					return;
 
 				case 1:
-					currentPacket.len = b;
+					if(b > 0x04) {	// unreasonable packet size (> 1kb)
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
+					currentPacket.len = (short)(b << 8);
+					currentChecksum = Checksum( currentChecksum, b );
+					packetByteIndex++;
+					return;
+
+				case 2:
+					currentPacket.len |= (short)b;
+					currentChecksum = Checksum( currentChecksum, b );
+
+					currentPacket.len -= 5;
+					if(currentPacket.len < 1) {	// Can't have a zero length packet - bad data
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
 					currentPacket.data = new byte[currentPacket.len];
 					packetByteIndex++;
 					return;
 
 				default:
-					currentPacket.data[packetByteIndex-2] = b;
+					currentPacket.data[packetByteIndex-3] = b;
 					break;
 			}
 
 			packetByteIndex++;
-			if(packetByteIndex == (currentPacket.data.Length + 2))
+			if(packetByteIndex == (currentPacket.data.Length + 3))	// length + header bytes
 			{
 				sigByteIndex = 0;
 				packetByteIndex = 0;
-				packetsArray[head] = currentPacket;
 
-				lock(packetsArray)
+				// Validate the checksum
+				// only keep the packet if they match
+				int len = currentPacket.data.Length - 2;
+
+				UInt16 check = Checksum( currentChecksum, currentPacket.data, len );
+				UInt16 sourceCheck = (UInt16)(currentPacket.data[len] | (currentPacket.data[len + 1] << 8));
+
+				if( check == sourceCheck )
 				{
-					head = (head+1) % packetsArray.Length;
+					packetsArray[head] = currentPacket;
 
-					if(tail == head) {
-						tail = (tail + 1) % packetsArray.Length;		// Throw away oldest data if we fill the buffer
+					lock(packetsArray)
+					{
+						head = (head+1) % packetsArray.Length;
+
+						if(tail == head) {
+							tail = (tail + 1) % packetsArray.Length;		// Throw away oldest data if we fill the buffer
+						}
 					}
 				}
 			}
 		}
 
+
+		UInt16 Checksum( UInt16 crc, byte [] buf, int Length)
+		{
+			for(int i = 0; i < Length; i++)
+			{
+				crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ buf[i]);
+			}
+			return crc;
+		}
+
+		UInt16 Checksum( UInt16 crc, byte val )
+		{
+			crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ val);
+			return crc;
+		}
+		
 
 		public Packet GetPacket()
 		{
@@ -235,59 +305,71 @@ namespace Elev8
 				{
 					if(DeviceList[i].Type != FTDI.FT_DEVICE.FT_DEVICE_X_SERIES) continue;
 
-					ftStatus = ftdi.OpenBySerialNumber( DeviceList[i].SerialNumber );
-					if(ftStatus == FTDI.FT_STATUS.FT_OK)
+					for(int baud = 0; baud < 2; baud++)
 					{
-						string portName;
-						ftdi.GetCOMPort( out portName );
-						if(portName == null || portName == "")
+						ftStatus = ftdi.OpenBySerialNumber( DeviceList[i].SerialNumber );
+						if(ftStatus == FTDI.FT_STATUS.FT_OK)
 						{
-							ftdi.Close();
-							continue;
-						}
-
-						ftdi.SetBaudRate( 115200 );
-						ftdi.SetDataCharacteristics( 8, 1, 0 );
-						ftdi.SetFlowControl( FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0, 0 );
-
-
-						txBuffer[0] = (byte)0;		// Set it to MODE_None to stop it writing (reset in case it was disconnected)
-						txBuffer[1] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
-						uint written = 0;
-
-						for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
-						{
-							ftdi.Write( txBuffer, 2, ref written );
-							System.Threading.Thread.Sleep( 50 );
-
-							uint bytesAvail = 0;
-							ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
-							if(bytesAvail > 0)
+							string portName;
+							ftdi.GetCOMPort( out portName );
+							if(portName == null || portName == "")
 							{
-								uint bytesRead = 0;
-								ftdi.Read( rxBuffer, 1, ref bytesRead );			// If it comes back with 0xE8 it's the one we want
-								if(bytesRead == 1 && rxBuffer[0] == 0xE8)
+								ftdi.Close();
+								continue;
+							}
+
+							if(baud == 0) {
+								ftdi.SetBaudRate( 115200 );	// try this first
+							}
+							else {
+								ftdi.SetBaudRate( 57600 );	// then try this (xbee)
+							}
+
+							ftdi.SetDataCharacteristics( 8, 1, 0 );
+							ftdi.SetFlowControl( FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0, 0 );
+
+
+							txBuffer[0] = (byte)0;		// Set it to MODE_None to stop it writing (reset in case it was disconnected)
+							txBuffer[1] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
+							uint written = 0;
+
+							for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
+							{
+								ftdi.Write( txBuffer, 2, ref written );
+								System.Threading.Thread.Sleep( 50 );
+
+								uint bytesAvail = 0;
+								ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
+								if(bytesAvail > 0)
 								{
-									FoundElev8 = true;
-									commStat = CommStatus.Connected;
-									break;
+									uint bytesRead = 0;
+									ftdi.Read( rxBuffer, 1, ref bytesRead );			// If it comes back with 0xE8 it's the one we want
+									if(bytesRead == 1 && rxBuffer[0] == 0xE8)
+									{
+										FoundElev8 = true;
+										commStat = CommStatus.Connected;
+										break;
+									}
 								}
 							}
-						}
 
-						if(FoundElev8) {
-							connected = true;
-							txBuffer[0] = 2;	// MODE_Sensors
-							written = 0;
-							ftdi.Write( txBuffer, 1, ref written );
+							if(FoundElev8)
+							{
+								connected = true;
+								txBuffer[0] = 2;	// MODE_Sensors
+								written = 0;
+								ftdi.Write( txBuffer, 1, ref written );
 
-							if(ConnectionStarted != null) {
-								ConnectionStarted();
+								if(ConnectionStarted != null)
+								{
+									ConnectionStarted();
+								}
+								break;
 							}
-							break;
-						}
-						else {
-							ftdi.Close();
+							else
+							{
+								ftdi.Close();
+							}
 						}
 					}
 				}

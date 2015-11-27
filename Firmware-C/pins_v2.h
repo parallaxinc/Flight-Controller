@@ -32,6 +32,8 @@
 #define PIN_BUZZER_1  6
 #define PIN_BUZZER_2  7
 
+#define XBEE_TX       25
+#define XBEE_RX       24
 
 #define FORCE_SBUS
 
