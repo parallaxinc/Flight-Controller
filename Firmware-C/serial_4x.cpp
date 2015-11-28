@@ -416,7 +416,7 @@ char S4_Get_Bytes_Timed(char The_Port, char * The_Buffer, int The_Count, int MS_
 
       return 1;
     }
-  } while( ! (((CNT - Stamp) / (CLKFREQ / 1000)) > MS_Timer)  );
+  } while( (((CNT - Stamp) / (CLKFREQ / 1000)) < MS_Timer)  );
 
   return 0;
 }

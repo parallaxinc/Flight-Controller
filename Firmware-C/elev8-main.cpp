@@ -376,8 +376,8 @@ void Initialize(void)
  
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
-  AltPID.Init( 600, 500 * Const_UpdateRate, 0, Const_UpdateRate );
-  AltPID.SetPrecision( 14 );
+  AltPID.Init( 1024, 0 * Const_UpdateRate, 0, Const_UpdateRate );
+  AltPID.SetPrecision( 8 );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
@@ -385,8 +385,8 @@ void Initialize(void)
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
-  AscentPID.Init( 1100, 0 * Const_UpdateRate, 0 * Const_UpdateRate , Const_UpdateRate );
-  AscentPID.SetPrecision( 12 );
+  AscentPID.Init( 1024, 0 * Const_UpdateRate, 0 * Const_UpdateRate , Const_UpdateRate );
+  AscentPID.SetPrecision( 8 );
   AscentPID.SetMaxOutput( 4000 );   // Limit of the control rate applied to the throttle
   AscentPID.SetPIMax( 500 );
   AscentPID.SetMaxIntegral( 2000 );
@@ -601,7 +601,7 @@ void UpdateFlightLoop(void)
 
 
 
-    if( Radio.Thro < -800 )
+    if( Radio.Thro < -900 )
     {
       // When throttle is essentially zero, disable all control authority
 
@@ -625,8 +625,8 @@ void UpdateFlightLoop(void)
     int YawOut = YawPID.Calculate( YawDifference, GyroYaw, DoIntegrate );
 
 
-    int ThroMix = (Radio.Thro + 1024) >> 2;           // Approx 0 - 512
-    ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/8 throttle, clamp it to 64
+    int ThroMix = (Radio.Thro + 1024) >> 1;           // Approx 0 - 1024
+    ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
     ThroOut = (Radio.Thro << 2) + 12000;
@@ -675,7 +675,7 @@ void UpdateFlightLoop(void)
         T2 = 1024 + Radio.Aux3;             // Right side control
 
         AscentPID.SetPGain( T1 );
-        AscentPID.SetIGain( T2 * 250 );
+        AltPID.SetIGain( T2 );
 
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );

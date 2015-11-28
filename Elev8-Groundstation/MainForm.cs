@@ -957,10 +957,16 @@ namespace Elev8
 			txBuffer[0] = 0x19;	// Store new settings
 			comm.Send( txBuffer, 1 );
 
-			// Wait a moment for the Elev8 to go into waiting (prevents overrunning the receive buffer)
 			Thread.Sleep( 10 );
 
-			comm.Send( prefBytes, prefBytes.Length );
+			// Have to slow this down a little during transmission because the buffer
+			// on the other end is small to save ram, and we don't have flow control
+			for(int i = 0; i < prefBytes.Length; i++)
+			{
+				txBuffer[0] = prefBytes[i];
+				comm.Send( txBuffer, 1 );
+				Thread.Sleep( 5 );
+			}
 
 			// Query prefs (forces to be applied to UI)
 			txBuffer[0] = 0x18;
