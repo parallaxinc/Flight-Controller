@@ -55,7 +55,7 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     PClamped = clamp( PClamped, -PMax, PMax );
   }
 
-  int Output = (Kp * PClamped);
+  Output = (Kp * PClamped);
   if( Kd ) {
     Output += (Kd * DError);
   }

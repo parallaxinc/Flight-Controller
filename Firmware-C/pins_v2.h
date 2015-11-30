@@ -20,6 +20,9 @@
 #define PIN_MOTOR_BR  17
 #define PIN_MOTOR_BL  18
 
+#define PIN_MOTOR_AUX1  19
+#define PIN_MOTOR_AUX2  20
+
 
 #define PIN_CS_ALT    9
 #define PIN_CS_AG    11

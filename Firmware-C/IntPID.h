@@ -48,6 +48,7 @@ public:
   short SampleRate;            //updates per second
 
   long RoundOffset;
+  long Output;
   long DError;         //Derivative error (kept for filtering)
   long IError;         //Accumulated integral error
   long LastPError;     //Previous Error

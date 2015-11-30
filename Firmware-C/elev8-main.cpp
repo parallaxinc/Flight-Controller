@@ -21,6 +21,8 @@
 #include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
 
+void DoLogOutput(void);
+
 // TODO: Might want to consider accelerating the comms by caching the buffer pointers, etc.
 
 COMMLINK Comm;          // Communication protocol for Elev8
@@ -115,17 +117,32 @@ const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
 
 
-/*  // Only used for debugging
-static void TxInt( int x , int Digits )
+// Only used for debugging
+static char LogInt( int x , char * dest )
 {
-  static char nybbles[] = "0123456789ABCDEF";
-  int shift = 32 - ((9-Digits)<<2);
+  char buf[14];
+  char index = 13;
+  buf[index] = ',';   // Add the comma here for speed
+  char isNeg;
+  if( x < 0 ) {
+    isNeg = 1;
+    x = -x;
+  }    
+  else isNeg = 0;
+
   do {
-    Tx( nybbles[ (x>>shift) & 0xf] );
-    shift -= 4;
-  } while( shift >= 0 );
+    buf[--index] = '0' + (x % 10);
+    x /= 10;
+  } while(x > 0);
+
+  if( isNeg ) {
+    buf[--index] = '-';
+  }    
+
+  char count = 14-index;
+  memcpy( dest, buf+index, count );
+  return count;
 }
-*/
 
 
 int main()                                    // Main function
@@ -270,6 +287,10 @@ int main()                                    // Main function
     CheckDebugInput();
     DoDebugModeOutput();
 
+    if( Mode == MODE_None ) {
+      // DoLogOutput();  // Don't run the data logger when connected to the PC (too much CPU req'd)
+    }      
+
     LoopCycles = CNT - Cycles;    // Record how long it took for one full iteration
     CycleCount[counter & 7] = LoopCycles;
 
@@ -398,7 +419,7 @@ void Initialize(void)
 static char RXBuf1[32], TXBuf1[64];
 static char RXBuf2[32], TXBuf2[64];
 static char RXBuf3[128],TXBuf3[4];  // GPS?
-static char RXBuf4[4],  TXBuf4[4];  // Unused
+static char RXBuf4[4],  TXBuf4[64]; // Data Logger
 
 void InitSerial(void)
 {
@@ -409,7 +430,8 @@ void InitSerial(void)
 
   // Unused ports get a pin value of 32
   S4_Define_Port(2,   9600, 32, TXBuf3, sizeof(TXBuf3), 32, RXBuf3, sizeof(RXBuf3));
-  S4_Define_Port(3,   2400, 32, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
+
+  S4_Define_Port(3, 115200, PIN_MOTOR_AUX2, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
 
   S4_Start();
 }
@@ -517,7 +539,7 @@ void UpdateCycleStats(void)
   for( int i=1; i<8; i++ )
   {
     Stats.MinCycles = min( Stats.MinCycles, CycleCount[i] );
-    Stats.MaxCycles = max( Stats.MinCycles, CycleCount[i] );
+    Stats.MaxCycles = max( Stats.MaxCycles, CycleCount[i] );
     Stats.AvgCycles += CycleCount[i];
   }
   Stats.AvgCycles >>= 3;
@@ -1134,6 +1156,38 @@ void DoDebugModeOutput(void)
   }
   //End Motor test code-----------------------------------
 }
+
+
+void DoLogOutput(void)
+{
+  return;
+
+  // Probably better to write this to just dump raw int, float, etc.
+  // MUCH faster, smaller, and the PC can extract it relatively easily
+
+  int phase = counter & 1;
+  char tempBuf[64];
+  char count = 0;
+
+  switch( phase )
+  {
+  case 0: // Squeeze it in somewhere it doesn't fight with other stuff
+  
+    // AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
+
+    count =  LogInt( DesiredAscentRate , tempBuf+count );
+    count += LogInt( AscentEst , tempBuf+count );
+    count += LogInt( AscentPID.LastPError , tempBuf+count );
+    count += LogInt( AscentPID.IError , tempBuf+count );
+    count += LogInt( AscentPID.Output , tempBuf+count );
+    tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
+
+    S4_Put_Bytes( 3, tempBuf, count );
+    break;
+  }
+}
+
+
 
 void InitializePrefs(void)
 {
