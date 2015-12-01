@@ -21,6 +21,14 @@
 #include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
 
+
+// TODO:
+// - PID tuning through UI
+// - Altitude hold work
+
+
+
+
 void DoLogOutput(void);
 
 // TODO: Might want to consider accelerating the comms by caching the buffer pointers, etc.
@@ -1096,15 +1104,15 @@ void DoDebugModeOutput(void)
   {
     if( NudgeMotor < 4 )
     {
-      Servo32_Set(MotorPin[NudgeMotor], 9500);       //Motor test - 1/8 throttle - TODO - Make this use Prefs.TestThrottle value, or calc 1/8th from range
+      Servo32_Set(MotorPin[NudgeMotor], Prefs.ThrottleTest);          //Motor test - use the configured throttle test value
     }
-    else if( NudgeMotor == 4 )                         //Buzzer test
+    else if( NudgeMotor == 4 )                                        //Buzzer test
     {
       BeepHz(4500, 50);
       waitcnt( CNT + 5000000 );
       BeepHz(3500, 50);
-    }      
-    else if( NudgeMotor == 5 )                         //LED test
+    }
+    else if( NudgeMotor == 5 )                                        //LED test
     {
       //RGB led will run a rainbow
       for( i=0; i<256; i++ ) {
@@ -1122,17 +1130,17 @@ void DoDebugModeOutput(void)
         waitcnt( CNT + 160000 );
       }          
     }
-    else if( NudgeMotor == 6 )                         //ESC Throttle calibration
+    else if( NudgeMotor == 6 )                                        //ESC Throttle calibration
     {
       BeepHz(4500, 100);
       waitcnt( CNT + 5000000 );
       BeepHz(4500, 100);
-      waitcnt( CNT + 5000000 );
+      waitcnt( CNT + 5000000 );   // 4 beeps - Throttle calibration waiting power-on command
       BeepHz(4500, 100);
       waitcnt( CNT + 5000000 );
       BeepHz(4500, 100);
 
-      if( S4_Get(0) == 0xFF )  //Safety check - Allow the user to break out by sending anything else                  
+      if( S4_Get(0) == 0xFF )     // Safety check - Allow the user to break out by sending anything else                  
       {
         for( int i=0; i<4; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MaxThrottle);
@@ -1143,9 +1151,14 @@ void DoDebugModeOutput(void)
         for( int i=0; i<4; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MinThrottle);  // Must add 64 to min throttle value (in this calibration code only) if using ESCs with BLHeli version 14.0 or 14.1
         }
+
+        Beep2();                  // Throttle calibration successful
       }
+      else {
+        BeepHz(3000,500);         // Throttle calibration cancelled - 1/2 second lower tone
+      }        
     }        
-    else if( NudgeMotor == 7 )                         //Motor off (after motor test)
+    else if( NudgeMotor == 7 )                         // Motor off (after motor test)
     {
       for( int i=0; i<4; i++ ) {
         Servo32_Set(MotorPin[i], Prefs.MinThrottle);
@@ -1160,7 +1173,7 @@ void DoDebugModeOutput(void)
 
 void DoLogOutput(void)
 {
-  return;
+  if( FlightEnabled == 0 ) return;
 
   // Probably better to write this to just dump raw int, float, etc.
   // MUCH faster, smaller, and the PC can extract it relatively easily
@@ -1180,6 +1193,13 @@ void DoLogOutput(void)
     count += LogInt( AscentPID.LastPError , tempBuf+count );
     count += LogInt( AscentPID.IError , tempBuf+count );
     count += LogInt( AscentPID.Output , tempBuf+count );
+    count += LogInt( DesiredAltitude , tempBuf+count );
+    count += LogInt( AltiEst, tempBuf+count );
+    count += LogInt( AltPID.LastPError , tempBuf+count );
+    count += LogInt( AltPID.IError , tempBuf+count );
+    count += LogInt( AltPID.Output , tempBuf+count );
+    
+    count += LogInt( Radio.Thro , tempBuf+count );
     tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
 
     S4_Put_Bytes( 3, tempBuf, count );

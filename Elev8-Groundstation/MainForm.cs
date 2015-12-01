@@ -199,7 +199,7 @@ namespace Elev8
 		{
 			UpdateStatus();
 
-			if(comm.Connected) {
+			if( comm.Connected && CalibrationCycle == 0 ) {	// Don't send the heartbeat during throttle calibration
 				Heartbeat++;
 				if(Heartbeat == 10) {
 					Heartbeat = 0;
@@ -982,6 +982,8 @@ namespace Elev8
 		{
 			if(comm.Connected)
 			{
+				CancelThrottleCalibration();	// just in case
+
 				txBuffer[0] = (byte)(MotorIndex | 8);
 				comm.Send( txBuffer, 1 );
 			}
@@ -1035,7 +1037,7 @@ namespace Elev8
 			{
 				case 0:
 					TestMotor( 6 );
-					lblCalibrateDocs.Text = "Throttle calibration has started.  Be sure your flight battery is UNPLUGGED, then press the Throttle Calibration button again";
+					lblCalibrateDocs.Text = "Throttle calibration has started.  Be sure your flight battery is UNPLUGGED, then press the Throttle Calibration button again.  (Click any other button to cancel)";
 					CalibrationCycle = 1;
 
 					// TODO - Should probably disable all other buttons, and make an abort button visible
@@ -1061,6 +1063,17 @@ namespace Elev8
 					break;
 			}
 		}
+
+		private void CancelThrottleCalibration()
+		{
+			if(CalibrationCycle == 0) return;
+
+			txBuffer[0] = 2;		// Back to sensors mode
+			comm.Send( txBuffer, 1 );
+			lblCalibrateDocs.Text = "";
+			CalibrationCycle = 0;
+		}
+
 
 		private void cbGraphLegend_CheckedChanged( object sender, EventArgs e )
 		{
@@ -1099,6 +1112,7 @@ namespace Elev8
 		private void tcTabs_SelectedIndexChanged( object sender, EventArgs e )
 		{
 			Mode newMode;
+			CancelThrottleCalibration();	// just in case
 
 			if(tcTabs.SelectedTab == tpGyroCalibration)
 			{
