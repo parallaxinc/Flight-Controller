@@ -641,7 +641,6 @@
 			this.btnMotor4.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
 			this.btnMotor4.UseVisualStyleBackColor = true;
 			this.btnMotor4.MouseDown += new System.Windows.Forms.MouseEventHandler( this.btnMotor4_MouseDown );
-			this.btnMotor4.MouseUp += new System.Windows.Forms.MouseEventHandler( this.btnMotor_MouseUp );
 			// 
 			// btnMotor3
 			// 
@@ -655,7 +654,6 @@
 			this.btnMotor3.TextAlign = System.Drawing.ContentAlignment.BottomRight;
 			this.btnMotor3.UseVisualStyleBackColor = true;
 			this.btnMotor3.MouseDown += new System.Windows.Forms.MouseEventHandler( this.btnMotor3_MouseDown );
-			this.btnMotor3.MouseUp += new System.Windows.Forms.MouseEventHandler( this.btnMotor_MouseUp );
 			// 
 			// btnMotor2
 			// 
@@ -669,7 +667,6 @@
 			this.btnMotor2.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			this.btnMotor2.UseVisualStyleBackColor = true;
 			this.btnMotor2.MouseDown += new System.Windows.Forms.MouseEventHandler( this.btnMotor2_MouseDown );
-			this.btnMotor2.MouseUp += new System.Windows.Forms.MouseEventHandler( this.btnMotor_MouseUp );
 			// 
 			// btnMotor1
 			// 
@@ -683,7 +680,6 @@
 			this.btnMotor1.TextAlign = System.Drawing.ContentAlignment.TopLeft;
 			this.btnMotor1.UseVisualStyleBackColor = true;
 			this.btnMotor1.MouseDown += new System.Windows.Forms.MouseEventHandler( this.btnMotor1_MouseDown );
-			this.btnMotor1.MouseUp += new System.Windows.Forms.MouseEventHandler( this.btnMotor_MouseUp );
 			// 
 			// tpControlSetup
 			// 
@@ -1001,6 +997,7 @@
 			this.cbReceiverType.TabIndex = 18;
 			this.tlToolTip.SetToolTip( this.cbReceiverType, "Choose the communication type for your receiver (SBUS = 1 wire, PWM = multiple wi" +
 					"res)" );
+			this.cbReceiverType.SelectedIndexChanged += new System.EventHandler( this.cbReceiverType_SelectedIndexChanged );
 			// 
 			// cbRev8
 			// 

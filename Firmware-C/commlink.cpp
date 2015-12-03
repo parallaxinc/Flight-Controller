@@ -1,18 +1,13 @@
 
 #include "commlink.h"
-#include "serial_4x.h"
 
+
+u16 COMMLINK::cachedLength;
+u16 COMMLINK::packetCrc;
+u8  COMMLINK::packetBuf[64];
+u8  COMMLINK::bufIndex;
 
 u16 Checksum(u16 crc, u8 * buf , int len );
-
-
-// Send a complete packet in a single call
-void COMMLINK::SendPacket( char port, u8 type , void * data , u16 length )
-{
-  StartPacket( port, type, length );
-  AddPacketData( port, data , length );
-  EndPacket( port );
-}
 
 
 void COMMLINK::StartPacket( char port, u8 type , u16 length )
@@ -35,12 +30,6 @@ void COMMLINK::AddPacketData( char port, void * data , u16 Count )
   packetCrc = Checksum( packetCrc, (u8*)data, Count );
   S4_Put_Bytes( port, data, Count );
 }
-
-void COMMLINK::EndPacket( char port )
-{
-  S4_Put_Bytes( port, &packetCrc, 2 );
-}
-
 
 
 void COMMLINK::StartPacket( u8 type , u16 length )
@@ -73,12 +62,6 @@ void COMMLINK::BuildPacket( u8 type , void * data , u16 length )
   StartPacket( type , length );
   AddPacketData( data , length );
   EndPacket();
-}
-
-
-void COMMLINK::SendPacket( char port )   // Sends the pre-built packet to the port
-{
-  S4_Put_Bytes( port, packetBuf, bufIndex );
 }
 
 

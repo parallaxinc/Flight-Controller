@@ -1,4 +1,7 @@
 
+#ifndef __SERIAL_4X_H__
+#define __SERIAL_4X_H__
+
 // Data structures:
 //
 // The data structures used are not for the faint of heart. Worse yet, the Propeller
@@ -99,3 +102,5 @@ char S4_Get(char The_Port);
 int  S4_Get_Timed(char The_Port, int MS_Timer);
 char S4_Get_Bytes_Timed(char The_Port, char * The_Buffer, int The_Count, int MS_Timer);
 
+
+#endif

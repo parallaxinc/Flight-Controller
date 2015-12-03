@@ -500,7 +500,8 @@ namespace Elev8
 
 			if(bDebugChanged)
 			{
-				lblCycles.Text = string.Format( "CPU Cycles: {0} (min)   {1} (max)   {2} (avg)", debugData.MinCycles, debugData.MaxCycles, debugData.AvgCycles );
+				lblCycles.Text = string.Format( "CPU time (uS): {0} (min)   {1} (max)   {2} (avg)",
+					debugData.MinCycles * 64/80, debugData.MaxCycles * 64/80, debugData.AvgCycles * 64/80 );
 				//lblCycles.Text = string.Format( "{0}", debugData.DebugFloat );
 			}
 
@@ -992,33 +993,24 @@ namespace Elev8
 
 		private void btnMotor1_MouseDown( object sender, MouseEventArgs e )
 		{
-			((Button)sender).Capture = true;
 			TestMotor( 0 );
 		}
 
 		private void btnMotor2_MouseDown( object sender, MouseEventArgs e )
 		{
-			((Button)sender).Capture = true;
 			TestMotor( 1 );
 		}
 
 		private void btnMotor3_MouseDown( object sender, MouseEventArgs e )
 		{
-			((Button)sender).Capture = true;
 			TestMotor( 2 );
 		}
 
 		private void btnMotor4_MouseDown( object sender, MouseEventArgs e )
 		{
-			((Button)sender).Capture = true;
 			TestMotor( 3 );
 		}
 
-		private void btnMotor_MouseUp( object sender, MouseEventArgs e )
-		{
-			((Button)sender).Capture = false;
-			TestMotor( 7 );	// Turn off all motors
-		}
 
 		private void btnBeeper_Click( object sender, EventArgs e )
 		{
@@ -1358,6 +1350,11 @@ namespace Elev8
 			// Put the Elev8 back into read "sensor mode"
 			txBuffer[0] = 0x2;	// Sensor mode
 			comm.Send( txBuffer, 1 );
+		}
+
+		private void cbReceiverType_SelectedIndexChanged( object sender, EventArgs e )
+		{
+			prefs.UseSBUS = (char)cbReceiverType.SelectedIndex;
 		}
 	}
 }

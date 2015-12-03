@@ -41,7 +41,7 @@ enum FLIGHTMODE {
 
 // Structure to hold radio values to make sure they stay in order
 struct RADIO {
-  short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3;
+  short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3, Aux4;   // Aux4 is an additional raw channel for SBUS users only
 
   short & Channel(int i) { return (&Thro)[i]; }
 };

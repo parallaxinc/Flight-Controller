@@ -55,31 +55,13 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     PClamped = clamp( PClamped, -PMax, PMax );
   }
 
-  Output = (Kp * PClamped);
-  if( Kd ) {
-    Output += (Kd * DError);
-  }
-
-  if( Ki ) {
-    Output += (Ki * IError);
-  }
-
+  Output = (Kp * PClamped) + (Kd * DError) + (Ki * IError);
   Output = (Output + RoundOffset) >> Precision;
   
-  //Accumulate Integral error *or* Limit output. 
-  //Stop accumulating when output saturates 
 
   if( abs(Output) > MaxOutput ) {
-    //if( DoIntegrate && Ki ) {
-    //  int Over = ((abs(Output) - MaxOutput) << Precision) / Ki;
-    //  if( Output > 0 )
-    //    IError -= Over;
-    //  else
-    //    IError += Over;
-    //}
-
     Output = clamp( Output, -MaxOutput, MaxOutput );
-  }    
+  }
 
   if( DoIntegrate && Ki != 0 )
   {
@@ -91,9 +73,44 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     IError += PClamped;
     IError = clamp( IError, -MaxIntegral, MaxIntegral );
   }
-     
+
   return Output;
 }
+
+/*
+int IntPID::Calculate_PD( int SetPoint , int Measured )
+{
+  // Proportional error is Desired - Measured
+  int PError = SetPoint - Measured;
+  
+  // Derivative error is the delta PError divided by time
+  // If loop timing is const, you can skip the divide and just make the factor smaller
+  if( DerivFilter == 0 ) {
+    DError = PError - LastPError;
+  }
+  else {
+    int RawDeriv = PError - LastPError;
+    DError += ((RawDeriv - DError) * DerivFilter) >> 8;  //Filter the derivative error term so it's not completely nuts
+  }
+
+  LastPError = PError;
+
+  int PClamped = PError;
+  if( PMax > 0 ) {
+    PClamped = clamp( PClamped, -PMax, PMax );
+  }
+
+  Output = (Kp * PClamped);
+  if( Kd ) {
+    Output += Kd * DError;
+  }
+
+  Output = (Output + RoundOffset) >> Precision;
+  Output = clamp( Output, -MaxOutput, MaxOutput );
+
+  return Output;
+}
+*/
 
 
 /*

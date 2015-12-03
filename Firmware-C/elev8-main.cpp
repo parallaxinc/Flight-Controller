@@ -28,12 +28,16 @@
 
 
 
-
+/*
 void DoLogOutput(void);
+void DataLogThread(void *par);
 
-// TODO: Might want to consider accelerating the comms by caching the buffer pointers, etc.
+#define LOG_STACK_SIZE (16 + 40)      // stack needs to accomodate thread control structure (40) plus room for functions (16)
+static int log_stack[LOG_STACK_SIZE]; // allocate space for the stack - you need to set up a 
 
-COMMLINK Comm;          // Communication protocol for Elev8
+volatile char LogTrigger = 0;
+*/
+
 
 short UsbPulse = 0;     // Periodically, the GroundStation will ping the FC to say it's still there - these are countdowns
 short XBeePulse = 0;
@@ -49,12 +53,12 @@ const int AltiThrottleDeadband = 100;
 static RADIO Radio;
 
 static int  LoopCycles = 0;
-static int  CycleCount[8];   // Number of cycles an update loop takes, recorded over 8 cycles so we can get min/max/avg
+static short CycleCount[8];   // Number of cycles an update loop takes, recorded over 8 cycles so we can get min/max/avg
 
 static struct CYCLESTATS {
- int MinCycles;
- int MaxCycles;
- int AvgCycles;
+ short MinCycles;
+ short MaxCycles;
+ short AvgCycles;
 } Stats;
 
 
@@ -67,12 +71,13 @@ static long  GyroZX, GyroZY, GyroZZ;  // Gyro zero values
 static long  AccelZSmooth;            // Smoothed (filtered) accelerometer Z value (used for height fluctuation damping)
 
 //Debug output mode, working variables  
-static long   counter;        //Main loop iteration counter
+static long   counter = 0;    //Main loop iteration counter
 static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
 static char   Quat[16];       //Current quaternion from the IMU functions
 
-static char Mode;                     //Debug communication mode
-static signed char NudgeMotor;        // Which motor to nudge during testing (-1 == no motor)
+static char Mode = MODE_None;         //Debug communication mode
+static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1 == no motor)
+static char NudgeCount[4];            // How long to spin the motor for (0 == stopped)
 
 static char AccelAssistZFactor  = 32; // 0 to 64 == 0 to 1.0
 
@@ -85,7 +90,7 @@ static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values 
 static long  GyroRPFilter, GyroYawFilter;   // Tunable damping values for gyro noise
 
 
-static long  Motor[4];                      //Motor output values  
+static short Motor[4];                     //Motor output values
 static long  LEDValue[LED_COUNT];           //LED outputs (copied to the LEDs by the Sensors cog)
 
 static long loopTimer;                      //Master flight loop counter - used to keep a steady update rate
@@ -95,13 +100,13 @@ static long PingZero, PingHeight;
 static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
 
-static char FlightEnabled;            //Flight arm/disarm flag
+static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
-static char IsHolding;                // Are we currently in altitude hold? (hover mode)
+static char IsHolding = 0;            // Are we currently in altitude hold? (hover mode)
 
 static short StartupDelay;            //Used to change convergence rates for IMU, enable battery monitor
 
-static char MotorPin[4];            //Motor index to pin index table
+static char MotorPin[4] = {PIN_MOTOR_FL, PIN_MOTOR_FR, PIN_MOTOR_BR, PIN_MOTOR_BL };            //Motor index to pin index table
 
 
 static long RollPitch_P, RollPitch_D; //Tunable values for roll & pitch Proportional gain and Derivative gain
@@ -125,6 +130,7 @@ const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
 
 
+/*
 // Only used for debugging
 static char LogInt( int x , char * dest )
 {
@@ -151,6 +157,7 @@ static char LogInt( int x , char * dest )
   memcpy( dest, buf+index, count );
   return count;
 }
+*/
 
 
 int main()                                    // Main function
@@ -165,9 +172,6 @@ int main()                                    // Main function
   //Set a reasonable starting point for the altitude computation
   QuatIMU_SetInitialAltitudeGuess( sens.Alt );
 
-  Mode = MODE_None;
-  counter = 0;
-  NudgeMotor = -1;
   loopTimer = CNT;
 
   // Set all the motors to their low-throttle point
@@ -193,6 +197,9 @@ int main()                                    // Main function
       for( int i=0; i<8; i++ ) {
         Radio.Channel(i) =  (SBUS::GetRC(Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
       }
+
+      // Extra raw channel for SBUS users, tuning, experimentation
+      Radio.Channel(8) =  ((SBUS::GetRC(8) + 32) * 1280) / 1024;  // Aux4
     }
     else
     {
@@ -295,12 +302,10 @@ int main()                                    // Main function
     CheckDebugInput();
     DoDebugModeOutput();
 
-    if( Mode == MODE_None ) {
-      // DoLogOutput();  // Don't run the data logger when connected to the PC (too much CPU req'd)
-    }      
+    //DoLogOutput();
 
     LoopCycles = CNT - Cycles;    // Record how long it took for one full iteration
-    CycleCount[counter & 7] = LoopCycles;
+    CycleCount[counter & 7] = LoopCycles / 64;
 
     ++counter;
     loopTimer += Const_UpdateCycles;
@@ -312,16 +317,6 @@ int main()                                    // Main function
 void Initialize(void)
 {
   //Initialize everything - First reset all variables to known states
-
-  MotorPin[0] = PIN_MOTOR_FL;
-  MotorPin[1] = PIN_MOTOR_FR;
-  MotorPin[2] = PIN_MOTOR_BR;
-  MotorPin[3] = PIN_MOTOR_BL;
-
-  Mode = MODE_None;
-  counter = 0;
-  NudgeMotor = -1;                                      //No motor to nudge
-  FlightEnabled = 0; 
 
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
@@ -391,7 +386,7 @@ void Initialize(void)
   PitchPID.SetDervativeFilter( 128 );
 
 
-  YawPID.Init( 15000,  200 * Const_UpdateRate,  10000 * Const_UpdateRate , Const_UpdateRate );
+  YawPID.Init( 15000,  0,  10000 * Const_UpdateRate , Const_UpdateRate );
   YawPID.SetPrecision( 12 );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetPIMax( 100 );
@@ -405,29 +400,37 @@ void Initialize(void)
  
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
-  AltPID.Init( 1024, 0 * Const_UpdateRate, 0, Const_UpdateRate );
+  AltPID.Init( 900, 0, 0, Const_UpdateRate );
   AltPID.SetPrecision( 8 );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
-  AltPID.SetPIMax( 1000 );
-  AltPID.SetMaxIntegral( 4000 );
+  //AltPID.SetPIMax( 1000 );
+  //AltPID.SetMaxIntegral( 4000 );
 
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
-  AscentPID.Init( 1024, 0 * Const_UpdateRate, 0 * Const_UpdateRate , Const_UpdateRate );
+  AscentPID.Init( 285, 0, 0 , Const_UpdateRate );
   AscentPID.SetPrecision( 8 );
   AscentPID.SetMaxOutput( 4000 );   // Limit of the control rate applied to the throttle
-  AscentPID.SetPIMax( 500 );
-  AscentPID.SetMaxIntegral( 2000 );
+  //AscentPID.SetPIMax( 500 );
+  //AscentPID.SetMaxIntegral( 2000 );
 
+
+  //cogstart( &DataLogThread , NULL, log_stack, sizeof(log_stack) );
   
   FindGyroZero();
 }
 
 static char RXBuf1[32], TXBuf1[64];
 static char RXBuf2[32], TXBuf2[64];
+
+#if 0 // Currently unused - these buffers might grow later
 static char RXBuf3[128],TXBuf3[4];  // GPS?
 static char RXBuf4[4],  TXBuf4[64]; // Data Logger
+#else
+static char RXBuf3[4],  TXBuf3[4]; // GPS?
+static char RXBuf4[4],  TXBuf4[4]; // Data Logger
+#endif
 
 void InitSerial(void)
 {
@@ -480,7 +483,7 @@ void FindGyroZero(void)
     for( int a=0; a<3; a++) {
       vmin[a] = vmax[a] = Sensors_In(1+a);
       avg[a] = 0;
-    }      
+    }
 
     // take a bunch of readings over about 1/10th of a second, keeping track of the min, max, and sum (average)
     for( int i=0; i<64; i++ )
@@ -540,22 +543,21 @@ void FindGyroZero(void)
 void UpdateCycleStats(void)
 {
   // Prime the initial values
-  Stats.MinCycles = CycleCount[0];
-  Stats.MaxCycles = CycleCount[0];
-  Stats.AvgCycles = CycleCount[0];
+  int avg;
+  Stats.MinCycles = Stats.MaxCycles = avg = CycleCount[0];
 
   for( int i=1; i<8; i++ )
   {
     Stats.MinCycles = min( Stats.MinCycles, CycleCount[i] );
     Stats.MaxCycles = max( Stats.MaxCycles, CycleCount[i] );
-    Stats.AvgCycles += CycleCount[i];
+    avg += CycleCount[i];
   }
-  Stats.AvgCycles >>= 3;
+  Stats.AvgCycles = avg >> 3;
 }
 
 void UpdateFlightLoop(void)
 {
-  int ThroOut, T1, T2, ThrustMul, AltiThrust, v, gr, gp, gy;
+  int ThroOut, ThrustMul, AltiThrust, v, gr, gp, gy;
   char DoIntegrate;  //Integration enabled in the flight PIDs?
 
   UpdateFlightLEDColor();
@@ -684,29 +686,11 @@ void UpdateFlightLoop(void)
           if( IsHolding == 0 ) {
             IsHolding = 1;
             DesiredAltitude = AltiEst;  // Start with our current altitude as the hold height
-            AltPID.ResetIntegralError();
           }
-
-          // in-flight PID tuning
-          //T1 = 1024 + Radio.Aux2;             // Left side control
-          //T2 = 1250 + Radio.Aux3;             // Right side control
-
-          //AltPID.SetPGain( T1 );
-          //AltPID.SetIGain( T2 * 250 );
-
 
           // Use a PID object to compute velocity requirements for the AscentPID object
           DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
         }
-
-
-        // in-flight PID tuning
-        T1 = 1024 + Radio.Aux2;             // Left side control
-        T2 = 1024 + Radio.Aux3;             // Right side control
-
-        AscentPID.SetPGain( T1 );
-        AltPID.SetIGain( T2 );
-
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
         ThroOut = Prefs.CenterThrottle + AltiThrust + AdjustedThrottle; // Feed in a bit of the user throttle to help with quick throttle changes
@@ -714,8 +698,8 @@ void UpdateFlightLoop(void)
 
       if( AccelAssistZFactor > 0 )
       {
-        // Accelerometer assist    
-        if( abs(Radio.Aile) < 300 && abs(Radio.Elev) < 300 && ThroMix > 32) { //Above 1/8 throttle, add a little AccelZ into the mix if the user is trying to hover
+        // Accelerometer assist - add a little AccelZ into the mix if the user is trying to hover
+        if( abs(Radio.Aile) < 300 && abs(Radio.Elev) < 300 && abs(Radio.Thro) < AltiThrottleDeadband ) {
           ThroOut -= ((AccelZSmooth - Const_OneG) * (int)AccelAssistZFactor) / 64;
         }
       }
@@ -740,7 +724,7 @@ void UpdateFlightLoop(void)
 
     // The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
     // Some ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment, so avoid that
-     
+
     Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
     Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
     Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
@@ -894,8 +878,19 @@ void CheckDebugInput(void)
     return;
   }
 
+  if( c == 0xff ) {
+    S4_Put(port, 0xE8);     //Simple ping-back to tell the application we have the right comm port
+  }
+
+  if( FlightEnabled ) return; // Don't allow any settings adjustment when in-flight
+
+
   if( port == 0 && (c & 0xF8) == 0x08 ) {  //Nudge one of the motors (ONLY allowed over USB)
       NudgeMotor = c & 7;  //Nudge the motor selected by the configuration app
+      if( NudgeMotor < 4 ) {
+        NudgeCount[NudgeMotor] = 50;  // 1/5th of a second at 250 updates per sec
+        NudgeMotor = -1;
+      }        
       return;
   }
 
@@ -933,7 +928,6 @@ void CheckDebugInput(void)
         //Reset accel offset settings
         Sensors_ResetAccelOffsetValues();
       }
-
     }      
   }
 
@@ -945,9 +939,9 @@ void CheckDebugInput(void)
       Prefs.Checksum = Prefs_CalculateChecksum( Prefs );
       int size = sizeof(Prefs);
 
-      Comm.StartPacket( 0, 0x18 , size );
-      Comm.AddPacketData( 0, &Prefs, size );
-      Comm.EndPacket(port);
+      COMMLINK::StartPacket( 0, 0x18 , size );
+      COMMLINK::AddPacketData( 0, &Prefs, size );
+      COMMLINK::EndPacket(port);
 
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }
@@ -987,10 +981,6 @@ void CheckDebugInput(void)
       loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
     }
   }
-
-  if( c == 0xff ) {
-    S4_Put(port, 0xE8);     //Simple ping-back to tell the application we have the right comm port
-  }
 }
 
 void DoDebugModeOutput(void)
@@ -1024,23 +1014,23 @@ void DoDebugModeOutput(void)
       switch( phase )
       {
       case 0:
-        Comm.StartPacket( 1, 18 );               // Radio values, 22 byte payload
-        Comm.AddPacketData( &Radio , 16 );       // Radio struct is 16 bytes total
-        Comm.AddPacketData( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
-        Comm.EndPacket();
-        Comm.SendPacket(port);
+        COMMLINK::StartPacket( 1, 18 );               // Radio values, 18 byte payload
+        COMMLINK::AddPacketData( &Radio , 16 );       // First 8 channels of Radio struct is 16 bytes total
+        COMMLINK::AddPacketData( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
+        COMMLINK::EndPacket();
+        COMMLINK::SendPacket(port);
         break;
 
       case 1:
         UpdateCycleStats();
-        Comm.StartPacket( 7, 20 );                // Debug values, 20 byte payload
-        Comm.AddPacketData( &Stats, 12 );         // Stats on update cycle counts (sending debug data takes a long time)
-        Comm.AddPacketData( &counter, 4 );        // Send the counter (sequence timestamp)
+        COMMLINK::StartPacket( 7, 14 );                // Debug values, 20 byte payload
+        COMMLINK::AddPacketData( &Stats, 6 );          // Stats on update cycle counts (sending debug data takes a long time)
+        COMMLINK::AddPacketData( &counter, 4 );        // Send the counter (sequence timestamp)
 
         QuatIMU_GetDebugFloat( (float*)TxData );  // This is just a debug value, used for testing outputs with the IMU running
-        Comm.AddPacketData( TxData, 4 );
-        Comm.EndPacket();
-        Comm.SendPacket(port);
+        COMMLINK::AddPacketData( TxData, 4 );
+        COMMLINK::EndPacket();
+        COMMLINK::SendPacket(port);
         break;
 
       case 2:
@@ -1055,43 +1045,39 @@ void DoDebugModeOutput(void)
         TxData[8] = sens.MagY;
         TxData[9] = sens.MagZ;
 
-        Comm.BuildPacket( 2, &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
-        Comm.SendPacket(port);
+        COMMLINK::BuildPacket( 2, &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
+        COMMLINK::SendPacket(port);
         break;
 
       case 4:
-        Comm.BuildPacket( 3, QuatIMU_GetQuaternion(), 16 );  // Quaternion data, 16 byte payload
-        Comm.SendPacket(port);
+        COMMLINK::BuildPacket( 3, QuatIMU_GetQuaternion(), 16 );  // Quaternion data, 16 byte payload
+        COMMLINK::SendPacket(port);
         break;
 
       case 5: // Motor data
-        TxData[0] = Motor[0];
-        TxData[1] = Motor[1];
-        TxData[2] = Motor[2];
-        TxData[3] = Motor[3];
-        Comm.BuildPacket( 5, &TxData, 8 );   // 8 byte payload
-        Comm.SendPacket(port);
+        COMMLINK::BuildPacket( 5, &Motor[0], 8 );   // 8 byte payload
+        COMMLINK::SendPacket(port);
         break;
 
 
       case 6:
-        Comm.StartPacket( 4, 24 );   // Computed data, 24 byte payload
+        COMMLINK::StartPacket( 4, 24 );   // Computed data, 24 byte payload
 
-        Comm.AddPacketData( &PitchDifference, 4 );
-        Comm.AddPacketData( &RollDifference, 4 );
-        Comm.AddPacketData( &YawDifference, 4 );
+        COMMLINK::AddPacketData( &PitchDifference, 4 );
+        COMMLINK::AddPacketData( &RollDifference, 4 );
+        COMMLINK::AddPacketData( &YawDifference, 4 );
 
-        Comm.AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
-        Comm.AddPacketData( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
-        Comm.AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
-        Comm.EndPacket();
-        Comm.SendPacket(port);
+        COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
+        COMMLINK::AddPacketData( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
+        COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
+        COMMLINK::EndPacket();
+        COMMLINK::SendPacket(port);
         break;
 
       case 7:
         QuatIMU_GetDesiredQ( (float*)TxData );
-        Comm.BuildPacket( 6, TxData, 16 );   // Desired Quaternion data, 16 byte payload
-        Comm.SendPacket(port);
+        COMMLINK::BuildPacket( 6, TxData, 16 );   // Desired Quaternion data, 16 byte payload
+        COMMLINK::SendPacket(port);
         break;
       }
     }
@@ -1100,13 +1086,25 @@ void DoDebugModeOutput(void)
 
 
   //Motor test code---------------------------------------
+  if( FlightEnabled ) return;   // Don't run this code in flight - dangerous
+
+  // Check to see if any motors are supposed to test-spin
+  for( char m=0; m<4; m++ )
+  {
+    if( NudgeCount[m] ) {
+      if( --NudgeCount[m] > 0 ) {
+        Servo32_Set(MotorPin[m], Prefs.ThrottleTest);          // Motor test - use the configured throttle test value
+      }
+      else {       
+        Servo32_Set(MotorPin[m], Prefs.MinThrottle);           // Back to zero throttle when the timer expires
+      }        
+    }
+  }
+
+
   if( NudgeMotor > -1 )
   {
-    if( NudgeMotor < 4 )
-    {
-      Servo32_Set(MotorPin[NudgeMotor], Prefs.ThrottleTest);          //Motor test - use the configured throttle test value
-    }
-    else if( NudgeMotor == 4 )                                        //Buzzer test
+    if( NudgeMotor == 4 )                                             //Buzzer test
     {
       BeepHz(4500, 50);
       waitcnt( CNT + 5000000 );
@@ -1118,12 +1116,12 @@ void DoDebugModeOutput(void)
       for( i=0; i<256; i++ ) {
         All_LED( ((255-i)<<16) + (i<<8) );
         waitcnt( CNT + 160000 );
-      }          
+      }
 
       for( i=0; i<256; i++ ) {
         All_LED( i + ((255-i) << 8) );
         waitcnt( CNT + 160000 );
-      }          
+      }
 
       for( i=0; i<256; i++ ) {
         All_LED( (255-i) + (i<<16) );
@@ -1158,36 +1156,34 @@ void DoDebugModeOutput(void)
         BeepHz(3000,500);         // Throttle calibration cancelled - 1/2 second lower tone
       }        
     }        
-    else if( NudgeMotor == 7 )                         // Motor off (after motor test)
-    {
-      for( int i=0; i<4; i++ ) {
-        Servo32_Set(MotorPin[i], Prefs.MinThrottle);
-      }
-    }
+
     NudgeMotor = -1;
     loopTimer = CNT;
   }
   //End Motor test code-----------------------------------
 }
 
-
+/*
 void DoLogOutput(void)
 {
   if( FlightEnabled == 0 ) return;
+  LogTrigger = 1;
+}
 
-  // Probably better to write this to just dump raw int, float, etc.
-  // MUCH faster, smaller, and the PC can extract it relatively easily
 
-  int phase = counter & 1;
-  char tempBuf[64];
-  char count = 0;
-
-  switch( phase )
+void DataLogThread(void *par)
+{
+  while( true )
   {
-  case 0: // Squeeze it in somewhere it doesn't fight with other stuff
-  
-    // AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
+    while( LogTrigger == 0 )
+      ;
 
+    // Probably better to write this to just dump raw int, float, etc.
+    // MUCH faster, smaller, and the PC can extract it relatively easily
+  
+    static char tempBuf[64];
+    char count = 0;
+  
     count =  LogInt( DesiredAscentRate , tempBuf+count );
     count += LogInt( AscentEst , tempBuf+count );
     count += LogInt( AscentPID.LastPError , tempBuf+count );
@@ -1198,15 +1194,17 @@ void DoLogOutput(void)
     count += LogInt( AltPID.LastPError , tempBuf+count );
     count += LogInt( AltPID.IError , tempBuf+count );
     count += LogInt( AltPID.Output , tempBuf+count );
-    
+  
     count += LogInt( Radio.Thro , tempBuf+count );
     tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
-
+  
     S4_Put_Bytes( 3, tempBuf, count );
-    break;
-  }
-}
 
+    // Reset the log trigger
+    LogTrigger = 0;
+  }    
+}
+*/
 
 
 void InitializePrefs(void)

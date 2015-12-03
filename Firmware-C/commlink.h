@@ -3,6 +3,7 @@
 
 #include "propeller.h"
 #include "elev8types.h"
+#include "serial_4x.h"
 
 
 // Elev8 packets are transmitted as follows:
@@ -16,28 +17,30 @@
 class COMMLINK
 {
 public:
-  // Send a complete packet in a single call (unbuffered)
-  void SendPacket( char port, u8 type , void * data , u16 length );
 
   // Length in THIS case is just the length of data you'll submit.  I'll add the rest.
-  void StartPacket( char port, u8 type , u16 length );
-  void AddPacketData( char port, void * data , u16 Count );   // Incrementally add packet data as you like
-  void EndPacket(char port);                                  // Call this when the packet is finished to close it and send the CRC
+  static void StartPacket( char port, u8 type , u16 length );
+  static void AddPacketData( char port, void * data , u16 Count );   // Incrementally add packet data as you like
 
+  static void EndPacket(char port) {                                 // Call this when the packet is finished to close it and send the CRC
+      S4_Put_Bytes( port, &packetCrc, 2 );
+  }
 
   // Use these versions to buffer the data internally so you can send to more than one port more efficiently
-  void StartPacket( u8 type , u16 length );
-  void AddPacketData( void * data , u16 Count );   // Incrementally add packet data as you like
-  void EndPacket(void);                            // Call this when the packet is finished to close it and send the CRC
+  static void StartPacket( u8 type , u16 length );
+  static void AddPacketData( void * data , u16 Count );   // Incrementally add packet data as you like
+  static void EndPacket(void);                            // Call this when the packet is finished to close it and send the CRC
 
-  void BuildPacket( u8 type , void * data , u16 length );
-  void SendPacket( char port );   // Sends the pre-built packet to the port
+  static void BuildPacket( u8 type , void * data , u16 length );
+  static void SendPacket( char port ) {  // Sends the pre-built packet to the port
+      S4_Put_Bytes( port, packetBuf, bufIndex );
+  }
 
 private:
-  int cachedLength;
-  u16 packetCrc;
-  u8  packetBuf[64];
-  int bufIndex;
+  static u16 cachedLength;
+  static u16 packetCrc;
+  static u8  packetBuf[64];
+  static u8  bufIndex;
 };
 
 #endif
