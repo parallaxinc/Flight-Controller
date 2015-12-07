@@ -34,7 +34,7 @@ int F32::Start(void)
 //  Start start floating point engine in a new cog.
 //  Returns:     True (non-zero) if cog started, or False (0) if no cog is available.
 
-  F32::Stop();
+  //F32::Stop();
   v.f32_cmd = 0;
 
   use_cog_driver(f32_driver);
@@ -50,7 +50,7 @@ int F32::Start(void)
   return cog;
 }
 
-
+/*
 void F32::Stop(void)
 {
 	// Stop floating point engine and release the cog.
@@ -59,7 +59,7 @@ void F32::Stop(void)
     cog = 0;
   }
 }
-
+*/
 
 void F32::RunStream( unsigned char * a , float * b )
 {

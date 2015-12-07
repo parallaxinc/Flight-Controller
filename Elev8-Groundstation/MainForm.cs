@@ -180,11 +180,19 @@ namespace Elev8
 			}
 		}
 
+		void SendCommand( string command )
+		{
+			txBuffer[0] = (byte)command[0];
+			txBuffer[1] = (byte)command[1];
+			txBuffer[2] = (byte)command[2];
+			txBuffer[3] = (byte)command[3];
+			comm.Send( txBuffer, 4 );
+		}
+
 
 		void comm_ConnectionStarted()
 		{
-			txBuffer[0] = 0x18;
-			comm.Send( txBuffer, 1 );	// Query the Elev8 for settings data
+			SendCommand( "QPRF" );	// Query the Elev8 for settings data
 		}
 
 
@@ -203,8 +211,7 @@ namespace Elev8
 				Heartbeat++;
 				if(Heartbeat == 10) {
 					Heartbeat = 0;
-					txBuffer[0] = (byte)Mode.SensorTest;
-					comm.Send( txBuffer, 1 );		// Ping it to tell it we're still here
+					SendCommand( "BEAT" );	// Send the connection heartbeat
 				}
 			}
 
@@ -313,8 +320,7 @@ namespace Elev8
 							}
 							else
 							{
-								txBuffer[0] = 0x18;
-								comm.Send( txBuffer, 1 );	// reqeust them again because the checksum failed
+								SendCommand( "QPRF" );	// reqeust them again because the checksum failed
 							}
 							break;
 
@@ -446,7 +452,7 @@ namespace Elev8
 					vbChannel8.RightLabel = radio.Aux3.ToString();
 					vbChannel8.Value = radio.Aux3;
 				}
-				else if(tcTabs.SelectedTab == tpControlSetup)
+				else if(tcTabs.SelectedTab == tpRadioSetup)
 				{
 					if(RadioMode == RADIO_MODE.Mode2)	// North American
 					{
@@ -538,9 +544,16 @@ namespace Elev8
 
 			if(bMotorsChanged && tcTabs.SelectedTab == tpStatus) {
 				vbFrontLeft.Value = motors.FL;
+				vbFrontLeft.RightLabel = (motors.FL/8).ToString();
+
 				vbFrontRight.Value = motors.FR;
+				vbFrontRight.LeftLabel = (motors.FR/8).ToString();
+
 				vbBackRight.Value = motors.BR;
+				vbBackRight.LeftLabel = (motors.BR/8).ToString();
+
 				vbBackLeft.Value = motors.BL;
+				vbBackLeft.RightLabel = (motors.BL/8).ToString();
 			}
 
 			if(bComputedChanged)
@@ -641,6 +654,13 @@ namespace Elev8
 			ud.Value = value;
 		}
 
+		void AttemptSetValue( HScrollBar hs, int value )
+		{
+			if(value >= hs.Minimum && value <= hs.Maximum) {
+				hs.Value = value;
+			}
+		}
+
 
 		void ConfigureUIFromPreferences()
 		{
@@ -713,6 +733,15 @@ namespace Elev8
 			//Value = prefs.YawSpeed;
 			//lblYawSpeedAuto.Text = ((float)Value / 64.0f).ToString( "0.00" );
 
+			cbPitchRollLocked.Checked = (prefs.PitchRollLocked != 0);
+			AttemptSetValue( hsPitchGain, prefs.PitchGain + 1 );
+			AttemptSetValue( hsRollGain, prefs.RollGain + 1 );
+			AttemptSetValue( hsYawGain, prefs.YawGain + 1 );
+			AttemptSetValue( hsAscentGain, prefs.AscentGain + 1 );
+			AttemptSetValue( hsAltiGain, prefs.AltiGain + 1 );
+			cbEnableAdvanced.Checked = (prefs.UseAdvancedPID != 0);
+
+
 			AttemptSetValue( udLowThrottle, (decimal)(prefs.MinThrottle / 8) );
 			AttemptSetValue( udArmedLowThrottle, (decimal)(prefs.MinThrottleArmed / 8) );
 			AttemptSetValue( udHighThrottle, (decimal)(prefs.MaxThrottle / 8) );
@@ -781,7 +810,7 @@ namespace Elev8
 		{
 			for(int i = 0; i < 8; i++)
 			{
-				prefs.SetChannelIndex( i, (char)i );
+				prefs.SetChannelIndex( i, (byte)i );
 				prefs.SetChannelScale( i, 1024 );
 				prefs.SetChannelCenter( i, 0 );
 			}
@@ -790,8 +819,7 @@ namespace Elev8
 
 		void ResetAllScalesAndReverses()
 		{
-			txBuffer[0] = 0x13;	// Reset radio channel scales
-			comm.Send( txBuffer, 1 );
+			SendCommand( "Rrad" );	// Reset radio channel scales
 		}
 
 
@@ -923,7 +951,7 @@ namespace Elev8
 
 			int channelIndex = cbSender.SelectedIndex;
 			if(tagIndex > 0 && channelIndex >=0 && channelIndex < 8) {
-				prefs.SetChannelIndex( tagIndex-1, (char)channelIndex );
+				prefs.SetChannelIndex( tagIndex-1, (byte)channelIndex );
 				UpdateElev8Preferences();
 			}
 		}
@@ -955,8 +983,7 @@ namespace Elev8
 			prefs.Checksum = prefs.CalculateChecksum();
 			byte[] prefBytes = prefs.ToBytes();
 
-			txBuffer[0] = 0x19;	// Store new settings
-			comm.Send( txBuffer, 1 );
+			SendCommand( "UPrf" );	// Update preferences
 
 			Thread.Sleep( 10 );
 
@@ -970,12 +997,7 @@ namespace Elev8
 			}
 
 			// Query prefs (forces to be applied to UI)
-			txBuffer[0] = 0x18;
-			comm.Send( txBuffer, 1 );
-
-			// Put the Elev8 back into read "sensor mode"
-			txBuffer[0] = 0x2;	// Sensor mode
-			comm.Send( txBuffer, 1 );
+			SendCommand( "QPRF" );
 		}
 
 
@@ -985,8 +1007,7 @@ namespace Elev8
 			{
 				CancelThrottleCalibration();	// just in case
 
-				txBuffer[0] = (byte)(MotorIndex | 8);
-				comm.Send( txBuffer, 1 );
+				SendCommand( string.Format( "M{0}t{0}", MotorIndex+1) );	// Becomes M1t1, M2t2, etc..
 			}
 		}
 
@@ -1043,7 +1064,7 @@ namespace Elev8
 					break;
 
 				case 2:
-					txBuffer[0] = 2;		// Back to sensors mode
+					txBuffer[0] = 0;		// Finish
 					comm.Send( txBuffer, 1 );
 					lblCalibrateDocs.Text = "Calibration complete";
 					lblCalibrateDocs.Update();
@@ -1060,7 +1081,7 @@ namespace Elev8
 		{
 			if(CalibrationCycle == 0) return;
 
-			txBuffer[0] = 2;		// Back to sensors mode
+			txBuffer[0] = 0;		// Escape from throttle setting
 			comm.Send( txBuffer, 1 );
 			lblCalibrateDocs.Text = "";
 			CalibrationCycle = 0;
@@ -1127,24 +1148,20 @@ namespace Elev8
 			// tell the flight controller to revert back to its drift-compensated settings
 			if(currentMode == Mode.GyroCalibration)
 			{
-				txBuffer[0] = 0x11;		// revert previous gyro calibration values
-				comm.Send( txBuffer, 1 );
+				SendCommand( "RGyr" );	// revert previous gyro calibration values
 			}
 			else if(currentMode == Mode.AccelCalibration)
 			{
-				txBuffer[0] = 0x15;		// revert previous accel calibration values
-				comm.Send( txBuffer, 1 );
+				SendCommand( "RAcl");	// revert previous accel calibration values
 			}
 
 			if(newMode == Mode.GyroCalibration)
 			{
-				txBuffer[0] = 0x10;		// zero gyro calibration settings
-				comm.Send( txBuffer, 1 );
+				SendCommand( "ZrGr" );	// zero gyro calibration settings
 			}
 			else if(newMode == Mode.AccelCalibration)
 			{
-				txBuffer[0] = 0x14;	// zero accelerometer calibration settings
-				comm.Send( txBuffer, 1 );
+				SendCommand( "ZeAc" );	// zero accelerometer calibration settings
 			}
 
 			currentMode = newMode;
@@ -1300,6 +1317,7 @@ namespace Elev8
 			UpdateElev8Preferences();
 		}
 
+
 		short[] DelayTable = { 250, 125, 62, 0 };
 
 		private void btnUploadThrottle_Click( object sender, EventArgs e )
@@ -1309,15 +1327,15 @@ namespace Elev8
 			prefs.ThrottleTest = (short)(udTestThrottle.Value * 8);
 			prefs.MaxThrottle = (short)(udHighThrottle.Value * 8);
 
-			prefs.UseBattMon = cbUseBatteryMonitor.Checked ? (char)1 : (char)0;
+			prefs.UseBattMon = cbUseBatteryMonitor.Checked ? (byte)1 : (byte)0;
 			prefs.LowVoltageAlarmThreshold = (short)(udLowVoltageAlarmThreshold.Value * 100);
 			prefs.VoltageOffset = (short)(udVoltageOffset.Value * 100);
-			prefs.LowVoltageAlarm = (char)(cbLowVoltageAlarm.Checked ? 1 : 0);
+			prefs.LowVoltageAlarm = (byte)(cbLowVoltageAlarm.Checked ? 1 : 0);
 
 			prefs.ArmDelay = DelayTable[cbArmingDelay.SelectedIndex];
 			prefs.DisarmDelay = DelayTable[cbDisarmDelay.SelectedIndex];
 
-			prefs.DisableMotors = (char)(cbDisableMotors.Checked ? 1 : 0);
+			prefs.DisableMotors = (byte)(cbDisableMotors.Checked ? 1 : 0);
 
 			UpdateElev8Preferences();
 		}
@@ -1338,23 +1356,80 @@ namespace Elev8
 
 		private void btnFactoryDefaultPrefs_Click( object sender, EventArgs e )
 		{
-			byte[] bytes = new byte[2];
-			txBuffer[0] = 0x1A;	// Reset prefs
-			txBuffer[1] = 0x1A;	// Reset prefs
-			comm.Send( txBuffer, 2 );
-
-			// Query prefs (forces to be applied to UI)
-			txBuffer[0] = 0x18;
-			comm.Send( txBuffer, 1 );
-
-			// Put the Elev8 back into read "sensor mode"
-			txBuffer[0] = 0x2;	// Sensor mode
-			comm.Send( txBuffer, 1 );
+			SendCommand( "WIPE" );	// Reset prefs
+			SendCommand( "QPRF" );	// Query prefs (forces to be applied to UI)
 		}
 
 		private void cbReceiverType_SelectedIndexChanged( object sender, EventArgs e )
 		{
-			prefs.UseSBUS = (char)cbReceiverType.SelectedIndex;
+			prefs.UseSBUS = (byte)cbReceiverType.SelectedIndex;
+		}
+
+
+		private void hsPitchGain_ValueChanged( object sender, EventArgs e )
+		{
+			if(cbPitchRollLocked.Checked)
+			{
+				if(hsRollGain.Value != hsPitchGain.Value) {
+					hsRollGain.Value = hsPitchGain.Value;
+				}
+			}
+			lblPitchGain.Text = hsPitchGain.Value.ToString();
+		}
+
+
+		private void hsRollGain_ValueChanged( object sender, EventArgs e )
+		{
+			if(cbPitchRollLocked.Checked)
+			{
+				if(hsPitchGain.Value != hsRollGain.Value) {
+					hsPitchGain.Value = hsRollGain.Value;
+				}
+			}
+
+			lblRollGain.Text = hsRollGain.Value.ToString();
+		}
+
+
+		private void cbPitchRollLocked_CheckedChanged( object sender, EventArgs e )
+		{
+			if(cbPitchRollLocked.Checked)
+			{
+				if(hsRollGain.Value != hsPitchGain.Value) {
+					hsRollGain.Value = hsPitchGain.Value;
+				}
+			}
+		}
+
+		private void hsYawGain_ValueChanged( object sender, EventArgs e )
+		{
+			lblYawGain.Text = hsYawGain.Value.ToString();
+		}
+
+		private void hsAscentGain_ValueChanged( object sender, EventArgs e )
+		{
+			lblAscentGain.Text = hsAscentGain.Value.ToString();
+		}
+
+		private void hsAltiGain_ValueChanged( object sender, EventArgs e )
+		{
+			lblAltiGain.Text = hsAltiGain.Value.ToString();
+		}
+
+		private void btnUploadFlightChanges_Click( object sender, EventArgs e )
+		{
+			// Pull the values from the flight controls page
+			prefs.PitchRollLocked = cbPitchRollLocked.Checked ? (byte)1 : (byte)0;
+			prefs.UseAdvancedPID = cbEnableAdvanced.Checked ? (byte)1 : (byte)0;
+
+			prefs.PitchGain = (byte)(hsPitchGain.Value - 1);
+			prefs.RollGain = (byte)(hsRollGain.Value - 1);
+			prefs.YawGain = (byte)(hsYawGain.Value - 1);
+			prefs.AscentGain = (byte)(hsAscentGain.Value - 1);
+			prefs.AltiGain = (byte)(hsAltiGain.Value - 1);
+
+			// Apply the prefs to the elev-8
+			UpdateElev8Preferences();
 		}
 	}
 }

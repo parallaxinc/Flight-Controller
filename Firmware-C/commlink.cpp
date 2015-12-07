@@ -3,45 +3,41 @@
 
 
 u16 COMMLINK::cachedLength;
-u16 COMMLINK::packetCrc;
+u16 COMMLINK::packetChecksum;
 u8  COMMLINK::packetBuf[64];
 u8  COMMLINK::bufIndex;
 
-u16 Checksum(u16 crc, u8 * buf , int len );
+u16 Checksum(u16 checksum, u16 * buf , int len );
 
 
 void COMMLINK::StartPacket( char port, u8 type , u16 length )
 {
-  cachedLength = length + 7;    // 2 byte signature, 1 byte type, 2 byte length, 2 byte crc
+  cachedLength = length + 8;    // 2 byte signature, 2 byte type, 2 byte length, 2 byte checksum
 
-  u8 buf[5];
-  buf[0] = 0x55;
-  buf[1] = 0xAA;
-  buf[2] = type;
-  buf[3] = (cachedLength >> 8);
-  buf[4] = cachedLength;
+  u16 buf[3];
+  buf[0] = 0xAA55;
+  buf[1] = type;
+  buf[2] = cachedLength;
 
-  packetCrc = Checksum( 0, buf, 5 );
-  S4_Put_Bytes( port, buf, 5 );
+  packetChecksum = Checksum( 0, buf, 3 );  // 6 bytes = 3 u16's, and the checksum is done on u16's for speed
+  S4_Put_Bytes( port, buf, 6 );
 }
 
 void COMMLINK::AddPacketData( char port, void * data , u16 Count )
 {
-  packetCrc = Checksum( packetCrc, (u8*)data, Count );
+  packetChecksum = Checksum( packetChecksum, (u16*)data, Count>>1 );
   S4_Put_Bytes( port, data, Count );
 }
 
 
 void COMMLINK::StartPacket( u8 type , u16 length )
 {
-  cachedLength = length + 7;    // 2 byte signature, 1 byte type, 2 byte length, 2 byte crc
-  
-  packetBuf[0] = 0x55;
-  packetBuf[1] = 0xAA;
-  packetBuf[2] = type;
-  packetBuf[3] = (cachedLength >> 8);
-  packetBuf[4] = cachedLength;
-  bufIndex = 5;
+  cachedLength = length + 8;    // 2 byte signature, 1 byte type, 2 byte length, 2 byte crc
+
+  ((u16*)packetBuf)[0] = 0xAA55;  // 55AA signature when done in little-endian
+  ((u16*)packetBuf)[1] = type;
+  ((u16*)packetBuf)[2] = cachedLength;
+  bufIndex = 6; // 3 x U16s = 6 bytes
 }
 
 void COMMLINK::AddPacketData( void * data , u16 Count )
@@ -52,8 +48,8 @@ void COMMLINK::AddPacketData( void * data , u16 Count )
 
 void COMMLINK::EndPacket(void)
 {
-  packetCrc = Checksum( 0, packetBuf, bufIndex );
-  memcpy( packetBuf + bufIndex, &packetCrc, 2 );
+  packetChecksum = Checksum( 0, (u16*)packetBuf, bufIndex>>1 );
+  memcpy( packetBuf + bufIndex, &packetChecksum, 2 );
   bufIndex += 2;
 }
 
@@ -66,10 +62,10 @@ void COMMLINK::BuildPacket( u8 type , void * data , u16 length )
 
 
 
-u16 Checksum(u16 crc, u8 * buf , int len )
+u16 Checksum(u16 checksum, u16 * buf , int len )
 {
   for( int i=0; i<len; i++) {
-    crc = ((crc << 5) | (crc >> (16-5))) ^ buf[i];
+    checksum = ((checksum << 5) | (checksum >> (16-5))) ^ buf[i];
   }
-  return crc;
+  return checksum;
 }

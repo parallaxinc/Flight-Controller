@@ -164,28 +164,37 @@ namespace Elev8
 						return;
 					}
 					packetByteIndex++;
-
-					currentChecksum = Checksum( 0, 0x55 );
-					currentChecksum = Checksum( currentChecksum, 0xAA );
-					currentChecksum = Checksum( currentChecksum, b );
 					return;
 
 				case 1:
-					if(b > 0x04) {	// unreasonable packet size (> 1kb)
+					if(b != 0)
+					{	// No such mode - bad data
 						sigByteIndex = 0;
 						packetByteIndex = 0;
 						return;
 					}
-					currentPacket.len = (short)(b << 8);
-					currentChecksum = Checksum( currentChecksum, b );
 					packetByteIndex++;
+					currentChecksum = Checksum( 0, (UInt16)0xaa55 );
+					currentChecksum = Checksum( currentChecksum, (UInt16)currentPacket.mode );
 					return;
 
 				case 2:
-					currentPacket.len |= (short)b;
-					currentChecksum = Checksum( currentChecksum, b );
+					currentPacket.len = (short)b;
+					packetByteIndex++;
+					return;
 
-					currentPacket.len -= 5;
+				case 3:
+					currentPacket.len |= (short)(b<<8);
+					currentChecksum = Checksum( currentChecksum, (UInt16)currentPacket.len );
+
+					if(currentPacket.len > 1024)
+					{	// unreasonable packet size (> 1kb)
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
+
+					currentPacket.len -= 6;		// Subtract off signature and header size
 					if(currentPacket.len < 1) {	// Can't have a zero length packet - bad data
 						sigByteIndex = 0;
 						packetByteIndex = 0;
@@ -196,12 +205,12 @@ namespace Elev8
 					return;
 
 				default:
-					currentPacket.data[packetByteIndex-3] = b;
+					currentPacket.data[packetByteIndex-4] = b;
 					break;
 			}
 
 			packetByteIndex++;
-			if(packetByteIndex == (currentPacket.data.Length + 3))	// length + header bytes
+			if(packetByteIndex == (currentPacket.data.Length + 4))	// length + header bytes
 			{
 				sigByteIndex = 0;
 				packetByteIndex = 0;
@@ -230,19 +239,20 @@ namespace Elev8
 		}
 
 
-		UInt16 Checksum( UInt16 crc, byte [] buf, int Length)
+		UInt16 Checksum( UInt16 checksum, byte [] buf, int Length)
 		{
-			for(int i = 0; i < Length; i++)
+			for(int i = 0; i < Length; i+=2)
 			{
-				crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ buf[i]);
+				UInt16 val = (UInt16)((buf[i] << 0) | (buf[i + 1] << 8));
+				checksum = (UInt16)(((checksum << 5) | (checksum >> (16 - 5))) ^ val);
 			}
-			return crc;
+			return checksum;
 		}
 
-		UInt16 Checksum( UInt16 crc, byte val )
+		UInt16 Checksum( UInt16 checksum, UInt16 val )
 		{
-			crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ val);
-			return crc;
+			checksum = (UInt16)(((checksum << 5) | (checksum >> (16 - 5))) ^ val);
+			return checksum;
 		}
 		
 
@@ -329,26 +339,37 @@ namespace Elev8
 							ftdi.SetFlowControl( FTDI.FT_FLOW_CONTROL.FT_FLOW_NONE, 0, 0 );
 
 
-							txBuffer[0] = (byte)0;		// Set it to MODE_None to stop it writing (reset in case it was disconnected)
-							txBuffer[1] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
+							txBuffer[0] = (byte)'E';
+							txBuffer[1] = (byte)'l';
+							txBuffer[2] = (byte)'v';
+							txBuffer[3] = (byte)'8';
 							uint written = 0;
 
 							for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
 							{
-								ftdi.Write( txBuffer, 2, ref written );
+								ftdi.Write( txBuffer, 4, ref written );
 								System.Threading.Thread.Sleep( 50 );
 
 								uint bytesAvail = 0;
 								ftdi.GetRxBytesAvailable( ref bytesAvail );				// How much data is available from the serial port?
 								if(bytesAvail > 0)
 								{
-									uint bytesRead = 0;
-									ftdi.Read( rxBuffer, 1, ref bytesRead );			// If it comes back with 0xE8 it's the one we want
-									if(bytesRead == 1 && rxBuffer[0] == 0xE8)
+									int TestVal = 0;
+
+									while(bytesAvail > 0)
 									{
-										FoundElev8 = true;
-										commStat = CommStatus.Connected;
-										break;
+										uint bytesRead = 0;
+										ftdi.Read( rxBuffer, 1, ref bytesRead );
+										if(bytesRead == 1)
+										{
+											TestVal = (TestVal << 8) | rxBuffer[0];
+											if(TestVal == (int)(('E' << 0) | ('l' << 8) | ('v' << 16) | ('8' << 24)) )
+											{
+												FoundElev8 = true;
+												commStat = CommStatus.Connected;
+												break;
+											}
+										}
 									}
 								}
 							}
@@ -356,12 +377,7 @@ namespace Elev8
 							if(FoundElev8)
 							{
 								connected = true;
-								txBuffer[0] = 2;	// MODE_Sensors
-								written = 0;
-								ftdi.Write( txBuffer, 1, ref written );
-
-								if(ConnectionStarted != null)
-								{
+								if(ConnectionStarted != null) {
 									ConnectionStarted();
 								}
 								break;

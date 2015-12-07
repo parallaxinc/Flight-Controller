@@ -60,6 +60,13 @@ namespace Elev8.Properties {
             }
         }
         
+        internal static System.Drawing.Icon AppIcon {
+            get {
+                object obj = ResourceManager.GetObject("AppIcon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
         internal static System.Drawing.Bitmap Icon_Clockwise {
             get {
                 object obj = ResourceManager.GetObject("Icon_Clockwise", resourceCulture);
@@ -67,9 +74,16 @@ namespace Elev8.Properties {
             }
         }
         
-        internal static System.Drawing.Bitmap Icon_Counter_clockwise {
+        internal static System.Drawing.Bitmap Icon_CounterClockwise {
             get {
-                object obj = ResourceManager.GetObject("Icon_Counter-clockwise", resourceCulture);
+                object obj = ResourceManager.GetObject("Icon_CounterClockwise", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap ParallaxLogo {
+            get {
+                object obj = ResourceManager.GetObject("ParallaxLogo", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -58,6 +58,13 @@ void Prefs_SetDefaults(void)
   Prefs.ManualYawRate =       ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
 
 
+  Prefs.PitchGain = 127;
+  Prefs.RollGain = 127;
+  Prefs.YawGain = 127;      // Values are not allowed to be zero, so we use 0 to 255 to represent 1 to 256.  127 is middle - basline
+  Prefs.AscentGain = 127;
+  Prefs.AltiGain = 127;
+  Prefs.PitchRollLocked = 1;
+
   Prefs.LowVoltageAlarmThreshold = 1050;
 
   Prefs.LowVoltageAlarm = 1;

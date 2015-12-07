@@ -21,14 +21,17 @@
 #include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
 
+//#define ENABLE_LOGGING
 
 // TODO:
-// - PID tuning through UI
+// - PID advanced tuning through UI
+// - PPM receiver
+// - GroundStation needs to store MODE setting
 // - Altitude hold work
 
 
 
-/*
+#ifdef ENABLE_LOGGING
 void DoLogOutput(void);
 void DataLogThread(void *par);
 
@@ -36,7 +39,8 @@ void DataLogThread(void *par);
 static int log_stack[LOG_STACK_SIZE]; // allocate space for the stack - you need to set up a 
 
 volatile char LogTrigger = 0;
-*/
+#endif
+
 
 
 short UsbPulse = 0;     // Periodically, the GroundStation will ping the FC to say it's still there - these are countdowns
@@ -78,6 +82,7 @@ static char   Quat[16];       //Current quaternion from the IMU functions
 static char Mode = MODE_None;         //Debug communication mode
 static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1 == no motor)
 static char NudgeCount[4];            // How long to spin the motor for (0 == stopped)
+static int HostCommandUSB, HostCommandXBee;
 
 static char AccelAssistZFactor  = 32; // 0 to 64 == 0 to 1.0
 
@@ -108,8 +113,6 @@ static short StartupDelay;            //Used to change convergence rates for IMU
 
 static char MotorPin[4] = {PIN_MOTOR_FL, PIN_MOTOR_FR, PIN_MOTOR_BR, PIN_MOTOR_BL };            //Motor index to pin index table
 
-
-static long RollPitch_P, RollPitch_D; //Tunable values for roll & pitch Proportional gain and Derivative gain
 static long LEDModeColor;
 
 static short BatteryVolts = 0;
@@ -130,7 +133,7 @@ const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
 
 
-/*
+#ifdef ENABLE_LOGGING
 // Only used for debugging
 static char LogInt( int x , char * dest )
 {
@@ -157,7 +160,7 @@ static char LogInt( int x , char * dest )
   memcpy( dest, buf+index, count );
   return count;
 }
-*/
+#endif
 
 
 int main()                                    // Main function
@@ -302,7 +305,9 @@ int main()                                    // Main function
     CheckDebugInput();
     DoDebugModeOutput();
 
-    //DoLogOutput();
+#ifdef ENABLE_LOGGING
+    DoLogOutput();
+#endif
 
     LoopCycles = CNT - Cycles;    // Record how long it took for one full iteration
     CycleCount[counter & 7] = LoopCycles / 64;
@@ -321,13 +326,10 @@ void Initialize(void)
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
   FlightMode = FlightMode_Assisted;
-  GyroRPFilter = 192;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
-  GyroYawFilter = 192;
+  GyroRPFilter = 224;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
+  GyroYawFilter = 224;
 
   InitSerial();
-
-  //dbg = fdserial_open( 31, 30, 0, 115200 );   // USB
-  //dbg = fdserial_open( 24, 25, 0, 57600 );     // XBee - V2 board (packets contain dropped bytes, likely need to reduce rate, add checksum)
 
   All_LED( LED_Red & LED_Half );                         //LED red on startup
 
@@ -366,57 +368,60 @@ void Initialize(void)
   }    
   Servo32_Start();
 
-  RollPitch_P = 8000;           //Set here to allow an in-flight tuning baseline
-  RollPitch_D = 20000 * Const_UpdateRate;
+  int RollPitch_P = 500;
+  int RollPitch_D = 1560 * Const_UpdateRate;
 
-
-  RollPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
-  RollPID.SetPrecision( 12 );
+  RollPID.Init( (RollPitch_P * (Prefs.RollGain+1)) >> 7, 0,  (RollPitch_D * (Prefs.RollGain+1)) >> 7 , Const_UpdateRate );
+  RollPID.SetPrecision( 8 );
   RollPID.SetMaxOutput( 3000 );
   RollPID.SetPIMax( 100 );
   RollPID.SetMaxIntegral( 1900 );
-  RollPID.SetDervativeFilter( 128 );    // was 96
+  RollPID.SetDervativeFilter( 224 );
 
 
-  PitchPID.Init( RollPitch_P, 0,  RollPitch_D , Const_UpdateRate );
-  PitchPID.SetPrecision( 12 );
+  PitchPID.Init( (RollPitch_P * (Prefs.PitchGain+1)) >> 7, 0,  (RollPitch_D * (Prefs.PitchGain+1)) >> 7 , Const_UpdateRate );
+  PitchPID.SetPrecision( 8 );
   PitchPID.SetMaxOutput( 3000 );
   PitchPID.SetPIMax( 100 );
   PitchPID.SetMaxIntegral( 1900 );
-  PitchPID.SetDervativeFilter( 128 );
+  PitchPID.SetDervativeFilter( 224 );
 
+  int YawP = (1200 * (Prefs.YawGain+1)) >> 7;
+  int YawD = (625 * Const_UpdateRate * (Prefs.YawGain+1)) >> 7;
 
-  YawPID.Init( 15000,  0,  10000 * Const_UpdateRate , Const_UpdateRate );
-  YawPID.SetPrecision( 12 );
+  YawPID.Init( YawP,  0,  YawD , Const_UpdateRate );
+  YawPID.SetPrecision( 8 );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetPIMax( 100 );
   YawPID.SetMaxIntegral( 2000 );
   YawPID.SetDervativeFilter( 192 );
 
+  int AltP = (900 * (Prefs.AltiGain+1)) >> 7;
+  int AltI = (200 * (Prefs.AltiGain+1)) >> 7;
 
-  // TODO: Need to get an XBee or a logger going here, 'cause I need to see what's happening inside these objects
-  // data logs would be very helpful for tuning these.  The cascaded controllers are kind of magically weird.
-
- 
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
-  AltPID.Init( 900, 0, 0, Const_UpdateRate );
+  AltPID.Init( AltP, AltI, 0, Const_UpdateRate );
   AltPID.SetPrecision( 8 );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
-  //AltPID.SetPIMax( 1000 );
-  //AltPID.SetMaxIntegral( 4000 );
+  AltPID.SetPIMax( 1000 );
+  AltPID.SetMaxIntegral( 4000 );
 
+  int AscentP = (300 * (Prefs.AscentGain+1)) >> 7;
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
-  AscentPID.Init( 285, 0, 0 , Const_UpdateRate );
+  AscentPID.Init( AscentP, 0, 0 , Const_UpdateRate );
   AscentPID.SetPrecision( 8 );
   AscentPID.SetMaxOutput( 4000 );   // Limit of the control rate applied to the throttle
-  //AscentPID.SetPIMax( 500 );
-  //AscentPID.SetMaxIntegral( 2000 );
+  AscentPID.SetPIMax( 500 );
+  AscentPID.SetMaxIntegral( 2000 );
 
 
-  //cogstart( &DataLogThread , NULL, log_stack, sizeof(log_stack) );
+#ifdef ENABLE_LOGGING
+  cogstart( &DataLogThread , NULL, log_stack, sizeof(log_stack) );
+#endif
+  
   
   FindGyroZero();
 }
@@ -627,6 +632,7 @@ void UpdateFlightLoop(void)
     gp = -(sens.GyroX - GyroZX);
     gy = -(sens.GyroZ - GyroZZ);
 
+    // TODO: Flight test - is this filtering necessary?
     GyroRoll += ((gr - GyroRoll) * GyroRPFilter) >> 8;
     GyroPitch += ((gp - GyroPitch) * GyroRPFilter) >> 8;
     GyroYaw += ((gy - GyroYaw) * GyroYawFilter) >> 8;
@@ -668,6 +674,14 @@ void UpdateFlightLoop(void)
     {
       if( FlightMode == FlightMode_Automatic )
       {
+        //int T0 = max( 0, (Radio.Aux1 + 1024) >> 1);
+        //int T1 = max( 0, (Radio.Aux2 + 1024));
+        //int T2 = max( 0, (Radio.Aux3 + 1024) >> 1);
+
+        //AscentPID.SetPGain( T0 );
+        //AltPID.SetPGain( T1 );
+        //AltPID.SetIGain( T2 );
+        
         int AdjustedThrottle = 0;
 
         // Throttle has to be off zero by a bit - deadband around zero helps keep it still
@@ -854,7 +868,7 @@ void DoCompassCalibrate(void)
 
 void CheckDebugInput(void)
 {
-  int i;
+  int i, HostCommand;
 
   char port = 0;
   int c = S4_Check(0);
@@ -863,90 +877,93 @@ void CheckDebugInput(void)
     if(c < 0)
       return;
     port = 1;
+    HostCommandXBee = (HostCommandXBee<<8) | c;
+    HostCommand = HostCommandXBee;
   }
+  else {
+    HostCommandUSB = (HostCommandUSB<<8) | c;
+    HostCommand = HostCommandUSB;
+  }    
 
-  if( c <= MODE_MotorTest ) {
-    Mode = c;
+  if( HostCommand == Comm_Beat )
+  {
+    Mode = MODE_SensorTest;
     if( port == 0 ) {
       UsbPulse = 500;   // send USB data for the next two seconds (we'll get another heartbeat before then)
       XBeePulse = 0;
-    }      
+    }
     if( port == 1 ) {
       UsbPulse = 0;
       XBeePulse = 500;  // send XBee data for the next two seconds (we'll get another heartbeat before then)
-    }      
+    }
     return;
   }
 
-  if( c == 0xff ) {
-    S4_Put(port, 0xE8);     //Simple ping-back to tell the application we have the right comm port
+  if( HostCommand == Comm_Elv8 ) {
+    S4_Put_Bytes( port, &HostCommand , 4 );     //Simple ping-back to tell the application we have the right comm port
+    return;
   }
 
   if( FlightEnabled ) return; // Don't allow any settings adjustment when in-flight
 
 
-  if( port == 0 && (c & 0xF8) == 0x08 ) {  //Nudge one of the motors (ONLY allowed over USB)
-      NudgeMotor = c & 7;  //Nudge the motor selected by the configuration app
+  switch( HostCommand )
+  {
+    case Comm_Motor1:
+    case Comm_Motor2:
+    case Comm_Motor3:
+    case Comm_Motor4:
+    case Comm_Motor5:
+    case Comm_Motor6:
+      NudgeMotor = (HostCommand&255) - '1';    // Becomes an index from 0 to 5, 0 to 3 are motors, 4 is LED, 5 is beeper
       if( NudgeMotor < 4 ) {
         NudgeCount[NudgeMotor] = 50;  // 1/5th of a second at 250 updates per sec
         NudgeMotor = -1;
-      }        
-      return;
-  }
+      }
+      break;
 
-  if( (c & 0xF8) == 0x10 )  //Zero, Reset, or set gyro or accelerometer calibration
-  {
-    if( Mode == MODE_SensorTest )
-    {
-      if( c == 0x10 )
-      {
-        //Temporarily zero gyro drift settings
-        Sensors_TempZeroDriftValues();
+    case Comm_ResetRadio:
+      for( int i=0; i<8; i++ ) {
+        Prefs.ChannelScale(i) = 1024;
+        Prefs.ChannelCenter(i) = 0;
       }
-      else if( c == 0x11 )
-      {
-        //Reset gyro drift settings
-        Sensors_ResetDriftValues();
-      }
-      else if( c == 0x13 )
-      {
-        for( int i=0; i<8; i++ ) {
-          Prefs.ChannelScale(i) = 1024;
-          Prefs.ChannelCenter(i) = 0;
-        }
+      Beep2();
+      break;
 
-        Beep2();
-        loopTimer = CNT;
-      }
-      else if( c == 0x14 )
-      {
-        //Temporarily zero accel offset settings
-        Sensors_TempZeroAccelOffsetValues();
-      }
-      else if( c == 0x15 )
-      {
-        //Reset accel offset settings
-        Sensors_ResetAccelOffsetValues();
-      }
-    }      
-  }
+    case Comm_ZeroGyro:
+      // temporarily zero gyro drift settings
+      Sensors_TempZeroDriftValues();
+      break;
+
+    case Comm_ResetGyro:
+      // restore previous settings
+      Sensors_ResetDriftValues();
+      break;
+
+    case Comm_ZeroAccel:
+      //Temporarily zero accel offset settings
+      Sensors_TempZeroAccelOffsetValues();
+      break;
+
+    case Comm_ResetAccel:
+      //Reset accel offset settings
+      Sensors_ResetAccelOffsetValues();
+      break;
 
 
-  if( (c & 0xf8) == 0x18 )        //Query or modify all settings
-  {
-    if( c == 0x18 )               //Query current settings
-    {
+    case Comm_QueryPrefs:  // Query Preferences
+      {
       Prefs.Checksum = Prefs_CalculateChecksum( Prefs );
       int size = sizeof(Prefs);
 
       COMMLINK::StartPacket( 0, 0x18 , size );
       COMMLINK::AddPacketData( 0, &Prefs, size );
       COMMLINK::EndPacket(port);
+      }
+      break;
 
-      loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
-    }
-    else if( c == 0x19 )          //Store new settings
-    {
+    case Comm_SetPrefs:  //Store new preferences
+      {
       PREFS TempPrefs;
       for( int i=0; i<sizeof(Prefs); i++ ) {
         ((char *)&TempPrefs)[i] = S4_Get_Timed(port, 50);   // wait up to 50ms per byte - Should be plenty
@@ -960,6 +977,7 @@ void CheckDebugInput(void)
           BeepOff( 'A' );   // turn off the alarm beeper if it was on
           Beep2();
           ApplyPrefs();
+          FindGyroZero();   // Prevents the IMU from wandering around when we change gyro or accel offsets
         }
         else {
           Beep();
@@ -967,20 +985,21 @@ void CheckDebugInput(void)
       }
       else {
         Beep();
-      }        
-      loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
-    }
-    else if( c == 0x1a )    // default prefs - wipe
-    {
-      if( S4_Get_Timed(port, 50) == 0x1a )
-      {
-        Prefs_SetDefaults();
-        Prefs_Save();
-        Beep3();
       }
-      loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
-    }
+      }
+      break;
+
+    case Comm_Wipe: // Default prefs - wipe
+      Prefs_SetDefaults();
+      Prefs_Save();
+      Beep3();
+      break;
+
+    default:
+      return;
   }
+
+  loopTimer = CNT;                                                          //Reset the loop counter in case we took too long 
 }
 
 void DoDebugModeOutput(void)
@@ -1144,7 +1163,7 @@ void DoDebugModeOutput(void)
           Servo32_Set(MotorPin[i], Prefs.MaxThrottle);
         }
 
-        S4_Get(0);
+        S4_Get(0);  // Get the next character to finish
 
         for( int i=0; i<4; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MinThrottle);  // Must add 64 to min throttle value (in this calibration code only) if using ESCs with BLHeli version 14.0 or 14.1
@@ -1163,7 +1182,7 @@ void DoDebugModeOutput(void)
   //End Motor test code-----------------------------------
 }
 
-/*
+#ifdef ENABLE_LOGGING
 void DoLogOutput(void)
 {
   if( FlightEnabled == 0 ) return;
@@ -1173,38 +1192,44 @@ void DoLogOutput(void)
 
 void DataLogThread(void *par)
 {
+  char phase = 0;
+
   while( true )
   {
     while( LogTrigger == 0 )
       ;
 
-    // Probably better to write this to just dump raw int, float, etc.
-    // MUCH faster, smaller, and the PC can extract it relatively easily
-  
-    static char tempBuf[64];
-    char count = 0;
-  
-    count =  LogInt( DesiredAscentRate , tempBuf+count );
-    count += LogInt( AscentEst , tempBuf+count );
-    count += LogInt( AscentPID.LastPError , tempBuf+count );
-    count += LogInt( AscentPID.IError , tempBuf+count );
-    count += LogInt( AscentPID.Output , tempBuf+count );
-    count += LogInt( DesiredAltitude , tempBuf+count );
-    count += LogInt( AltiEst, tempBuf+count );
-    count += LogInt( AltPID.LastPError , tempBuf+count );
-    count += LogInt( AltPID.IError , tempBuf+count );
-    count += LogInt( AltPID.Output , tempBuf+count );
-  
-    count += LogInt( Radio.Thro , tempBuf+count );
-    tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
-  
-    S4_Put_Bytes( 3, tempBuf, count );
+    if( phase == 0 ) {
+      // Probably better to write this to just dump raw int, float, etc.
+      // MUCH faster, smaller, and the PC can extract it relatively easily
+    
+      static char tempBuf[128];
+      char count = 0;
+
+      count =  LogInt( DesiredAscentRate , tempBuf+count );
+      count += LogInt( AscentEst , tempBuf+count );
+      count += LogInt( AscentPID.LastPError , tempBuf+count );
+      count += LogInt( AscentPID.IError , tempBuf+count );
+      count += LogInt( AscentPID.Output , tempBuf+count );
+      count += LogInt( DesiredAltitude , tempBuf+count );
+      count += LogInt( AltiEst, tempBuf+count );
+      count += LogInt( AltPID.LastPError , tempBuf+count );
+      count += LogInt( AltPID.IError , tempBuf+count );
+      count += LogInt( FlightMode , tempBuf+count);
+
+      count += LogInt( Radio.Thro , tempBuf+count );
+      tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
+    
+      S4_Put_Bytes( 3, tempBuf, count );
+    }
+
+    phase ^= 1; // Cut the data rate down a little
 
     // Reset the log trigger
     LogTrigger = 0;
   }    
 }
-*/
+#endif
 
 
 void InitializePrefs(void)

@@ -35,7 +35,30 @@
 			this.tmCommTimer = new System.Windows.Forms.Timer( this.components );
 			this.tcTabs = new System.Windows.Forms.TabControl();
 			this.tpStatus = new System.Windows.Forms.TabPage();
+			this.label23 = new System.Windows.Forms.Label();
 			this.lblCycles = new System.Windows.Forms.Label();
+			this.vbRollOut = new Elev8.Controls.ValueBar();
+			this.vbYawOut = new Elev8.Controls.ValueBar();
+			this.vbPitchOut = new Elev8.Controls.ValueBar();
+			this.vbBackLeft = new Elev8.Controls.ValueBar();
+			this.vbFrontLeft = new Elev8.Controls.ValueBar();
+			this.vbBackRight = new Elev8.Controls.ValueBar();
+			this.vbFrontRight = new Elev8.Controls.ValueBar();
+			this.vbVoltage = new Elev8.Controls.ValueBar();
+			this.vbChannel8 = new Elev8.Controls.ValueBar();
+			this.vbChannel7 = new Elev8.Controls.ValueBar();
+			this.vbChannel6 = new Elev8.Controls.ValueBar();
+			this.vbChannel5 = new Elev8.Controls.ValueBar();
+			this.vbRS_XValue = new Elev8.Controls.ValueBar();
+			this.vbRS_YValue = new Elev8.Controls.ValueBar();
+			this.vbLS_XValue = new Elev8.Controls.ValueBar();
+			this.vbLS_YValue = new Elev8.Controls.ValueBar();
+			this.rsRight = new Elev8.RadioStick();
+			this.rsLeft = new Elev8.RadioStick();
+			this.aicAttitude = new Elev8.AttitudeIndicator();
+			this.ocOrientation = new Elev8.OrientationCube();
+			this.aicHeading = new Elev8.HeadingIndicator();
+			this.aicAltimeter = new Elev8.Altimeter();
 			this.tpSensors = new System.Windows.Forms.TabPage();
 			this.cbAltiBaro = new System.Windows.Forms.CheckBox();
 			this.cbVoltage = new System.Windows.Forms.CheckBox();
@@ -52,6 +75,7 @@
 			this.cbGyroZ = new System.Windows.Forms.CheckBox();
 			this.cbGyroY = new System.Windows.Forms.CheckBox();
 			this.cbGyroX = new System.Windows.Forms.CheckBox();
+			this.plotSensors = new GraphLib.PlotterDisplayEx();
 			this.tpSysTest = new System.Windows.Forms.TabPage();
 			this.lblCalibrateDocs = new System.Windows.Forms.Label();
 			this.btnThrottleCalibrate = new System.Windows.Forms.Button();
@@ -62,7 +86,7 @@
 			this.btnMotor3 = new System.Windows.Forms.Button();
 			this.btnMotor2 = new System.Windows.Forms.Button();
 			this.btnMotor1 = new System.Windows.Forms.Button();
-			this.tpControlSetup = new System.Windows.Forms.TabPage();
+			this.tpRadioSetup = new System.Windows.Forms.TabPage();
 			this.tbCalibrateDocs = new System.Windows.Forms.TextBox();
 			this.lblYawSpeedManual = new System.Windows.Forms.Label();
 			this.label14 = new System.Windows.Forms.Label();
@@ -103,31 +127,68 @@
 			this.cbChannel5 = new System.Windows.Forms.ComboBox();
 			this.cbChannel4 = new System.Windows.Forms.ComboBox();
 			this.cbChannel1 = new System.Windows.Forms.ComboBox();
+			this.vbR_Channel8 = new Elev8.Controls.ValueBar();
+			this.vbR_Channel7 = new Elev8.Controls.ValueBar();
+			this.vbR_Channel6 = new Elev8.Controls.ValueBar();
+			this.vbR_Channel5 = new Elev8.Controls.ValueBar();
+			this.vbR_RS_XValue = new Elev8.Controls.ValueBar();
+			this.vbR_RS_YValue = new Elev8.Controls.ValueBar();
+			this.vbR_LS_XValue = new Elev8.Controls.ValueBar();
+			this.vbR_LS_YValue = new Elev8.Controls.ValueBar();
+			this.rsR_Right = new Elev8.RadioStick();
+			this.rsR_Left = new Elev8.RadioStick();
+			this.tpControllerSetup = new System.Windows.Forms.TabPage();
+			this.btnUploadFlightChanges = new System.Windows.Forms.Button();
+			this.cbEnableAdvanced = new System.Windows.Forms.CheckBox();
+			this.groupBox4 = new System.Windows.Forms.GroupBox();
+			this.groupBox3 = new System.Windows.Forms.GroupBox();
+			this.lblAltiGain = new System.Windows.Forms.Label();
+			this.label27 = new System.Windows.Forms.Label();
+			this.hsAltiGain = new System.Windows.Forms.HScrollBar();
+			this.cbPitchRollLocked = new System.Windows.Forms.CheckBox();
+			this.lblAscentGain = new System.Windows.Forms.Label();
+			this.hsPitchGain = new System.Windows.Forms.HScrollBar();
+			this.label25 = new System.Windows.Forms.Label();
+			this.hsRollGain = new System.Windows.Forms.HScrollBar();
+			this.hsAscentGain = new System.Windows.Forms.HScrollBar();
+			this.label11 = new System.Windows.Forms.Label();
+			this.lblYawGain = new System.Windows.Forms.Label();
+			this.label19 = new System.Windows.Forms.Label();
+			this.lblRollGain = new System.Windows.Forms.Label();
+			this.hsYawGain = new System.Windows.Forms.HScrollBar();
+			this.lblPitchGain = new System.Windows.Forms.Label();
+			this.label21 = new System.Windows.Forms.Label();
 			this.tpSystemSetup = new System.Windows.Forms.TabPage();
-			this.btnFactoryDefaultPrefs = new System.Windows.Forms.Button();
-			this.cbLowVoltageAlarm = new System.Windows.Forms.CheckBox();
-			this.label16 = new System.Windows.Forms.Label();
-			this.cbArmingDelay = new System.Windows.Forms.ComboBox();
-			this.label15 = new System.Windows.Forms.Label();
-			this.cbDisarmDelay = new System.Windows.Forms.ComboBox();
-			this.label10 = new System.Windows.Forms.Label();
-			this.udVoltageOffset = new System.Windows.Forms.NumericUpDown();
-			this.label12 = new System.Windows.Forms.Label();
-			this.label9 = new System.Windows.Forms.Label();
-			this.btnUploadThrottle = new System.Windows.Forms.Button();
-			this.udLowVoltageAlarmThreshold = new System.Windows.Forms.NumericUpDown();
+			this.groupBox2 = new System.Windows.Forms.GroupBox();
+			this.vbVoltage2 = new Elev8.Controls.ValueBar();
 			this.cbUseBatteryMonitor = new System.Windows.Forms.CheckBox();
+			this.cbLowVoltageAlarm = new System.Windows.Forms.CheckBox();
+			this.udLowVoltageAlarmThreshold = new System.Windows.Forms.NumericUpDown();
+			this.label9 = new System.Windows.Forms.Label();
+			this.label12 = new System.Windows.Forms.Label();
+			this.udVoltageOffset = new System.Windows.Forms.NumericUpDown();
+			this.label10 = new System.Windows.Forms.Label();
+			this.btnFactoryDefaultPrefs = new System.Windows.Forms.Button();
+			this.btnUploadThrottle = new System.Windows.Forms.Button();
 			this.groupBox1 = new System.Windows.Forms.GroupBox();
 			this.cbDisableMotors = new System.Windows.Forms.CheckBox();
 			this.label6 = new System.Windows.Forms.Label();
+			this.label16 = new System.Windows.Forms.Label();
 			this.label4 = new System.Windows.Forms.Label();
+			this.cbArmingDelay = new System.Windows.Forms.ComboBox();
+			this.label15 = new System.Windows.Forms.Label();
 			this.udTestThrottle = new System.Windows.Forms.NumericUpDown();
+			this.cbDisarmDelay = new System.Windows.Forms.ComboBox();
 			this.label7 = new System.Windows.Forms.Label();
 			this.label8 = new System.Windows.Forms.Label();
 			this.udLowThrottle = new System.Windows.Forms.NumericUpDown();
 			this.udHighThrottle = new System.Windows.Forms.NumericUpDown();
 			this.udArmedLowThrottle = new System.Windows.Forms.NumericUpDown();
 			this.tpGyroCalibration = new System.Windows.Forms.TabPage();
+			this.gCalibTemp = new Elev8.Gauge();
+			this.gCalibZ = new Elev8.Gauge();
+			this.gCalibY = new Elev8.Gauge();
+			this.gCalibX = new Elev8.Gauge();
 			this.btnUploadGyroCalibration = new System.Windows.Forms.Button();
 			this.btnResetGyroCal = new System.Windows.Forms.Button();
 			this.groupBox10 = new System.Windows.Forms.GroupBox();
@@ -145,7 +206,9 @@
 			this.gxOffset = new System.Windows.Forms.Label();
 			this.label28 = new System.Windows.Forms.Label();
 			this.gxScale = new System.Windows.Forms.Label();
+			this.lfGraph = new Elev8.LineFit();
 			this.tpAccelCalibration = new System.Windows.Forms.TabPage();
+			this.ocAccelOrient = new Elev8.OrientationCube();
 			this.groupBox6 = new System.Windows.Forms.GroupBox();
 			this.btnUploadAngleCorrection = new System.Windows.Forms.Button();
 			this.udRollCorrection = new System.Windows.Forms.NumericUpDown();
@@ -153,6 +216,9 @@
 			this.label42 = new System.Windows.Forms.Label();
 			this.udPitchCorrection = new System.Windows.Forms.NumericUpDown();
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
+			this.gAccelXCal = new Elev8.Gauge();
+			this.gAccelYCal = new Elev8.Gauge();
+			this.gAccelZCal = new Elev8.Gauge();
 			this.label39 = new System.Windows.Forms.Label();
 			this.label38 = new System.Windows.Forms.Label();
 			this.label37 = new System.Windows.Forms.Label();
@@ -187,49 +253,6 @@
 			this.comboBox7 = new System.Windows.Forms.ComboBox();
 			this.comboBox8 = new System.Windows.Forms.ComboBox();
 			this.tlToolTip = new System.Windows.Forms.ToolTip( this.components );
-			this.vbRollOut = new Elev8.Controls.ValueBar();
-			this.vbYawOut = new Elev8.Controls.ValueBar();
-			this.vbPitchOut = new Elev8.Controls.ValueBar();
-			this.vbBackLeft = new Elev8.Controls.ValueBar();
-			this.vbFrontLeft = new Elev8.Controls.ValueBar();
-			this.vbBackRight = new Elev8.Controls.ValueBar();
-			this.vbFrontRight = new Elev8.Controls.ValueBar();
-			this.vbVoltage = new Elev8.Controls.ValueBar();
-			this.vbChannel8 = new Elev8.Controls.ValueBar();
-			this.vbChannel7 = new Elev8.Controls.ValueBar();
-			this.vbChannel6 = new Elev8.Controls.ValueBar();
-			this.vbChannel5 = new Elev8.Controls.ValueBar();
-			this.vbRS_XValue = new Elev8.Controls.ValueBar();
-			this.vbRS_YValue = new Elev8.Controls.ValueBar();
-			this.vbLS_XValue = new Elev8.Controls.ValueBar();
-			this.vbLS_YValue = new Elev8.Controls.ValueBar();
-			this.rsRight = new Elev8.RadioStick();
-			this.rsLeft = new Elev8.RadioStick();
-			this.aicAttitude = new Elev8.AttitudeIndicator();
-			this.ocOrientation = new Elev8.OrientationCube();
-			this.aicHeading = new Elev8.HeadingIndicator();
-			this.aicAltimeter = new Elev8.Altimeter();
-			this.plotSensors = new GraphLib.PlotterDisplayEx();
-			this.vbR_Channel8 = new Elev8.Controls.ValueBar();
-			this.vbR_Channel7 = new Elev8.Controls.ValueBar();
-			this.vbR_Channel6 = new Elev8.Controls.ValueBar();
-			this.vbR_Channel5 = new Elev8.Controls.ValueBar();
-			this.vbR_RS_XValue = new Elev8.Controls.ValueBar();
-			this.vbR_RS_YValue = new Elev8.Controls.ValueBar();
-			this.vbR_LS_XValue = new Elev8.Controls.ValueBar();
-			this.vbR_LS_YValue = new Elev8.Controls.ValueBar();
-			this.rsR_Right = new Elev8.RadioStick();
-			this.rsR_Left = new Elev8.RadioStick();
-			this.vbVoltage2 = new Elev8.Controls.ValueBar();
-			this.gCalibTemp = new Elev8.Gauge();
-			this.gCalibZ = new Elev8.Gauge();
-			this.gCalibY = new Elev8.Gauge();
-			this.gCalibX = new Elev8.Gauge();
-			this.lfGraph = new Elev8.LineFit();
-			this.ocAccelOrient = new Elev8.OrientationCube();
-			this.gAccelXCal = new Elev8.Gauge();
-			this.gAccelYCal = new Elev8.Gauge();
-			this.gAccelZCal = new Elev8.Gauge();
 			this.valueBar1 = new Elev8.Controls.ValueBar();
 			this.valueBar2 = new Elev8.Controls.ValueBar();
 			this.valueBar3 = new Elev8.Controls.ValueBar();
@@ -245,16 +268,19 @@
 			this.tpStatus.SuspendLayout();
 			this.tpSensors.SuspendLayout();
 			this.tpSysTest.SuspendLayout();
-			this.tpControlSetup.SuspendLayout();
+			this.tpRadioSetup.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeedManual)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbAccelCorrectionFilter)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbThrustCorrection)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeedAuto)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchManual)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchAuto)).BeginInit();
+			this.tpControllerSetup.SuspendLayout();
+			this.groupBox3.SuspendLayout();
 			this.tpSystemSetup.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.udVoltageOffset)).BeginInit();
+			this.groupBox2.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.udLowVoltageAlarmThreshold)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.udVoltageOffset)).BeginInit();
 			this.groupBox1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.udTestThrottle)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.udLowThrottle)).BeginInit();
@@ -299,7 +325,8 @@
 			this.tcTabs.Controls.Add( this.tpStatus );
 			this.tcTabs.Controls.Add( this.tpSensors );
 			this.tcTabs.Controls.Add( this.tpSysTest );
-			this.tcTabs.Controls.Add( this.tpControlSetup );
+			this.tcTabs.Controls.Add( this.tpRadioSetup );
+			this.tcTabs.Controls.Add( this.tpControllerSetup );
 			this.tcTabs.Controls.Add( this.tpSystemSetup );
 			this.tcTabs.Controls.Add( this.tpGyroCalibration );
 			this.tcTabs.Controls.Add( this.tpAccelCalibration );
@@ -314,6 +341,7 @@
 			// tpStatus
 			// 
 			this.tpStatus.BackColor = System.Drawing.SystemColors.Control;
+			this.tpStatus.Controls.Add( this.label23 );
 			this.tpStatus.Controls.Add( this.lblCycles );
 			this.tpStatus.Controls.Add( this.vbRollOut );
 			this.tpStatus.Controls.Add( this.vbYawOut );
@@ -344,6 +372,14 @@
 			this.tpStatus.TabIndex = 0;
 			this.tpStatus.Text = "Status";
 			// 
+			// label23
+			// 
+			this.label23.Image = global::Elev8.Properties.Resources.ParallaxLogo;
+			this.label23.Location = new System.Drawing.Point( 517, 133 );
+			this.label23.Name = "label23";
+			this.label23.Size = new System.Drawing.Size( 198, 58 );
+			this.label23.TabIndex = 42;
+			// 
 			// lblCycles
 			// 
 			this.lblCycles.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
@@ -353,6 +389,284 @@
 			this.lblCycles.TabIndex = 41;
 			this.lblCycles.Text = "0 cycles";
 			this.lblCycles.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			// 
+			// vbRollOut
+			// 
+			this.vbRollOut.BarColor = System.Drawing.Color.Aquamarine;
+			this.vbRollOut.FromLeft = true;
+			this.vbRollOut.LeftLabel = "Roll Power";
+			this.vbRollOut.Location = new System.Drawing.Point( 532, 248 );
+			this.vbRollOut.MaxValue = 5000;
+			this.vbRollOut.MinValue = -5000;
+			this.vbRollOut.Name = "vbRollOut";
+			this.vbRollOut.RightLabel = "0";
+			this.vbRollOut.Size = new System.Drawing.Size( 171, 16 );
+			this.vbRollOut.TabIndex = 40;
+			this.vbRollOut.Value = 0;
+			// 
+			// vbYawOut
+			// 
+			this.vbYawOut.BarColor = System.Drawing.Color.Aquamarine;
+			this.vbYawOut.FromLeft = true;
+			this.vbYawOut.LeftLabel = "Yaw Power";
+			this.vbYawOut.Location = new System.Drawing.Point( 532, 290 );
+			this.vbYawOut.MaxValue = 5000;
+			this.vbYawOut.MinValue = -5000;
+			this.vbYawOut.Name = "vbYawOut";
+			this.vbYawOut.RightLabel = "0";
+			this.vbYawOut.Size = new System.Drawing.Size( 171, 16 );
+			this.vbYawOut.TabIndex = 39;
+			this.vbYawOut.Value = 0;
+			// 
+			// vbPitchOut
+			// 
+			this.vbPitchOut.BarColor = System.Drawing.Color.Aquamarine;
+			this.vbPitchOut.FromLeft = true;
+			this.vbPitchOut.LeftLabel = "Pitch Power";
+			this.vbPitchOut.Location = new System.Drawing.Point( 532, 206 );
+			this.vbPitchOut.MaxValue = 5000;
+			this.vbPitchOut.MinValue = -5000;
+			this.vbPitchOut.Name = "vbPitchOut";
+			this.vbPitchOut.RightLabel = "0";
+			this.vbPitchOut.Size = new System.Drawing.Size( 171, 16 );
+			this.vbPitchOut.TabIndex = 38;
+			this.vbPitchOut.Value = 0;
+			// 
+			// vbBackLeft
+			// 
+			this.vbBackLeft.BarColor = System.Drawing.Color.Tomato;
+			this.vbBackLeft.Font = new System.Drawing.Font( "Microsoft Sans Serif", 8.25F );
+			this.vbBackLeft.FromLeft = false;
+			this.vbBackLeft.LeftLabel = "BL";
+			this.vbBackLeft.Location = new System.Drawing.Point( 9, 316 );
+			this.vbBackLeft.MaxValue = 16000;
+			this.vbBackLeft.MinValue = 8000;
+			this.vbBackLeft.Name = "vbBackLeft";
+			this.vbBackLeft.RightLabel = "";
+			this.vbBackLeft.Size = new System.Drawing.Size( 83, 18 );
+			this.vbBackLeft.TabIndex = 37;
+			this.vbBackLeft.Value = 0;
+			// 
+			// vbFrontLeft
+			// 
+			this.vbFrontLeft.BarColor = System.Drawing.Color.Tomato;
+			this.vbFrontLeft.Font = new System.Drawing.Font( "Microsoft Sans Serif", 8.25F );
+			this.vbFrontLeft.FromLeft = false;
+			this.vbFrontLeft.LeftLabel = "FL";
+			this.vbFrontLeft.Location = new System.Drawing.Point( 9, 182 );
+			this.vbFrontLeft.MaxValue = 16000;
+			this.vbFrontLeft.MinValue = 8000;
+			this.vbFrontLeft.Name = "vbFrontLeft";
+			this.vbFrontLeft.RightLabel = "";
+			this.vbFrontLeft.Size = new System.Drawing.Size( 83, 18 );
+			this.vbFrontLeft.TabIndex = 36;
+			this.vbFrontLeft.Value = 0;
+			// 
+			// vbBackRight
+			// 
+			this.vbBackRight.BarColor = System.Drawing.Color.Tomato;
+			this.vbBackRight.Font = new System.Drawing.Font( "Microsoft Sans Serif", 8.25F );
+			this.vbBackRight.FromLeft = true;
+			this.vbBackRight.LeftLabel = "";
+			this.vbBackRight.Location = new System.Drawing.Point( 425, 316 );
+			this.vbBackRight.MaxValue = 16000;
+			this.vbBackRight.MinValue = 8000;
+			this.vbBackRight.Name = "vbBackRight";
+			this.vbBackRight.RightLabel = "BR";
+			this.vbBackRight.Size = new System.Drawing.Size( 83, 18 );
+			this.vbBackRight.TabIndex = 35;
+			this.vbBackRight.Value = 0;
+			// 
+			// vbFrontRight
+			// 
+			this.vbFrontRight.BarColor = System.Drawing.Color.Tomato;
+			this.vbFrontRight.Font = new System.Drawing.Font( "Microsoft Sans Serif", 8.25F );
+			this.vbFrontRight.FromLeft = true;
+			this.vbFrontRight.LeftLabel = "";
+			this.vbFrontRight.Location = new System.Drawing.Point( 425, 182 );
+			this.vbFrontRight.MaxValue = 16000;
+			this.vbFrontRight.MinValue = 8000;
+			this.vbFrontRight.Name = "vbFrontRight";
+			this.vbFrontRight.RightLabel = "FR";
+			this.vbFrontRight.Size = new System.Drawing.Size( 83, 18 );
+			this.vbFrontRight.TabIndex = 34;
+			this.vbFrontRight.Value = 0;
+			// 
+			// vbVoltage
+			// 
+			this.vbVoltage.BarColor = System.Drawing.Color.LightGreen;
+			this.vbVoltage.FromLeft = true;
+			this.vbVoltage.LeftLabel = "Battery Voltage";
+			this.vbVoltage.Location = new System.Drawing.Point( 183, 160 );
+			this.vbVoltage.MaxValue = 1260;
+			this.vbVoltage.MinValue = 900;
+			this.vbVoltage.Name = "vbVoltage";
+			this.vbVoltage.RightLabel = "0";
+			this.vbVoltage.Size = new System.Drawing.Size( 150, 20 );
+			this.vbVoltage.TabIndex = 33;
+			this.vbVoltage.Value = 1200;
+			// 
+			// vbChannel8
+			// 
+			this.vbChannel8.BarColor = System.Drawing.Color.LightGreen;
+			this.vbChannel8.FromLeft = true;
+			this.vbChannel8.LeftLabel = "Aux3";
+			this.vbChannel8.Location = new System.Drawing.Point( 425, 290 );
+			this.vbChannel8.MaxValue = 1024;
+			this.vbChannel8.MinValue = -1024;
+			this.vbChannel8.Name = "vbChannel8";
+			this.vbChannel8.RightLabel = "0";
+			this.vbChannel8.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel8.TabIndex = 32;
+			this.vbChannel8.Value = 0;
+			// 
+			// vbChannel7
+			// 
+			this.vbChannel7.BarColor = System.Drawing.Color.LightGreen;
+			this.vbChannel7.FromLeft = true;
+			this.vbChannel7.LeftLabel = "Aux2";
+			this.vbChannel7.Location = new System.Drawing.Point( 425, 262 );
+			this.vbChannel7.MaxValue = 1024;
+			this.vbChannel7.MinValue = -1024;
+			this.vbChannel7.Name = "vbChannel7";
+			this.vbChannel7.RightLabel = "0";
+			this.vbChannel7.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel7.TabIndex = 31;
+			this.vbChannel7.Value = 0;
+			// 
+			// vbChannel6
+			// 
+			this.vbChannel6.BarColor = System.Drawing.Color.LightGreen;
+			this.vbChannel6.FromLeft = true;
+			this.vbChannel6.LeftLabel = "Aux1";
+			this.vbChannel6.Location = new System.Drawing.Point( 9, 290 );
+			this.vbChannel6.MaxValue = 1024;
+			this.vbChannel6.MinValue = -1024;
+			this.vbChannel6.Name = "vbChannel6";
+			this.vbChannel6.RightLabel = "0";
+			this.vbChannel6.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel6.TabIndex = 30;
+			this.vbChannel6.Value = 0;
+			// 
+			// vbChannel5
+			// 
+			this.vbChannel5.BarColor = System.Drawing.Color.LightGreen;
+			this.vbChannel5.FromLeft = true;
+			this.vbChannel5.LeftLabel = "Gear";
+			this.vbChannel5.Location = new System.Drawing.Point( 9, 262 );
+			this.vbChannel5.MaxValue = 1024;
+			this.vbChannel5.MinValue = -1024;
+			this.vbChannel5.Name = "vbChannel5";
+			this.vbChannel5.RightLabel = "0";
+			this.vbChannel5.Size = new System.Drawing.Size( 83, 20 );
+			this.vbChannel5.TabIndex = 29;
+			this.vbChannel5.Value = 0;
+			// 
+			// vbRS_XValue
+			// 
+			this.vbRS_XValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbRS_XValue.FromLeft = true;
+			this.vbRS_XValue.LeftLabel = "Aileron";
+			this.vbRS_XValue.Location = new System.Drawing.Point( 425, 234 );
+			this.vbRS_XValue.MaxValue = 1024;
+			this.vbRS_XValue.MinValue = -1024;
+			this.vbRS_XValue.Name = "vbRS_XValue";
+			this.vbRS_XValue.RightLabel = "0";
+			this.vbRS_XValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbRS_XValue.TabIndex = 28;
+			this.vbRS_XValue.Value = 0;
+			// 
+			// vbRS_YValue
+			// 
+			this.vbRS_YValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbRS_YValue.FromLeft = true;
+			this.vbRS_YValue.LeftLabel = "Elevator";
+			this.vbRS_YValue.Location = new System.Drawing.Point( 425, 206 );
+			this.vbRS_YValue.MaxValue = 1024;
+			this.vbRS_YValue.MinValue = -1024;
+			this.vbRS_YValue.Name = "vbRS_YValue";
+			this.vbRS_YValue.RightLabel = "0";
+			this.vbRS_YValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbRS_YValue.TabIndex = 27;
+			this.vbRS_YValue.Value = 0;
+			// 
+			// vbLS_XValue
+			// 
+			this.vbLS_XValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbLS_XValue.FromLeft = true;
+			this.vbLS_XValue.LeftLabel = "Rudder";
+			this.vbLS_XValue.Location = new System.Drawing.Point( 9, 234 );
+			this.vbLS_XValue.MaxValue = 1024;
+			this.vbLS_XValue.MinValue = -1024;
+			this.vbLS_XValue.Name = "vbLS_XValue";
+			this.vbLS_XValue.RightLabel = "0";
+			this.vbLS_XValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbLS_XValue.TabIndex = 26;
+			this.vbLS_XValue.Value = 0;
+			// 
+			// vbLS_YValue
+			// 
+			this.vbLS_YValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbLS_YValue.FromLeft = true;
+			this.vbLS_YValue.LeftLabel = "Throttle";
+			this.vbLS_YValue.Location = new System.Drawing.Point( 9, 206 );
+			this.vbLS_YValue.MaxValue = 1024;
+			this.vbLS_YValue.MinValue = -1024;
+			this.vbLS_YValue.Name = "vbLS_YValue";
+			this.vbLS_YValue.RightLabel = "0";
+			this.vbLS_YValue.Size = new System.Drawing.Size( 83, 20 );
+			this.vbLS_YValue.TabIndex = 25;
+			this.vbLS_YValue.Value = 0;
+			// 
+			// rsRight
+			// 
+			this.rsRight.Location = new System.Drawing.Point( 265, 182 );
+			this.rsRight.Name = "rsRight";
+			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
+			this.rsRight.TabIndex = 8;
+			this.rsRight.Text = "radioStick2";
+			// 
+			// rsLeft
+			// 
+			this.rsLeft.Location = new System.Drawing.Point( 102, 182 );
+			this.rsLeft.Name = "rsLeft";
+			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
+			this.rsLeft.TabIndex = 7;
+			this.rsLeft.Text = "radioStick1";
+			// 
+			// aicAttitude
+			// 
+			this.aicAttitude.Location = new System.Drawing.Point( 183, 6 );
+			this.aicAttitude.Name = "aicAttitude";
+			this.aicAttitude.Size = new System.Drawing.Size( 150, 150 );
+			this.aicAttitude.TabIndex = 4;
+			this.aicAttitude.Text = "attitudeIndicatorInstrumentControl1";
+			// 
+			// ocOrientation
+			// 
+			this.ocOrientation.CubeDepth = 1.2F;
+			this.ocOrientation.CubeHeight = 0.8F;
+			this.ocOrientation.CubeWidth = 1.2F;
+			this.ocOrientation.Location = new System.Drawing.Point( 507, 6 );
+			this.ocOrientation.Name = "ocOrientation";
+			this.ocOrientation.Size = new System.Drawing.Size( 206, 124 );
+			this.ocOrientation.TabIndex = 3;
+			// 
+			// aicHeading
+			// 
+			this.aicHeading.Location = new System.Drawing.Point( 351, 6 );
+			this.aicHeading.Name = "aicHeading";
+			this.aicHeading.Size = new System.Drawing.Size( 150, 150 );
+			this.aicHeading.TabIndex = 6;
+			this.aicHeading.Text = "headingIndicator1";
+			// 
+			// aicAltimeter
+			// 
+			this.aicAltimeter.Location = new System.Drawing.Point( 15, 6 );
+			this.aicAltimeter.Name = "aicAltimeter";
+			this.aicAltimeter.Size = new System.Drawing.Size( 150, 150 );
+			this.aicAltimeter.TabIndex = 5;
+			this.aicAltimeter.Text = "altimeter1";
 			// 
 			// tpSensors
 			// 
@@ -560,6 +874,23 @@
 			this.cbGyroX.UseVisualStyleBackColor = true;
 			this.cbGyroX.CheckedChanged += new System.EventHandler( this.cbGraphLegend_CheckedChanged );
 			// 
+			// plotSensors
+			// 
+			this.plotSensors.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+						| System.Windows.Forms.AnchorStyles.Left)
+						| System.Windows.Forms.AnchorStyles.Right)));
+			this.plotSensors.BackColor = System.Drawing.Color.Transparent;
+			this.plotSensors.BackgroundColorBot = System.Drawing.Color.White;
+			this.plotSensors.BackgroundColorTop = System.Drawing.Color.White;
+			this.plotSensors.DashedGridColor = System.Drawing.Color.DarkGray;
+			this.plotSensors.DoubleBuffering = true;
+			this.plotSensors.Location = new System.Drawing.Point( 87, 6 );
+			this.plotSensors.Name = "plotSensors";
+			this.plotSensors.PlaySpeed = 0.5F;
+			this.plotSensors.Size = new System.Drawing.Size( 626, 344 );
+			this.plotSensors.SolidGridColor = System.Drawing.Color.DarkGray;
+			this.plotSensors.TabIndex = 14;
+			// 
 			// tpSysTest
 			// 
 			this.tpSysTest.BackColor = System.Drawing.Color.Transparent;
@@ -631,7 +962,7 @@
 			// 
 			// btnMotor4
 			// 
-			this.btnMotor4.BackgroundImage = global::Elev8.Properties.Resources.Icon_Counter_clockwise;
+			this.btnMotor4.BackgroundImage = global::Elev8.Properties.Resources.Icon_CounterClockwise;
 			this.btnMotor4.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
 			this.btnMotor4.Location = new System.Drawing.Point( 119, 226 );
 			this.btnMotor4.Name = "btnMotor4";
@@ -657,7 +988,7 @@
 			// 
 			// btnMotor2
 			// 
-			this.btnMotor2.BackgroundImage = global::Elev8.Properties.Resources.Icon_Counter_clockwise;
+			this.btnMotor2.BackgroundImage = global::Elev8.Properties.Resources.Icon_CounterClockwise;
 			this.btnMotor2.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
 			this.btnMotor2.Location = new System.Drawing.Point( 345, 68 );
 			this.btnMotor2.Name = "btnMotor2";
@@ -681,64 +1012,64 @@
 			this.btnMotor1.UseVisualStyleBackColor = true;
 			this.btnMotor1.MouseDown += new System.Windows.Forms.MouseEventHandler( this.btnMotor1_MouseDown );
 			// 
-			// tpControlSetup
+			// tpRadioSetup
 			// 
-			this.tpControlSetup.BackColor = System.Drawing.SystemColors.Control;
-			this.tpControlSetup.Controls.Add( this.tbCalibrateDocs );
-			this.tpControlSetup.Controls.Add( this.lblYawSpeedManual );
-			this.tpControlSetup.Controls.Add( this.label14 );
-			this.tpControlSetup.Controls.Add( this.tbYawSpeedManual );
-			this.tpControlSetup.Controls.Add( this.lblAccelCorrectionFilter );
-			this.tpControlSetup.Controls.Add( this.label13 );
-			this.tpControlSetup.Controls.Add( this.tbAccelCorrectionFilter );
-			this.tpControlSetup.Controls.Add( this.lblThrustCorrection );
-			this.tpControlSetup.Controls.Add( this.label17 );
-			this.tpControlSetup.Controls.Add( this.tbThrustCorrection );
-			this.tpControlSetup.Controls.Add( this.btnControlReset );
-			this.tpControlSetup.Controls.Add( this.lblYawSpeedAuto );
-			this.tpControlSetup.Controls.Add( this.label5 );
-			this.tpControlSetup.Controls.Add( this.tbYawSpeedAuto );
-			this.tpControlSetup.Controls.Add( this.btnUploadRollPitch );
-			this.tpControlSetup.Controls.Add( this.lblRollPitchManual );
-			this.tpControlSetup.Controls.Add( this.lblRollPitchAngle );
-			this.tpControlSetup.Controls.Add( this.label3 );
-			this.tpControlSetup.Controls.Add( this.tbRollPitchManual );
-			this.tpControlSetup.Controls.Add( this.label2 );
-			this.tpControlSetup.Controls.Add( this.tbRollPitchAuto );
-			this.tpControlSetup.Controls.Add( this.btnCalibrate );
-			this.tpControlSetup.Controls.Add( this.label1 );
-			this.tpControlSetup.Controls.Add( this.cbReceiverType );
-			this.tpControlSetup.Controls.Add( this.cbRev8 );
-			this.tpControlSetup.Controls.Add( this.cbRev7 );
-			this.tpControlSetup.Controls.Add( this.cbRev2 );
-			this.tpControlSetup.Controls.Add( this.cbRev3 );
-			this.tpControlSetup.Controls.Add( this.cbRev6 );
-			this.tpControlSetup.Controls.Add( this.cbRev5 );
-			this.tpControlSetup.Controls.Add( this.cbRev4 );
-			this.tpControlSetup.Controls.Add( this.cbRev1 );
-			this.tpControlSetup.Controls.Add( this.cbChannel8 );
-			this.tpControlSetup.Controls.Add( this.cbChannel7 );
-			this.tpControlSetup.Controls.Add( this.cbChannel2 );
-			this.tpControlSetup.Controls.Add( this.cbChannel3 );
-			this.tpControlSetup.Controls.Add( this.cbChannel6 );
-			this.tpControlSetup.Controls.Add( this.cbChannel5 );
-			this.tpControlSetup.Controls.Add( this.cbChannel4 );
-			this.tpControlSetup.Controls.Add( this.cbChannel1 );
-			this.tpControlSetup.Controls.Add( this.vbR_Channel8 );
-			this.tpControlSetup.Controls.Add( this.vbR_Channel7 );
-			this.tpControlSetup.Controls.Add( this.vbR_Channel6 );
-			this.tpControlSetup.Controls.Add( this.vbR_Channel5 );
-			this.tpControlSetup.Controls.Add( this.vbR_RS_XValue );
-			this.tpControlSetup.Controls.Add( this.vbR_RS_YValue );
-			this.tpControlSetup.Controls.Add( this.vbR_LS_XValue );
-			this.tpControlSetup.Controls.Add( this.vbR_LS_YValue );
-			this.tpControlSetup.Controls.Add( this.rsR_Right );
-			this.tpControlSetup.Controls.Add( this.rsR_Left );
-			this.tpControlSetup.Location = new System.Drawing.Point( 4, 22 );
-			this.tpControlSetup.Name = "tpControlSetup";
-			this.tpControlSetup.Size = new System.Drawing.Size( 721, 356 );
-			this.tpControlSetup.TabIndex = 3;
-			this.tpControlSetup.Text = "Control Setup";
+			this.tpRadioSetup.BackColor = System.Drawing.SystemColors.Control;
+			this.tpRadioSetup.Controls.Add( this.tbCalibrateDocs );
+			this.tpRadioSetup.Controls.Add( this.lblYawSpeedManual );
+			this.tpRadioSetup.Controls.Add( this.label14 );
+			this.tpRadioSetup.Controls.Add( this.tbYawSpeedManual );
+			this.tpRadioSetup.Controls.Add( this.lblAccelCorrectionFilter );
+			this.tpRadioSetup.Controls.Add( this.label13 );
+			this.tpRadioSetup.Controls.Add( this.tbAccelCorrectionFilter );
+			this.tpRadioSetup.Controls.Add( this.lblThrustCorrection );
+			this.tpRadioSetup.Controls.Add( this.label17 );
+			this.tpRadioSetup.Controls.Add( this.tbThrustCorrection );
+			this.tpRadioSetup.Controls.Add( this.btnControlReset );
+			this.tpRadioSetup.Controls.Add( this.lblYawSpeedAuto );
+			this.tpRadioSetup.Controls.Add( this.label5 );
+			this.tpRadioSetup.Controls.Add( this.tbYawSpeedAuto );
+			this.tpRadioSetup.Controls.Add( this.btnUploadRollPitch );
+			this.tpRadioSetup.Controls.Add( this.lblRollPitchManual );
+			this.tpRadioSetup.Controls.Add( this.lblRollPitchAngle );
+			this.tpRadioSetup.Controls.Add( this.label3 );
+			this.tpRadioSetup.Controls.Add( this.tbRollPitchManual );
+			this.tpRadioSetup.Controls.Add( this.label2 );
+			this.tpRadioSetup.Controls.Add( this.tbRollPitchAuto );
+			this.tpRadioSetup.Controls.Add( this.btnCalibrate );
+			this.tpRadioSetup.Controls.Add( this.label1 );
+			this.tpRadioSetup.Controls.Add( this.cbReceiverType );
+			this.tpRadioSetup.Controls.Add( this.cbRev8 );
+			this.tpRadioSetup.Controls.Add( this.cbRev7 );
+			this.tpRadioSetup.Controls.Add( this.cbRev2 );
+			this.tpRadioSetup.Controls.Add( this.cbRev3 );
+			this.tpRadioSetup.Controls.Add( this.cbRev6 );
+			this.tpRadioSetup.Controls.Add( this.cbRev5 );
+			this.tpRadioSetup.Controls.Add( this.cbRev4 );
+			this.tpRadioSetup.Controls.Add( this.cbRev1 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel8 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel7 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel2 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel3 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel6 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel5 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel4 );
+			this.tpRadioSetup.Controls.Add( this.cbChannel1 );
+			this.tpRadioSetup.Controls.Add( this.vbR_Channel8 );
+			this.tpRadioSetup.Controls.Add( this.vbR_Channel7 );
+			this.tpRadioSetup.Controls.Add( this.vbR_Channel6 );
+			this.tpRadioSetup.Controls.Add( this.vbR_Channel5 );
+			this.tpRadioSetup.Controls.Add( this.vbR_RS_XValue );
+			this.tpRadioSetup.Controls.Add( this.vbR_RS_YValue );
+			this.tpRadioSetup.Controls.Add( this.vbR_LS_XValue );
+			this.tpRadioSetup.Controls.Add( this.vbR_LS_YValue );
+			this.tpRadioSetup.Controls.Add( this.rsR_Right );
+			this.tpRadioSetup.Controls.Add( this.rsR_Left );
+			this.tpRadioSetup.Location = new System.Drawing.Point( 4, 22 );
+			this.tpRadioSetup.Name = "tpRadioSetup";
+			this.tpRadioSetup.Size = new System.Drawing.Size( 721, 356 );
+			this.tpRadioSetup.TabIndex = 3;
+			this.tpRadioSetup.Text = "Radio Setup";
 			// 
 			// tbCalibrateDocs
 			// 
@@ -893,11 +1224,11 @@
 			// 
 			// btnUploadRollPitch
 			// 
-			this.btnUploadRollPitch.Location = new System.Drawing.Point( 323, 330 );
+			this.btnUploadRollPitch.Location = new System.Drawing.Point( 300, 330 );
 			this.btnUploadRollPitch.Name = "btnUploadRollPitch";
-			this.btnUploadRollPitch.Size = new System.Drawing.Size( 75, 22 );
+			this.btnUploadRollPitch.Size = new System.Drawing.Size( 129, 22 );
 			this.btnUploadRollPitch.TabIndex = 22;
-			this.btnUploadRollPitch.Text = "Upload";
+			this.btnUploadRollPitch.Text = "Upload Changes";
 			this.btnUploadRollPitch.UseVisualStyleBackColor = true;
 			this.btnUploadRollPitch.Click += new System.EventHandler( this.btnUploadRollPitch_Click );
 			// 
@@ -1008,6 +1339,7 @@
 			this.cbRev8.TabIndex = 16;
 			this.cbRev8.Tag = "8";
 			this.cbRev8.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev8, "Reverse this radio channel" );
 			this.cbRev8.UseVisualStyleBackColor = true;
 			this.cbRev8.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1020,6 +1352,7 @@
 			this.cbRev7.TabIndex = 15;
 			this.cbRev7.Tag = "7";
 			this.cbRev7.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev7, "Reverse this radio channel" );
 			this.cbRev7.UseVisualStyleBackColor = true;
 			this.cbRev7.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1032,6 +1365,7 @@
 			this.cbRev2.TabIndex = 14;
 			this.cbRev2.Tag = "2";
 			this.cbRev2.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev2, "Reverse this radio channel" );
 			this.cbRev2.UseVisualStyleBackColor = true;
 			this.cbRev2.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1044,6 +1378,7 @@
 			this.cbRev3.TabIndex = 13;
 			this.cbRev3.Tag = "3";
 			this.cbRev3.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev3, "Reverse this radio channel" );
 			this.cbRev3.UseVisualStyleBackColor = true;
 			this.cbRev3.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1057,6 +1392,7 @@
 			this.cbRev6.TabIndex = 3;
 			this.cbRev6.Tag = "6";
 			this.cbRev6.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev6, "Reverse this radio channel" );
 			this.cbRev6.UseVisualStyleBackColor = true;
 			this.cbRev6.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1070,6 +1406,7 @@
 			this.cbRev5.TabIndex = 2;
 			this.cbRev5.Tag = "5";
 			this.cbRev5.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev5, "Reverse this radio channel" );
 			this.cbRev5.UseVisualStyleBackColor = true;
 			this.cbRev5.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1083,6 +1420,7 @@
 			this.cbRev4.TabIndex = 1;
 			this.cbRev4.Tag = "4";
 			this.cbRev4.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev4, "Reverse this radio channel" );
 			this.cbRev4.UseVisualStyleBackColor = true;
 			this.cbRev4.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1096,6 +1434,7 @@
 			this.cbRev1.TabIndex = 0;
 			this.cbRev1.Tag = "1";
 			this.cbRev1.Text = "Rev";
+			this.tlToolTip.SetToolTip( this.cbRev1, "Reverse this radio channel" );
 			this.cbRev1.UseVisualStyleBackColor = true;
 			this.cbRev1.CheckedChanged += new System.EventHandler( this.cbRev_CheckedChanged );
 			// 
@@ -1108,6 +1447,7 @@
 			this.cbChannel8.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel8.TabIndex = 12;
 			this.cbChannel8.Tag = "8";
+			this.tlToolTip.SetToolTip( this.cbChannel8, "Selects the radio channel to use for this flight function" );
 			this.cbChannel8.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel7
@@ -1119,6 +1459,7 @@
 			this.cbChannel7.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel7.TabIndex = 11;
 			this.cbChannel7.Tag = "7";
+			this.tlToolTip.SetToolTip( this.cbChannel7, "Selects the radio channel to use for this flight function" );
 			this.cbChannel7.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel2
@@ -1130,6 +1471,7 @@
 			this.cbChannel2.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel2.TabIndex = 9;
 			this.cbChannel2.Tag = "2";
+			this.tlToolTip.SetToolTip( this.cbChannel2, "Selects the radio channel to use for this flight function" );
 			this.cbChannel2.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel3
@@ -1141,6 +1483,7 @@
 			this.cbChannel3.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel3.TabIndex = 8;
 			this.cbChannel3.Tag = "3";
+			this.tlToolTip.SetToolTip( this.cbChannel3, "Selects the radio channel to use for this flight function" );
 			this.cbChannel3.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel6
@@ -1152,6 +1495,7 @@
 			this.cbChannel6.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel6.TabIndex = 7;
 			this.cbChannel6.Tag = "6";
+			this.tlToolTip.SetToolTip( this.cbChannel6, "Selects the radio channel to use for this flight function" );
 			this.cbChannel6.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel5
@@ -1163,6 +1507,7 @@
 			this.cbChannel5.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel5.TabIndex = 6;
 			this.cbChannel5.Tag = "5";
+			this.tlToolTip.SetToolTip( this.cbChannel5, "Selects the radio channel to use for this flight function" );
 			this.cbChannel5.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel4
@@ -1174,6 +1519,7 @@
 			this.cbChannel4.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel4.TabIndex = 5;
 			this.cbChannel4.Tag = "4";
+			this.tlToolTip.SetToolTip( this.cbChannel4, "Selects the radio channel to use for this flight function" );
 			this.cbChannel4.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
 			// 
 			// cbChannel1
@@ -1185,160 +1531,461 @@
 			this.cbChannel1.Size = new System.Drawing.Size( 46, 21 );
 			this.cbChannel1.TabIndex = 4;
 			this.cbChannel1.Tag = "1";
+			this.tlToolTip.SetToolTip( this.cbChannel1, "Selects the radio channel to use for this flight function" );
 			this.cbChannel1.SelectedIndexChanged += new System.EventHandler( this.cbChannel_SelectedIndexChanged );
+			// 
+			// vbR_Channel8
+			// 
+			this.vbR_Channel8.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_Channel8.FromLeft = true;
+			this.vbR_Channel8.LeftLabel = "Aux3";
+			this.vbR_Channel8.Location = new System.Drawing.Point( 527, 186 );
+			this.vbR_Channel8.MaxValue = 1024;
+			this.vbR_Channel8.MinValue = -1024;
+			this.vbR_Channel8.Name = "vbR_Channel8";
+			this.vbR_Channel8.RightLabel = "0";
+			this.vbR_Channel8.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel8.TabIndex = 42;
+			this.vbR_Channel8.Value = 0;
+			// 
+			// vbR_Channel7
+			// 
+			this.vbR_Channel7.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_Channel7.FromLeft = true;
+			this.vbR_Channel7.LeftLabel = "Aux2";
+			this.vbR_Channel7.Location = new System.Drawing.Point( 527, 143 );
+			this.vbR_Channel7.MaxValue = 1024;
+			this.vbR_Channel7.MinValue = -1024;
+			this.vbR_Channel7.Name = "vbR_Channel7";
+			this.vbR_Channel7.RightLabel = "0";
+			this.vbR_Channel7.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel7.TabIndex = 41;
+			this.vbR_Channel7.Value = 0;
+			// 
+			// vbR_Channel6
+			// 
+			this.vbR_Channel6.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_Channel6.FromLeft = true;
+			this.vbR_Channel6.LeftLabel = "Aux1";
+			this.vbR_Channel6.Location = new System.Drawing.Point( 111, 186 );
+			this.vbR_Channel6.MaxValue = 1024;
+			this.vbR_Channel6.MinValue = -1024;
+			this.vbR_Channel6.Name = "vbR_Channel6";
+			this.vbR_Channel6.RightLabel = "0";
+			this.vbR_Channel6.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel6.TabIndex = 40;
+			this.vbR_Channel6.Value = 0;
+			// 
+			// vbR_Channel5
+			// 
+			this.vbR_Channel5.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_Channel5.FromLeft = true;
+			this.vbR_Channel5.LeftLabel = "Gear";
+			this.vbR_Channel5.Location = new System.Drawing.Point( 111, 143 );
+			this.vbR_Channel5.MaxValue = 1024;
+			this.vbR_Channel5.MinValue = -1024;
+			this.vbR_Channel5.Name = "vbR_Channel5";
+			this.vbR_Channel5.RightLabel = "0";
+			this.vbR_Channel5.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_Channel5.TabIndex = 39;
+			this.vbR_Channel5.Value = 0;
+			// 
+			// vbR_RS_XValue
+			// 
+			this.vbR_RS_XValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_RS_XValue.FromLeft = true;
+			this.vbR_RS_XValue.LeftLabel = "Aileron";
+			this.vbR_RS_XValue.Location = new System.Drawing.Point( 527, 100 );
+			this.vbR_RS_XValue.MaxValue = 1024;
+			this.vbR_RS_XValue.MinValue = -1024;
+			this.vbR_RS_XValue.Name = "vbR_RS_XValue";
+			this.vbR_RS_XValue.RightLabel = "0";
+			this.vbR_RS_XValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_RS_XValue.TabIndex = 38;
+			this.vbR_RS_XValue.Value = 0;
+			// 
+			// vbR_RS_YValue
+			// 
+			this.vbR_RS_YValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_RS_YValue.FromLeft = true;
+			this.vbR_RS_YValue.LeftLabel = "Elevator";
+			this.vbR_RS_YValue.Location = new System.Drawing.Point( 527, 57 );
+			this.vbR_RS_YValue.MaxValue = 1024;
+			this.vbR_RS_YValue.MinValue = -1024;
+			this.vbR_RS_YValue.Name = "vbR_RS_YValue";
+			this.vbR_RS_YValue.RightLabel = "0";
+			this.vbR_RS_YValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_RS_YValue.TabIndex = 37;
+			this.vbR_RS_YValue.Value = 0;
+			// 
+			// vbR_LS_XValue
+			// 
+			this.vbR_LS_XValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_LS_XValue.FromLeft = true;
+			this.vbR_LS_XValue.LeftLabel = "Rudder";
+			this.vbR_LS_XValue.Location = new System.Drawing.Point( 111, 100 );
+			this.vbR_LS_XValue.MaxValue = 1024;
+			this.vbR_LS_XValue.MinValue = -1024;
+			this.vbR_LS_XValue.Name = "vbR_LS_XValue";
+			this.vbR_LS_XValue.RightLabel = "0";
+			this.vbR_LS_XValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_LS_XValue.TabIndex = 36;
+			this.vbR_LS_XValue.Value = 0;
+			// 
+			// vbR_LS_YValue
+			// 
+			this.vbR_LS_YValue.BarColor = System.Drawing.Color.LightGreen;
+			this.vbR_LS_YValue.FromLeft = true;
+			this.vbR_LS_YValue.LeftLabel = "Throttle";
+			this.vbR_LS_YValue.Location = new System.Drawing.Point( 111, 57 );
+			this.vbR_LS_YValue.MaxValue = 1024;
+			this.vbR_LS_YValue.MinValue = -1024;
+			this.vbR_LS_YValue.Name = "vbR_LS_YValue";
+			this.vbR_LS_YValue.RightLabel = "0";
+			this.vbR_LS_YValue.Size = new System.Drawing.Size( 83, 21 );
+			this.vbR_LS_YValue.TabIndex = 35;
+			this.vbR_LS_YValue.Value = 0;
+			// 
+			// rsR_Right
+			// 
+			this.rsR_Right.Location = new System.Drawing.Point( 367, 57 );
+			this.rsR_Right.Name = "rsR_Right";
+			this.rsR_Right.Size = new System.Drawing.Size( 150, 150 );
+			this.rsR_Right.TabIndex = 34;
+			this.rsR_Right.Text = "radioStick2";
+			// 
+			// rsR_Left
+			// 
+			this.rsR_Left.Location = new System.Drawing.Point( 204, 57 );
+			this.rsR_Left.Name = "rsR_Left";
+			this.rsR_Left.Size = new System.Drawing.Size( 150, 150 );
+			this.rsR_Left.TabIndex = 33;
+			this.rsR_Left.Text = "radioStick1";
+			// 
+			// tpControllerSetup
+			// 
+			this.tpControllerSetup.Controls.Add( this.btnUploadFlightChanges );
+			this.tpControllerSetup.Controls.Add( this.cbEnableAdvanced );
+			this.tpControllerSetup.Controls.Add( this.groupBox4 );
+			this.tpControllerSetup.Controls.Add( this.groupBox3 );
+			this.tpControllerSetup.Location = new System.Drawing.Point( 4, 22 );
+			this.tpControllerSetup.Name = "tpControllerSetup";
+			this.tpControllerSetup.Size = new System.Drawing.Size( 721, 356 );
+			this.tpControllerSetup.TabIndex = 7;
+			this.tpControllerSetup.Text = "Flight Control Setup";
+			this.tlToolTip.SetToolTip( this.tpControllerSetup, "Gain value specifies how forcefully the controller responds to outside influence." +
+					"  Higher numbers mean tighter control, but too high can cause instability." );
+			// 
+			// btnUploadFlightChanges
+			// 
+			this.btnUploadFlightChanges.Location = new System.Drawing.Point( 355, 144 );
+			this.btnUploadFlightChanges.Name = "btnUploadFlightChanges";
+			this.btnUploadFlightChanges.Size = new System.Drawing.Size( 130, 23 );
+			this.btnUploadFlightChanges.TabIndex = 0;
+			this.btnUploadFlightChanges.Text = "Upload Changes";
+			this.tlToolTip.SetToolTip( this.btnUploadFlightChanges, "Upload changes on this page to the flight controller" );
+			this.btnUploadFlightChanges.UseVisualStyleBackColor = true;
+			this.btnUploadFlightChanges.Click += new System.EventHandler( this.btnUploadFlightChanges_Click );
+			// 
+			// cbEnableAdvanced
+			// 
+			this.cbEnableAdvanced.AutoSize = true;
+			this.cbEnableAdvanced.Location = new System.Drawing.Point( 561, 150 );
+			this.cbEnableAdvanced.Name = "cbEnableAdvanced";
+			this.cbEnableAdvanced.Size = new System.Drawing.Size( 152, 17 );
+			this.cbEnableAdvanced.TabIndex = 1;
+			this.cbEnableAdvanced.Text = "Enable Advanced Settings";
+			this.cbEnableAdvanced.UseVisualStyleBackColor = true;
+			// 
+			// groupBox4
+			// 
+			this.groupBox4.Enabled = false;
+			this.groupBox4.Location = new System.Drawing.Point( 8, 165 );
+			this.groupBox4.Name = "groupBox4";
+			this.groupBox4.Size = new System.Drawing.Size( 705, 188 );
+			this.groupBox4.TabIndex = 15;
+			this.groupBox4.TabStop = false;
+			this.groupBox4.Text = "Advanced Settings";
+			// 
+			// groupBox3
+			// 
+			this.groupBox3.Controls.Add( this.lblAltiGain );
+			this.groupBox3.Controls.Add( this.label27 );
+			this.groupBox3.Controls.Add( this.hsAltiGain );
+			this.groupBox3.Controls.Add( this.cbPitchRollLocked );
+			this.groupBox3.Controls.Add( this.lblAscentGain );
+			this.groupBox3.Controls.Add( this.hsPitchGain );
+			this.groupBox3.Controls.Add( this.label25 );
+			this.groupBox3.Controls.Add( this.hsRollGain );
+			this.groupBox3.Controls.Add( this.hsAscentGain );
+			this.groupBox3.Controls.Add( this.label11 );
+			this.groupBox3.Controls.Add( this.lblYawGain );
+			this.groupBox3.Controls.Add( this.label19 );
+			this.groupBox3.Controls.Add( this.lblRollGain );
+			this.groupBox3.Controls.Add( this.hsYawGain );
+			this.groupBox3.Controls.Add( this.lblPitchGain );
+			this.groupBox3.Controls.Add( this.label21 );
+			this.groupBox3.Location = new System.Drawing.Point( 8, 10 );
+			this.groupBox3.Name = "groupBox3";
+			this.groupBox3.Size = new System.Drawing.Size( 331, 149 );
+			this.groupBox3.TabIndex = 14;
+			this.groupBox3.TabStop = false;
+			this.groupBox3.Text = "Simple Settings";
+			// 
+			// lblAltiGain
+			// 
+			this.lblAltiGain.Location = new System.Drawing.Point( 281, 128 );
+			this.lblAltiGain.Name = "lblAltiGain";
+			this.lblAltiGain.Size = new System.Drawing.Size( 42, 13 );
+			this.lblAltiGain.TabIndex = 16;
+			this.lblAltiGain.Text = "128";
+			this.lblAltiGain.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.tlToolTip.SetToolTip( this.lblAltiGain, "The affort applied by the controller to attain the correct altitude" );
+			// 
+			// label27
+			// 
+			this.label27.AutoSize = true;
+			this.label27.Location = new System.Drawing.Point( 3, 128 );
+			this.label27.Name = "label27";
+			this.label27.Size = new System.Drawing.Size( 67, 13 );
+			this.label27.TabIndex = 15;
+			this.label27.Text = "Altitude Gain";
+			this.tlToolTip.SetToolTip( this.label27, "The affort applied by the controller to attain the correct altitude" );
+			// 
+			// hsAltiGain
+			// 
+			this.hsAltiGain.Location = new System.Drawing.Point( 73, 128 );
+			this.hsAltiGain.Maximum = 265;
+			this.hsAltiGain.Minimum = 1;
+			this.hsAltiGain.Name = "hsAltiGain";
+			this.hsAltiGain.Size = new System.Drawing.Size( 205, 16 );
+			this.hsAltiGain.TabIndex = 5;
+			this.hsAltiGain.TabStop = true;
+			this.tlToolTip.SetToolTip( this.hsAltiGain, "The affort applied by the controller to attain the correct altitude" );
+			this.hsAltiGain.Value = 128;
+			this.hsAltiGain.ValueChanged += new System.EventHandler( this.hsAltiGain_ValueChanged );
+			// 
+			// cbPitchRollLocked
+			// 
+			this.cbPitchRollLocked.AutoSize = true;
+			this.cbPitchRollLocked.Location = new System.Drawing.Point( 14, 25 );
+			this.cbPitchRollLocked.Name = "cbPitchRollLocked";
+			this.cbPitchRollLocked.Size = new System.Drawing.Size( 115, 17 );
+			this.cbPitchRollLocked.TabIndex = 0;
+			this.cbPitchRollLocked.Text = "Pitch && Roll locked";
+			this.cbPitchRollLocked.UseVisualStyleBackColor = true;
+			this.cbPitchRollLocked.CheckedChanged += new System.EventHandler( this.cbPitchRollLocked_CheckedChanged );
+			// 
+			// lblAscentGain
+			// 
+			this.lblAscentGain.Location = new System.Drawing.Point( 281, 108 );
+			this.lblAscentGain.Name = "lblAscentGain";
+			this.lblAscentGain.Size = new System.Drawing.Size( 42, 13 );
+			this.lblAscentGain.TabIndex = 13;
+			this.lblAscentGain.Text = "128";
+			this.lblAscentGain.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.tlToolTip.SetToolTip( this.lblAscentGain, "The affort applied by the controller to attain the correct rate of ascent / desce" +
+					"nt" );
+			// 
+			// hsPitchGain
+			// 
+			this.hsPitchGain.Location = new System.Drawing.Point( 73, 48 );
+			this.hsPitchGain.Maximum = 265;
+			this.hsPitchGain.Minimum = 1;
+			this.hsPitchGain.Name = "hsPitchGain";
+			this.hsPitchGain.Size = new System.Drawing.Size( 205, 16 );
+			this.hsPitchGain.TabIndex = 1;
+			this.hsPitchGain.TabStop = true;
+			this.tlToolTip.SetToolTip( this.hsPitchGain, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			this.hsPitchGain.Value = 128;
+			this.hsPitchGain.ValueChanged += new System.EventHandler( this.hsPitchGain_ValueChanged );
+			// 
+			// label25
+			// 
+			this.label25.AutoSize = true;
+			this.label25.Location = new System.Drawing.Point( 5, 108 );
+			this.label25.Name = "label25";
+			this.label25.Size = new System.Drawing.Size( 65, 13 );
+			this.label25.TabIndex = 12;
+			this.label25.Text = "Ascent Gain";
+			this.tlToolTip.SetToolTip( this.label25, "The affort applied by the controller to attain the correct rate of ascent / desce" +
+					"nt" );
+			// 
+			// hsRollGain
+			// 
+			this.hsRollGain.Location = new System.Drawing.Point( 73, 68 );
+			this.hsRollGain.Maximum = 265;
+			this.hsRollGain.Minimum = 1;
+			this.hsRollGain.Name = "hsRollGain";
+			this.hsRollGain.Size = new System.Drawing.Size( 205, 16 );
+			this.hsRollGain.TabIndex = 2;
+			this.hsRollGain.TabStop = true;
+			this.tlToolTip.SetToolTip( this.hsRollGain, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			this.hsRollGain.Value = 128;
+			this.hsRollGain.ValueChanged += new System.EventHandler( this.hsRollGain_ValueChanged );
+			// 
+			// hsAscentGain
+			// 
+			this.hsAscentGain.Location = new System.Drawing.Point( 73, 108 );
+			this.hsAscentGain.Maximum = 265;
+			this.hsAscentGain.Minimum = 1;
+			this.hsAscentGain.Name = "hsAscentGain";
+			this.hsAscentGain.Size = new System.Drawing.Size( 205, 16 );
+			this.hsAscentGain.TabIndex = 4;
+			this.hsAscentGain.TabStop = true;
+			this.tlToolTip.SetToolTip( this.hsAscentGain, "The affort applied by the controller to attain the correct rate of ascent / desce" +
+					"nt" );
+			this.hsAscentGain.Value = 128;
+			this.hsAscentGain.ValueChanged += new System.EventHandler( this.hsAscentGain_ValueChanged );
+			// 
+			// label11
+			// 
+			this.label11.AutoSize = true;
+			this.label11.Location = new System.Drawing.Point( 14, 48 );
+			this.label11.Name = "label11";
+			this.label11.Size = new System.Drawing.Size( 56, 13 );
+			this.label11.TabIndex = 4;
+			this.label11.Text = "Pitch Gain";
+			this.tlToolTip.SetToolTip( this.label11, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			// 
+			// lblYawGain
+			// 
+			this.lblYawGain.Location = new System.Drawing.Point( 281, 88 );
+			this.lblYawGain.Name = "lblYawGain";
+			this.lblYawGain.Size = new System.Drawing.Size( 42, 13 );
+			this.lblYawGain.TabIndex = 10;
+			this.lblYawGain.Text = "128";
+			this.lblYawGain.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.tlToolTip.SetToolTip( this.lblYawGain, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			// 
+			// label19
+			// 
+			this.label19.AutoSize = true;
+			this.label19.Location = new System.Drawing.Point( 20, 68 );
+			this.label19.Name = "label19";
+			this.label19.Size = new System.Drawing.Size( 50, 13 );
+			this.label19.TabIndex = 5;
+			this.label19.Text = "Roll Gain";
+			this.tlToolTip.SetToolTip( this.label19, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			// 
+			// lblRollGain
+			// 
+			this.lblRollGain.Location = new System.Drawing.Point( 281, 68 );
+			this.lblRollGain.Name = "lblRollGain";
+			this.lblRollGain.Size = new System.Drawing.Size( 42, 13 );
+			this.lblRollGain.TabIndex = 9;
+			this.lblRollGain.Text = "128";
+			this.lblRollGain.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.tlToolTip.SetToolTip( this.lblRollGain, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			// 
+			// hsYawGain
+			// 
+			this.hsYawGain.Location = new System.Drawing.Point( 73, 88 );
+			this.hsYawGain.Maximum = 265;
+			this.hsYawGain.Minimum = 1;
+			this.hsYawGain.Name = "hsYawGain";
+			this.hsYawGain.Size = new System.Drawing.Size( 205, 16 );
+			this.hsYawGain.TabIndex = 3;
+			this.hsYawGain.TabStop = true;
+			this.tlToolTip.SetToolTip( this.hsYawGain, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			this.hsYawGain.Value = 128;
+			this.hsYawGain.ValueChanged += new System.EventHandler( this.hsYawGain_ValueChanged );
+			// 
+			// lblPitchGain
+			// 
+			this.lblPitchGain.Location = new System.Drawing.Point( 281, 48 );
+			this.lblPitchGain.Name = "lblPitchGain";
+			this.lblPitchGain.Size = new System.Drawing.Size( 42, 13 );
+			this.lblPitchGain.TabIndex = 8;
+			this.lblPitchGain.Text = "128";
+			this.lblPitchGain.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+			this.tlToolTip.SetToolTip( this.lblPitchGain, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
+			// 
+			// label21
+			// 
+			this.label21.AutoSize = true;
+			this.label21.Location = new System.Drawing.Point( 20, 88 );
+			this.label21.Name = "label21";
+			this.label21.Size = new System.Drawing.Size( 53, 13 );
+			this.label21.TabIndex = 7;
+			this.label21.Text = "Yaw Gain";
+			this.tlToolTip.SetToolTip( this.label21, "Gain values affect how forcefully the controller responds to outside influence.  " +
+					"Higher numbers mean tighter control, but too high can cause instability." );
 			// 
 			// tpSystemSetup
 			// 
+			this.tpSystemSetup.Controls.Add( this.groupBox2 );
 			this.tpSystemSetup.Controls.Add( this.btnFactoryDefaultPrefs );
-			this.tpSystemSetup.Controls.Add( this.cbLowVoltageAlarm );
-			this.tpSystemSetup.Controls.Add( this.label16 );
-			this.tpSystemSetup.Controls.Add( this.cbArmingDelay );
-			this.tpSystemSetup.Controls.Add( this.label15 );
-			this.tpSystemSetup.Controls.Add( this.cbDisarmDelay );
-			this.tpSystemSetup.Controls.Add( this.label10 );
-			this.tpSystemSetup.Controls.Add( this.udVoltageOffset );
-			this.tpSystemSetup.Controls.Add( this.label12 );
-			this.tpSystemSetup.Controls.Add( this.label9 );
 			this.tpSystemSetup.Controls.Add( this.btnUploadThrottle );
-			this.tpSystemSetup.Controls.Add( this.udLowVoltageAlarmThreshold );
-			this.tpSystemSetup.Controls.Add( this.cbUseBatteryMonitor );
 			this.tpSystemSetup.Controls.Add( this.groupBox1 );
-			this.tpSystemSetup.Controls.Add( this.vbVoltage2 );
 			this.tpSystemSetup.Location = new System.Drawing.Point( 4, 22 );
 			this.tpSystemSetup.Name = "tpSystemSetup";
 			this.tpSystemSetup.Size = new System.Drawing.Size( 721, 356 );
 			this.tpSystemSetup.TabIndex = 4;
 			this.tpSystemSetup.Text = "System Setup";
 			// 
-			// btnFactoryDefaultPrefs
+			// groupBox2
 			// 
-			this.btnFactoryDefaultPrefs.Location = new System.Drawing.Point( 574, 330 );
-			this.btnFactoryDefaultPrefs.Name = "btnFactoryDefaultPrefs";
-			this.btnFactoryDefaultPrefs.Size = new System.Drawing.Size( 139, 23 );
-			this.btnFactoryDefaultPrefs.TabIndex = 40;
-			this.btnFactoryDefaultPrefs.Text = "Factory Default Prefs";
-			this.btnFactoryDefaultPrefs.UseVisualStyleBackColor = true;
-			this.btnFactoryDefaultPrefs.Click += new System.EventHandler( this.btnFactoryDefaultPrefs_Click );
+			this.groupBox2.Controls.Add( this.vbVoltage2 );
+			this.groupBox2.Controls.Add( this.cbUseBatteryMonitor );
+			this.groupBox2.Controls.Add( this.cbLowVoltageAlarm );
+			this.groupBox2.Controls.Add( this.udLowVoltageAlarmThreshold );
+			this.groupBox2.Controls.Add( this.label9 );
+			this.groupBox2.Controls.Add( this.label12 );
+			this.groupBox2.Controls.Add( this.udVoltageOffset );
+			this.groupBox2.Controls.Add( this.label10 );
+			this.groupBox2.Location = new System.Drawing.Point( 216, 14 );
+			this.groupBox2.Name = "groupBox2";
+			this.groupBox2.Size = new System.Drawing.Size( 200, 159 );
+			this.groupBox2.TabIndex = 41;
+			this.groupBox2.TabStop = false;
+			this.groupBox2.Text = "Battery Monitor";
+			// 
+			// vbVoltage2
+			// 
+			this.vbVoltage2.BarColor = System.Drawing.Color.LightGreen;
+			this.vbVoltage2.FromLeft = true;
+			this.vbVoltage2.LeftLabel = "Battery Voltage";
+			this.vbVoltage2.Location = new System.Drawing.Point( 19, 17 );
+			this.vbVoltage2.MaxValue = 1260;
+			this.vbVoltage2.MinValue = 900;
+			this.vbVoltage2.Name = "vbVoltage2";
+			this.vbVoltage2.RightLabel = "0";
+			this.vbVoltage2.Size = new System.Drawing.Size( 150, 20 );
+			this.vbVoltage2.TabIndex = 34;
+			this.vbVoltage2.Value = 1200;
+			// 
+			// cbUseBatteryMonitor
+			// 
+			this.cbUseBatteryMonitor.AutoSize = true;
+			this.cbUseBatteryMonitor.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
+			this.cbUseBatteryMonitor.Location = new System.Drawing.Point( 38, 46 );
+			this.cbUseBatteryMonitor.Name = "cbUseBatteryMonitor";
+			this.cbUseBatteryMonitor.Size = new System.Drawing.Size( 133, 17 );
+			this.cbUseBatteryMonitor.TabIndex = 8;
+			this.cbUseBatteryMonitor.Text = "Enable Battery Monitor";
+			this.tlToolTip.SetToolTip( this.cbUseBatteryMonitor, "Enable / disable monitoring of battery voltage" );
+			this.cbUseBatteryMonitor.UseVisualStyleBackColor = true;
 			// 
 			// cbLowVoltageAlarm
 			// 
 			this.cbLowVoltageAlarm.AutoSize = true;
 			this.cbLowVoltageAlarm.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.cbLowVoltageAlarm.Location = new System.Drawing.Point( 244, 106 );
+			this.cbLowVoltageAlarm.Location = new System.Drawing.Point( 19, 118 );
 			this.cbLowVoltageAlarm.Name = "cbLowVoltageAlarm";
 			this.cbLowVoltageAlarm.Size = new System.Drawing.Size( 152, 17 );
 			this.cbLowVoltageAlarm.TabIndex = 39;
 			this.cbLowVoltageAlarm.Text = "Audible Low Voltage Alarm";
 			this.tlToolTip.SetToolTip( this.cbLowVoltageAlarm, "Enable / Disable audible low-voltage buzzer" );
 			this.cbLowVoltageAlarm.UseVisualStyleBackColor = true;
-			// 
-			// label16
-			// 
-			this.label16.AutoSize = true;
-			this.label16.Location = new System.Drawing.Point( 36, 170 );
-			this.label16.Name = "label16";
-			this.label16.Size = new System.Drawing.Size( 69, 13 );
-			this.label16.TabIndex = 38;
-			this.label16.Text = "Arming Delay";
-			// 
-			// cbArmingDelay
-			// 
-			this.cbArmingDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cbArmingDelay.FormattingEnabled = true;
-			this.cbArmingDelay.Items.AddRange( new object[] {
-            "1.00 sec",
-            "0.50 sec",
-            "0.25 sec",
-            "Off"} );
-			this.cbArmingDelay.Location = new System.Drawing.Point( 111, 167 );
-			this.cbArmingDelay.Name = "cbArmingDelay";
-			this.cbArmingDelay.Size = new System.Drawing.Size( 65, 21 );
-			this.cbArmingDelay.TabIndex = 37;
-			// 
-			// label15
-			// 
-			this.label15.AutoSize = true;
-			this.label15.Location = new System.Drawing.Point( 36, 196 );
-			this.label15.Name = "label15";
-			this.label15.Size = new System.Drawing.Size( 69, 13 );
-			this.label15.TabIndex = 36;
-			this.label15.Text = "Disarm Delay";
-			// 
-			// cbDisarmDelay
-			// 
-			this.cbDisarmDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-			this.cbDisarmDelay.FormattingEnabled = true;
-			this.cbDisarmDelay.Items.AddRange( new object[] {
-            "1.00 sec",
-            "0.50 sec",
-            "0.25 sec",
-            "Off"} );
-			this.cbDisarmDelay.Location = new System.Drawing.Point( 111, 193 );
-			this.cbDisarmDelay.Name = "cbDisarmDelay";
-			this.cbDisarmDelay.Size = new System.Drawing.Size( 65, 21 );
-			this.cbDisarmDelay.TabIndex = 35;
-			// 
-			// label10
-			// 
-			this.label10.AutoSize = true;
-			this.label10.Location = new System.Drawing.Point( 261, 83 );
-			this.label10.Name = "label10";
-			this.label10.Size = new System.Drawing.Size( 74, 13 );
-			this.label10.TabIndex = 15;
-			this.label10.Text = "Voltage Offset";
-			// 
-			// udVoltageOffset
-			// 
-			this.udVoltageOffset.DecimalPlaces = 2;
-			this.udVoltageOffset.Increment = new decimal( new int[] {
-            1,
-            0,
-            0,
-            65536} );
-			this.udVoltageOffset.Location = new System.Drawing.Point( 341, 81 );
-			this.udVoltageOffset.Maximum = new decimal( new int[] {
-            2,
-            0,
-            0,
-            0} );
-			this.udVoltageOffset.Minimum = new decimal( new int[] {
-            2,
-            0,
-            0,
-            -2147483648} );
-			this.udVoltageOffset.Name = "udVoltageOffset";
-			this.udVoltageOffset.Size = new System.Drawing.Size( 57, 20 );
-			this.udVoltageOffset.TabIndex = 14;
-			this.tlToolTip.SetToolTip( this.udVoltageOffset, "Adjust this value to compensate for the difference between actual voltage and the" +
-					" displayed value" );
-			// 
-			// label12
-			// 
-			this.label12.AutoSize = true;
-			this.label12.Location = new System.Drawing.Point( 260, 127 );
-			this.label12.Name = "label12";
-			this.label12.Size = new System.Drawing.Size( 111, 13 );
-			this.label12.TabIndex = 13;
-			this.label12.Text = "TODO: Ascent limiting";
-			// 
-			// label9
-			// 
-			this.label9.AutoSize = true;
-			this.label9.Location = new System.Drawing.Point( 240, 59 );
-			this.label9.Name = "label9";
-			this.label9.Size = new System.Drawing.Size( 95, 13 );
-			this.label9.TabIndex = 10;
-			this.label9.Text = "Low Voltage Alarm";
-			// 
-			// btnUploadThrottle
-			// 
-			this.btnUploadThrottle.Location = new System.Drawing.Point( 246, 161 );
-			this.btnUploadThrottle.Name = "btnUploadThrottle";
-			this.btnUploadThrottle.Size = new System.Drawing.Size( 130, 23 );
-			this.btnUploadThrottle.TabIndex = 4;
-			this.btnUploadThrottle.Text = "Upload Changes";
-			this.btnUploadThrottle.UseVisualStyleBackColor = true;
-			this.btnUploadThrottle.Click += new System.EventHandler( this.btnUploadThrottle_Click );
 			// 
 			// udLowVoltageAlarmThreshold
 			// 
@@ -1348,7 +1995,7 @@
             0,
             0,
             65536} );
-			this.udLowVoltageAlarmThreshold.Location = new System.Drawing.Point( 341, 57 );
+			this.udLowVoltageAlarmThreshold.Location = new System.Drawing.Point( 116, 69 );
 			this.udLowVoltageAlarmThreshold.Maximum = new decimal( new int[] {
             168,
             0,
@@ -1369,24 +2016,89 @@
             0,
             65536} );
 			// 
-			// cbUseBatteryMonitor
+			// label9
 			// 
-			this.cbUseBatteryMonitor.AutoSize = true;
-			this.cbUseBatteryMonitor.CheckAlign = System.Drawing.ContentAlignment.MiddleRight;
-			this.cbUseBatteryMonitor.Location = new System.Drawing.Point( 263, 38 );
-			this.cbUseBatteryMonitor.Name = "cbUseBatteryMonitor";
-			this.cbUseBatteryMonitor.Size = new System.Drawing.Size( 133, 17 );
-			this.cbUseBatteryMonitor.TabIndex = 8;
-			this.cbUseBatteryMonitor.Text = "Enable Battery Monitor";
-			this.tlToolTip.SetToolTip( this.cbUseBatteryMonitor, "Enable / disable monitoring of battery voltage" );
-			this.cbUseBatteryMonitor.UseVisualStyleBackColor = true;
+			this.label9.AutoSize = true;
+			this.label9.Location = new System.Drawing.Point( 15, 71 );
+			this.label9.Name = "label9";
+			this.label9.Size = new System.Drawing.Size( 95, 13 );
+			this.label9.TabIndex = 10;
+			this.label9.Text = "Low Voltage Alarm";
+			// 
+			// label12
+			// 
+			this.label12.AutoSize = true;
+			this.label12.Location = new System.Drawing.Point( 35, 139 );
+			this.label12.Name = "label12";
+			this.label12.Size = new System.Drawing.Size( 111, 13 );
+			this.label12.TabIndex = 13;
+			this.label12.Text = "TODO: Ascent limiting";
+			// 
+			// udVoltageOffset
+			// 
+			this.udVoltageOffset.DecimalPlaces = 2;
+			this.udVoltageOffset.Increment = new decimal( new int[] {
+            1,
+            0,
+            0,
+            65536} );
+			this.udVoltageOffset.Location = new System.Drawing.Point( 116, 93 );
+			this.udVoltageOffset.Maximum = new decimal( new int[] {
+            2,
+            0,
+            0,
+            0} );
+			this.udVoltageOffset.Minimum = new decimal( new int[] {
+            2,
+            0,
+            0,
+            -2147483648} );
+			this.udVoltageOffset.Name = "udVoltageOffset";
+			this.udVoltageOffset.Size = new System.Drawing.Size( 57, 20 );
+			this.udVoltageOffset.TabIndex = 14;
+			this.tlToolTip.SetToolTip( this.udVoltageOffset, "Adjust this value to compensate for the difference between actual voltage and the" +
+					" displayed value" );
+			// 
+			// label10
+			// 
+			this.label10.AutoSize = true;
+			this.label10.Location = new System.Drawing.Point( 36, 95 );
+			this.label10.Name = "label10";
+			this.label10.Size = new System.Drawing.Size( 74, 13 );
+			this.label10.TabIndex = 15;
+			this.label10.Text = "Voltage Offset";
+			// 
+			// btnFactoryDefaultPrefs
+			// 
+			this.btnFactoryDefaultPrefs.Location = new System.Drawing.Point( 574, 330 );
+			this.btnFactoryDefaultPrefs.Name = "btnFactoryDefaultPrefs";
+			this.btnFactoryDefaultPrefs.Size = new System.Drawing.Size( 139, 23 );
+			this.btnFactoryDefaultPrefs.TabIndex = 40;
+			this.btnFactoryDefaultPrefs.Text = "Factory Default Prefs";
+			this.btnFactoryDefaultPrefs.UseVisualStyleBackColor = true;
+			this.btnFactoryDefaultPrefs.Click += new System.EventHandler( this.btnFactoryDefaultPrefs_Click );
+			// 
+			// btnUploadThrottle
+			// 
+			this.btnUploadThrottle.Location = new System.Drawing.Point( 259, 190 );
+			this.btnUploadThrottle.Name = "btnUploadThrottle";
+			this.btnUploadThrottle.Size = new System.Drawing.Size( 130, 23 );
+			this.btnUploadThrottle.TabIndex = 4;
+			this.btnUploadThrottle.Text = "Upload Changes";
+			this.tlToolTip.SetToolTip( this.btnUploadThrottle, "Upload changes on this page to the flight controller" );
+			this.btnUploadThrottle.UseVisualStyleBackColor = true;
+			this.btnUploadThrottle.Click += new System.EventHandler( this.btnUploadThrottle_Click );
 			// 
 			// groupBox1
 			// 
 			this.groupBox1.Controls.Add( this.cbDisableMotors );
 			this.groupBox1.Controls.Add( this.label6 );
+			this.groupBox1.Controls.Add( this.label16 );
 			this.groupBox1.Controls.Add( this.label4 );
+			this.groupBox1.Controls.Add( this.cbArmingDelay );
+			this.groupBox1.Controls.Add( this.label15 );
 			this.groupBox1.Controls.Add( this.udTestThrottle );
+			this.groupBox1.Controls.Add( this.cbDisarmDelay );
 			this.groupBox1.Controls.Add( this.label7 );
 			this.groupBox1.Controls.Add( this.label8 );
 			this.groupBox1.Controls.Add( this.udLowThrottle );
@@ -1394,7 +2106,7 @@
 			this.groupBox1.Controls.Add( this.udArmedLowThrottle );
 			this.groupBox1.Location = new System.Drawing.Point( 8, 14 );
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size( 202, 149 );
+			this.groupBox1.Size = new System.Drawing.Size( 202, 214 );
 			this.groupBox1.TabIndex = 7;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Motor Outputs";
@@ -1422,6 +2134,16 @@
 			this.label6.TabIndex = 1;
 			this.label6.Text = "Armed Low Throttle";
 			// 
+			// label16
+			// 
+			this.label16.AutoSize = true;
+			this.label16.Location = new System.Drawing.Point( 29, 160 );
+			this.label16.Name = "label16";
+			this.label16.Size = new System.Drawing.Size( 69, 13 );
+			this.label16.TabIndex = 38;
+			this.label16.Text = "Arming Delay";
+			this.tlToolTip.SetToolTip( this.label16, "How long you have to hold the sticks in the arming position to arm the motors" );
+			// 
 			// label4
 			// 
 			this.label4.AutoSize = true;
@@ -1430,6 +2152,31 @@
 			this.label4.Size = new System.Drawing.Size( 66, 13 );
 			this.label4.TabIndex = 0;
 			this.label4.Text = "Low Throttle";
+			// 
+			// cbArmingDelay
+			// 
+			this.cbArmingDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbArmingDelay.FormattingEnabled = true;
+			this.cbArmingDelay.Items.AddRange( new object[] {
+            "1.00 sec",
+            "0.50 sec",
+            "0.25 sec",
+            "Off"} );
+			this.cbArmingDelay.Location = new System.Drawing.Point( 104, 157 );
+			this.cbArmingDelay.Name = "cbArmingDelay";
+			this.cbArmingDelay.Size = new System.Drawing.Size( 65, 21 );
+			this.cbArmingDelay.TabIndex = 37;
+			this.tlToolTip.SetToolTip( this.cbArmingDelay, "How long you have to hold the sticks in the arming position to arm the motors" );
+			// 
+			// label15
+			// 
+			this.label15.AutoSize = true;
+			this.label15.Location = new System.Drawing.Point( 29, 186 );
+			this.label15.Name = "label15";
+			this.label15.Size = new System.Drawing.Size( 69, 13 );
+			this.label15.TabIndex = 36;
+			this.label15.Text = "Disarm Delay";
+			this.tlToolTip.SetToolTip( this.label15, "How long you have to hold the sticks in the disarm position to disarm the motors" );
 			// 
 			// udTestThrottle
 			// 
@@ -1458,6 +2205,21 @@
             0,
             0,
             0} );
+			// 
+			// cbDisarmDelay
+			// 
+			this.cbDisarmDelay.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+			this.cbDisarmDelay.FormattingEnabled = true;
+			this.cbDisarmDelay.Items.AddRange( new object[] {
+            "1.00 sec",
+            "0.50 sec",
+            "0.25 sec",
+            "Off"} );
+			this.cbDisarmDelay.Location = new System.Drawing.Point( 104, 183 );
+			this.cbDisarmDelay.Name = "cbDisarmDelay";
+			this.cbDisarmDelay.Size = new System.Drawing.Size( 65, 21 );
+			this.cbDisarmDelay.TabIndex = 35;
+			this.tlToolTip.SetToolTip( this.cbDisarmDelay, "How long you have to hold the sticks in the disarm position to disarm the motors" );
 			// 
 			// label7
 			// 
@@ -1578,6 +2340,50 @@
 			this.tpGyroCalibration.Size = new System.Drawing.Size( 721, 356 );
 			this.tpGyroCalibration.TabIndex = 5;
 			this.tpGyroCalibration.Text = "Gyro Calibration";
+			// 
+			// gCalibTemp
+			// 
+			this.gCalibTemp.AverageCount = 128;
+			this.gCalibTemp.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibTemp.Location = new System.Drawing.Point( 251, 254 );
+			this.gCalibTemp.Name = "gCalibTemp";
+			this.gCalibTemp.Range = 8192F;
+			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibTemp.TabIndex = 38;
+			this.gCalibTemp.Value = 0F;
+			// 
+			// gCalibZ
+			// 
+			this.gCalibZ.AverageCount = 128;
+			this.gCalibZ.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibZ.Location = new System.Drawing.Point( 560, 254 );
+			this.gCalibZ.Name = "gCalibZ";
+			this.gCalibZ.Range = 8192F;
+			this.gCalibZ.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibZ.TabIndex = 37;
+			this.gCalibZ.Value = 0F;
+			// 
+			// gCalibY
+			// 
+			this.gCalibY.AverageCount = 128;
+			this.gCalibY.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibY.Location = new System.Drawing.Point( 466, 254 );
+			this.gCalibY.Name = "gCalibY";
+			this.gCalibY.Range = 8192F;
+			this.gCalibY.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibY.TabIndex = 36;
+			this.gCalibY.Value = 0F;
+			// 
+			// gCalibX
+			// 
+			this.gCalibX.AverageCount = 128;
+			this.gCalibX.BackColor = System.Drawing.SystemColors.Control;
+			this.gCalibX.Location = new System.Drawing.Point( 372, 254 );
+			this.gCalibX.Name = "gCalibX";
+			this.gCalibX.Range = 8192F;
+			this.gCalibX.Size = new System.Drawing.Size( 84, 84 );
+			this.gCalibX.TabIndex = 35;
+			this.gCalibX.Value = 0F;
 			// 
 			// btnUploadGyroCalibration
 			// 
@@ -1752,6 +2558,13 @@
 			this.gxScale.Text = "0";
 			this.gxScale.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
 			// 
+			// lfGraph
+			// 
+			this.lfGraph.Location = new System.Drawing.Point( 224, 19 );
+			this.lfGraph.Name = "lfGraph";
+			this.lfGraph.Size = new System.Drawing.Size( 447, 232 );
+			this.lfGraph.TabIndex = 29;
+			// 
 			// tpAccelCalibration
 			// 
 			this.tpAccelCalibration.Controls.Add( this.ocAccelOrient );
@@ -1762,6 +2575,16 @@
 			this.tpAccelCalibration.Size = new System.Drawing.Size( 721, 356 );
 			this.tpAccelCalibration.TabIndex = 6;
 			this.tpAccelCalibration.Text = "Accel Calibration";
+			// 
+			// ocAccelOrient
+			// 
+			this.ocAccelOrient.CubeDepth = 1.25F;
+			this.ocAccelOrient.CubeHeight = 0.6F;
+			this.ocAccelOrient.CubeWidth = 1.25F;
+			this.ocAccelOrient.Location = new System.Drawing.Point( 358, 166 );
+			this.ocAccelOrient.Name = "ocAccelOrient";
+			this.ocAccelOrient.Size = new System.Drawing.Size( 313, 165 );
+			this.ocAccelOrient.TabIndex = 37;
 			// 
 			// groupBox6
 			// 
@@ -1877,6 +2700,39 @@
 			this.groupBox5.TabIndex = 35;
 			this.groupBox5.TabStop = false;
 			this.groupBox5.Text = "Fixed offset compensation";
+			// 
+			// gAccelXCal
+			// 
+			this.gAccelXCal.AverageCount = 200;
+			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelXCal.Location = new System.Drawing.Point( 6, 19 );
+			this.gAccelXCal.Name = "gAccelXCal";
+			this.gAccelXCal.Range = 32768F;
+			this.gAccelXCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelXCal.TabIndex = 12;
+			this.gAccelXCal.Value = 0F;
+			// 
+			// gAccelYCal
+			// 
+			this.gAccelYCal.AverageCount = 200;
+			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelYCal.Location = new System.Drawing.Point( 103, 19 );
+			this.gAccelYCal.Name = "gAccelYCal";
+			this.gAccelYCal.Range = 32768F;
+			this.gAccelYCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelYCal.TabIndex = 13;
+			this.gAccelYCal.Value = 0F;
+			// 
+			// gAccelZCal
+			// 
+			this.gAccelZCal.AverageCount = 200;
+			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
+			this.gAccelZCal.Location = new System.Drawing.Point( 200, 19 );
+			this.gAccelZCal.Name = "gAccelZCal";
+			this.gAccelZCal.Range = 32768F;
+			this.gAccelZCal.Size = new System.Drawing.Size( 91, 89 );
+			this.gAccelZCal.TabIndex = 14;
+			this.gAccelZCal.Value = 0F;
 			// 
 			// label39
 			// 
@@ -2169,533 +3025,6 @@
 			this.comboBox8.Size = new System.Drawing.Size( 40, 21 );
 			this.comboBox8.TabIndex = 43;
 			// 
-			// vbRollOut
-			// 
-			this.vbRollOut.BarColor = System.Drawing.Color.Aquamarine;
-			this.vbRollOut.FromLeft = true;
-			this.vbRollOut.LeftLabel = "Roll Power";
-			this.vbRollOut.Location = new System.Drawing.Point( 532, 248 );
-			this.vbRollOut.MaxValue = 5000;
-			this.vbRollOut.MinValue = -5000;
-			this.vbRollOut.Name = "vbRollOut";
-			this.vbRollOut.RightLabel = "0";
-			this.vbRollOut.Size = new System.Drawing.Size( 171, 16 );
-			this.vbRollOut.TabIndex = 40;
-			this.vbRollOut.Value = 0;
-			// 
-			// vbYawOut
-			// 
-			this.vbYawOut.BarColor = System.Drawing.Color.Aquamarine;
-			this.vbYawOut.FromLeft = true;
-			this.vbYawOut.LeftLabel = "Yaw Power";
-			this.vbYawOut.Location = new System.Drawing.Point( 532, 290 );
-			this.vbYawOut.MaxValue = 5000;
-			this.vbYawOut.MinValue = -5000;
-			this.vbYawOut.Name = "vbYawOut";
-			this.vbYawOut.RightLabel = "0";
-			this.vbYawOut.Size = new System.Drawing.Size( 171, 16 );
-			this.vbYawOut.TabIndex = 39;
-			this.vbYawOut.Value = 0;
-			// 
-			// vbPitchOut
-			// 
-			this.vbPitchOut.BarColor = System.Drawing.Color.Aquamarine;
-			this.vbPitchOut.FromLeft = true;
-			this.vbPitchOut.LeftLabel = "Pitch Power";
-			this.vbPitchOut.Location = new System.Drawing.Point( 532, 206 );
-			this.vbPitchOut.MaxValue = 5000;
-			this.vbPitchOut.MinValue = -5000;
-			this.vbPitchOut.Name = "vbPitchOut";
-			this.vbPitchOut.RightLabel = "0";
-			this.vbPitchOut.Size = new System.Drawing.Size( 171, 16 );
-			this.vbPitchOut.TabIndex = 38;
-			this.vbPitchOut.Value = 0;
-			// 
-			// vbBackLeft
-			// 
-			this.vbBackLeft.BarColor = System.Drawing.Color.Tomato;
-			this.vbBackLeft.FromLeft = false;
-			this.vbBackLeft.LeftLabel = "";
-			this.vbBackLeft.Location = new System.Drawing.Point( 9, 324 );
-			this.vbBackLeft.MaxValue = 16000;
-			this.vbBackLeft.MinValue = 8000;
-			this.vbBackLeft.Name = "vbBackLeft";
-			this.vbBackLeft.RightLabel = "";
-			this.vbBackLeft.Size = new System.Drawing.Size( 83, 10 );
-			this.vbBackLeft.TabIndex = 37;
-			this.vbBackLeft.Value = 0;
-			// 
-			// vbFrontLeft
-			// 
-			this.vbFrontLeft.BarColor = System.Drawing.Color.Tomato;
-			this.vbFrontLeft.FromLeft = false;
-			this.vbFrontLeft.LeftLabel = "";
-			this.vbFrontLeft.Location = new System.Drawing.Point( 9, 182 );
-			this.vbFrontLeft.MaxValue = 16000;
-			this.vbFrontLeft.MinValue = 8000;
-			this.vbFrontLeft.Name = "vbFrontLeft";
-			this.vbFrontLeft.RightLabel = "";
-			this.vbFrontLeft.Size = new System.Drawing.Size( 83, 10 );
-			this.vbFrontLeft.TabIndex = 36;
-			this.vbFrontLeft.Value = 0;
-			// 
-			// vbBackRight
-			// 
-			this.vbBackRight.BarColor = System.Drawing.Color.Tomato;
-			this.vbBackRight.FromLeft = true;
-			this.vbBackRight.LeftLabel = "";
-			this.vbBackRight.Location = new System.Drawing.Point( 425, 324 );
-			this.vbBackRight.MaxValue = 16000;
-			this.vbBackRight.MinValue = 8000;
-			this.vbBackRight.Name = "vbBackRight";
-			this.vbBackRight.RightLabel = "";
-			this.vbBackRight.Size = new System.Drawing.Size( 83, 10 );
-			this.vbBackRight.TabIndex = 35;
-			this.vbBackRight.Value = 0;
-			// 
-			// vbFrontRight
-			// 
-			this.vbFrontRight.BarColor = System.Drawing.Color.Tomato;
-			this.vbFrontRight.FromLeft = true;
-			this.vbFrontRight.LeftLabel = "";
-			this.vbFrontRight.Location = new System.Drawing.Point( 425, 182 );
-			this.vbFrontRight.MaxValue = 16000;
-			this.vbFrontRight.MinValue = 8000;
-			this.vbFrontRight.Name = "vbFrontRight";
-			this.vbFrontRight.RightLabel = "";
-			this.vbFrontRight.Size = new System.Drawing.Size( 83, 10 );
-			this.vbFrontRight.TabIndex = 34;
-			this.vbFrontRight.Value = 0;
-			// 
-			// vbVoltage
-			// 
-			this.vbVoltage.BarColor = System.Drawing.Color.LightGreen;
-			this.vbVoltage.FromLeft = true;
-			this.vbVoltage.LeftLabel = "Battery Voltage";
-			this.vbVoltage.Location = new System.Drawing.Point( 183, 160 );
-			this.vbVoltage.MaxValue = 1260;
-			this.vbVoltage.MinValue = 900;
-			this.vbVoltage.Name = "vbVoltage";
-			this.vbVoltage.RightLabel = "0";
-			this.vbVoltage.Size = new System.Drawing.Size( 150, 20 );
-			this.vbVoltage.TabIndex = 33;
-			this.vbVoltage.Value = 1200;
-			// 
-			// vbChannel8
-			// 
-			this.vbChannel8.BarColor = System.Drawing.Color.LightGreen;
-			this.vbChannel8.FromLeft = true;
-			this.vbChannel8.LeftLabel = "Aux3";
-			this.vbChannel8.Location = new System.Drawing.Point( 425, 290 );
-			this.vbChannel8.MaxValue = 1024;
-			this.vbChannel8.MinValue = -1024;
-			this.vbChannel8.Name = "vbChannel8";
-			this.vbChannel8.RightLabel = "0";
-			this.vbChannel8.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel8.TabIndex = 32;
-			this.vbChannel8.Value = 0;
-			// 
-			// vbChannel7
-			// 
-			this.vbChannel7.BarColor = System.Drawing.Color.LightGreen;
-			this.vbChannel7.FromLeft = true;
-			this.vbChannel7.LeftLabel = "Aux2";
-			this.vbChannel7.Location = new System.Drawing.Point( 425, 262 );
-			this.vbChannel7.MaxValue = 1024;
-			this.vbChannel7.MinValue = -1024;
-			this.vbChannel7.Name = "vbChannel7";
-			this.vbChannel7.RightLabel = "0";
-			this.vbChannel7.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel7.TabIndex = 31;
-			this.vbChannel7.Value = 0;
-			// 
-			// vbChannel6
-			// 
-			this.vbChannel6.BarColor = System.Drawing.Color.LightGreen;
-			this.vbChannel6.FromLeft = true;
-			this.vbChannel6.LeftLabel = "Aux1";
-			this.vbChannel6.Location = new System.Drawing.Point( 9, 290 );
-			this.vbChannel6.MaxValue = 1024;
-			this.vbChannel6.MinValue = -1024;
-			this.vbChannel6.Name = "vbChannel6";
-			this.vbChannel6.RightLabel = "0";
-			this.vbChannel6.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel6.TabIndex = 30;
-			this.vbChannel6.Value = 0;
-			// 
-			// vbChannel5
-			// 
-			this.vbChannel5.BarColor = System.Drawing.Color.LightGreen;
-			this.vbChannel5.FromLeft = true;
-			this.vbChannel5.LeftLabel = "Gear";
-			this.vbChannel5.Location = new System.Drawing.Point( 9, 262 );
-			this.vbChannel5.MaxValue = 1024;
-			this.vbChannel5.MinValue = -1024;
-			this.vbChannel5.Name = "vbChannel5";
-			this.vbChannel5.RightLabel = "0";
-			this.vbChannel5.Size = new System.Drawing.Size( 83, 20 );
-			this.vbChannel5.TabIndex = 29;
-			this.vbChannel5.Value = 0;
-			// 
-			// vbRS_XValue
-			// 
-			this.vbRS_XValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbRS_XValue.FromLeft = true;
-			this.vbRS_XValue.LeftLabel = "Aileron";
-			this.vbRS_XValue.Location = new System.Drawing.Point( 425, 234 );
-			this.vbRS_XValue.MaxValue = 1024;
-			this.vbRS_XValue.MinValue = -1024;
-			this.vbRS_XValue.Name = "vbRS_XValue";
-			this.vbRS_XValue.RightLabel = "0";
-			this.vbRS_XValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbRS_XValue.TabIndex = 28;
-			this.vbRS_XValue.Value = 0;
-			// 
-			// vbRS_YValue
-			// 
-			this.vbRS_YValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbRS_YValue.FromLeft = true;
-			this.vbRS_YValue.LeftLabel = "Elevator";
-			this.vbRS_YValue.Location = new System.Drawing.Point( 425, 206 );
-			this.vbRS_YValue.MaxValue = 1024;
-			this.vbRS_YValue.MinValue = -1024;
-			this.vbRS_YValue.Name = "vbRS_YValue";
-			this.vbRS_YValue.RightLabel = "0";
-			this.vbRS_YValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbRS_YValue.TabIndex = 27;
-			this.vbRS_YValue.Value = 0;
-			// 
-			// vbLS_XValue
-			// 
-			this.vbLS_XValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbLS_XValue.FromLeft = true;
-			this.vbLS_XValue.LeftLabel = "Rudder";
-			this.vbLS_XValue.Location = new System.Drawing.Point( 9, 234 );
-			this.vbLS_XValue.MaxValue = 1024;
-			this.vbLS_XValue.MinValue = -1024;
-			this.vbLS_XValue.Name = "vbLS_XValue";
-			this.vbLS_XValue.RightLabel = "0";
-			this.vbLS_XValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbLS_XValue.TabIndex = 26;
-			this.vbLS_XValue.Value = 0;
-			// 
-			// vbLS_YValue
-			// 
-			this.vbLS_YValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbLS_YValue.FromLeft = true;
-			this.vbLS_YValue.LeftLabel = "Throttle";
-			this.vbLS_YValue.Location = new System.Drawing.Point( 9, 206 );
-			this.vbLS_YValue.MaxValue = 1024;
-			this.vbLS_YValue.MinValue = -1024;
-			this.vbLS_YValue.Name = "vbLS_YValue";
-			this.vbLS_YValue.RightLabel = "0";
-			this.vbLS_YValue.Size = new System.Drawing.Size( 83, 20 );
-			this.vbLS_YValue.TabIndex = 25;
-			this.vbLS_YValue.Value = 0;
-			// 
-			// rsRight
-			// 
-			this.rsRight.Location = new System.Drawing.Point( 265, 182 );
-			this.rsRight.Name = "rsRight";
-			this.rsRight.Size = new System.Drawing.Size( 150, 150 );
-			this.rsRight.TabIndex = 8;
-			this.rsRight.Text = "radioStick2";
-			// 
-			// rsLeft
-			// 
-			this.rsLeft.Location = new System.Drawing.Point( 102, 182 );
-			this.rsLeft.Name = "rsLeft";
-			this.rsLeft.Size = new System.Drawing.Size( 150, 150 );
-			this.rsLeft.TabIndex = 7;
-			this.rsLeft.Text = "radioStick1";
-			// 
-			// aicAttitude
-			// 
-			this.aicAttitude.Location = new System.Drawing.Point( 183, 6 );
-			this.aicAttitude.Name = "aicAttitude";
-			this.aicAttitude.Size = new System.Drawing.Size( 150, 150 );
-			this.aicAttitude.TabIndex = 4;
-			this.aicAttitude.Text = "attitudeIndicatorInstrumentControl1";
-			// 
-			// ocOrientation
-			// 
-			this.ocOrientation.CubeDepth = 1.2F;
-			this.ocOrientation.CubeHeight = 0.8F;
-			this.ocOrientation.CubeWidth = 1.2F;
-			this.ocOrientation.Location = new System.Drawing.Point( 507, 6 );
-			this.ocOrientation.Name = "ocOrientation";
-			this.ocOrientation.Size = new System.Drawing.Size( 206, 150 );
-			this.ocOrientation.TabIndex = 3;
-			// 
-			// aicHeading
-			// 
-			this.aicHeading.Location = new System.Drawing.Point( 351, 6 );
-			this.aicHeading.Name = "aicHeading";
-			this.aicHeading.Size = new System.Drawing.Size( 150, 150 );
-			this.aicHeading.TabIndex = 6;
-			this.aicHeading.Text = "headingIndicator1";
-			// 
-			// aicAltimeter
-			// 
-			this.aicAltimeter.Location = new System.Drawing.Point( 15, 6 );
-			this.aicAltimeter.Name = "aicAltimeter";
-			this.aicAltimeter.Size = new System.Drawing.Size( 150, 150 );
-			this.aicAltimeter.TabIndex = 5;
-			this.aicAltimeter.Text = "altimeter1";
-			// 
-			// plotSensors
-			// 
-			this.plotSensors.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-						| System.Windows.Forms.AnchorStyles.Left)
-						| System.Windows.Forms.AnchorStyles.Right)));
-			this.plotSensors.BackColor = System.Drawing.Color.Transparent;
-			this.plotSensors.BackgroundColorBot = System.Drawing.Color.White;
-			this.plotSensors.BackgroundColorTop = System.Drawing.Color.White;
-			this.plotSensors.DashedGridColor = System.Drawing.Color.DarkGray;
-			this.plotSensors.DoubleBuffering = true;
-			this.plotSensors.Location = new System.Drawing.Point( 87, 6 );
-			this.plotSensors.Name = "plotSensors";
-			this.plotSensors.PlaySpeed = 0.5F;
-			this.plotSensors.Size = new System.Drawing.Size( 626, 344 );
-			this.plotSensors.SolidGridColor = System.Drawing.Color.DarkGray;
-			this.plotSensors.TabIndex = 14;
-			// 
-			// vbR_Channel8
-			// 
-			this.vbR_Channel8.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_Channel8.FromLeft = true;
-			this.vbR_Channel8.LeftLabel = "Aux3";
-			this.vbR_Channel8.Location = new System.Drawing.Point( 527, 186 );
-			this.vbR_Channel8.MaxValue = 1024;
-			this.vbR_Channel8.MinValue = -1024;
-			this.vbR_Channel8.Name = "vbR_Channel8";
-			this.vbR_Channel8.RightLabel = "0";
-			this.vbR_Channel8.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel8.TabIndex = 42;
-			this.vbR_Channel8.Value = 0;
-			// 
-			// vbR_Channel7
-			// 
-			this.vbR_Channel7.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_Channel7.FromLeft = true;
-			this.vbR_Channel7.LeftLabel = "Aux2";
-			this.vbR_Channel7.Location = new System.Drawing.Point( 527, 143 );
-			this.vbR_Channel7.MaxValue = 1024;
-			this.vbR_Channel7.MinValue = -1024;
-			this.vbR_Channel7.Name = "vbR_Channel7";
-			this.vbR_Channel7.RightLabel = "0";
-			this.vbR_Channel7.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel7.TabIndex = 41;
-			this.vbR_Channel7.Value = 0;
-			// 
-			// vbR_Channel6
-			// 
-			this.vbR_Channel6.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_Channel6.FromLeft = true;
-			this.vbR_Channel6.LeftLabel = "Aux1";
-			this.vbR_Channel6.Location = new System.Drawing.Point( 111, 186 );
-			this.vbR_Channel6.MaxValue = 1024;
-			this.vbR_Channel6.MinValue = -1024;
-			this.vbR_Channel6.Name = "vbR_Channel6";
-			this.vbR_Channel6.RightLabel = "0";
-			this.vbR_Channel6.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel6.TabIndex = 40;
-			this.vbR_Channel6.Value = 0;
-			// 
-			// vbR_Channel5
-			// 
-			this.vbR_Channel5.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_Channel5.FromLeft = true;
-			this.vbR_Channel5.LeftLabel = "Gear";
-			this.vbR_Channel5.Location = new System.Drawing.Point( 111, 143 );
-			this.vbR_Channel5.MaxValue = 1024;
-			this.vbR_Channel5.MinValue = -1024;
-			this.vbR_Channel5.Name = "vbR_Channel5";
-			this.vbR_Channel5.RightLabel = "0";
-			this.vbR_Channel5.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_Channel5.TabIndex = 39;
-			this.vbR_Channel5.Value = 0;
-			// 
-			// vbR_RS_XValue
-			// 
-			this.vbR_RS_XValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_RS_XValue.FromLeft = true;
-			this.vbR_RS_XValue.LeftLabel = "Aileron";
-			this.vbR_RS_XValue.Location = new System.Drawing.Point( 527, 100 );
-			this.vbR_RS_XValue.MaxValue = 1024;
-			this.vbR_RS_XValue.MinValue = -1024;
-			this.vbR_RS_XValue.Name = "vbR_RS_XValue";
-			this.vbR_RS_XValue.RightLabel = "0";
-			this.vbR_RS_XValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_RS_XValue.TabIndex = 38;
-			this.vbR_RS_XValue.Value = 0;
-			// 
-			// vbR_RS_YValue
-			// 
-			this.vbR_RS_YValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_RS_YValue.FromLeft = true;
-			this.vbR_RS_YValue.LeftLabel = "Elevator";
-			this.vbR_RS_YValue.Location = new System.Drawing.Point( 527, 57 );
-			this.vbR_RS_YValue.MaxValue = 1024;
-			this.vbR_RS_YValue.MinValue = -1024;
-			this.vbR_RS_YValue.Name = "vbR_RS_YValue";
-			this.vbR_RS_YValue.RightLabel = "0";
-			this.vbR_RS_YValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_RS_YValue.TabIndex = 37;
-			this.vbR_RS_YValue.Value = 0;
-			// 
-			// vbR_LS_XValue
-			// 
-			this.vbR_LS_XValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_LS_XValue.FromLeft = true;
-			this.vbR_LS_XValue.LeftLabel = "Rudder";
-			this.vbR_LS_XValue.Location = new System.Drawing.Point( 111, 100 );
-			this.vbR_LS_XValue.MaxValue = 1024;
-			this.vbR_LS_XValue.MinValue = -1024;
-			this.vbR_LS_XValue.Name = "vbR_LS_XValue";
-			this.vbR_LS_XValue.RightLabel = "0";
-			this.vbR_LS_XValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_LS_XValue.TabIndex = 36;
-			this.vbR_LS_XValue.Value = 0;
-			// 
-			// vbR_LS_YValue
-			// 
-			this.vbR_LS_YValue.BarColor = System.Drawing.Color.LightGreen;
-			this.vbR_LS_YValue.FromLeft = true;
-			this.vbR_LS_YValue.LeftLabel = "Throttle";
-			this.vbR_LS_YValue.Location = new System.Drawing.Point( 111, 57 );
-			this.vbR_LS_YValue.MaxValue = 1024;
-			this.vbR_LS_YValue.MinValue = -1024;
-			this.vbR_LS_YValue.Name = "vbR_LS_YValue";
-			this.vbR_LS_YValue.RightLabel = "0";
-			this.vbR_LS_YValue.Size = new System.Drawing.Size( 83, 21 );
-			this.vbR_LS_YValue.TabIndex = 35;
-			this.vbR_LS_YValue.Value = 0;
-			// 
-			// rsR_Right
-			// 
-			this.rsR_Right.Location = new System.Drawing.Point( 367, 57 );
-			this.rsR_Right.Name = "rsR_Right";
-			this.rsR_Right.Size = new System.Drawing.Size( 150, 150 );
-			this.rsR_Right.TabIndex = 34;
-			this.rsR_Right.Text = "radioStick2";
-			// 
-			// rsR_Left
-			// 
-			this.rsR_Left.Location = new System.Drawing.Point( 204, 57 );
-			this.rsR_Left.Name = "rsR_Left";
-			this.rsR_Left.Size = new System.Drawing.Size( 150, 150 );
-			this.rsR_Left.TabIndex = 33;
-			this.rsR_Left.Text = "radioStick1";
-			// 
-			// vbVoltage2
-			// 
-			this.vbVoltage2.BarColor = System.Drawing.Color.LightGreen;
-			this.vbVoltage2.FromLeft = true;
-			this.vbVoltage2.LeftLabel = "Battery Voltage";
-			this.vbVoltage2.Location = new System.Drawing.Point( 243, 7 );
-			this.vbVoltage2.MaxValue = 1260;
-			this.vbVoltage2.MinValue = 900;
-			this.vbVoltage2.Name = "vbVoltage2";
-			this.vbVoltage2.RightLabel = "0";
-			this.vbVoltage2.Size = new System.Drawing.Size( 150, 20 );
-			this.vbVoltage2.TabIndex = 34;
-			this.vbVoltage2.Value = 1200;
-			// 
-			// gCalibTemp
-			// 
-			this.gCalibTemp.AverageCount = 128;
-			this.gCalibTemp.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibTemp.Location = new System.Drawing.Point( 251, 254 );
-			this.gCalibTemp.Name = "gCalibTemp";
-			this.gCalibTemp.Range = 8192F;
-			this.gCalibTemp.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibTemp.TabIndex = 38;
-			this.gCalibTemp.Value = 0F;
-			// 
-			// gCalibZ
-			// 
-			this.gCalibZ.AverageCount = 128;
-			this.gCalibZ.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibZ.Location = new System.Drawing.Point( 560, 254 );
-			this.gCalibZ.Name = "gCalibZ";
-			this.gCalibZ.Range = 8192F;
-			this.gCalibZ.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibZ.TabIndex = 37;
-			this.gCalibZ.Value = 0F;
-			// 
-			// gCalibY
-			// 
-			this.gCalibY.AverageCount = 128;
-			this.gCalibY.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibY.Location = new System.Drawing.Point( 466, 254 );
-			this.gCalibY.Name = "gCalibY";
-			this.gCalibY.Range = 8192F;
-			this.gCalibY.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibY.TabIndex = 36;
-			this.gCalibY.Value = 0F;
-			// 
-			// gCalibX
-			// 
-			this.gCalibX.AverageCount = 128;
-			this.gCalibX.BackColor = System.Drawing.SystemColors.Control;
-			this.gCalibX.Location = new System.Drawing.Point( 372, 254 );
-			this.gCalibX.Name = "gCalibX";
-			this.gCalibX.Range = 8192F;
-			this.gCalibX.Size = new System.Drawing.Size( 84, 84 );
-			this.gCalibX.TabIndex = 35;
-			this.gCalibX.Value = 0F;
-			// 
-			// lfGraph
-			// 
-			this.lfGraph.Location = new System.Drawing.Point( 224, 19 );
-			this.lfGraph.Name = "lfGraph";
-			this.lfGraph.Size = new System.Drawing.Size( 447, 232 );
-			this.lfGraph.TabIndex = 29;
-			// 
-			// ocAccelOrient
-			// 
-			this.ocAccelOrient.CubeDepth = 1.25F;
-			this.ocAccelOrient.CubeHeight = 0.6F;
-			this.ocAccelOrient.CubeWidth = 1.25F;
-			this.ocAccelOrient.Location = new System.Drawing.Point( 358, 166 );
-			this.ocAccelOrient.Name = "ocAccelOrient";
-			this.ocAccelOrient.Size = new System.Drawing.Size( 313, 165 );
-			this.ocAccelOrient.TabIndex = 37;
-			// 
-			// gAccelXCal
-			// 
-			this.gAccelXCal.AverageCount = 200;
-			this.gAccelXCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelXCal.Location = new System.Drawing.Point( 6, 19 );
-			this.gAccelXCal.Name = "gAccelXCal";
-			this.gAccelXCal.Range = 32768F;
-			this.gAccelXCal.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelXCal.TabIndex = 12;
-			this.gAccelXCal.Value = 0F;
-			// 
-			// gAccelYCal
-			// 
-			this.gAccelYCal.AverageCount = 200;
-			this.gAccelYCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelYCal.Location = new System.Drawing.Point( 103, 19 );
-			this.gAccelYCal.Name = "gAccelYCal";
-			this.gAccelYCal.Range = 32768F;
-			this.gAccelYCal.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelYCal.TabIndex = 13;
-			this.gAccelYCal.Value = 0F;
-			// 
-			// gAccelZCal
-			// 
-			this.gAccelZCal.AverageCount = 200;
-			this.gAccelZCal.Font = new System.Drawing.Font( "Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)) );
-			this.gAccelZCal.Location = new System.Drawing.Point( 200, 19 );
-			this.gAccelZCal.Name = "gAccelZCal";
-			this.gAccelZCal.Range = 32768F;
-			this.gAccelZCal.Size = new System.Drawing.Size( 91, 89 );
-			this.gAccelZCal.TabIndex = 14;
-			this.gAccelZCal.Value = 0F;
-			// 
 			// valueBar1
 			// 
 			this.valueBar1.BarColor = System.Drawing.Color.LightGreen;
@@ -2832,6 +3161,7 @@
 			this.Controls.Add( this.tcTabs );
 			this.Controls.Add( this.stMainStatus );
 			this.Controls.Add( this.msMainMenu );
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject( "$this.Icon" )));
 			this.MainMenuStrip = this.msMainMenu;
 			this.MinimumSize = new System.Drawing.Size( 745, 464 );
 			this.Name = "MainForm";
@@ -2845,18 +3175,23 @@
 			this.tpSensors.PerformLayout();
 			this.tpSysTest.ResumeLayout( false );
 			this.tpSysTest.PerformLayout();
-			this.tpControlSetup.ResumeLayout( false );
-			this.tpControlSetup.PerformLayout();
+			this.tpRadioSetup.ResumeLayout( false );
+			this.tpRadioSetup.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeedManual)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbAccelCorrectionFilter)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbThrustCorrection)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbYawSpeedAuto)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchManual)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.tbRollPitchAuto)).EndInit();
+			this.tpControllerSetup.ResumeLayout( false );
+			this.tpControllerSetup.PerformLayout();
+			this.groupBox3.ResumeLayout( false );
+			this.groupBox3.PerformLayout();
 			this.tpSystemSetup.ResumeLayout( false );
-			this.tpSystemSetup.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)(this.udVoltageOffset)).EndInit();
+			this.groupBox2.ResumeLayout( false );
+			this.groupBox2.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.udLowVoltageAlarmThreshold)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.udVoltageOffset)).EndInit();
 			this.groupBox1.ResumeLayout( false );
 			this.groupBox1.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.udTestThrottle)).EndInit();
@@ -2937,7 +3272,7 @@
 		private System.Windows.Forms.Button btnMotor3;
 		private System.Windows.Forms.Button btnMotor2;
 		private System.Windows.Forms.Button btnMotor1;
-		private System.Windows.Forms.TabPage tpControlSetup;
+		private System.Windows.Forms.TabPage tpRadioSetup;
 		private System.Windows.Forms.TabPage tpSystemSetup;
 		private Elev8.Controls.ValueBar vbR_Channel8;
 		private Elev8.Controls.ValueBar vbR_Channel7;
@@ -3096,6 +3431,29 @@
 		private System.Windows.Forms.TrackBar tbYawSpeedManual;
 		private System.Windows.Forms.Button btnFactoryDefaultPrefs;
 		private System.Windows.Forms.CheckBox cbAltiBaro;
+		private System.Windows.Forms.TabPage tpControllerSetup;
+		private System.Windows.Forms.Label label21;
+		private System.Windows.Forms.HScrollBar hsYawGain;
+		private System.Windows.Forms.Label label19;
+		private System.Windows.Forms.Label label11;
+		private System.Windows.Forms.HScrollBar hsRollGain;
+		private System.Windows.Forms.CheckBox cbPitchRollLocked;
+		private System.Windows.Forms.HScrollBar hsPitchGain;
+		private System.Windows.Forms.Label lblYawGain;
+		private System.Windows.Forms.Label lblRollGain;
+		private System.Windows.Forms.Label lblPitchGain;
+		private System.Windows.Forms.Label lblAscentGain;
+		private System.Windows.Forms.Label label25;
+		private System.Windows.Forms.HScrollBar hsAscentGain;
+		private System.Windows.Forms.GroupBox groupBox2;
+		private System.Windows.Forms.GroupBox groupBox3;
+		private System.Windows.Forms.GroupBox groupBox4;
+		private System.Windows.Forms.CheckBox cbEnableAdvanced;
+		private System.Windows.Forms.Label lblAltiGain;
+		private System.Windows.Forms.Label label27;
+		private System.Windows.Forms.HScrollBar hsAltiGain;
+		private System.Windows.Forms.Button btnUploadFlightChanges;
+		private System.Windows.Forms.Label label23;
 	}
 }
 

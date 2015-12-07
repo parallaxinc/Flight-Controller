@@ -67,5 +67,25 @@ const int LED_Cyan =   LED_Blue | LED_Green;
 const int LED_DimCyan = (LED_Blue | LED_Green) & LED_Half;
 const int LED_DimWhite = LED_White & LED_Half;
 
+#define COMMAND(a,b,c,d) (int)((a<<24) | (b<<16) | (c<<8) | (d<<0) )
+
+#define Comm_Elv8       COMMAND('E','l','v','8')
+#define Comm_Beat       COMMAND('B','E','A','T')
+#define Comm_QueryPrefs COMMAND('Q','P','R','F')
+#define Comm_SetPrefs   COMMAND('U','P','r','f')
+#define Comm_Wipe       COMMAND('W','I','P','E')
+
+#define Comm_ZeroGyro   COMMAND('Z','r','G','r')
+#define Comm_ZeroAccel  COMMAND('Z','e','A','c')
+#define Comm_ResetGyro  COMMAND('R','G','y','r')
+#define Comm_ResetAccel COMMAND('R','A','c','l')
+#define Comm_ResetRadio COMMAND('R','r','a','d')
+
+#define Comm_Motor1     COMMAND('M','1','t','1')    // Motor test values are duplicated - very unlikely to get set this way by noise
+#define Comm_Motor2     COMMAND('M','2','t','2')
+#define Comm_Motor3     COMMAND('M','3','t','3')
+#define Comm_Motor4     COMMAND('M','4','t','4')
+#define Comm_Motor5     COMMAND('M','5','t','5')
+#define Comm_Motor6     COMMAND('M','6','t','6')
 
 #endif

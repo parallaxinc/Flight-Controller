@@ -124,9 +124,9 @@ namespace Elev8
 
 		private void ProcessByte( byte b )
 		{
-			if(sigByteIndex < 2 )
+			if(sigByteIndex < 2)
 			{
-				if( sigByteIndex == 0 )
+				if(sigByteIndex == 0)
 				{
 					if(b == 0x55)
 					{
@@ -153,40 +153,51 @@ namespace Elev8
 			}
 
 
-			switch( packetByteIndex )
+			switch(packetByteIndex)
 			{
 				case 0:
 					currentPacket = new Packet();
 					currentPacket.mode = b;
-					if(b > 0x20) {	// No such mode - bad data
+					if(b > 0x20)
+					{	// No such mode - bad data
 						sigByteIndex = 0;
 						packetByteIndex = 0;
 						return;
 					}
 					packetByteIndex++;
-
-					currentChecksum = Checksum( 0, 0x55 );
-					currentChecksum = Checksum( currentChecksum, 0xAA );
-					currentChecksum = Checksum( currentChecksum, b );
 					return;
 
 				case 1:
-					if(b > 0x04) {	// unreasonable packet size (> 1kb)
+					if(b != 0)
+					{	// No such mode - bad data
 						sigByteIndex = 0;
 						packetByteIndex = 0;
 						return;
 					}
-					currentPacket.len = (short)(b << 8);
-					currentChecksum = Checksum( currentChecksum, b );
 					packetByteIndex++;
+					currentChecksum = Checksum( 0, (UInt16)0xaa55 );
+					currentChecksum = Checksum( currentChecksum, (UInt16)currentPacket.mode );
 					return;
 
 				case 2:
-					currentPacket.len |= (short)b;
-					currentChecksum = Checksum( currentChecksum, b );
+					currentPacket.len = (short)b;
+					packetByteIndex++;
+					return;
 
-					currentPacket.len -= 5;
-					if(currentPacket.len < 1) {	// Can't have a zero length packet - bad data
+				case 3:
+					currentPacket.len |= (short)(b << 8);
+					currentChecksum = Checksum( currentChecksum, (UInt16)currentPacket.len );
+
+					if(currentPacket.len > 1024)
+					{	// unreasonable packet size (> 1kb)
+						sigByteIndex = 0;
+						packetByteIndex = 0;
+						return;
+					}
+
+					currentPacket.len -= 6;		// Subtract off signature and header size
+					if(currentPacket.len < 1)
+					{	// Can't have a zero length packet - bad data
 						sigByteIndex = 0;
 						packetByteIndex = 0;
 						return;
@@ -196,12 +207,12 @@ namespace Elev8
 					return;
 
 				default:
-					currentPacket.data[packetByteIndex-3] = b;
+					currentPacket.data[packetByteIndex - 4] = b;
 					break;
 			}
 
 			packetByteIndex++;
-			if(packetByteIndex == (currentPacket.data.Length + 3))	// length + header bytes
+			if(packetByteIndex == (currentPacket.data.Length + 4))	// length + header bytes
 			{
 				sigByteIndex = 0;
 				packetByteIndex = 0;
@@ -213,13 +224,13 @@ namespace Elev8
 				UInt16 check = Checksum( currentChecksum, currentPacket.data, len );
 				UInt16 sourceCheck = (UInt16)(currentPacket.data[len] | (currentPacket.data[len + 1] << 8));
 
-				if( check == sourceCheck )
+				if(check == sourceCheck)
 				{
 					packetsArray[head] = currentPacket;
 
 					lock(packetsArray)
 					{
-						head = (head+1) % packetsArray.Length;
+						head = (head + 1) % packetsArray.Length;
 
 						if(tail == head) {
 							tail = (tail + 1) % packetsArray.Length;		// Throw away oldest data if we fill the buffer
@@ -230,20 +241,22 @@ namespace Elev8
 		}
 
 
-		UInt16 Checksum( UInt16 crc, byte [] buf, int Length)
+		UInt16 Checksum( UInt16 checksum, byte[] buf, int Length )
 		{
-			for(int i = 0; i < Length; i++)
+			for(int i = 0; i < Length; i += 2)
 			{
-				crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ buf[i]);
+				UInt16 val = (UInt16)((buf[i] << 0) | (buf[i + 1] << 8));
+				checksum = (UInt16)(((checksum << 5) | (checksum >> (16 - 5))) ^ val);
 			}
-			return crc;
+			return checksum;
 		}
 
-		UInt16 Checksum( UInt16 crc, byte val )
+		UInt16 Checksum( UInt16 checksum, UInt16 val )
 		{
-			crc = (UInt16)(((crc << 5) | (crc >> (16 - 5))) ^ val);
-			return crc;
+			checksum = (UInt16)(((checksum << 5) | (checksum >> (16 - 5))) ^ val);
+			return checksum;
 		}
+
 
 		public Packet GetPacket()
 		{
@@ -299,32 +312,40 @@ namespace Elev8
 					serial = new SerialPort( Ports[i], 115200, Parity.None, 8, StopBits.One );
 					serial.Open();
 
-					txBuffer[0] = (byte)0;		// Set it to MODE_None to stop it writing (reset in case it was disconnected)
-					txBuffer[1] = (byte)0xff;	// Send 0xff to the Prop to see if it replies
+					txBuffer[0] = (byte)'E';
+					txBuffer[1] = (byte)'l';
+					txBuffer[2] = (byte)'v';
+					txBuffer[3] = (byte)'8';
 
 					for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
 					{
-						serial.Write( txBuffer, 0, 2 );
+						serial.Write( txBuffer, 0, 4 );
 						System.Threading.Thread.Sleep( 50 );
 
 						int bytesAvail = serial.BytesToRead;
 						if(bytesAvail > 0)
 						{
-							int bytesRead = serial.Read( rxBuffer, 0, 1 );			// If it comes back with 0xE8 it's the one we want
-							if(bytesRead == 1 && rxBuffer[0] == 0xE8)
+							int TestVal = 0;
+
+							while(bytesAvail > 0)
 							{
-								FoundElev8 = true;
-								commStat = CommStatus.Connected;
-								break;
+								int bytesRead = serial.Read( rxBuffer, 0, 1 );
+								if(bytesRead == 1)
+								{
+									TestVal = (TestVal << 8) | rxBuffer[0];
+									if(TestVal == (int)(('E' << 0) | ('l' << 8) | ('v' << 16) | ('8' << 24)))
+									{
+										FoundElev8 = true;
+										commStat = CommStatus.Connected;
+										break;
+									}
+								}
 							}
 						}
 					}
 
 					if(FoundElev8) {
 						connected = true;
-						txBuffer[0] = 2;	// MODE_Sensors
-						serial.Write( txBuffer, 0, 1 );
-
 						if(ConnectionStarted != null) {
 							ConnectionStarted();
 						}

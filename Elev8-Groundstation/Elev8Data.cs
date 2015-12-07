@@ -5,7 +5,6 @@ using System.Text;
 
 namespace Elev8
 {
-
 	public class RadioData
 	{
 		public short Thro, Aile, Elev, Rudd;

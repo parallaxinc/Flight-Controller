@@ -41,16 +41,13 @@ enum IMU_VarLabels {
     const_1,
     const_neg1,
     const_neg12,
-    const_11,
-    const_16,
-
 
 	// FLOAT data ---------------------
 
 	// Internal orientation storage
     qx, qy, qz, qw,                              // Body orientation quaternion
       
-    m00, m01, m02,
+    /*m00,*/ m01, /*m02,*/
     m10, m11, m12,                               // Body orientation as a 3x3 matrix
     m20, m21, m22,
 
@@ -125,13 +122,10 @@ enum IMU_VarLabels {
 
     const_epsilon,
     
-    const_half,
     const_neghalf,
 
     const_ErrScale,
     const_AccScale,
-    const_outAngleScale,
-    const_outNegAngleScale,
     const_ThrustShift,
     const_G_mm_PerSec,
     const_UpdateScale,
@@ -171,7 +165,7 @@ static union {
 
 void QuatIMU_Start(void)
 {
-  memset( &IMU_VARS, 0, sizeof(IMU_VARS) );
+  memset( &IMU_VARS[0], 0, sizeof(IMU_VARS) );
 
   IMU_VARS[qx] = 0.0f;
   IMU_VARS[qy] = 0.0f;
@@ -193,28 +187,23 @@ void QuatIMU_Start(void)
   INT_VARS[const_1]                 =    1;
   INT_VARS[const_neg1]              =   -1;
   INT_VARS[const_neg12]             =   -12;              //Used to subtract from acc exponent, equivalent to /= 4096.0
-  INT_VARS[const_11]                =    11;              //Used to add to exponents, equivalent to *= 4096.0
-  INT_VARS[const_16]                =    16;              //Used to add to exponents, equivalent to *= 65536.0
 
   IMU_VARS[const_F1]                =    1.0f;
   IMU_VARS[const_F2]                =    2.0f;
   IMU_VARS[const_NegF1]             =    -1.0f;
   
   IMU_VARS[const_epsilon]           =    0.00000001f;     //Added to vector length value before inverting (1/X) to insure no divide-by-zero problems
-  IMU_VARS[const_half]              =    0.5f;
   IMU_VARS[const_neghalf]           =   -0.5f;
 
 
   IMU_VARS[const_ErrScale]          =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
-  IMU_VARS[const_outAngleScale]     =    65536.0f / PI;               
-  IMU_VARS[const_outNegAngleScale]  =    -65536.0f / PI;               
   INT_VARS[const_ThrustShift]       =    8;
   IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
 
-  IMU_VARS[const_velAccScale]       =    0.9990f;     // was 0.9995     - Used to generate the vertical velocity estimate
-  IMU_VARS[const_velAltiScale]      =    0.0010f;     // was 0.0005
+  IMU_VARS[const_velAccScale]       =    0.9995f;     // was 0.9995     - Used to generate the vertical velocity estimate
+  IMU_VARS[const_velAltiScale]      =    0.0005f;     // was 0.0005
 
   IMU_VARS[const_velAccTrust]       =    0.9990f;      // was 0.9990    - used to generate the absolute altitude estimate
   IMU_VARS[const_velAltiTrust]      =    0.0010f;      // was 0.0010
@@ -252,13 +241,13 @@ int QuatIMU_GetThrustFactor(void) {
   return INT_VARS[ ThrustFactor ];
 }
 
-int * QuatIMU_GetSensors(void) {
-  return &INT_VARS[gx];
-}
+//int * QuatIMU_GetSensors(void) {
+//  return &INT_VARS[gx];
+//}
 
-float * QuatIMU_GetMatrix(void) {
-  return &IMU_VARS[m00];
-}  
+//float * QuatIMU_GetMatrix(void) {
+//  return &IMU_VARS[m00];
+//}  
 
 float * QuatIMU_GetQuaternion(void) {
   return &IMU_VARS[qx];

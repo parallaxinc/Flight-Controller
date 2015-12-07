@@ -16,6 +16,16 @@ typedef struct {
   float ManualRollPitchRate;
   float ManualYawRate;
 
+  char  PitchGain;
+  char  RollGain;
+  char  YawGain;
+  char  AscentGain;
+
+  char  AltiGain;
+  char  PitchRollLocked;
+  char  UseAdvancedPID;
+  char  unused;
+
   char  UseSBUS;
   char  UsePing;
   char  UseBattMon;

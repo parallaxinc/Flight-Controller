@@ -22,13 +22,23 @@ namespace Elev8
 		public float ManualRollPitchRate;
 		public float ManualYawRate;
 
-		public char UseSBUS;
-		public char UsePing;
-		public char UseBattMon;
-		public char DisableMotors;
+		public byte PitchGain;
+		public byte RollGain;
+		public byte YawGain;
+		public byte AscentGain;
 
-		public char LowVoltageAlarm;
-		public char LowVoltageAscentLimit;
+		public byte AltiGain;
+		public byte PitchRollLocked;
+		public byte UseAdvancedPID;
+		public byte unused;
+
+		public byte UseSBUS;
+		public byte UsePing;
+		public byte UseBattMon;
+		public byte DisableMotors;
+
+		public byte LowVoltageAlarm;
+		public byte LowVoltageAscentLimit;
 		public short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
 
 		public short MinThrottle;      // Minimum motor output value
@@ -45,14 +55,14 @@ namespace Elev8
 		public short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
 
 
-		public char ThroChannel;      // Radio inputs to use for each value
-		public char AileChannel;
-		public char ElevChannel;
-		public char RuddChannel;
-		public char GearChannel;
-		public char Aux1Channel;
-		public char Aux2Channel;
-		public char Aux3Channel;
+		public byte ThroChannel;      // Radio inputs to use for each value
+		public byte AileChannel;
+		public byte ElevChannel;
+		public byte RuddChannel;
+		public byte GearChannel;
+		public byte Aux1Channel;
+		public byte Aux2Channel;
+		public byte Aux3Channel;
 
 		public short ThroScale;
 		public short AileScale;
@@ -122,7 +132,7 @@ namespace Elev8
 			}
 		}
 
-		public void SetChannelIndex( int i, char Index )
+		public void SetChannelIndex( int i, byte Index )
 		{
 			switch(i)
 			{
