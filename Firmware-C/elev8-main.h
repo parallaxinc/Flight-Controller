@@ -2,6 +2,7 @@
 #define __ELEV8_MAIN_H__
 
 void Initialize(void);
+void InitReceiver(void);
 void InitSerial(void);
 void FindGyroZero(void);
 void UpdateFlightLoop(void);

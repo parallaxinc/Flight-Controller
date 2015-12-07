@@ -17,6 +17,11 @@ void SBUS::Start( int InputPin )
   data.InputMask = 1 << InputPin;
   data.BaudDelay = Const_ClockFreq / 100000;                        // SBUS is 100,000 bps 
 
+  data.Channels[0] = 0;          // Throttle is zero'd
+  for( int i=1; i<18; i++ ) {
+    data.Channels[i] = 1024;     // All other channels are centered
+  }
+
   use_cog_driver(sbus_driver);
   Cog = load_cog_driver(sbus_driver, &data) + 1;
 }

@@ -341,13 +341,7 @@ void Initialize(void)
   QuatIMU_SetErrScaleMode(1);   // Start with the IMU in fast-converge mode (takes ~3 instead of ~26 seconds to converge)
 
   InitializePrefs();
-
-  if( Prefs.UseSBUS ) {
-    SBUS::Start( PIN_RC_0 ); // Doesn't matter - it'll be compensated for by the channel scaling/offset code
-  }
-  else {
-    RC::Start();
-  }
+  InitReceiver();
 
   // Wait 2 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
   // Also used to reduce convergence rate for the IMU (starts up with a high convergence rate)
@@ -425,6 +419,21 @@ void Initialize(void)
   
   FindGyroZero();
 }
+
+
+void InitReceiver(void)
+{
+  RC::Stop();
+  SBUS::Stop();
+
+  if( Prefs.UseSBUS ) {
+    SBUS::Start( PIN_RC_0 ); // Doesn't matter - it'll be compensated for by the channel scaling/offset code
+  }
+  else {
+    RC::Start();
+  }
+}
+
 
 static char RXBuf1[32], TXBuf1[64];
 static char RXBuf2[32], TXBuf2[64];
@@ -977,6 +986,7 @@ void CheckDebugInput(void)
           BeepOff( 'A' );   // turn off the alarm beeper if it was on
           Beep2();
           ApplyPrefs();
+          InitReceiver();   // In case the user changes receiver types
           FindGyroZero();   // Prevents the IMU from wandering around when we change gyro or accel offsets
         }
         else {
