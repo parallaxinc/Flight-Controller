@@ -37,6 +37,7 @@ serial_4x.h
 serial_4x_driver.spin
 commlink.cpp
 commlink.h
+rc_driver_ppm.spin
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

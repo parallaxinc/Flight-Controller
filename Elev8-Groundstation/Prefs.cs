@@ -32,7 +32,7 @@ namespace Elev8
 		public byte UseAdvancedPID;
 		public byte unused;
 
-		public byte UseSBUS;
+		public byte ReceiverType;		//0 = PWM, 1 = SBUS, 2 = PPM
 		public byte UsePing;
 		public byte UseBattMon;
 		public byte DisableMotors;

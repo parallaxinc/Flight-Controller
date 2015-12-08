@@ -62,13 +62,13 @@ namespace Elev8.Controls
 		public string LeftLabel
 		{
 			get { return leftLabel; }
-			set { leftLabel = value; }
+			set { leftLabel = value; Invalidate(); }
 		}
 
 		public string RightLabel
 		{
 			get { return rightLabel; }
-			set { rightLabel = value; }
+			set { rightLabel = value; Invalidate(); }
 		}
 
 		public Color BarColor

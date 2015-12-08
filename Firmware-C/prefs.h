@@ -26,7 +26,7 @@ typedef struct {
   char  UseAdvancedPID;
   char  unused;
 
-  char  UseSBUS;
+  char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
   char  UsePing;
   char  UseBattMon;
   char  DisableMotors;

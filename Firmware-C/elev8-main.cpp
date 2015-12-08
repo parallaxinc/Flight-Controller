@@ -1,4 +1,5 @@
 /*
+/*
   Elev8 Flight Controller
 */
 
@@ -194,7 +195,7 @@ int main()                                    // Main function
     QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~125000 cycles
     AccelZSmooth += (sens.AccelZ - AccelZSmooth) * Prefs.AccelCorrectionFilter / 256;
 
-    if( Prefs.UseSBUS )
+    if( Prefs.ReceiverType == 1 ) // SBUS?
     {
       // Unrolling these loops saves about 10000 cycles, but costs a little over 1/2kb of code space
       for( int i=0; i<8; i++ ) {
@@ -231,11 +232,11 @@ int main()                                    // Main function
       char NewFlightMode;
 
       if( Radio.Gear > 512 )
-        NewFlightMode = FlightMode_Assisted;
+        NewFlightMode = FlightMode_Assist;    // Forward is "Full Assist"
       else if( Radio.Gear < -512 )
-        NewFlightMode = FlightMode_Manual;
+        NewFlightMode = FlightMode_Manual;    // Back is "Manual"
       else
-        NewFlightMode = FlightMode_Automatic;
+        NewFlightMode = FlightMode_Stable;    // Centered is "Stable"
 
 
       if( NewFlightMode != FlightMode )
@@ -247,7 +248,7 @@ int main()                                    // Main function
           QuatIMU_ResetDesiredYaw();          // Sync the heading when switching from manual to auto-level
         }
 
-        if( NewFlightMode == FlightMode_Automatic ) {
+        if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
         }
 
@@ -325,7 +326,7 @@ void Initialize(void)
 
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
-  FlightMode = FlightMode_Assisted;
+  FlightMode = FlightMode_Stable;
   GyroRPFilter = 224;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
   GyroYawFilter = 224;
 
@@ -426,11 +427,20 @@ void InitReceiver(void)
   RC::Stop();
   SBUS::Stop();
 
-  if( Prefs.UseSBUS ) {
-    SBUS::Start( PIN_RC_0 ); // Doesn't matter - it'll be compensated for by the channel scaling/offset code
-  }
-  else {
-    RC::Start();
+  switch( Prefs.ReceiverType )
+  {
+    default:
+    case 0:
+      RC::Start(0);   // PWM mode
+      break;
+
+    case 2:
+      RC::Start(1);   // PPM mode
+      break;
+
+    case 1:
+      SBUS::Start( PIN_RC_0 );
+      break;
   }
 }
 
@@ -681,7 +691,7 @@ void UpdateFlightLoop(void)
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
     {
-      if( FlightMode == FlightMode_Automatic )
+      if( FlightMode == FlightMode_Assist )
       {
         //int T0 = max( 0, (Radio.Aux1 + 1024) >> 1);
         //int T1 = max( 0, (Radio.Aux2 + 1024));
@@ -785,8 +795,8 @@ void UpdateFlightLoop(void)
 
 
 static int LEDColorTable[] = {
-        /* LED_Assisted  */    LED_Cyan,
-        /* LED_Automatic */    LED_White,
+        /* LED_Assisted */     LED_White,
+        /* LED_Stable  */      LED_Cyan,
         /* LED_Manual    */    LED_Yellow,
         /* LED_CompCalib */    LED_Violet,
 };

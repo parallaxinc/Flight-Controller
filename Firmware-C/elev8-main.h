@@ -34,9 +34,9 @@ enum MODE {
 };
 
 enum FLIGHTMODE {
-  FlightMode_Assisted = 0,
-  FlightMode_Automatic = 1,
-  FlightMode_Manual = 2,
+  FlightMode_Assist = 0,          // Auto level, heading hold, altitude hold
+  FlightMode_Stable = 1,          // Auto level, heading hold
+  FlightMode_Manual = 2,          // Gyro stabilized, not auto level
   FlightMode_CalibrateCompass = 3,
 };
 

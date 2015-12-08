@@ -5,7 +5,7 @@
 class RC
 {
 public:
-  static void Start(void);
+  static void Start(char UsePPM);
   static void Stop(void);
   //static int  Get(int _pin);
   static int  GetRC(int _pin);

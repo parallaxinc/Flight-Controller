@@ -220,6 +220,19 @@ namespace Elev8
 			CheckCalibrateControls();
 		}
 
+		string GearValueToFlightMode( int Value )
+		{
+			if(Value > 512) {
+				return "Assisted";
+			}
+			else if(Value < -512) {
+				return "Manual";
+			}
+			else {
+				return "Stable";
+			}
+		}
+
 
 		void ProcessPackets()
 		{
@@ -451,6 +464,8 @@ namespace Elev8
 
 					vbChannel8.RightLabel = radio.Aux3.ToString();
 					vbChannel8.Value = radio.Aux3;
+
+					vbChannel5.LeftLabel = GearValueToFlightMode( radio.Gear );
 				}
 				else if(tcTabs.SelectedTab == tpRadioSetup)
 				{
@@ -496,6 +511,8 @@ namespace Elev8
 
 					vbR_Channel8.RightLabel = radio.Aux3.ToString();
 					vbR_Channel8.Value = radio.Aux3;
+
+					vbR_Channel5.LeftLabel = GearValueToFlightMode( radio.Gear );
 				}
 				else if(tcTabs.SelectedTab == tpSystemSetup)
 				{
@@ -666,7 +683,7 @@ namespace Elev8
 		{
 			InternalChange = true;
 
-			cbReceiverType.SelectedIndex = prefs.UseSBUS;
+			cbReceiverType.SelectedIndex = prefs.ReceiverType;
 
 			cbRev1.Checked = prefs.ThroScale < 0;
 			cbRev2.Checked = prefs.AileScale < 0;
@@ -1362,7 +1379,7 @@ namespace Elev8
 
 		private void cbReceiverType_SelectedIndexChanged( object sender, EventArgs e )
 		{
-			prefs.UseSBUS = (byte)cbReceiverType.SelectedIndex;
+			prefs.ReceiverType = (byte)cbReceiverType.SelectedIndex;
 		}
 
 
