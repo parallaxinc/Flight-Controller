@@ -1,14 +1,10 @@
+These works are Copyright 2015 Parallax Incorporated
 
-The Elev8 Flight Controller firmware is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
-http://creativecommons.org/licenses/by-sa/4.0/
-
+The ELEV-8 Flight Controller Firmware is licensed under the GNU General Public License version 3.0.
+http://www.gnu.org/licenses/
 
 The Parallax GroundStation software is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
 http://creativecommons.org/licenses/by-nc-sa/4.0/
-
-
-Copyright (c) 2015 Parallax Inc.
-
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -17,4 +13,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
