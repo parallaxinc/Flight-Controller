@@ -3,12 +3,14 @@
 
 
 /*
-  Elev8 Flight Controller - V1.0
+  Elev8 Flight Controller
 
   F32 - Concise floating point code for the Propeller
 
   Copyright (c) 2011 Jonathan "lonesock" Dummer
   Ported to C++, modified for stream processing, and new instructions added by Jason Dorie
+
+  C++ API Copyright 2015 Parallax Inc
 
   Released under the MIT License (see the end of f32_driver.spin for details)
 */
@@ -17,11 +19,11 @@
 class F32
 {
 public:
-	static int  Start(void);
-	static void Stop(void);
+  static int  Start(void);
+  static void Stop(void);
 
-	static void RunStream( unsigned char * a, float * b );
-	static void WaitStream(void);
+  static void RunStream( unsigned char * a, float * b );
+  static void WaitStream(void);
 
   static float FFloat( int n );
   static float FDiv( float a, float b );

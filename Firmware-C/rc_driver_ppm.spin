@@ -7,7 +7,9 @@ Use 4.7K resistors (or 4050 buffers) between each Propeller input and receiver s
  so to power the receiver only one channel need to be connected to +5V and GND.
 -----------------------------------------------------------------------------------------------
 
-  Elev8 Flight Controller - V1.0
+  Elev8 Flight Controller
+
+  Copyright 2015 Parallax Inc
 
   This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
   http://creativecommons.org/licenses/by-sa/4.0/

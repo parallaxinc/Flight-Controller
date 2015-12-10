@@ -1,6 +1,9 @@
 ''
 ''
-''     LSM9DS1 Gyro/Accel/Magnetometer, LPS25H Barometer SPI driver
+''     LSM9DS1 Gyro/Accel/Magnetometer, LPS25H Barometer SPI driver for Elev8 Flight Controller
+''
+''
+''  Copyright 2015 Parallax Inc
 ''
 ''  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
 ''  http://creativecommons.org/licenses/by-sa/4.0/

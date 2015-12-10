@@ -7,6 +7,8 @@
   Copyright (c) 2011 Jonathan "lonesock" Dummer
   Ported to C++, modified for stream processing, and new instructions added by Jason Dorie
 
+  C++ API Copyright 2015 Parallax Inc
+
   Released under the MIT License (see the end of f32_driver.spin for details)
 */
 
