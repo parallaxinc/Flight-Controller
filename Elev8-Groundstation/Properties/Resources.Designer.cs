@@ -87,5 +87,12 @@ namespace Elev8.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        internal static System.Drawing.Bitmap ParallaxLogo_S200_vertical {
+            get {
+                object obj = ResourceManager.GetObject("ParallaxLogo-S200-vertical", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }

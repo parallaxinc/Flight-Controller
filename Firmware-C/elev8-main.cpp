@@ -1,6 +1,12 @@
 /*
-/*
-  Elev8 Flight Controller
+  Elev8 Flight Controller - V1.0
+
+  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-sa/4.0/
+
+  Written by Jason Dorie
+
+  Dedicated to the memory of my father, Jim Dorie, who encouraged me endlessly
 */
 
 #include <propeller.h>
@@ -26,8 +32,7 @@
 
 // TODO:
 // - PID advanced tuning through UI
-// - PPM receiver
-// - GroundStation needs to store MODE setting
+// - GroundStation needs to store radio MODE setting
 // - Altitude hold work
 
 
@@ -61,9 +66,10 @@ static int  LoopCycles = 0;
 static short CycleCount[8];   // Number of cycles an update loop takes, recorded over 8 cycles so we can get min/max/avg
 
 static struct CYCLESTATS {
- short MinCycles;
- short MaxCycles;
- short AvgCycles;
+  short Version;
+  short MinCycles;
+  short MaxCycles;
+  short AvgCycles;
 } Stats;
 
 
@@ -232,7 +238,7 @@ int main()                                    // Main function
       char NewFlightMode;
 
       if( Radio.Gear > 512 )
-        NewFlightMode = FlightMode_Assist;    // Forward is "Full Assist"
+        NewFlightMode = FlightMode_Stable;    // Forward is "Stable"    (This was "Assist" but the altitude hold isn't working properly yet)
       else if( Radio.Gear < -512 )
         NewFlightMode = FlightMode_Manual;    // Back is "Manual"
       else
@@ -329,6 +335,7 @@ void Initialize(void)
   FlightMode = FlightMode_Stable;
   GyroRPFilter = 224;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
   GyroYawFilter = 224;
+  Stats.Version = 0x0100;
 
   InitSerial();
 
@@ -392,13 +399,13 @@ void Initialize(void)
   YawPID.SetDervativeFilter( 192 );
 
   int AltP = (900 * (Prefs.AltiGain+1)) >> 7;
-  int AltI = (200 * (Prefs.AltiGain+1)) >> 7;
+  int AltI = (0 * (Prefs.AltiGain+1)) >> 7;
 
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
   AltPID.Init( AltP, AltI, 0, Const_UpdateRate );
   AltPID.SetPrecision( 8 );
-  AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
+  AltPID.SetMaxOutput( 6000 );    // Fastest the altitude hold object will ask for is 6000 mm/sec (6 M/sec)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
 
@@ -603,17 +610,19 @@ void UpdateFlightLoop(void)
           ArmFlightMode();
         }          
       }
+      /* // Compass calibration not enabled yet
       else if( (Radio.Rudd > 750)  &&  (Radio.Aile > 750) )
       {
         CompassConfigStep++;
         FlightEnableStep = 0;
 
         LEDModeColor = (LED_Blue | LED_Red) & LED_Half;
-                
+
         if( CompassConfigStep == 250 ) {   //Hold for 1 second
           StartCompassCalibrate();
         }
       }
+      */
       else
       {
         CompassConfigStep = 0;
@@ -691,16 +700,18 @@ void UpdateFlightLoop(void)
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
     {
+      /*  // Altitude hold is currently disabled becuase it's not working right yet - I suspect a bug in the altitude estimate
+
       if( FlightMode == FlightMode_Assist )
       {
-        //int T0 = max( 0, (Radio.Aux1 + 1024) >> 1);
+        //int T0 = max( 0, (Radio.Aux1 + 1024) >> 2);
         //int T1 = max( 0, (Radio.Aux2 + 1024));
         //int T2 = max( 0, (Radio.Aux3 + 1024) >> 1);
 
         //AscentPID.SetPGain( T0 );
         //AltPID.SetPGain( T1 );
         //AltPID.SetIGain( T2 );
-        
+
         int AdjustedThrottle = 0;
 
         // Throttle has to be off zero by a bit - deadband around zero helps keep it still
@@ -711,6 +722,7 @@ void UpdateFlightLoop(void)
           // Remove the deadband area from center stick so we don't get a hiccup as you transition out of it
           AdjustedThrottle = (Radio.Thro > 0) ? (Radio.Thro - AltiThrottleDeadband) : (Radio.Thro + AltiThrottleDeadband);
 
+          // 6 m/sec maximum rate of ascent/descent
           DesiredAscentRate = AdjustedThrottle * 6000 / (1024 - AltiThrottleDeadband);
         }
         else
@@ -726,8 +738,8 @@ void UpdateFlightLoop(void)
         }
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
-        ThroOut = Prefs.CenterThrottle + AltiThrust + AdjustedThrottle; // Feed in a bit of the user throttle to help with quick throttle changes
-      }
+        ThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
+      }*/
 
       if( AccelAssistZFactor > 0 )
       {
@@ -877,7 +889,7 @@ void DisarmFlightMode(void)
 void StartCompassCalibrate(void)
 {
   // Placeholder
-}  
+}
 
 void DoCompassCalibrate(void)
 {
@@ -1062,12 +1074,9 @@ void DoDebugModeOutput(void)
 
       case 1:
         UpdateCycleStats();
-        COMMLINK::StartPacket( 7, 14 );                // Debug values, 20 byte payload
-        COMMLINK::AddPacketData( &Stats, 6 );          // Stats on update cycle counts (sending debug data takes a long time)
+        COMMLINK::StartPacket( 7, 12 );                // Debug values, 12 byte payload
+        COMMLINK::AddPacketData( &Stats, 8 );          // Version number, + Stats on update cycle counts (sending debug data takes a long time)
         COMMLINK::AddPacketData( &counter, 4 );        // Send the counter (sequence timestamp)
-
-        QuatIMU_GetDebugFloat( (float*)TxData );  // This is just a debug value, used for testing outputs with the IMU running
-        COMMLINK::AddPacketData( TxData, 4 );
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
         break;
@@ -1285,3 +1294,4 @@ void All_LED( int Color )
   for( int i=0; i<LED_COUNT; i++ )
     LEDValue[i] = Color;
 }  
+

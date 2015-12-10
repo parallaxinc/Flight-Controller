@@ -45,6 +45,7 @@
       <HintPath>.\FTD2XX_NET.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -62,6 +63,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AboutBox.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="AboutBox.Designer.cs">
+      <DependentUpon>AboutBox.cs</DependentUpon>
+    </Compile>
     <Compile Include="Connection_Serial.cs" />
     <Compile Include="Controls\ValueBar.cs">
       <SubType>UserControl</SubType>
@@ -109,7 +116,6 @@
     <Compile Include="Instruments\AttitudeIndicator.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ConnectionHandler.cs" />
     <Compile Include="Connection_FTDI.cs" />
     <Compile Include="Connection.cs" />
     <Compile Include="Controls\Gauge.cs">
@@ -210,6 +216,10 @@
     <Compile Include="Vector.cs" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="AboutBox.resx">
+      <DependentUpon>AboutBox.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Controls\ValueBar.resx">
       <DependentUpon>ValueBar.cs</DependentUpon>
       <SubType>Designer</SubType>
@@ -235,6 +245,8 @@
     <Content Include="GraphLib\GraphLib.csproj" />
     <Content Include="Icon_Clockwise.png" />
     <Content Include="Icon_Counter-clockwise.png" />
+    <None Include="app.config" />
+    <None Include="ParallaxLogo-S200-vertical.png" />
     <None Include="Resources\AppIcon.ico" />
     <None Include="PropIcon.png" />
     <None Include="ParallaxLogo-S200.png" />

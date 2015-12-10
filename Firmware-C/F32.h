@@ -2,6 +2,18 @@
 #define __F32_H__
 
 
+/*
+  Elev8 Flight Controller - V1.0
+
+  F32 - Concise floating point code for the Propeller
+
+  Copyright (c) 2011 Jonathan "lonesock" Dummer
+  Ported to C++, modified for stream processing, and new instructions added by Jason Dorie
+
+  Released under the MIT License (see the end of f32_driver.spin for details)
+*/
+
+
 class F32
 {
 public:

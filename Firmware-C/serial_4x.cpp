@@ -36,7 +36,7 @@
 //               Tim Moore
 //____________________________________________________________________________________________
 //
-// Copyright (c) 2015 by Wayne Meretsky
+// Copyright (c) 2015 by Wayne Meretsky, ported to C++ by Jason Dorie
 //
 // This version of the serial port driver was rewritten entirely from scratch in early
 // 2015 with three goals, in order: Correctness, Performance, Code Size. While it is

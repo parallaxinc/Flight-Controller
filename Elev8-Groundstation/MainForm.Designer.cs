@@ -32,6 +32,8 @@
 			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager( typeof( MainForm ) );
 			this.stMainStatus = new System.Windows.Forms.StatusStrip();
 			this.tssStatusText = new System.Windows.Forms.ToolStripStatusLabel();
+			this.tssGSVersion = new System.Windows.Forms.ToolStripStatusLabel();
+			this.tssFCVersion = new System.Windows.Forms.ToolStripStatusLabel();
 			this.tmCommTimer = new System.Windows.Forms.Timer( this.components );
 			this.tcTabs = new System.Windows.Forms.TabControl();
 			this.tpStatus = new System.Windows.Forms.TabPage();
@@ -196,6 +198,8 @@
 			this.miRadioMode1 = new System.Windows.Forms.ToolStripMenuItem();
 			this.miRadioMode2 = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
+			this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.checkBox4 = new System.Windows.Forms.CheckBox();
 			this.checkBox5 = new System.Windows.Forms.CheckBox();
 			this.checkBox6 = new System.Windows.Forms.CheckBox();
@@ -301,7 +305,9 @@
 			// stMainStatus
 			// 
 			this.stMainStatus.Items.AddRange( new System.Windows.Forms.ToolStripItem[] {
-            this.tssStatusText} );
+            this.tssStatusText,
+            this.tssGSVersion,
+            this.tssFCVersion} );
 			this.stMainStatus.Location = new System.Drawing.Point( 0, 406 );
 			this.stMainStatus.Name = "stMainStatus";
 			this.stMainStatus.Size = new System.Drawing.Size( 729, 22 );
@@ -310,9 +316,26 @@
 			// 
 			// tssStatusText
 			// 
+			this.tssStatusText.AutoSize = false;
 			this.tssStatusText.Name = "tssStatusText";
-			this.tssStatusText.Size = new System.Drawing.Size( 78, 17 );
+			this.tssStatusText.Size = new System.Drawing.Size( 250, 17 );
 			this.tssStatusText.Text = "Connecting...";
+			this.tssStatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// tssGSVersion
+			// 
+			this.tssGSVersion.AutoSize = false;
+			this.tssGSVersion.Name = "tssGSVersion";
+			this.tssGSVersion.Size = new System.Drawing.Size( 240, 17 );
+			this.tssGSVersion.Text = "GroundStation Version 1.0";
+			this.tssGSVersion.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+			// 
+			// tssFCVersion
+			// 
+			this.tssFCVersion.AutoSize = false;
+			this.tssFCVersion.Name = "tssFCVersion";
+			this.tssFCVersion.Size = new System.Drawing.Size( 150, 17 );
+			this.tssFCVersion.Text = "Firmware Version -.-";
 			// 
 			// tmCommTimer
 			// 
@@ -1268,6 +1291,7 @@
 			// cbEnableAdvanced
 			// 
 			this.cbEnableAdvanced.AutoSize = true;
+			this.cbEnableAdvanced.Enabled = false;
 			this.cbEnableAdvanced.Location = new System.Drawing.Point( 561, 150 );
 			this.cbEnableAdvanced.Name = "cbEnableAdvanced";
 			this.cbEnableAdvanced.Size = new System.Drawing.Size( 152, 17 );
@@ -1278,12 +1302,13 @@
 			// groupBox4
 			// 
 			this.groupBox4.Enabled = false;
-			this.groupBox4.Location = new System.Drawing.Point( 8, 165 );
+			this.groupBox4.Location = new System.Drawing.Point( 8, 173 );
 			this.groupBox4.Name = "groupBox4";
-			this.groupBox4.Size = new System.Drawing.Size( 705, 188 );
+			this.groupBox4.Size = new System.Drawing.Size( 705, 180 );
 			this.groupBox4.TabIndex = 15;
 			this.groupBox4.TabStop = false;
 			this.groupBox4.Text = "Advanced Settings";
+			this.groupBox4.Visible = false;
 			// 
 			// groupBox3
 			// 
@@ -2319,7 +2344,8 @@
 			// msMainMenu
 			// 
 			this.msMainMenu.Items.AddRange( new System.Windows.Forms.ToolStripItem[] {
-            this.settingsToolStripMenuItem} );
+            this.settingsToolStripMenuItem,
+            this.helpToolStripMenuItem} );
 			this.msMainMenu.Location = new System.Drawing.Point( 0, 0 );
 			this.msMainMenu.Name = "msMainMenu";
 			this.msMainMenu.Size = new System.Drawing.Size( 729, 24 );
@@ -2370,6 +2396,21 @@
 			// 
 			this.toolStripMenuItem1.Name = "toolStripMenuItem1";
 			this.toolStripMenuItem1.Size = new System.Drawing.Size( 144, 6 );
+			// 
+			// helpToolStripMenuItem
+			// 
+			this.helpToolStripMenuItem.DropDownItems.AddRange( new System.Windows.Forms.ToolStripItem[] {
+            this.aboutToolStripMenuItem} );
+			this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+			this.helpToolStripMenuItem.Size = new System.Drawing.Size( 44, 20 );
+			this.helpToolStripMenuItem.Text = "Help";
+			// 
+			// aboutToolStripMenuItem
+			// 
+			this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+			this.aboutToolStripMenuItem.Size = new System.Drawing.Size( 107, 22 );
+			this.aboutToolStripMenuItem.Text = "About";
+			this.aboutToolStripMenuItem.Click += new System.EventHandler( this.aboutToolStripMenuItem_Click );
 			// 
 			// checkBox4
 			// 
@@ -3455,6 +3496,10 @@
 		private System.Windows.Forms.HScrollBar hsAltiGain;
 		private System.Windows.Forms.Button btnUploadFlightChanges;
 		private System.Windows.Forms.Label label23;
+		private System.Windows.Forms.ToolStripStatusLabel tssFCVersion;
+		private System.Windows.Forms.ToolStripStatusLabel tssGSVersion;
+		private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 	}
 }
 

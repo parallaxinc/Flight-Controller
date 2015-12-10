@@ -1,4 +1,4 @@
-{{RC_driver.spin
+{{RC_driver_ppm.spin
 -----------------------------------------------------------------------------------------------
 Read servo control pulses from a generic R/C receiver
 Use 4.7K resistors (or 4050 buffers) between each Propeller input and receiver signal output.
@@ -7,13 +7,12 @@ Use 4.7K resistors (or 4050 buffers) between each Propeller input and receiver s
  so to power the receiver only one channel need to be connected to +5V and GND.
 -----------------------------------------------------------------------------------------------
 
-The getrc function was modified to return values centered at zero instead of 3000
+  Elev8 Flight Controller - V1.0
 
-NOTE that the pins are accessed by index, not by pin number.  If you set the code to
-read the four pins %011001100, the lowest pin index (P2) will be entry 0 in the array,
-and will be returned when you call Get( 0 ) or GetRC( 0 ).  Pins are returned from lowest
-to highest.
+  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-sa/4.0/
 
+  Written by Jason Dorie
 }}
 
 Con

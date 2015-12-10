@@ -2,7 +2,10 @@
 ''
 ''     LSM9DS1 Gyro/Accel/Magnetometer, LPS25H Barometer SPI driver
 ''
-''     Jason Dorie               
+''  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+''  http://creativecommons.org/licenses/by-sa/4.0/
+''
+''  Written by Jason Dorie
 ''               
 '' Note that this code assumes an 80 MHz clock
 

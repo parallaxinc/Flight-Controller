@@ -1,6 +1,19 @@
+
+#ifndef __PREFS_H__
+#define __PREFS_H__
+
+/*
+  Elev8 Flight Controller - V1.0
+
+  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-sa/4.0/
+
+  Written by Jason Dorie
+
 //
 // Preferences - User prefs storage for Elev8-FC
 //
+*/
 
 typedef struct {
   int   DriftScale[3];
@@ -27,7 +40,7 @@ typedef struct {
   char  unused;
 
   char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
-  char  UsePing;
+  char  unused2;
   char  UseBattMon;
   char  DisableMotors;
 
@@ -95,3 +108,5 @@ void Prefs_SetDefaults(void);
 void Prefs_Test(void);
 
 int Prefs_CalculateChecksum( PREFS & PrefsStruct );
+
+#endif

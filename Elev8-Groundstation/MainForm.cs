@@ -1,10 +1,22 @@
-﻿using System;
+﻿/*
+  Elev8 GroundStation - V1.0
+
+  This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+  Written by Jason Dorie
+*/
+
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Media;
+using System.Reflection;
 using System.Threading;
 using System.Text;
 using System.Windows.Forms;
@@ -81,10 +93,28 @@ namespace Elev8
 		int SampleIndex = 0;
 
 
+
+		public string AssemblyVersion
+		{
+			get {
+				return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+			}
+		}
+
+
 		public MainForm()
 		{
 			InternalChange = true;
 			InitializeComponent();
+
+			string modeString = Properties.Settings.Default.RadioMode;
+			if(modeString != null)
+			{
+				if(modeString == "Mode1") RadioMode = RADIO_MODE.Mode1;
+				if(modeString == "Mode2") RadioMode = RADIO_MODE.Mode2;
+			}
+
+			tssGSVersion.Text = string.Format( "GroundStation version {0}", AssemblyVersion );
 
 			channelAssignControls = new ComboBox[] {
 				cbChannel1, cbChannel2, cbChannel3, cbChannel4,
@@ -220,10 +250,11 @@ namespace Elev8
 			CheckCalibrateControls();
 		}
 
+
 		string GearValueToFlightMode( int Value )
 		{
 			if(Value > 512) {
-				return "Assisted";
+				return "Stable";		//  return "Assisted";  (Altitude hold not working properly yet - I suspect a bug in the altitude estimate)
 			}
 			else if(Value < -512) {
 				return "Manual";
@@ -525,6 +556,9 @@ namespace Elev8
 			{
 				lblCycles.Text = string.Format( "CPU time (uS): {0} (min)   {1} (max)   {2} (avg)",
 					debugData.MinCycles * 64/80, debugData.MaxCycles * 64/80, debugData.AvgCycles * 64/80 );
+
+				tssFCVersion.Text = string.Format( "Firmware Version {0}.{1}", debugData.Version >> 8, debugData.Version & 255 );
+
 				//lblCycles.Text = string.Format( "{0}", debugData.DebugFloat );
 			}
 
@@ -657,6 +691,9 @@ namespace Elev8
 				vbLS_YValue.LeftLabel = "Throttle";
 				vbRS_YValue.LeftLabel = "Elevator";
 			}
+
+			Properties.Settings.Default.RadioMode = RadioMode.ToString();
+			Properties.Settings.Default.Save();
 		}
 
 		void AttemptSetValue( TrackBar tb, int value )
@@ -1447,6 +1484,13 @@ namespace Elev8
 
 			// Apply the prefs to the elev-8
 			UpdateElev8Preferences();
+		}
+
+
+		private void aboutToolStripMenuItem_Click( object sender, EventArgs e )
+		{
+			AboutBox ab = new AboutBox();
+			ab.ShowDialog();
 		}
 	}
 }

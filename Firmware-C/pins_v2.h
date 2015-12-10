@@ -2,6 +2,16 @@
 #ifndef __PINS_V2_H__
 #define __PINS_V2_H__
 
+/*
+  Elev8 Flight Controller - V1.0
+
+  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-sa/4.0/
+
+  Written by Jason Dorie
+*/
+
+
 #define PIN_RC_0  26
 #define PIN_RC_1  27
 #define PIN_RC_2  0

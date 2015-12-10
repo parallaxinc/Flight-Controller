@@ -2,6 +2,14 @@
 #ifndef __SENSORS_H__
 #define __SENSORS_H__
 
+/*
+  Elev8 Flight Controller - V1.0
+
+  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-sa/4.0/
+
+  Written by Jason Dorie
+*/
 
 void Sensors_Start(int ipin, int opin, int cpin, int sgpin, int smpin, int apin, int _LEDPin, int _LEDAddr, int _LEDCount);
 

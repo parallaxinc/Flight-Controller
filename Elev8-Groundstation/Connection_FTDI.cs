@@ -1,4 +1,13 @@
-﻿using System;
+﻿/*
+  Elev8 GroundStation
+
+  This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.
+  http://creativecommons.org/licenses/by-nc-sa/4.0/
+
+  Written by Jason Dorie
+*/
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -67,7 +76,6 @@ namespace Elev8
 		}
 
 
-
 		private void CommThread()
 		{
 			do
@@ -77,7 +85,7 @@ namespace Elev8
 					continue;
 				}
 
-				if(!Connected)
+				if(!Connected && !quit)
 				{
 					AttemptConnect();
 				}
@@ -100,7 +108,7 @@ namespace Elev8
 							continue;
 						}
 
-						if(bytesAvail > 0)
+						if(bytesAvail > 0 && !quit)
 						{
 							uint toRead = Math.Min( bytesAvail, (uint)rxBuffer.Length );
 							if(toRead > 0) {
@@ -111,6 +119,7 @@ namespace Elev8
 
 					for( int i=0; i<bytesRead; i++) {
 						ProcessByte( rxBuffer[i] );
+						if(quit) break;
 					}
 				}
 			} while(!quit);
@@ -345,7 +354,7 @@ namespace Elev8
 							txBuffer[3] = (byte)'8';
 							uint written = 0;
 
-							for(int j = 0; j < 10 && FoundElev8 == false; j++)	// Keep pinging until it replies, or we give up
+							for(int j = 0; j < 10 && FoundElev8 == false && !quit; j++)	// Keep pinging until it replies, or we give up
 							{
 								ftdi.Write( txBuffer, 4, ref written );
 								System.Threading.Thread.Sleep( 50 );
@@ -356,7 +365,7 @@ namespace Elev8
 								{
 									int TestVal = 0;
 
-									while(bytesAvail > 0)
+									while(bytesAvail > 0 && !quit)
 									{
 										uint bytesRead = 0;
 										ftdi.Read( rxBuffer, 1, ref bytesRead );
@@ -370,6 +379,8 @@ namespace Elev8
 												break;
 											}
 										}
+
+										if(bytesRead == 0) break;
 									}
 								}
 							}
