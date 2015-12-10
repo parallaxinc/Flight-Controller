@@ -2,13 +2,22 @@
 #define __ELEV8_MAIN_H__
 
 /*
-  Elev8 Flight Controller - V1.0
+  This file is part of the ELEV-8 Flight Controller Firmware
+  for Parallax part #80204, Revision A
+  
+  Copyright 2015 Parallax Incorporated
 
-  Copyright 2015 Parallax Inc
+  ELEV-8 Flight Controller Firmware is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the Free Software Foundation, 
+  either version 3 of the License, or (at your option) any later version.
 
-  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
-  http://creativecommons.org/licenses/by-sa/4.0/
+  ELEV-8 Flight Controller Firmware is distributed in the hope that it will be useful, but 
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+  FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
+  You should have received a copy of the GNU General Public License
+  along with the ELEV-8 Flight Controller Firmware.  If not, see <http://www.gnu.org/licenses/>.
+  
   Written by Jason Dorie
 */
 

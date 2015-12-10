@@ -1,11 +1,27 @@
 /*
-  Elev8 Flight Controller - V1.0
+  This file is part of the ELEV-8 Flight Controller Firmware
+  for Parallax part #80204, Revision A
+  Version 1.0.1
+  
+  Copyright 2015 Parallax Incorporated
 
-  Copyright 2015 Parallax Inc
+  ELEV-8 Flight Controller Firmware is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the Free Software Foundation, 
+  either version 3 of the License, or (at your option) any later version.
 
-  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
-  http://creativecommons.org/licenses/by-sa/4.0/
+  ELEV-8 Flight Controller Firmware is distributed in the hope that it will be useful, but 
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+  FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
+  You should have received a copy of the GNU General Public License
+  along with the ELEV-8 Flight Controller Firmware.  If not, see <http://www.gnu.org/licenses/>.
+  
+ 
+  Actively In Development / To Be Developed:
+  - Altitude Hold - currently disabled
+  - Heading Hold & Compass Calibratin 
+  
+  
   Written by Jason Dorie
 
   Dedicated to the memory of my father, Jim Dorie, who encouraged me endlessly
@@ -29,15 +45,7 @@
 #include "serial_4x.h"          // 4 port simultaneous serial I/O                               (1 COG)
 #include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
-
 //#define ENABLE_LOGGING
-
-// TODO:
-// - PID advanced tuning through UI
-// - GroundStation needs to store radio MODE setting
-// - Altitude hold work
-
-
 
 #ifdef ENABLE_LOGGING
 void DoLogOutput(void);

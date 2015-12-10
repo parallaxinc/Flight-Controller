@@ -1,4 +1,24 @@
-{{RC_driver_ppm.spin
+{{
+* RC_driver_ppm.spin *
+
+  This file is part of the ELEV-8 Flight Controller Firmware
+  for Parallax part #80204, Revision A
+  
+  Copyright 2015 Parallax Incorporated
+
+  ELEV-8 Flight Controller Firmware is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by the Free Software Foundation, 
+  either version 3 of the License, or (at your option) any later version.
+
+  ELEV-8 Flight Controller Firmware is distributed in the hope that it will be useful, but 
+  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or 
+  FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with the ELEV-8 Flight Controller Firmware.  If not, see <http://www.gnu.org/licenses/>.
+  
+  Written by Jason Dorie
+  
 -----------------------------------------------------------------------------------------------
 Read servo control pulses from a generic R/C receiver
 Use 4.7K resistors (or 4050 buffers) between each Propeller input and receiver signal output.
@@ -6,15 +26,6 @@ Use 4.7K resistors (or 4050 buffers) between each Propeller input and receiver s
  Note: +5 and GND on all the receiver channels are usally interconnected,
  so to power the receiver only one channel need to be connected to +5V and GND.
 -----------------------------------------------------------------------------------------------
-
-  Elev8 Flight Controller
-
-  Copyright 2015 Parallax Inc
-
-  This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
-  http://creativecommons.org/licenses/by-sa/4.0/
-
-  Written by Jason Dorie
 }}
 
 Con
