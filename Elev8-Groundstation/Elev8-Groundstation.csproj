@@ -9,7 +9,7 @@
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Elev8</RootNamespace>
-    <AssemblyName>Elev8-Groundstation</AssemblyName>
+    <AssemblyName>Parallax-Groundstation</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ApplicationIcon>Resources\AppIcon.ico</ApplicationIcon>

@@ -5,13 +5,13 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle( "Elev8 Groundstation" )]
+[assembly: AssemblyTitle( "Parallax Groundstation" )]
 [assembly: AssemblyDescription( "GroundStation was designed to connect to and configure the Elev8 FC flight controller from Parallax.\r\n\r\n"+
 "This work is licensed under a Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License.\r\n\r\n" +
 "Written by Jason Dorie" )]
 [assembly: AssemblyConfiguration( "" )]
 [assembly: AssemblyCompany( "Parallax Inc." )]
-[assembly: AssemblyProduct( "Elev8 Groundstation" )]
+[assembly: AssemblyProduct( "Parallax Groundstation" )]
 [assembly: AssemblyCopyright( "Copyright © 2015" )]
 [assembly: AssemblyTrademark( "" )]
 [assembly: AssemblyCulture( "" )]
