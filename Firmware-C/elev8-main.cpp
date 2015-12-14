@@ -956,6 +956,7 @@ void CheckDebugInput(void)
     case Comm_Motor4:
     case Comm_Motor5:
     case Comm_Motor6:
+    case Comm_Motor7:
       NudgeMotor = (HostCommand&255) - '1';    // Becomes an index from 0 to 5, 0 to 3 are motors, 4 is LED, 5 is beeper
       if( NudgeMotor < 4 ) {
         NudgeCount[NudgeMotor] = 50;  // 1/5th of a second at 250 updates per sec
