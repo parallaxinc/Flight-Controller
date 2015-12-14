@@ -108,5 +108,6 @@ const int LED_DimWhite = LED_White & LED_Half;
 #define Comm_Motor4     COMMAND('M','4','t','4')
 #define Comm_Motor5     COMMAND('M','5','t','5')
 #define Comm_Motor6     COMMAND('M','6','t','6')
+#define Comm_Motor7     COMMAND('M','7','t','7')
 
 #endif
