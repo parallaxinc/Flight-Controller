@@ -1,0 +1,1761 @@
+<Spektrum>
+Generator="DX7"
+VCode=" 1.01"
+Originator="TH501XCQkAir40E6AbTuBTzVPiHsIA"
+mmNum=7
+bCode=0
+PosIndex= 5
+Type=Acro
+curveIndex= 7
+enabXPLUS=Disabled
+modelImage= 8
+Name="ELEV-8 v3"
+</Spektrum>
+
+<Acro>
+Wing=Standard
+Tail=Normal
+</Acro>
+
+<EF-Mix>
+analogID= 129
+conditionID= 0
+trimID= 0
+activePositions=%0000
+outChan= 52
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+mixName="ELE > FLP"
+</EF-Mix>
+
+<AR-Mix>
+analogID= 128
+conditionID= 0
+trimID= 0
+activePositions=%0000
+outChan= 35
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+mixName="AIL > RUD"
+</AR-Mix>
+
+<FlapSystem>
+analogID= 0
+conditionID= 0
+trimID= 0
+speed= 32736
+flapTarget: 0 0 0 0 0
+elevatorTarget: 0 0 0 0 0
+
+[Curvedata]
+*Index= 0
+points= 5
+Expo=Disabled
+trimActive=Disabled
+X: -1023 -511 0 511 1023 0 0
+Y: -1023 -511 0 511 1023 0 0
+[/Curvedata]
+</FlapSystem>
+
+<Differential>
+conditionID= 0
+rate: 0 0 0 0 0
+</Differential>
+
+<Diff-Rud>
+conditionID= 0
+rate: 0 0 0 0 0
+</Diff-Rud>
+
+<Config>
+;FrameRate=ms22
+FrameRateX=%0001
+TrimType=%00000000
+trimMode=Normal
+thrTrimRev=%00
+</Config>
+
+<Trainer>
+Type=Disabled
+mixOrNormal=%0000
+mixRatio:  100  100  100  100  0  0  0  100  100  100  100  100  100  100  100  100  100  100  100  100
+destSlot:  0  1  2  3  4  5  6  7  8  9  10  11  12  13  14  15  16  17  18  19
+conditionID_F:  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+conditionID= 89
+MOverride=Disabled
+activePositions=%00FE
+wireless= 1
+</Trainer>
+
+<FMode>
+switch_a= 85
+switch_b= 0
+switch_c= 0
+size= 18
+fmtable: 0 0 0 0 0 0 1 3 4 0 0 0 2 2 2 0 0 0
+activePositions=%0002
+</FMode>
+
+<FManalog>
+*Index= 0
+Analog= -1023
+</FManalog>
+
+<FManalog>
+*Index= 1
+Analog= -511
+</FManalog>
+
+<FManalog>
+*Index= 2
+Analog= 0
+</FManalog>
+
+<FManalog>
+*Index= 3
+Analog= 511
+</FManalog>
+
+<FManalog>
+*Index= 4
+Analog= 1023
+</FManalog>
+
+<FManalog>
+*Index= 5
+Analog= -511
+</FManalog>
+
+<FManalog>
+*Index= 6
+Analog= -511
+</FManalog>
+
+<FManalog>
+*Index= 7
+Analog= 0
+</FManalog>
+
+<FManalog>
+*Index= 8
+Analog= 511
+</FManalog>
+
+<FManalog>
+*Index= 9
+Analog= 1023
+</FManalog>
+
+<Special>
+*Index= 0
+sourceID= 85
+</Special>
+
+<Special>
+*Index= 1
+sourceID= 82
+</Special>
+
+<SoftSw>
+*Index= 0
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 1
+sourceID= 8
+</SoftSw>
+
+<SoftSw>
+*Index= 2
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 3
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 4
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 5
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 6
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 7
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 8
+sourceID= 5
+</SoftSw>
+
+<SoftSw>
+*Index= 9
+sourceID= 7
+</SoftSw>
+
+<SoftSw>
+*Index= 10
+sourceID= 6
+</SoftSw>
+
+<SoftSw>
+*Index= 11
+sourceID= 0
+</SoftSw>
+
+<SoftSw>
+*Index= 12
+sourceID= 0
+</SoftSw>
+
+<TrimID>
+*Index= 0
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 1
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 2
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 3
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 4
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 5
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 6
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 7
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 8
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 9
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 10
+sourceID= 0
+</TrimID>
+
+<TrimID>
+*Index= 11
+sourceID= 0
+</TrimID>
+
+<Digital>
+*Index= 23
+Pos0= 0
+Pos1= 0
+Pos2= 0
+</Digital>
+
+<Digital>
+*Index= 24
+Pos0= 0
+Pos1= 0
+Pos2= 0
+</Digital>
+
+<Trim>
+*Index= 0
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 1 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 300
+trimStepSize= 1
+trimRepeat= 1
+trimNextRepeat= 21
+</Trim>
+
+<Trim>
+*Index= 1
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: -2 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 300
+trimStepSize= 1
+trimRepeat= 1
+trimNextRepeat= 21
+</Trim>
+
+<Trim>
+*Index= 2
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 1 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 300
+trimStepSize= 1
+trimRepeat= 1
+trimNextRepeat= 21
+</Trim>
+
+<Trim>
+*Index= 3
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: -2 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 300
+trimStepSize= 1
+trimRepeat= 1
+trimNextRepeat= 21
+</Trim>
+
+<Trim>
+*Index= 4
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 0 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 50
+trimStepSize= 6
+trimRepeat= 1
+trimNextRepeat= 21
+</Trim>
+
+<Trim>
+*Index= 5
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 0 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 50
+trimStepSize= 6
+trimRepeat= 1
+trimNextRepeat= 21
+</Trim>
+
+<Trim>
+*Index= 6
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 0 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 50
+trimStepSize= 6
+trimRepeat= 10
+trimNextRepeat= 6
+</Trim>
+
+<Trim>
+*Index= 7
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 0 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 50
+trimStepSize= 6
+trimRepeat= 10
+trimNextRepeat= 6
+</Trim>
+
+<Trim>
+*Index= 8
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 0 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 50
+trimStepSize= 6
+trimRepeat= 10
+trimNextRepeat= 6
+</Trim>
+
+<Trim>
+*Index= 9
+Pos0= 0
+Pos1= 767
+Pos2= -767
+trimClicks: 0 0 0 0 0 0 0 0 0 0
+maxTrimClicks= 50
+trimStepSize= 6
+trimRepeat= 10
+trimNextRepeat= 6
+</Trim>
+
+<Servo>
+*Index= 0
+sourceID= 32
+speed= 32767
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=THR
+vSource= 0
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 1
+sourceID= 33
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Reverse
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=AIL
+vSource= 1
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 2
+sourceID= 34
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=ELE
+vSource= 2
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 3
+sourceID= 35
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Reverse
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=RUD
+vSource= 3
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 4
+sourceID= 85
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=GER
+vSource= 4
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 5
+sourceID= 82
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Reverse
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=AX1
+vSource= 5
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 6
+sourceID= 69
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -125
+travelHigh= 125
+name=AX2
+vSource= 6
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 7
+sourceID= 69
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=AX3
+vSource= 7
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 8
+sourceID= 70
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=AX4
+vSource= 8
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 9
+sourceID= 71
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=AX5
+vSource= 9
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 10
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=AX6
+vSource= 10
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 11
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=AX7
+vSource= 11
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 12
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP1
+vSource= 12
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 13
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP2
+vSource= 13
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 14
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP3
+vSource= 14
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 15
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP4
+vSource= 15
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 16
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP5
+vSource= 16
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 17
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP6
+vSource= 17
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 18
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP7
+vSource= 18
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<Servo>
+*Index= 19
+sourceID= 0
+speed= 32736
+conditionID= 107
+activePositions=%0002
+speedDown= 32736
+absLimitHigh= 2047
+absLimitLow= 0
+direction=Normal
+subTrim= 0
+travelLow= -100
+travelHigh= 100
+name=XP8
+vSource= 19
+
+[Curvedata]
+*Index= 0
+points= 7
+Expo=Disabled
+trimActive=Disabled
+X: 0 341 682 1023 1364 1705 2047
+Y: 0 341 682 1023 1364 1705 2047
+[/Curvedata]
+</Servo>
+
+<DR_Expo>
+*Index= 0
+analogID= 65
+conditionID= 0
+activePositions=%0002
+conditionID1= 0
+conditionID2= 0
+drHigh: 100 75 100 100 100 0 0 0 0 0
+drLow: 100 75 100 100 100 0 0 0 0 0
+drHigh1: 100 100 100 100 100 0 0 0 0 0
+drLow1: 100 100 100 100 100 0 0 0 0 0
+drHigh2: 100 100 100 100 100 0 0 0 0 0
+drLow2: 100 100 100 100 100 0 0 0 0 0
+expoHigh: 0 0 0 0 0 0 0 0 0 0
+assignedCurve: 0 1 2 3 4 4 4 4 4 4
+expoLow: 0 0 0 0 0 0 0 0 0 0
+</DR_Expo>
+
+<DR_Expo>
+*Index= 1
+analogID= 66
+conditionID= 0
+activePositions=%0002
+conditionID1= 0
+conditionID2= 0
+drHigh: 100 75 50 100 100 0 0 0 0 0
+drLow: 100 75 50 100 100 0 0 0 0 0
+drHigh1: 100 100 100 100 100 0 0 0 0 0
+drLow1: 100 100 100 100 100 0 0 0 0 0
+drHigh2: 100 100 100 100 100 0 0 0 0 0
+drLow2: 100 100 100 100 100 0 0 0 0 0
+expoHigh: 0 0 0 0 0 0 0 0 0 0
+assignedCurve: 0 1 2 3 4 4 4 4 4 4
+expoLow: 0 0 0 0 0 0 0 0 0 0
+</DR_Expo>
+
+<DR_Expo>
+*Index= 2
+analogID= 67
+conditionID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+drHigh: 100 100 100 100 100 0 0 0 0 0
+drLow: 100 100 100 100 100 0 0 0 0 0
+drHigh1: 100 100 100 100 100 0 0 0 0 0
+drLow1: 100 100 100 100 100 0 0 0 0 0
+drHigh2: 100 100 100 100 100 0 0 0 0 0
+drLow2: 100 100 100 100 100 0 0 0 0 0
+expoHigh: 0 0 0 0 0 0 0 0 0 0
+assignedCurve: 0 1 2 3 4 4 4 4 4 4
+expoLow: 0 0 0 0 0 0 0 0 0 0
+</DR_Expo>
+
+<P-Mix>
+*Index= 0
+mixName="Mix 0"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 1
+mixName="Mix 1"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 2
+mixName="Mix 2"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 3
+mixName="Mix 3"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 4
+mixName="Mix 4"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 5
+mixName="Mix 5"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 6
+mixName="Mix 6"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 7
+mixName="Mix 7"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 8
+mixName="Mix 8"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 9
+mixName="Mix 9"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 10
+mixName="Mix 10"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 11
+mixName="Mix 11"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 12
+mixName="Mix 12"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 13
+mixName="Mix 13"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 14
+mixName="Mix 14"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<P-Mix>
+*Index= 15
+mixName="Mix 15"
+analogID= 0
+conditionID= 0
+trimID= 0
+activePositions=%0000
+conditionID1= 0
+conditionID2= 0
+activePositions1=%0000
+activePositions2=%0000
+relation= 0
+outChan= 0
+
+[Curvedata]
+*Index= 0
+points= 3
+Expo=Disabled
+trimActive=Disabled
+X: -1023 0 1023 0 0 0 0
+Y: 0 0 0 0 0 0 0
+[/Curvedata]
+</P-Mix>
+
+<ThroCut>
+conditionID= 0
+percent= -6
+rampSpeed= 32736
+activePositions=%FFFE
+</ThroCut>
+
+<ThroCurve>
+analogID= 64
+conditionID= 0
+trimID= 108
+activeMask=%0000
+delay= 0
+mixName="Throttle"
+assignedCurve: 0 1 2 3 1 0 0 0 0 0
+
+[Curvedata]
+*Index= 0
+points= 5
+Expo=Disabled
+trimActive=Disabled
+curved=Enabled
+X: -1023 -511 0 511 1023 0 0
+Y: -1023 -511 0 511 1023 0 0
+[/Curvedata]
+
+[Curvedata]
+*Index= 1
+points= 5
+Expo=Disabled
+trimActive=Disabled
+curved=Enabled
+X: -1023 -511 0 511 1023 0 0
+Y: -1023 -511 0 511 1023 0 0
+[/Curvedata]
+
+[Curvedata]
+*Index= 2
+points= 5
+Expo=Disabled
+trimActive=Disabled
+curved=Enabled
+X: -1023 -511 0 511 1023 0 0
+Y: -1023 -511 0 511 1023 0 0
+[/Curvedata]
+
+[Curvedata]
+*Index= 3
+points= 5
+Expo=Disabled
+trimActive=Disabled
+curved=Enabled
+X: -1023 -511 0 511 1023 0 0
+Y: -1023 -511 0 511 1023 0 0
+[/Curvedata]
+
+[Curvedata]
+*Index= 4
+points= 5
+Expo=Disabled
+trimActive=Disabled
+curved=Enabled
+X: -1023 -511 0 511 1023 0 0
+Y: -1023 -511 0 511 1023 0 0
+[/Curvedata]
+</ThroCurve>
+
+<Warning>
+Vibrate=Enabled
+Throttle=Over
+Thresh= -819
+FltMode=%0000
+Gear=%0000
+Flaps=%0000
+chanAchan= 0
+chanAtype=Disabled
+chanBchan= 0
+chanBtype=Disabled
+</Warning>
+
+<Timer>
+*Index= 0
+Mode=Up
+oneTime=Disabled
+audioX=%00F4
+vibeX=%0000
+voiceX=%0000
+voxEv1=%0055
+StartID= 64
+Event= 2
+Thresh= -511
+activePositions=%00FE
+</Timer>
+
+<Timer>
+*Index= 1
+Mode=Disabled
+oneTime=Disabled
+audioX=%00F4
+vibeX=%0000
+voiceX=%0000
+voxEv1=%0055
+StartID= 64
+Event= 2
+Thresh= -511
+activePositions=%00FE
+</Timer>
+
+<Telemetry>
+lcdMode= 3
+Screens=%FFFF
+StartID= 0
+Event= 4
+Thresh= -511
+oneTime=Disabled
+sdEnabled= 1
+activePositions=%FFFE
+
+[FlightLog]
+F= 0
+H= 0
+A= 0
+B= 0
+R= 0
+L= 0
+FrameAlarmX=%0000
+HoldAlarmX=%0000
+voxRepStatQoS= 0
+voxRepWarnQoS= 0
+minRx= 43
+maxRx= 81
+RxVoltAlarmX=%0000
+voxRepStatRxV= 0
+voxRepWarnRxV= 0
+[/FlightLog]
+
+[Module]
+*Device=Voltmeter
+minVolt= 1100
+maxVolt= 1280
+minAlarm= 1
+maxAlarm= 0
+voxRepeatStatus=%0000
+voxRepeatWarning=%0000
+Address= 1
+display=Enabled
+[/Module]
+</Telemetry>
+
+<Preflight>
+Mode=Disabled
+RF=Disabled
+
+[Checklist]
+*Index= 0
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+
+[Checklist]
+*Index= 1
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+
+[Checklist]
+*Index= 2
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+
+[Checklist]
+*Index= 3
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+
+[Checklist]
+*Index= 4
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+
+[Checklist]
+*Index= 5
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+
+[Checklist]
+*Index= 6
+Mode=Disabled
+display=""
+voxOnEntry=%0000
+voxOnCheck=%0000
+voxOnClear=%0000
+[/Checklist]
+</Preflight>
+
+<FMode_Names>
+
+[fmName]
+*Index= 0
+display="MANUAL"
+fmVox=%FE42
+[/fmName]
+
+[fmName]
+*Index= 1
+display="ASSISTED"
+fmVox=%004A
+[/fmName]
+
+[fmName]
+*Index= 2
+display="ASSISTED"
+fmVox=%004B
+[/fmName]
+
+[fmName]
+*Index= 3
+display="FLIGHT MODE 4"
+fmVox=%004C
+[/fmName]
+
+[fmName]
+*Index= 4
+display="FLIGHT MODE 5"
+fmVox=%004D
+[/fmName]
+
+[fmName]
+*Index= 5
+display="FLIGHT MODE 6"
+fmVox=%004E
+[/fmName]
+
+[fmName]
+*Index= 6
+display="FLIGHT MODE 7"
+fmVox=%004F
+[/fmName]
+
+[fmName]
+*Index= 7
+display="FLIGHT MODE 8"
+fmVox=%0050
+[/fmName]
+
+[fmName]
+*Index= 8
+display="FLIGHT MODE 9"
+fmVox=%0051
+[/fmName]
+
+[fmName]
+*Index= 9
+display="FLIGHT MODE 10"
+fmVox=%0052
+[/fmName]
+</FMode_Names>
+
+<GUIcontrols>
+soundEnabled= 0
+trimDispMode= 0
+autoTrim= 0
+trnrAlerModes=%00AA
+trnrAlertInst=%0000
+trnrAlertStud=%0000
+trnrAlertSign=%0000
+</GUIcontrols>
+
+<Voice>
+masterVolume= 30
+sysVolume= 10
+warnVolume= 50
+timerVolume= 50
+expireVolume= 50
+teleRptVolume= 50
+teleWarnVolume= 50
+userVolume= 50
+FModeVolume= 50
+sayGeneric=%00000000
+
+[userEvent]
+*Index= 0
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 1
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 2
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 3
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 4
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 5
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 6
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userEvent]
+*Index= 7
+conditionID= 0
+action:%0000 %0000 %0000 %0000 %0000 
+[/userEvent]
+
+[userSequence]
+*Index= 0
+conditionID= 0
+actionsInSeq= 0
+activePositions=%00FE
+repeatPos=%0000
+actions:%0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 
+[/userSequence]
+
+[userSequence]
+*Index= 1
+conditionID= 0
+actionsInSeq= 0
+activePositions=%00FE
+repeatPos=%0000
+actions:%0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 %0000 
+[/userSequence]
+</Voice>
+
+*EOF*
+
+                                                                                                                                                                         
