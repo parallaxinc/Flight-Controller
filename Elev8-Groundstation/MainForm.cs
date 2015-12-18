@@ -896,9 +896,13 @@ namespace Elev8
 				case 2:
 					tbCalibrateDocs.Visible = true;
 					tbCalibrateDocs.Height = 140;
-					tbCalibrateDocs.Lines = new string[] {
+					/*tbCalibrateDocs.Lines = new string[] {
 						"Move all sticks and levers to their\n",
 						"full forward, or full right positions.\n",
+						"(Controls above may respond incorrectly) - " + CalibrateTimer.ToString() };*/
+                    			tbCalibrateDocs.Lines = new string[] {
+						"Move both STICKS all the way to the RIGHT and UP, and all",
+						"SWITCHES/KNOBS to their MAXIMUM value position. (1 or 2/clockwise)",
 						"(Controls above may respond incorrectly) - " + CalibrateTimer.ToString() };
 
 					if(CalibrateControlsStep == 200) {
@@ -923,8 +927,11 @@ namespace Elev8
 					break;
 
 				case 3:
-					tbCalibrateDocs.Lines = new string[] { "Move all sticks and levers to\n",
+					/*tbCalibrateDocs.Lines = new string[] { "Move all sticks and levers to\n",
 						"their full back, or full left positions.\n",
+						CalibrateTimer.ToString() };*/
+                    			tbCalibrateDocs.Lines = new string[] { "Move both STICKS all the way to the LEFT and DOWN, and all",
+						"SWITCHES/KNOBS to their MINIMUM value position (0/counter-clockwise).",
 						CalibrateTimer.ToString() };
 
 
@@ -1115,14 +1122,16 @@ namespace Elev8
 				case 1:
 					txBuffer[0] = (byte)0xFF;
 					comm.Send( txBuffer, 1 );
-					lblCalibrateDocs.Text = "Plug in your flight battery and wait for the ESCs to beep twice, then press the Throttle Calibration button again";
+					//lblCalibrateDocs.Text = "Plug in your flight battery and wait for the ESCs to beep twice, then press the Throttle Calibration button again";
+					lblCalibrateDocs.Text = "Plug in your flight battery and wait for the ESCs to stop beeping (about 5 seconds), then press the Throttle Calibration button again";
 					CalibrationCycle = 2;
 					break;
 
 				case 2:
 					txBuffer[0] = 0;		// Finish
 					comm.Send( txBuffer, 1 );
-					lblCalibrateDocs.Text = "Calibration complete";
+					//lblCalibrateDocs.Text = "Calibration complete";
+					lblCalibrateDocs.Text = "Once the ESCs stop beeping (about 5 seconds), calibration is complete and your may remove the flight battery";
 					lblCalibrateDocs.Update();
 					System.Threading.Thread.Sleep( 1000 * 3 );
 					lblCalibrateDocs.Text = "";
