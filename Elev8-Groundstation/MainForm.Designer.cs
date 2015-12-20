@@ -2062,6 +2062,7 @@
 			this.label12.Size = new System.Drawing.Size( 111, 13 );
 			this.label12.TabIndex = 13;
 			this.label12.Text = "TODO: Ascent limiting";
+            this.label12.Visible = false;
 			// 
 			// udVoltageOffset
 			// 
