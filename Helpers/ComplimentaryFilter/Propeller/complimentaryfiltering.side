@@ -1,0 +1,19 @@
+complimentaryfiltering.cpp
+Constants.h
+pins.h
+pins_v2.h
+pins_v3.h
+sensors.cpp
+serial_4x.cpp
+serial_4x.h
+serial_4x_driver.spin
+elev8types.h
+sensors.h
+sensors_driver.spin
+>compiler=C++
+>memtype=cmm main ram compact
+>optimize=-Os
+>-m32bit-doubles
+>-fno-exceptions
+>-fno-rtti
+>BOARD::QUICKSTART
