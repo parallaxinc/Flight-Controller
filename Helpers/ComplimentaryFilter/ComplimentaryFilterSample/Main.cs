@@ -231,7 +231,7 @@ namespace FilterSample
 			int val = hsStrength.Value;
 
 			lblStrength.Text = String.Format("Mix: {0}% accel, {1}% gyro",
-				val, 100-val);
+				100-val, val);
 		}
 	}
 }
