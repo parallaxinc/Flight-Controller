@@ -19,6 +19,18 @@ Written by Jason Dorie
 
 --------------------------------
 
+Current Flight Mode Capabilities:
+
+Stable:
+  - Automatic leveling
+  - Tilt-compensated thrust
+  - Accelerometer disturbance thrust adjustment
+
+Manual:
+  - Gyro stabiization - basically a heading hold gyro on all three axis
+
+--------------------------------
+
 Modules:
 
 Elev8-Main - Main control loop.  Handles initialization, communication
@@ -145,10 +157,7 @@ steps over the standard range of 1ms to 2ms pulse lengths.  This COG only uses
 892 of 1984 bytes of code space.  If the desired update rate is below 500Hz,
 any "in between" time could be used to run additional functions.
 
-
-
-
-
+--------------------------------
 
 Cogs in use:
 1- Elev8-Main / IntPIDs
