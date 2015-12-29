@@ -1,0 +1,160 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}{\f1\fnil Consolas;}{\f2\fnil\fcharset0 Consolas;}}
+{\colortbl ;\red0\green0\blue0;\red255\green255\blue255;\red0\green0\blue255;}
+{\*\generator Riched20 6.3.9600}\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\ul\f0\fs22\lang9 Parallax Flight Controller\par
+\ulnone List of code modules:\par
+\cf1\highlight2\ul F32_1_6\ulnone  - 32-bit floating point math routines.  Originally authored by\lang1033  \lang9 Jonathan Dummer (Lonesock on the Parallax forums) this is similar to the\lang1033  \lang9 Float32 library provided with the Propeller Tool, but is generally faster.  It\lang1033  \lang9 has been modified to remove a few unused functions, add a few new ones, and now includes a "stream processor" whereby a sequence of\lang1033  \lang9 operations can be generated into a memory stream.  The stream processor can then run the\lang1033  \lang9 operations asynchronously.  Requires a COG and uses nearly all available COG\lang1033  \lang9 memory.\par
+\par
+\ul Serial-4X\ulnone  - From Tracey Allen, this driver runs four simultaneous full-duplex serial ports in a single cog.  Each port can run at its own baud rate.  Flow control is not supported.  This handles the communication with GroundStation, XBee, and two additional ports.\par
+\par
+\ul IntPID\ulnone  - Integer PID control object.  This object is used to run\lang1033  \lang9 the PID loops governing the stability controls.  Math is done with integers,\lang1033  \lang9 with a user-defined scale factor applied.  At some point I would like to move\lang1033  \lang9 the PID functions into F32 streams, but this works well for now.  The PID functions include code to limit derivative kick, integer windup, and total output.  There are variants of the PID functions that allow passing in the derivative value, or the more standard method of computing it from the measured error can be used.\par
+\par
+\ul Propeller Eeprom\ulnone  - Simple I2C communication and EEPROM page read/write module.\lang1033  \lang9 This object is used to handle writing variables to EEPROM, allowing the\lang1033  \lang9 configuration code to persist user settings for things like gyro drift\lang1033  \lang9 and accelerometer offset compensation.\par
+\par
+\ul QuatIMU\ulnone  - Quaternion / Matrix hybrid orientation estimation code.  This\lang1033  \lang9 code uses incremental updates to maintain an estimate of the current\lang1033  \lang9 orientation in both quaternion and matrix form.  The current quaternion\lang1033  \lang9 is rotated by a small-angle quaternion created from the gyro readings.  That\lang1033  \lang9 result is converted to a matrix.  The Y axis column of the matrix is compared\lang1033  \lang9 against the current accelerometer vector to produce an estimated rotation\lang1033  \lang9 error, a portion of which is applied on the next update.  The comparison of\lang1033  \lang9 the matrix term and orientation estimate is largely taken from the Discrete\lang1033  \lang9 Cosine Matrix mathod described by William Premerlani and Paul Bizard.  This\lang1033  \lang9 code relies entirely on the F32 module for computation - it is entirely Spin\lang1033  \lang9 and does not take a COG itself.  The bulk of the functionality is in the QuatUpdateCommands array, which is simply embedded in the code.  At runtime, function and variable indices are converted to pointers within the Propeller's 32kb address space, as the F32 stream processor expects pointers to variables in memory.\par
+Once the orientation is updated, roll, pitch, and yaw values are computed from the matrix terms.  These values express the rotation of the craft with respect to the world, and are used by the flight control main loop when determining how fast to drive the motors.\par
+QuatIMU also does altitude estimation by fusing accelerometer and\lang1033  \lang9 altimeter readings.  Gravity is subtracted from the current accelerometer\lang1033  \lang9 vector, the vector is rotated into world-space, and a velocity estimate is\lang1033  \lang9 updated with it.  Another velocity estimate is computed from the rate of\lang1033  \lang9 change of the pressure-altitude reading.  The accelerometer-based value is\lang1033  \lang9 filtered using the altimeter value, and the result is integrated into an\lang1033  \lang9 altitude estimate.  The altitude estimate is then itself filtered using the\lang1033  \lang9 pressure-altitude value.\par
+This module is by far the most mathematically complex, so you'll find a more readable version of the equations in use in the comments beside the code.  In addition, more detail on the various math performed by the module will follow later in this document.\par
+\par
+\ul RC_Receiver \ulnone - Remote Control Receiever code.  This module listens for signals on the R/C receiver input pins, and records the length of the pulses from each pin as numeric values in 1/2 microsecond increments.  Standard servo pulse widths are from 1ms to 2ms in length, centered at 1.5ms.  In 1/2uS units,\lang1033  \lang9 those values are 2000 (1ms), 4000 (2ms), and 3000 (1.5ms) respectively.\lang1033  The radio receiver may output pulses in any order, and at any time, so \lang9 it is advised that this COG remain\lang1033  \lang9 dedicated to this sole task for accuracy.  This module uses one of two PASM drivers, one supporting a single channel per input pin (PWM) and one that handles all incoming data on a single pin (PPM).  A flag is used to specify which PASM driver to use.\par
+\par
+\ul SBUS-Receiver\ulnone  - Futaba S-BUS Receiver code.  This module decodes the\lang1033  \lang9 Futaba S-BUS protocol signals into numeric values.  S-BUS serves the same role\lang1033  \lang9 as the PWM signals from a normal radio control receiver, but does so using\lang1033  \lang9 a modified serial protocol for accuracy, speed, and robustness.  The output\lang1033  \lang9 of the S-BUS module and the RC_Receiver module is interchangeable, but the\lang1033  \lang9 S-BUS physically uses only a single wire in addition to power and ground\lang1033  \lang9 connections, and provides up to 16 analog channels and 2 binary channels of\lang1033  \lang9 input.  It is advised that this\lang1033  \lang9 COG remain dedicated to this sole task for accuracy.\par
+Note that only RC Receiver or SBUS Receiver is ever active.  The two are mutually exclusive.\par
+\par
+\ul Sensors\ulnone  - Gyro, Accelerometer, Magnetometer, Altimeter, and LED module.\lang1033  \lang9 This code reads all the sensors on the Elev8-FC, and writes the LED values to\lang1033  \lang9 the WS2812B LEDs.  Since almost all of these devices are high-speed SPI, they\lang1033  \lang9 share much of the same interface code, and can be read from very quickly.\lang1033  \lang9 This code does the initial setup of the devices, reads their values, and\lang1033  \lang9 performs some conditioning of the outputs.  This additional work includes gyro drift compensation for temperature changes, median filtering of the accelerometer outputs, and conversion from barometer pressure to altutude.\lang1033   This COG does not use all of it's available time, but it consumes almost the entire COG RAM, so performing additional work here is unlikely.\lang9\par
+\par
+\ul Servo32-HighRes\ulnone  - ESC/Servo output driver.  This module drives the PWM\lang1033  \lang9 outputs for the electronic speed controls and optional servo outputs.  It\lang1033  \lang9 supports very high output rates (up to 500Hz) with 1/8uS resolution, or 8000\lang1033  \lang9 steps over the standard range of 1ms to 2ms pulse lengths.  This COG only uses\lang1033  \lang9 892 of 1984 bytes of code space.  If the desired update rate is below 500Hz,\lang1033  \lang9 any "in between" time could be used to run additional functions.  It is possible to over or under-drive ome servos, and this module supports that - output pulses as low as 1/2 millisecond are supported, and any length below the update rate is acceptable.  At 500hz, this limit is 2ms.  At 400hz, the limit becomes 2.5ms, and so on.\par
+\par
+\ul Elev8-Main\ulnone  - This is the core flight control logic and user interface.  It collects input from the sensors module, and passes that along to the QuatIMU routines for processing.  It then uses the resulting outputs in combination with the inputs from the R/C receiver values to feed the PIDs, which in turn drive the motor (ESC/servo) outputs.\par
+\par
+
+\pard\sl276\slmult1 Cogs in use:\par
+1- Elev8-Main / IntPIDs\par
+2- RC Reciever (or) SBus-Receiver\par
+3- Sensors\par
+4- F32_1_6 float math / QuatIMU\par
+5- Servo32-HighRes\par
+
+\pard\sa200\sl276\slmult1 6- Serial-4X\par
+
+\pard\sl276\slmult1 Two full cogs currently remain unused.\par
+
+\pard\sa200\sl276\slmult1\cf0\highlight0\par
+\ul More about QuatIMU\ulnone\par
+A full understanding of the QuatIMU module involves two things.\par
+
+\pard\sl276\slmult1 1) The construction of the instruction sequence for the F32 command stream\par
+\tab 1a) Authoring the stream as a sequence of instruction and variable indices\par
+\tab 1b) Converting those indices to Propeller memory addresses\par
+2) The math involved in the commands themselves\par
+\tab 2a) Building and applying the incremental rotation quaternion\par
+\tab 2b) Converting the updated orientation quaternion to a rotation matrix\par
+\tab 2c) Using the terms of the rotation matrix to compute the orientation drift\par
+\tab 2d) Updating the altitude estimate using the accelerometer and barometer readings\par
+\tab 2e) Converting the user inputs for roll, pitch, and yaw into a target quaternion\par
+\tab 2f) Computing the difference between the current and desired orientations\par
+
+\pard\sa200\sl276\slmult1\par
+\ul 1a - Authoring the command stream\ulnone\par
+The command stream is simply a sequence of instructions, where each instruction is of the form:  ( operation, variable 1, variable 2, result ).\par
+The possible operations are available as a set of constants, prefixed with op_.  For example, op_Add, op_Subtract, and so on.\par
+The variables are named in a large enum.  This allows their symbolic names to be used when constructing the command stream, and the compiler will happily convert the names into indices in a buffer of variables.  Each variable used by the F32 object is a 32 bit quantity, so an array of integer values is used, but the F32 module is free to interpret them as either integers or 32 bit floating point numbers - as far as the code is concerned, it's just RAM.  In the code, this is represented using a union - two arrays, one float, and one integer, are declared together, and the compiler is told they occupy the same space in memory.\par
+\par
+\ul 1b - Converting the command stream indices to addresses\ulnone\par
+The F32 command stream processor expects each of the 4 values for the operation to be a memory address.  In the case of the operation, it's the memory address of a jump instruction into the COG that performs the function.  For the variables, it's the memory address of the variable within the Propeller's 32kb of HUB RAM.  Since Propeller addresses are limited to 32kb, they can be stored in a 16 bit value (a word or a short).  In order to make coding simpler, and more compact, the instruction sequence is entered as indices to the instructions and variables, each stored as a single byte, and the addresses are computed from those indices at runtime.  This is done to save RAM at a small cost of execution speed.\par
+\ul\par
+2 - The math\ulnone\par
+The QuatIMU module uses both quaternion and rotation matrix forms during computation.  A quaternion is used for the orientation update because it is faster to rotate and renormalize a quaternion than it is a matrix.  The quaternion is then converted to a matrix, and the matrix coefficients are used to compute rotation error and the pitch, roll, and yaw values of the current orientation.\par
+\ul 2a - Building and applying the incremental rotation quaternion\ulnone\par
+A unit quaternion is a representation of a rotation that is, essentially, a vector about which to rotate, and an amount to rotate around that vector.  The way the values are represented isn't quite so obvious - the first 3 components of the quaternion are the vector to rotate around, scaled by the sin of the rotation amount.  The 4th value is the cosine of the rotation amount.  To make it interesting, the rotation is scaled by 1/2.  A unit quaternion representing no rotation is (0,0,0 , 1), also called the identity.  Unit quaternions always have a length of 1.0, that is, the square root of the sum-of-squares of the components of the vector will be 1, or:\par
+\tab Length = Sqrt( Q.w\super 2\nosupersub  + Q.x\super 2\nosupersub  + Q.y\super 2\nosupersub  + Q.z\super 2\nosupersub  ) = 1.0\par
+We measure the change in orientation of our craft every 250th of a second.  We build a quaternion from the 3 rotation rate values from the gyro as follows:\par
+First, convert the incoming gyro values from gyro units to radians:\par
+\tab rate = gyroRate / GyroUnitsToRadians / UpdateRateInHz\par
+Then compute the magnitude of the quaternion rotation:\par
+  \tab rmag = sqrt(rx\super 2\nosupersub  + ry\super 2\nosupersub  + rz\super 2\nosupersub ) * 0.5    (rx, ry, and rz are now in radians)\par
+Compute the sin and cos of the quaternion magnitude value.\par
+\tab cosr = Cos(rMag),  sinr = Sin(rMag) / rMag\par
+Compute the quaternion with which to rotate our existing quaternion:\par
+
+\pard\sl276\slmult1\tab qdot.w = -(rx * q.x + ry * q.y + rz * q.z) / 2.0\par
+\tab qdot.x =  (rx * q.w + rz * q.y - ry * q.z) / 2.0\par
+\tab qdot.y =  (ry * q.w - rz * q.x + rx * q.z) / 2.0\par
+
+\pard\sa200\sl276\slmult1\tab qdot.z =  (rz * q.w + ry * q.x - rx * q.y) / 2.0\par
+Rotate our current quaternion by the computed quaternion rotation:\par
+
+\pard\sl276\slmult1\tab q.w = cosr * q.w + sinr * qdot.w\par
+\tab q.x = cosr * q.x + sinr * qdot.x\par
+\tab q.y = cosr * q.y + sinr * qdot.y\par
+
+\pard\sa200\sl276\slmult1\tab q.z = cosr * q.z + sinr * qdot.z\par
+Normalize the resulting quaternion:\par
+\tab q = q.Normalize()   (compute the vector length, scale each component by 1/length)\par
+\ul 2b - Convert the resulting quaternion to a 3x3 rotation matrix\ulnone\par
+This is a straightforward procedure where individual terms of the rotation matrix are composed of sums or differences of products of the quaternion terms.  The function computes some common terms that are reused frequently to save computation, and the end result looks like this:\par
+
+\pard\sl276\slmult1\cf1\highlight2\f1\fs19\tab\tab\tab\cf3 float\cf1  qx2 =  Q.x * Q.x * 2;\par
+\tab\tab\tab\cf3 float\cf1  qy2 =  Q.y * Q.y * 2;\par
+\tab\tab\tab\cf3 float\cf1  qz2 =  Q.z * Q.z * 2;\par
+\tab\tab\tab\cf3 float\cf1  qxqy2 = Q.x * Q.y * 2;\par
+\tab\tab\tab\cf3 float\cf1  qxqz2 = Q.x * Q.z * 2;\par
+\tab\tab\tab\cf3 float\cf1  qxqw2 = Q.x * Q.w * 2;\par
+\tab\tab\tab\cf3 float\cf1  qyqz2 = Q.y * Q.z * 2;\par
+\tab\tab\tab\cf3 float\cf1  qyqw2 = Q.y * Q.w * 2;\par
+\tab\tab\tab\cf3 float\cf1  qzqw2 = Q.z * Q.w * 2;\par
+\par
+\tab\tab\tab m[0, 0] = 1 - qy2 - qz2;\par
+\tab\tab\tab m[0, 1] = qxqy2 - qzqw2;\par
+\tab\tab\tab m[0, 2] = qxqz2 + qyqw2;\par
+\par
+\tab\tab\tab m[1, 0] = qxqy2 + qzqw2;\par
+\tab\tab\tab m[1, 1] = 1 - qx2 - qz2;\par
+\tab\tab\tab m[1, 2] = qyqz2 - qxqw2;\par
+\par
+\tab\tab\tab m[2, 0] = qxqz2 - qyqw2;\par
+\tab\tab\tab m[2, 1] = qyqz2 + qxqw2;\par
+
+\pard\sa200\sl276\slmult1\tab\tab\tab m[2, 2] = 1 - qx2 - qy2;\par
+\f2\lang1033\tab\f0\fs22 (insert reference to wikipedia quat to matrix rotation page)\lang9\par
+\cf0\highlight0\ul 2c - Using terms of the orientation matrix to compute rotation drift\ulnone\par
+Once the rotation matrix is computed, the rows of the matrix represent the X, Y, and Z axis vectors of the craft rotated into world space.  Conversely, the 3 columns of the matrix represent the X, Y, and Z axis vectors of the world rotated into the space of the craft.\par
+The accelerometer measures acceleration from forces applied to the craft, and the force countering the pull of gravity is one of those forces.  If you take the average of the accelerometer readings over a long period of time, the non-gravity forces will cancel each other, and the force countering gravity is all you're left with.\par
+Since the 2nd column of the rotation matrix represents the Y axis of the world rotated into the space of the craft, it should point in exactly the same direction of the gravity countering force vector.  Any difference between the two could be caused by non-gravity forces acting on the craft, like wind, but those will be generally short lived.  If we compute the rotation required to align the two vectors perfectly, this is our "Error Correction" amount.  A small amount of the error correction value is added in every frame, and over time, will correct for errors in the orientation of the craft.\par
+(insert reference to Premerlani and Bizard's DCM Draft 2 paper, citing relevant pages)\par
+\par
+\ul 2d- Updating the altitude estimate using the accelerometer and barometer readings\ulnone\par
+The Elev8 uses a barometer to read atmospheric pressure, and converts that to an estimate of your current altitude.  Barometric pressure readings can be noisy, and are influenced somewhat by wind, turbulence, and so on.  The code attempts to compensate for this by fusing the accelerometer readings with the barometer in much the same way that the gyroscope and accelerometer complement each other.\par
+The barometer to altitude conversion produces an estimate of your absolute altitude, but it fluctuates.  The accelerometer reads your current acceleration.  By integrating the accelerometer readings (summing over time) you can estimate your current velocity.  Integrating that velocity estimate in turn will give you an estimate of your position, relative to your starting point.  The accelerometer readings are noisy, so your velocity estimate will never be perfectly accurate, and therefore your position estimate will accumulate errors if left unchecked.\par
+The barometer altitude readings will vary somewhat, but on average over the long term, they're quite stable.  The rate of change of the barometer altitude value is fused into the accelerometer velocity estimate to stabilise it, and the raw barometer altitude value and accelerometer position estimates are fused together with a complimentary filter to produce a more accurate altitude estimate.\par
+\par
+\ul 2e - Converting the user inputs for roll, pitch, and yaw into a target quaternion\ulnone\par
+Most people think of aircraft orientation in terms of pitch (nose up/down), roll (bank left/right), and yaw (heading).  Intuitively, if you command your craft to a specific heading, with a specific pitch and roll, most of the time it will work.  Problems arise, however, when the craft does certain maneuvers.  For example, if you point your craft straight up, so your nose is perfectly vertical, "heading" becomes meaningless.  This is commonly referred to as gimbal lock, and is a problem with any system that uses angles to describe orientation.\par
+If you were to fly a half loop with your craft, as you transition from upright to inverted, your heading changes 180 degrees - if you were flying north, now you're flying south.  It could also be argued that since you're now upside down, either your pitch or your roll is 180 degrees from where it started, but which one?\par
+The Elev8 uses unit quaternions to describe orientation, because they don't suffer from gimbal lock, concisely describe an orientation in space, and can be meaningfully compared to other quaternions to determine differences between rotations.\par
+A unit quaternion can be thought of conceptually as an amount of rotation around an axis.  The numbers are stored in a form that makes them difficult to interpret, because the rotation and the vector are combined, but they are conceptually similar to an axis-angle representation.\par
+In the Elev8, the user can be flying in one of two basic modes: auto-level, or manual.\par
+In the auto-level mode, the desired orientation of the craft is held to be some maximum amount away from level, with a specified heading.  In this mode, the aileron and elevator sticks are treated as desired pitch and roll amounts, and the current heading is updated with the rudder input.  These three values are combined to produce a quaternion that describes this desired orientation.\par
+In manual mode, the orientation is unconstrained.  The user inputs for aileron, elevator, and rudder are used to construct an incremental quaternion, and that quaternion is used to rotate the desired orientation.\par
+If the user switches between auto-level and manual mode in flight, the system handles it gracefully.  If the user switches from manual back to auto-level, the only thing needed is to extract the current heading, if possible, from the current desired orientation.\par
+\par
+\ul 2f - Computing the difference between the current and desired orientations\par
+\ulnone Given an orientation quaternion Q and a desired quaternion DQ, we need to compute the rotation from Q to DQ.  This is simply the conjugate of DQ * Q.  Conjugate is the inverse of a quaternion - it's opposite rotation - and is often notated as Q'.  It is simply a copy of the original rotation quaternion whose vector portion is negated:\par
+Q' = (Qw, -Qx, -Qy, -Qz)\par
+So the rotation from Q to DQ becomes:\par
+QR = DQ' * Q\par
+Once we have the rotation quaternion QR, it is easy to convert it from quaternion form back into an axis/angle form.  This same form can be used to tell us how much instantaneous pitch, roll, and yaw must be applied - IE, how far we need to move in our three local rotation axis to achieve our desired rotation.\par
+The angle (amount of rotation) of a quaternion is the inverse cosine of its W component, multiplied by two because quaternions store half angle.\par
+Angle =  ACos( QR.w ) * 2.0\par
+The axis of rotation is just the vector portion of the quaternion normalized.\par
+Axis = QR(x,y,z) / Length( QR(x,y,z) )\par
+From that we can compute a "strength" of rotation in each of our local axis to move toward our goal by simply scaling the axis by the angle:\par
+
+\pard\sl276\slmult1 Pitch = Axis.x * Angle\par
+Roll = Axis.z * Angle\par
+
+\pard\sa200\sl276\slmult1 Yaw = Axis.y * Angle\par
+Note that these are "instantaneous" amounts - IE, relative rotation speeds around the three axis.  They should not be thought of in the same way as a set of Euler angles, which represent a concise rotation applied in a specific sequence.\par
+\par
+}
+ 
