@@ -560,8 +560,6 @@ namespace Elev8
 					debugData.MinCycles * 64/80, debugData.MaxCycles * 64/80, debugData.AvgCycles * 64/80 );
 
 				tssFCVersion.Text = string.Format( "Firmware Version {0}.{1}", debugData.Version >> 8, debugData.Version & 255 );
-
-				//lblCycles.Text = string.Format( "{0}", debugData.DebugFloat );
 			}
 
 			if(bQuatChanged) {
