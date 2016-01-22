@@ -36,13 +36,17 @@ void BeepHz( int Hz , int Delay )
   {
     //Revision 3 firmware has one buzzer pin  
 
-    loop <<= 1;   // Double the loop count, because we're doing one toggle per loop
-    ctr = CNT;
+    int d2 = d>>2;    // First phase is short so we don't hold the power line for too long
+    d = d + (d-d2);   // Second phase makes up the difference in the delay
 
+    ctr = CNT;
     for( i=0; i<=loop; i++ )
     {
       OUTA ^= (1<<PIN_BUZZER_1);
+      ctr += d2;
+      waitcnt( ctr );
 
+      OUTA ^= (1<<PIN_BUZZER_1);
       ctr += d;
       waitcnt( ctr );
     }

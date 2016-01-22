@@ -36,6 +36,7 @@
 #include "elev8-main.h"         // Main thread functions and defines                            (Main thread takes 1 COG)
 #include "f32.h"                // 32 bit IEEE floating point math and stream processor         (1 COG)
 #include "intpid.h"             // Integer PID functions
+#include "laserrange.h"         // Laser Rangefinder
 #include "pins.h"               // Pin assignments for the hardware
 #include "prefs.h"              // User preferences storage
 #include "quatimu.h"            // Quaternion IMU and control functions
@@ -56,8 +57,6 @@ static int log_stack[LOG_STACK_SIZE]; // allocate space for the stack - you need
 
 volatile char LogTrigger = 0;
 #endif
-
-
 
 short UsbPulse = 0;     // Periodically, the GroundStation will ping the FC to say it's still there - these are countdowns
 short XBeePulse = 0;
@@ -148,6 +147,9 @@ static IntPID  RollPID, PitchPID, YawPID, AltPID, AscentPID;
 const int LEDBrightShift = 0;
 const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
+
+
+LASER_RANGE LaserRange;
 
 
 #ifdef ENABLE_LOGGING
@@ -469,7 +471,7 @@ static char RXBuf2[32], TXBuf2[64];
 static char RXBuf3[128],TXBuf3[4];  // GPS?
 static char RXBuf4[4],  TXBuf4[64]; // Data Logger
 #else
-static char RXBuf3[4],  TXBuf3[4]; // GPS?
+static char RXBuf3[32], TXBuf3[4]; // laser rangefinder
 static char RXBuf4[4],  TXBuf4[4]; // Data Logger
 #endif
 
@@ -481,8 +483,7 @@ void InitSerial(void)
   S4_Define_Port(1,  57600, XBEE_TX, TXBuf2, sizeof(TXBuf2), XBEE_RX, RXBuf2, sizeof(RXBuf2));
 
   // Unused ports get a pin value of 32
-  S4_Define_Port(2,   9600, 32, TXBuf3, sizeof(TXBuf3), 32, RXBuf3, sizeof(RXBuf3));
-
+  S4_Define_Port(2, 19200,       19, TXBuf3, sizeof(TXBuf3),      20, RXBuf3, sizeof(RXBuf3));
   S4_Define_Port(3, 115200, PIN_MOTOR_AUX2, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
 
   S4_Start();
@@ -909,10 +910,27 @@ void DoCompassCalibrate(void)
 
 void CheckDebugInput(void)
 {
-  int i, HostCommand;
+  int i, c, HostCommand;
+  static char laserCount = 0;
+
+  do {
+    c = S4_Check(2);
+    if( c >= 0 ) {
+      LaserRange.AddChar( (char)c );
+      laserCount = 16;
+    }
+  } while( c >= 0 );
+
+  if( laserCount == 0 ) {
+    S4_Put(2,'A');
+    laserCount = 16;
+  }
+  else {
+    laserCount--;
+  }        
 
   char port = 0;
-  int c = S4_Check(0);
+  c = S4_Check(0);
   if(c < 0) {
     c = S4_Check(1);
     if(c < 0)
@@ -1085,7 +1103,7 @@ void DoDebugModeOutput(void)
 
       case 1:
         UpdateCycleStats();
-        COMMLINK::StartPacket( 7, 12 );                // Debug values, 12 byte payload
+        COMMLINK::StartPacket( 7, 12 );                // Debug values, 16 byte payload
         COMMLINK::AddPacketData( &Stats, 8 );          // Version number, + Stats on update cycle counts (sending debug data takes a long time)
         COMMLINK::AddPacketData( &counter, 4 );        // Send the counter (sequence timestamp)
         COMMLINK::EndPacket();
@@ -1104,7 +1122,7 @@ void DoDebugModeOutput(void)
         TxData[8] = sens.MagY;
         TxData[9] = sens.MagZ;
 
-        COMMLINK::BuildPacket( 2, &TxData, 20 );   //Send 22 bytes of data from @TxData onward (sends 11 words worth of data)
+        COMMLINK::BuildPacket( 2, &TxData, 20 );   //Send 20 bytes of data from @TxData onward (sends 10 words worth of data)
         COMMLINK::SendPacket(port);
         break;
 
@@ -1291,7 +1309,7 @@ void ApplyPrefs(void)
   QuatIMU_SetManualRates( Prefs.ManualRollPitchRate , Prefs.ManualYawRate );
 
 #ifdef FORCE_SBUS
-  Prefs.UseSBUS = 1;
+  Prefs.ReceiverType = 1;
 #endif
 
 #if defined( __V2_PINS_H__ )  // V2 hardware doesn't support the battery monitor

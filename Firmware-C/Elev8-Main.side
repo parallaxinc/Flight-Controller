@@ -38,6 +38,8 @@ serial_4x_driver.spin
 commlink.cpp
 commlink.h
 rc_driver_ppm.spin
+laserrange.cpp
+laserrange.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os
