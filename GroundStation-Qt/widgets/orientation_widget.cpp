@@ -82,8 +82,8 @@ void Orientation_Widget::Init(void)
 void Orientation_Widget::setQuat( QQuaternion q )
 {
 	quat = q;
-	QMatrix3x3 m = quat.toRotationMatrix();
-	mat = QMatrix4x4(m);
+//	QMatrix3x3 m = quat.toRotationMatrix();
+//	mat = QMatrix4x4(m);
 
 	update();
 }
@@ -91,8 +91,8 @@ void Orientation_Widget::setQuat( QQuaternion q )
 void Orientation_Widget::setQuat2( QQuaternion q )
 {
 	quat2 = q;
-	QMatrix3x3 m = quat2.toRotationMatrix();
-	mat2 = QMatrix4x4(m);
+//	QMatrix3x3 m = quat2.toRotationMatrix();
+//	mat2 = QMatrix4x4(m);
 	bQuat2Valid = true;
 
 	update();

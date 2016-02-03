@@ -6,7 +6,7 @@
 #include <QLabel>
 #include <QQuaternion>
 
-#include "Connection.h"
+#include "connection.h"
 #include "elev8data.h"
 #include "prefs.h"
 
