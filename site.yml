@@ -1,5 +1,5 @@
 image: Elev8-Groundstation/PropIcon.png
-type: other
+type: hardware
 
  links:
         Source Code: https://github.com/parallaxinc/Flight-Controller
