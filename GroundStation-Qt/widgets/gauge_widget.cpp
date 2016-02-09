@@ -91,15 +91,15 @@ void Gauge_Widget::paintEvent(QPaintEvent * event)
 	temp = value * displayScale + displayOffset;
 	QString s;
 	if( displayScale != 1.f ) {
-		s = QString::asprintf("%0.1f", temp) + displayPostfix;
+		s = QString::number(temp, 'f', 1) + displayPostfix;
 	}
 	else {
-		s = QString::asprintf("%g", temp) + displayPostfix;
+		s = QString::number(temp, 'f', 1) + displayPostfix;
 	}
 
 	p.setFont( font() );
 	p.drawText( 10, 1, width()-20, height()-8, Qt::AlignLeft | Qt::AlignBottom, s );
 
-	s = QString::asprintf("%0.1f", avg.Value() );
+	s = QString::number(avg.Value(), 'f', 1);
 	p.drawText( 10, 1, width()-20, height()-8, Qt::AlignRight | Qt::AlignBottom, s );
 }

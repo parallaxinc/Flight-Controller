@@ -1,0 +1,35 @@
+name: Flight-Controller
+package: flightcontroller
+org: Parallax Inc.
+url: http://developer.parallax.com/flight-controller/
+maintainer: Jason Dorie
+email: jason.dorie@gmail.com
+copyright: 2014-2016
+license: GPLv3
+tagline: ELEV-8 GroundStation
+description: A Ground Station for the ELEV-8 Quadrotor
+master: groundstation
+
+target: 
+    deb: 
+        depends: libftdi1
+        categories: Development
+        section: Applications
+    dmg: 
+        category: public.app-category.developer-tools
+        background: icons/mac-dmg.png
+        bundle: flightcontroller
+    inno:
+        banner: icons/win-banner.bmp
+        run: groundstation
+
+repos: 
+    groundstation:
+        url: https://github.com/bweir/Flight-Controller.git
+        builder: qmake
+        root: GroundStation-Qt
+        files:
+            groundstation:
+                name: GroundStation
+                icon: icons/PropIcon.png
+        branch: master
