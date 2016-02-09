@@ -781,10 +781,19 @@ void UpdateFlightLoop(void)
     // The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
     // Some ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment, so avoid that
 
-    Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
-    Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
-    Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
-    Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    if( UsbPulse > 0 ) {
+      // If USB is connected, don't allow throttle to go above test value for added safety.
+      Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+    }
+    else {
+      Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    }
 
     if( Prefs.DisableMotors == 0 ) {
       //Copy new Ouput array into servo values
