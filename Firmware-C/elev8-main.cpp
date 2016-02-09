@@ -46,7 +46,7 @@
 #include "serial_4x.h"          // 4 port simultaneous serial I/O                               (1 COG)
 #include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
-//#define ENABLE_LOGGING
+#define ENABLE_LOGGING
 
 #ifdef ENABLE_LOGGING
 void DoLogOutput(void);
@@ -154,6 +154,8 @@ LASER_RANGE LaserRange;
 
 #ifdef ENABLE_LOGGING
 // Only used for debugging
+static const char * nibbleToAscii = "0123456789abcdef";
+
 static char LogInt( int x , char * dest )
 {
   char buf[14];
@@ -167,8 +169,8 @@ static char LogInt( int x , char * dest )
   else isNeg = 0;
 
   do {
-    buf[--index] = '0' + (x % 10);
-    x /= 10;
+    buf[--index] = nibbleToAscii[x & 15];
+    x >>= 4;
   } while(x > 0);
 
   if( isNeg ) {
@@ -467,7 +469,7 @@ void InitReceiver(void)
 static char RXBuf1[32], TXBuf1[64];
 static char RXBuf2[32], TXBuf2[64];
 
-#if 0 // Currently unused - these buffers might grow later
+#if 1 // Currently unused - these buffers might grow later
 static char RXBuf3[128],TXBuf3[4];  // GPS?
 static char RXBuf4[4],  TXBuf4[64]; // Data Logger
 #else
@@ -1260,28 +1262,28 @@ void DataLogThread(void *par)
     if( phase == 0 ) {
       // Probably better to write this to just dump raw int, float, etc.
       // MUCH faster, smaller, and the PC can extract it relatively easily
-    
+
       static char tempBuf[128];
       char count = 0;
 
-      count =  LogInt( DesiredAscentRate , tempBuf+count );
-      count += LogInt( AscentEst , tempBuf+count );
-      count += LogInt( AscentPID.LastPError , tempBuf+count );
-      count += LogInt( AscentPID.IError , tempBuf+count );
-      count += LogInt( AscentPID.Output , tempBuf+count );
-      count += LogInt( DesiredAltitude , tempBuf+count );
-      count += LogInt( AltiEst, tempBuf+count );
-      count += LogInt( AltPID.LastPError , tempBuf+count );
-      count += LogInt( AltPID.IError , tempBuf+count );
-      count += LogInt( FlightMode , tempBuf+count);
+      count =  LogInt( sens.Alt , tempBuf+count );
+      count += LogInt( sens.AccelX , tempBuf+count );
+      count += LogInt( sens.AccelY , tempBuf+count );
+      count += LogInt( sens.AccelZ , tempBuf+count );
+      
+      int * Q = (int *)QuatIMU_GetQuaternion();
 
-      count += LogInt( Radio.Thro , tempBuf+count );
+      count += LogInt( Q[0] , tempBuf+count );
+      count += LogInt( Q[1] , tempBuf+count );
+      count += LogInt( Q[2] , tempBuf+count );
+      count += LogInt( Q[3] , tempBuf+count );
+
       tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
-    
+
       S4_Put_Bytes( 3, tempBuf, count );
     }
 
-    phase ^= 1; // Cut the data rate down a little
+    phase = (phase+1) & 3; // Cut the data rate down a little
 
     // Reset the log trigger
     LogTrigger = 0;
