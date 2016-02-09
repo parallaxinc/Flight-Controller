@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QCoreApplication>
 #include "aboutbox.h"
+#include "quatutil.h"
 #include <math.h>
 
 static char beatString[] = "BEAT";
@@ -266,7 +267,7 @@ void MainWindow::timerEvent(QTimerEvent * e)
 	UpdateStatus();
 
 	Heartbeat++;
-	if( Heartbeat == 20 && ThrottleCalibrationCycle == 0 )	// don't send heartbeat during throttle calibration
+	if( Heartbeat >= 20 && ThrottleCalibrationCycle == 0 )	// don't send heartbeat during throttle calibration
 	{
 		Heartbeat = 0;
 		SendCommand( beatString );	// Send the connection heartbeat
@@ -356,7 +357,6 @@ void MainWindow::SetRadioMode(int mode)
 	// Save radio mode to prefs file
 	saveSettings();
 }
-
 
 
 const float PI = 3.141592654f;
@@ -480,7 +480,7 @@ void MainWindow::ProcessPackets(void)
 
     if( bRadioChanged )
     {
-		QString volts = QString::number(radio.BatteryVolts, 'f', 2);
+		QString volts = QString::number((float)radio.BatteryVolts / 100.f, 'f', 2);
 
 		ui->batteryVal->setValue( radio.BatteryVolts );
 		ui->batteryVal->setRightLabel( volts );
@@ -576,20 +576,17 @@ void MainWindow::ProcessPackets(void)
 			ui->Orientation_display->setQuat(q);
 			ui->Orientation_Accel->setQuat(q);
 
-//            QMatrix3x3 m;
-//            m = q.toRotationMatrix();
-//
-//            float roll =   asin( m(1,0) ) * (180.0f/PI);
-//            float pitch =  asin( m(1,2) ) * (180.0f/PI);
-//            float yaw =  -atan2( m(2,0), m(2,2) ) * (180.0f/PI);
-//
-//            ui->Horizon_display->setAngles( roll, pitch );
-//            ui->Heading_display->setHeading(yaw);
+			QMatrix3x3 m;
+			m = QuatToMatrix( q );
+
+			float roll =   asin( m(1,0) ) * (180.0f/PI);
+			float pitch =  asin( m(1,2) ) * (180.0f/PI);
+			float yaw =  -atan2( m(2,0), m(2,2) ) * (180.0f/PI);
+
+			ui->Horizon_display->setAngles( roll, pitch );
+			ui->Heading_display->setHeading(yaw);
         }
-        //else if(tcTabs.SelectedTab == tpAccelCalibration) {
-            //ocAccelOrient.Quat = q;
-        //}
-    }
+	}
 
 	if( bSensorsChanged )
 	{
@@ -774,6 +771,25 @@ quint8 txBuffer[1];
 		break;
 
 	case 1:
+		if( radio.BatteryVolts > 0 )
+		{
+			txBuffer[0] = (quint8)0x0;
+			comm.Send( txBuffer, 1 );
+
+			str = "You must disconnect your flight battery to calibrate your ESC throttle range.  Failure to do so is a serious safety hazard.";
+
+			QString backup = ui->lblCalibrateDocs->styleSheet();
+			ui->lblCalibrateDocs->setText(str);
+			ui->lblCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
+
+			qApp->processEvents();	// force the label we just updated to repaint
+
+			QThread::sleep( 5 );
+			ui->lblCalibrateDocs->setStyleSheet( backup );
+			CancelThrottleCalibration();
+			return;
+		}
+
 		txBuffer[0] = (quint8)0xFF;
 		comm.Send( txBuffer, 1 );
 		str = "Plug in your flight battery and wait for the ESCs to stop beeping (about 5 seconds), then press the Throttle Calibration button again";
