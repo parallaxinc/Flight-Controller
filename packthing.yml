@@ -25,7 +25,7 @@ target:
 
 repos: 
     groundstation:
-        url: https://github.com/bweir/Flight-Controller.git
+        url: https://github.com/parallaxinc/Flight-Controller.git
         builder: qmake
         root: GroundStation-Qt
         files:
