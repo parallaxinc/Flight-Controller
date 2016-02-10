@@ -1,0 +1,35 @@
+sudo: required
+dist: trusty
+cache: apt
+language: cpp
+addons:
+  apt:
+    packages:
+      - help2man
+      - lintian
+      - cppcheck
+      - tree
+      - debhelper
+      - libudev-dev
+      - imagemagick
+      - qt5-default
+      - libqt5serialport5-dev
+matrix:
+  include:
+
+  - os: osx
+    compiler: clang
+    env:
+        PLATFORM=osx
+        PATH=/Users/travis/local/bin:$PATH
+        PYTHONPATH=$PYTHONPATH:$HOME/local/lib/python2.7/site-packages 
+
+  - os: linux
+    compiler: g++
+    env:
+        PLATFORM=linux
+        PATH=/home/travis/local/bin:$PATH
+        PYTHONPATH=$PYTHONPATH:$HOME/local/lib/python2.7/site-packages
+
+install: "./scripts/travis/install.sh"
+script:  "./scripts/travis/script.sh"
