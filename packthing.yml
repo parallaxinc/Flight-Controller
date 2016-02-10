@@ -1,5 +1,5 @@
-name: Flight-Controller
-package: flightcontroller
+name: ELEV-8 Flight Controller
+package: elev8-flightcontroller
 org: Parallax Inc.
 url: http://developer.parallax.com/flight-controller/
 maintainer: Jason Dorie
@@ -32,4 +32,16 @@ repos:
             groundstation:
                 name: GroundStation
                 icon: icons/PropIcon.png
+        branch: master
+
+	firmware-sources:
+        url: https://github.com/parallaxinc/Flight-Controller.git
+        builder: dir
+        root: Firmware-C
+        branch: master
+
+	groundstation-sources:
+        url: https://github.com/parallaxinc/Flight-Controller.git
+        builder: dir
+        root: GroundStation-Qt
         branch: master
