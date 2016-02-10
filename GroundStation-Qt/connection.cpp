@@ -364,7 +364,10 @@ void Connection::AttemptConnect(void)
             continue;
         }
 
+#ifdef WIN32	// Only do this on windows systems
 		serial->setDataTerminalReady(false);
+#endif
+
 		serial->setBaudRate( QSerialPort::Baud115200 );
 		serial->setFlowControl( QSerialPort::NoFlowControl );
 		serial->setParity( QSerialPort::NoParity );
@@ -374,7 +377,7 @@ void Connection::AttemptConnect(void)
 
         int TestVal = 0;
 
-		for( int i=0; i<5 && !quit; i++ )
+		for( int i=0; i<10 && !quit; i++ )
         {
             // Send the ELV8 signature
             serial->write(txBuf, 4);

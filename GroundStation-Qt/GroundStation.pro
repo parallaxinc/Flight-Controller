@@ -27,7 +27,8 @@ SOURCES += main.cpp\
     widgets/orientation_widget.cpp \
     widgets/radiostick_widget.cpp \
     widgets/valuebar_widget.cpp \
-    aboutbox.cpp
+    aboutbox.cpp \
+    quatutil.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -44,7 +45,8 @@ HEADERS  += mainwindow.h \
     widgets/orientation_widget.h \
     widgets/radiostick_widget.h \
     widgets/valuebar_widget.h \
-    aboutbox.h
+    aboutbox.h \
+    quatutil.h
 
 FORMS    += mainwindow.ui \
     aboutbox.ui
