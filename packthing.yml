@@ -34,13 +34,13 @@ repos:
                 icon: icons/PropIcon.png
         branch: master
 
-	firmware-sources:
+    firmware-sources:
         url: https://github.com/parallaxinc/Flight-Controller.git
         builder: dir
         root: Firmware-C
         branch: master
 
-	groundstation-sources:
+    groundstation-sources:
         url: https://github.com/parallaxinc/Flight-Controller.git
         builder: dir
         root: GroundStation-Qt
