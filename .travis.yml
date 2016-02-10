@@ -31,5 +31,5 @@ matrix:
         PATH=/home/travis/local/bin:$PATH
         PYTHONPATH=$PYTHONPATH:$HOME/local/lib/python2.7/site-packages
 
-install: "./scripts/travis/install.sh"
-script:  "./scripts/travis/script.sh"
+install: "./.travis/install.sh"
+script:  "./.travis/script.sh"
