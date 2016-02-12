@@ -1,7 +1,7 @@
 image: Elev8-Groundstation/PropIcon.png
 type: hardware
 
- links:
+links:
         Source Code: https://github.com/parallaxinc/Flight-Controller
         Hardware: https://www.parallax.com/product/80204
         Elev8-V3 Quadcopter: https://www.parallax.com/product/80300
