@@ -29,8 +29,8 @@ build_script:
 - packthing inno
 
 artifacts:
-  - path: build\staging\elev8-flightcontroller-*.exe
-    name: elev8-flightcontroller
+  - path: build\staging\elev8-groundstation-*.exe
+    name: elev8-groundstation
 
 deploy:
   provider: GitHub

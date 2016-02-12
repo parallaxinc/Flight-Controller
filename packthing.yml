@@ -1,13 +1,13 @@
-name: ELEV-8 Flight Controller
-package: elev8-flightcontroller
+name: Parallax GroundStation
+package: parallax-groundstation
 org: Parallax Inc.
 url: http://developer.parallax.com/flight-controller/
 maintainer: Jason Dorie
 email: jason.dorie@gmail.com
 copyright: 2014-2016
 license: GPLv3
-tagline: ELEV-8 GroundStation
-description: A Ground Station for the ELEV-8 Quadrotor
+tagline: Parallax GroundStation
+description: A Ground Station for the Parallax ELEV-8 Quadrotor
 master: groundstation
 
 target: 
