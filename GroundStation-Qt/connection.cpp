@@ -368,7 +368,6 @@ void Connection::AttemptConnect(void)
 		serial->setDataTerminalReady(false);
 #endif
 
-		serial->setBaudRate( QSerialPort::Baud115200 );
 		serial->setFlowControl( QSerialPort::NoFlowControl );
 		serial->setParity( QSerialPort::NoParity );
 		serial->setStopBits( QSerialPort::OneStop );
@@ -377,34 +376,43 @@ void Connection::AttemptConnect(void)
 
         int TestVal = 0;
 
-		for( int i=0; i<10 && !quit; i++ )
-        {
-            // Send the ELV8 signature
-            serial->write(txBuf, 4);
-			serial->waitForBytesWritten(5);
+		// rateType = 0 or 1 = 115200 (USB) or 57600 (XBee)
+		for( int rateType=0; rateType < 2; rateType++ )
+		{
+			if( rateType == 0 )
+				serial->setBaudRate( QSerialPort::Baud115200 );	// USB connection at 115200
+			else if( rateType == 1 )
+				serial->setBaudRate( QSerialPort::Baud57600 );	// XBee connection at 57600
 
-			QThread::usleep(20);
-            if( serial->waitForReadyRead(50) )
-            {
-                int bytesAvail = (int)serial->bytesAvailable();
-                while( bytesAvail > 0 )
-                {
-                    char c;
-                    if( serial->getChar( &c ) )
-                    {
-                        TestVal = (TestVal << 8) | (quint8)c;
-                        if(TestVal == (int)(('E' << 0) | ('l' << 8) | ('v' << 16) | ('8' << 24)))
-                        {
-                            //FoundElev8 = true;
-                            commStat = CS_Connected;
-                            connected = true;
-                            emit connectionMade();
-                            return;
-                        }
-                    }
-                    bytesAvail--;
-                }
-            }
+			for( int i=0; i<10 && !quit; i++ )
+			{
+				// Send the ELV8 signature
+				serial->write(txBuf, 4);
+				serial->waitForBytesWritten(5);
+
+				QThread::usleep(20);
+				if( serial->waitForReadyRead(50) )
+				{
+					int bytesAvail = (int)serial->bytesAvailable();
+					while( bytesAvail > 0 )
+					{
+						char c;
+						if( serial->getChar( &c ) )
+						{
+							TestVal = (TestVal << 8) | (quint8)c;
+							if(TestVal == (int)(('E' << 0) | ('l' << 8) | ('v' << 16) | ('8' << 24)))
+							{
+								//FoundElev8 = true;
+								commStat = CS_Connected;
+								connected = true;
+								emit connectionMade();
+								return;
+							}
+						}
+						bytesAvail--;
+					}
+				}
+			}
         }
     }
 	commStat = tempStatus;
