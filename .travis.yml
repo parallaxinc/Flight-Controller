@@ -39,7 +39,7 @@ deploy:
   api-key:
     secure: OwQYJeS9/JpzfJmLhNaUxGPFn3wtaNreh1hYvvO8G4yZONJmCxaf3EwvO6TjSn48Mn2GK3CHYyRgYHfL/a4wNAKEHpiIDiZCpeuD/YVCpcDbXuKk98CxNdbdGs3dJ7cCuzu+xDJUJj7c4JePj1zcg9om9EpsgWMaF5fXiDY60kP+bvZdBsmrmmYKycl9CzBokwMW/rIJUA1CHUXLHFOuPEPyLrFuLkfc3RdqlkTcIyBSCqwL+q/e0LD1goXs0cjSjR54/gvLPs8IsAEHjDT/TNQgE6fvWGX9qSlIH/YrufIS69JvqXl38KI6iKzN3Hxr6882EecPB1KmwS7nNFhz0iiGkjNvyI2GEq+5cyI9zWRHhq9R4pXf7zmVlj2Gl6EcIODDfb4Eeepf4vks460zSeTJCaytFYiK9ElmjENOABlOWdULR2lJQfjRtu5uDRVrLhQ1u0KWaf7g8N1Bwt2pP+hdlA8C4cNZI2ufPunYOHstVvPACxOgT0heBHuyxfipaXWL4R0f8LvFESBx9ywBA3/siRnJ1xMsSqTuQZ5ECcuE6TSQiuqK0yIEeUZxHdddWAXsnw1LcGZeHENhxNUNAct8md1+hmGv3Ruyh6Ui9XxPAwgBdFloZnvhAJVeBUJW0/mtfsQVNIMv/koF+ePEPXN/nRxrCTR3q+vrwa8ggFg=
   file_glob: true
-  file: elev8-groundstation-*
+  file: parallax-groundstation-*
   skip_cleanup: true
   on:
     repo: parallaxinc/Flight-Controller

@@ -29,8 +29,8 @@ build_script:
 - packthing inno
 
 artifacts:
-  - path: build\staging\elev8-groundstation-*.exe
-    name: elev8-groundstation
+  - path: build\staging\parallax-groundstation-*.exe
+    name: parallax-groundstation
 
 deploy:
   provider: GitHub
