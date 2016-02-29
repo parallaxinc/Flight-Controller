@@ -19,7 +19,7 @@
  
   Actively In Development / To Be Developed:
   - Altitude Hold - currently disabled
-  - Heading Hold & Compass Calibratin 
+  - Heading Hold & Compass Calibration
   
   
   Written by Jason Dorie
@@ -249,8 +249,10 @@ int main()                                    // Main function
     {
       char NewFlightMode;
 
-      if( Radio.Gear > 512 )
-        NewFlightMode = FlightMode_Stable;    // Forward is "Stable"    (This was "Assist" but the altitude hold isn't working properly yet)
+      if( Radio.Gear > 512 ) {
+        NewFlightMode = FlightMode_Stable;    // Forward is "Stable"
+        //NewFlightMode = FlightMode_Assist;    // Forward is "Assist"  // un-comment this line to engage full-stability mode
+      }        
       else if( Radio.Gear < -512 )
         NewFlightMode = FlightMode_Manual;    // Back is "Manual"
       else
@@ -711,8 +713,6 @@ void UpdateFlightLoop(void)
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
     {
-      /*  // Altitude hold is currently disabled becuase it's not working right yet - I suspect a bug in the altitude estimate
-
       if( FlightMode == FlightMode_Assist )
       {
         //int T0 = max( 0, (Radio.Aux1 + 1024) >> 2);
@@ -750,7 +750,7 @@ void UpdateFlightLoop(void)
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
         ThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
-      }*/
+      }
 
       if( AccelAssistZFactor > 0 )
       {
@@ -815,7 +815,7 @@ void UpdateFlightLoop(void)
 
       if( (BatteryVolts < Prefs.LowVoltageAlarmThreshold) && (BatteryVolts > 200) && ((counter & 63) == 0) )  // Make sure the voltage is above the (0 + VoltageOffset) range
       {
-        BeepOn( 'A' , PIN_BUZZER_1, 5000 );
+        BeepOn( 'A' , PIN_BUZZER_1, 4800 );
       }
       else if( (counter & 63) > 32 )
       {
@@ -859,7 +859,6 @@ void UpdateFlightLEDColor(void)
     else {
       LEDModeColor = ((LED_Red | (LED_Yellow & LED_Half)) & LEDBrightMask) >> LEDBrightShift;   // Fast flash orange for battery warning
     }
-
   }
   else {
     int index = (counter >> 3) & 15;
