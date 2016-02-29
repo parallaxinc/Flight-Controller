@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui serialport
+QT       += core gui serialport printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -28,7 +28,8 @@ SOURCES += main.cpp\
     widgets/radiostick_widget.cpp \
     widgets/valuebar_widget.cpp \
     aboutbox.cpp \
-    quatutil.cpp
+    quatutil.cpp \
+    qcustomplot.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -46,7 +47,8 @@ HEADERS  += mainwindow.h \
     widgets/radiostick_widget.h \
     widgets/valuebar_widget.h \
     aboutbox.h \
-    quatutil.h
+    quatutil.h \
+    qcustomplot.h
 
 FORMS    += mainwindow.ui \
     aboutbox.ui

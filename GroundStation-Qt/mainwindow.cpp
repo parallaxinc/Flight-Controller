@@ -187,6 +187,30 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelGSVersion->setFrameStyle(QFrame::NoFrame);
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
 
+	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ",
+							   "AltiRaw", "AltiEst", };
+	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
+									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
+									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255),
+								   Qt::gray, Qt::black,
+								 };
+
+
+	SampleIndex = 0;
+	sg = ui->sensorGraph;
+	sg->legend->setVisible(true);
+	sg->setAutoAddPlottableToLegend(true);
+	sg->xAxis->setRange(0, 2000);
+	sg->yAxis->setRange(-2048, 2048);
+	for( int i=0; i<11; i++ )
+	{
+		graphs[i] = sg->addGraph();
+		graphs[i]->setName(graphNames[i]);
+		graphs[i]->setPen( QPen(graphColors[i]) );
+	}
+
+	sg->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
+
 	InternalChange = false;
 
 	this->startTimer(25, Qt::PreciseTimer);		// 40 updates / sec
@@ -389,7 +413,17 @@ void MainWindow::ProcessPackets(void)
                 case 2:	// Sensor values
                     sensors.ReadFrom( p );
 
-                    //graphSources[0].Samples[SampleIndex].y = sensors.GyroX;
+					graphs[0]->addData( SampleIndex, sensors.GyroX );
+					graphs[1]->addData( SampleIndex, sensors.GyroY);
+					graphs[2]->addData( SampleIndex, sensors.GyroZ);
+					graphs[3]->addData( SampleIndex, sensors.AccelX);
+					graphs[4]->addData( SampleIndex, sensors.AccelY);
+					graphs[5]->addData( SampleIndex, sensors.AccelZ);
+					graphs[6]->addData( SampleIndex, sensors.MagX);
+					graphs[7]->addData( SampleIndex, sensors.MagY);
+					graphs[8]->addData( SampleIndex, sensors.MagZ);
+
+					//graphSources[0].Samples[SampleIndex].y = sensors.GyroX;
                     //graphSources[1].Samples[SampleIndex].y = sensors.GyroY;
                     //graphSources[2].Samples[SampleIndex].y = sensors.GyroZ;
                     //graphSources[3].Samples[SampleIndex].y = sensors.AccelX;
@@ -431,7 +465,8 @@ void MainWindow::ProcessPackets(void)
                     //graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
                     //graphSources[10].Samples[SampleIndex].y = (float)computed.AltiEst / 1000.0f;
 
-                    //SampleIndex = (SampleIndex + 1) % NumGraphDisplaySamples;
+					graphs[9]->addData( SampleIndex, (float)computed.Alt );
+					graphs[10]->addData( SampleIndex, (float)computed.AltiEst );
                     break;
 
                 case 5:	// Motor values
@@ -445,7 +480,14 @@ void MainWindow::ProcessPackets(void)
                     cq.setZ      ( p->GetFloat() );
                     cq.setScalar ( p->GetFloat() );
                     bTargetQuatChanged = true;
-                    break;
+
+					// this is actually the last packet sent by the quad, so use this to advance the sample index
+					SampleIndex++;
+					if( SampleIndex > 6000 ) {
+						SampleIndex = 0;
+					}
+					break;
+
 
                 case 7:	// Debug data
                     debugData.ReadFrom( p );
@@ -655,6 +697,10 @@ void MainWindow::ProcessPackets(void)
 			ui->gAccelXCal->setValue( sensors.AccelX );
 			ui->gAccelYCal->setValue( sensors.AccelY );
 			ui->gAccelZCal->setValue( sensors.AccelZ );
+		}
+		else if( ui->tabWidget->currentWidget() == ui->tpSensors )
+		{
+			sg->replot();
 		}
 	}
 
@@ -1548,4 +1594,54 @@ void MainWindow::on_actionAbout_triggered()
 {
 	QDialog * dlg = new AboutBox(this);
 	dlg->show();
+}
+
+
+void MainWindow::on_cbGyroX_clicked() {
+	graphs[0]->setVisible( ui->cbGyroX->isChecked() );
+}
+
+void MainWindow::on_cbGyroY_clicked() {
+	graphs[1]->setVisible( ui->cbGyroY->isChecked() );
+}
+
+void MainWindow::on_cbGyroZ_clicked() {
+	graphs[2]->setVisible( ui->cbGyroZ->isChecked() );
+}
+
+void MainWindow::on_cbAccelX_clicked() {
+	graphs[3]->setVisible( ui->cbAccelX->isChecked() );
+}
+
+void MainWindow::on_cbAccelY_clicked() {
+	graphs[4]->setVisible( ui->cbAccelY->isChecked() );
+}
+
+void MainWindow::on_cbAccelZ_clicked() {
+	graphs[5]->setVisible( ui->cbAccelZ->isChecked() );
+}
+
+void MainWindow::on_cbMagX_clicked()
+{
+	graphs[6]->setVisible( ui->cbMagX->isChecked() );
+}
+
+void MainWindow::on_cbMagY_clicked()
+{
+	graphs[7]->setVisible( ui->cbMagY->isChecked() );
+}
+
+void MainWindow::on_cbMagZ_clicked()
+{
+	graphs[8]->setVisible( ui->cbMagZ->isChecked() );
+}
+
+void MainWindow::on_cbAlti_clicked()
+{
+	graphs[9]->setVisible( ui->cbAlti->isChecked() );
+}
+
+void MainWindow::on_cbAltiEst_clicked()
+{
+	graphs[10]->setVisible( ui->cbAltiEst->isChecked() );
 }

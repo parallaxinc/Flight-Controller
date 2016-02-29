@@ -5,10 +5,12 @@
 #include <QSettings>
 #include <QLabel>
 #include <QQuaternion>
+#include <QVector>
 
 #include "connection.h"
 #include "elev8data.h"
 #include "prefs.h"
+#include "qcustomplot.h"
 
 class QComboBox;
 class QSlider;
@@ -113,6 +115,18 @@ private slots:
 
 	void on_actionAbout_triggered();
 
+	void on_cbGyroX_clicked();
+	void on_cbGyroY_clicked();
+	void on_cbGyroZ_clicked();
+	void on_cbAccelX_clicked();
+	void on_cbAccelY_clicked();
+	void on_cbAccelZ_clicked();
+	void on_cbMagX_clicked();
+	void on_cbMagY_clicked();
+	void on_cbMagZ_clicked();
+	void on_cbAlti_clicked();
+	void on_cbAltiEst_clicked();
+
 private:
     void FillChannelComboBox( QComboBox *cb , int defaultIndex );
 	void SetChannelMapping( int DestChannel, int SourceChannel );
@@ -179,6 +193,10 @@ private:
 	int CalibrateTimer;
 
 	ChannelData channelData[8];
+
+	int SampleIndex;
+	QCPGraph * graphs[16];
+	QCustomPlot * sg;
 
     PREFS prefs;
 };
