@@ -252,7 +252,7 @@ int main()                                    // Main function
       if( Radio.Gear > 512 ) {
         NewFlightMode = FlightMode_Stable;    // Forward is "Stable"
         //NewFlightMode = FlightMode_Assist;    // Forward is "Assist"  // un-comment this line to engage full-stability mode
-      }        
+      }
       else if( Radio.Gear < -512 )
         NewFlightMode = FlightMode_Manual;    // Back is "Manual"
       else
@@ -601,7 +601,9 @@ void UpdateCycleStats(void)
 
 void UpdateFlightLoop(void)
 {
-  int ThroOut, ThrustMul, AltiThrust, v, gr, gp, gy;
+  static int ThroOut; // make this static so we can limit the rate of change
+
+  int ThrustMul, AltiThrust, v, gr, gp, gy;
   char DoIntegrate;  //Integration enabled in the flight PIDs?
 
   UpdateFlightLEDColor();
@@ -609,6 +611,8 @@ void UpdateFlightLoop(void)
   //Test for flight mode change-----------------------------------------------
   if( FlightEnabled == 0 )
   {
+    ThroOut = Prefs.MinThrottle;  // reset this when disarmed so we don't get weird results from filtering
+
     //Are the sticks being pushed down and toward the center?
 
     if( (Radio.Thro < -750)  &&  (Radio.Elev < -750) )
@@ -708,7 +712,7 @@ void UpdateFlightLoop(void)
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
-    ThroOut = (Radio.Thro << 2) + 12000;
+    int NewThroOut = (Radio.Thro << 2) + 12000;
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
@@ -749,7 +753,13 @@ void UpdateFlightLoop(void)
         }
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
-        ThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
+        NewThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
+
+        ThroOut += ((NewThroOut - ThroOut) * 192) >> 8;   // Small amount of filtering to keep the throttle from changing too abruptly in Assist mode
+      }
+      else
+      {
+        ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
       }
 
       if( AccelAssistZFactor > 0 )
@@ -768,6 +778,10 @@ void UpdateFlightLoop(void)
         ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
       }        
     }
+    else  // in manual mode
+    {
+      ThroOut = NewThroOut;   // Direct to motors - no filtering in Manual mode
+    }      
     //-------------------------------------------
 
 
