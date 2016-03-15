@@ -120,11 +120,13 @@ static long PingZero, PingHeight;
 
 static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
+static short ReArmTimer = 0;          // ONLY used in throttle cut - set this value to non-zero to allow instant re-arm if throttle present until it expires
 
 static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
 static char IsHolding = 0;            // Are we currently in altitude hold? (hover mode)
-
+static char AllowThrottleCut = 1;     // < -1100 throttle is considered a system kill
+static char AllowRearm = 1;           // Will get moved into Prefs once tested
 static short StartupDelay;            //Used to change convergence rates for IMU, enable battery monitor
 
 static char MotorPin[4] = {PIN_MOTOR_FL, PIN_MOTOR_FR, PIN_MOTOR_BR, PIN_MOTOR_BL };            //Motor index to pin index table
@@ -613,6 +615,22 @@ void UpdateFlightLoop(void)
   {
     ThroOut = Prefs.MinThrottle;  // reset this when disarmed so we don't get weird results from filtering
 
+    if( ReArmTimer > 0 && AllowRearm )
+    {
+      ReArmTimer--;
+
+      if( Radio.Thro > -1100 )
+      {
+        ReArmTimer = 0;
+        FlightEnabled = 1;
+        FlightEnableStep = 0;
+        CompassConfigStep = 0;
+
+        DesiredAltitude = AltiEst;
+        loopTimer = CNT;
+      }
+    }      
+
     //Are the sticks being pushed down and toward the center?
 
     if( (Radio.Thro < -750)  &&  (Radio.Elev < -750) )
@@ -683,19 +701,37 @@ void UpdateFlightLoop(void)
     GyroYaw += ((gy - GyroYaw) * GyroYawFilter) >> 8;
 
 
-
     if( Radio.Thro < -900 )
     {
-      // When throttle is essentially zero, disable all control authority
+      if( Radio.Thro < -1100 && AllowThrottleCut )
+      {
+        // We're in throttle cut - disarm immediately, set a timer to allow rearm
+        for( int i=0; i<4; i++ ) {
+          Motor[i] = Prefs.MinThrottle;
+          Servo32_Set( MotorPin[i], Prefs.MinThrottle );
+        }
 
-      if( FlightMode == FlightMode_Manual ) {
-        QuatIMU_ResetDesiredOrientation();
-      }
-      else {
-        // Zero yaw target when throttle is off - makes for more stable liftoff
-        QuatIMU_ResetDesiredYaw();
-      }
+        FlightEnabled = 0;
+        FlightEnableStep = 0;
+        CompassConfigStep = 0;
+        ReArmTimer = 250;
 
+        All_LED( LED_Green & LED_Half );
+        loopTimer = CNT;
+        return;   // Exit the loop so the motors stay killed, no additional flight code runs
+      }
+      else
+      {
+        // When throttle is essentially zero, disable all control authority
+  
+        if( FlightMode == FlightMode_Manual ) {
+          QuatIMU_ResetDesiredOrientation();
+        }
+        else {
+          // Zero yaw target when throttle is off - makes for more stable liftoff
+          QuatIMU_ResetDesiredYaw();
+        }
+      }
       DoIntegrate = 0;          // Disable PID integral terms until throttle is applied      
     }      
     else {
