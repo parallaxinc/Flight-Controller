@@ -1645,3 +1645,98 @@ void MainWindow::on_cbAltiEst_clicked()
 {
 	graphs[10]->setVisible( ui->cbAltiEst->isChecked() );
 }
+
+void MainWindow::on_actionExport_Settings_to_File_triggered()
+{
+#if 0	// Disabled until completed
+	// Get the filename from the user
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Settings File"), QDir::currentPath(), tr("Elev8 Settings Files (*.elev8set *.xml)"));
+	if (fileName.isEmpty())
+		return;
+
+	QFile file(fileName);
+	if(!file.open(QFile::WriteOnly | QFile::Text)) {
+		return;
+	}
+
+	// Serialize the data into a tagged file format suitable for editing
+#endif
+}
+
+/*
+void MainWindow::WriteSettings( QIODevice *device )
+{
+
+	int DriftScaleX,  DriftScaleY,  DriftScaleZ;
+	int DriftOffsetX, DriftOffsetY, DriftOffsetZ;
+	int AccelOffsetX, AccelOffsetY, AccelOffsetZ;
+	int MagOfsX, MagScaleX, MagOfsY, MagScaleY, MagOfsZ, MagScaleZ;
+
+	float RollCorrectSin, RollCorrectCos;
+	float PitchCorrectSin, PitchCorrectCos;
+
+	float AutoLevelRollPitch;
+	float AutoLevelYawRate;
+	float ManualRollPitchRate;
+	float ManualYawRate;
+
+	char  PitchGain;
+	char  RollGain;
+	char  YawGain;
+	char  AscentGain;
+
+	char  AltiGain;
+	char  PitchRollLocked;
+	char  UseAdvancedPID;
+	char  unused;
+
+	char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
+	char  unused2;
+	char  UseBattMon;
+	char  DisableMotors;
+
+	char  LowVoltageAlarm;
+	char  LowVoltageAscentLimit;
+	short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
+
+	short MinThrottle;      // Minimum motor output value
+	short MaxThrottle;      // Maximum motor output value
+	short CenterThrottle;   // Mid-point motor output value
+	short MinThrottleArmed; // Minimum throttle output value when armed - MUST be equal or greater than MinThrottle
+	short ArmDelay;
+	short DisarmDelay;
+
+	short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
+	short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
+
+	short VoltageOffset;    // Used to correct the difference between measured and actual voltage
+	short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
+
+	char  ThroChannel;      // Radio inputs to use for each value
+	char  AileChannel;
+	char  ElevChannel;
+	char  RuddChannel;
+	char  GearChannel;
+	char  Aux1Channel;
+	char  Aux2Channel;
+	char  Aux3Channel;
+
+	short ThroScale;
+	short AileScale;
+	short ElevScale;
+	short RuddScale;
+	short GearScale;
+	short Aux1Scale;
+	short Aux2Scale;
+	short Aux3Scale;
+
+	short ThroCenter;
+	short AileCenter;
+	short ElevCenter;
+	short RuddCenter;
+	short GearCenter;
+	short Aux1Center;
+	short Aux2Center;
+	short Aux3Center;
+}
+*/

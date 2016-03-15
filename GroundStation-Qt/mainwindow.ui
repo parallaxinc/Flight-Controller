@@ -3441,6 +3441,7 @@ will spin very briefly.</string>
     <addaction name="actionReset_Flight_Controller"/>
     <addaction name="separator"/>
     <addaction name="actionRestore_Factory_Defaults"/>
+    <addaction name="actionExport_Settings_to_File"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -3497,6 +3498,14 @@ will spin very briefly.</string>
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionExport_Settings_to_File">
+   <property name="text">
+    <string>Export Settings to File</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
  </widget>

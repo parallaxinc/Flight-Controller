@@ -127,6 +127,8 @@ private slots:
 	void on_cbAlti_clicked();
 	void on_cbAltiEst_clicked();
 
+	void on_actionExport_Settings_to_File_triggered();
+
 private:
     void FillChannelComboBox( QComboBox *cb , int defaultIndex );
 	void SetChannelMapping( int DestChannel, int SourceChannel );
