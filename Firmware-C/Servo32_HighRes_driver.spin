@@ -91,6 +91,7 @@ VAR
         long          _MasterLoopDelay, _SlowUpdateCounter
         long          Cycles
         long          ServoData[32]                                              'Servo Pulse Width information
+        long          PingCounter                                                'Distance reported by Ping))) sensor, if used
 
         'long          SortedPins[32]                   'Only enable these if sending results back from the COG
         'long          SortedDelays[32]
@@ -179,6 +180,10 @@ ServoStart
                         mov     dira, _SlowPinMask                              'Enable all relevant pins (fast and slow) as outputs
 
 SlowPinLoop
+                        'TODO:
+                        'See if we have a previous Ping reading, and if so, write it to the ping HUB value
+                        'See if the ping sensor is active, if so, fire the ping sensor  (5 uSec typical pulse duration)
+
                         mov     PinMask, _SlowPinMask                           'For the first pass, include slow pins and fast pins
                         mov     OuterLoopCount, SlowUpdateCounter
 '------------------------------------------------------------------------------------------------------------------------------------------------
@@ -517,7 +522,7 @@ CopyToHub
                         movd    :hubWrite, #ServoPins                           'Starting location in COG to copy the sorted data from
                         
                         mov     HubAddress, _ServoHubArrayPtr                   'Address of the source data in HUB ram
-                        add     HubAddress, #128                                'Hub address of the sorted array                        
+                        add     HubAddress, #(128+4)                            'Hub address of the sorted array
                                                 
                         mov     LoopCounter, #64                                'Number of array entries to transfer (pins + delays)
 
