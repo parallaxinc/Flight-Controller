@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QCoreApplication>
 #include "aboutbox.h"
+#include "quatutil.h"
 #include <math.h>
 
 static char beatString[] = "BEAT";
@@ -172,7 +173,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // set text for the label
 	labelStatus->setText("Connecting...");
 	labelStatus->setContentsMargins( 5, 1, 5, 1 );
-	labelGSVersion->setText("GroundStation Version 1.0.2");
+	labelGSVersion->setText("GroundStation Version 1.0.3");
 	labelFWVersion->setText( "Firmware Version -.--");
 
 	// add the controls to the status bar
@@ -185,6 +186,30 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelStatus->setFrameStyle(QFrame::NoFrame);
 	labelGSVersion->setFrameStyle(QFrame::NoFrame);
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
+
+	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ",
+							   "AltiRaw", "AltiEst", };
+	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
+									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
+									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255),
+								   Qt::gray, Qt::black,
+								 };
+
+
+	SampleIndex = 0;
+	sg = ui->sensorGraph;
+	sg->legend->setVisible(true);
+	sg->setAutoAddPlottableToLegend(true);
+	sg->xAxis->setRange(0, 2000);
+	sg->yAxis->setRange(-2048, 2048);
+	for( int i=0; i<11; i++ )
+	{
+		graphs[i] = sg->addGraph();
+		graphs[i]->setName(graphNames[i]);
+		graphs[i]->setPen( QPen(graphColors[i]) );
+	}
+
+	sg->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
 	InternalChange = false;
 
@@ -245,7 +270,7 @@ void MainWindow::FillChannelComboBox(QComboBox *cb, int defaultIndex )
 	cb->clear();
     for( int i=0; i<8; i++)
     {
-        QString str = QString::asprintf("Ch %d", i+1);
+        QString str = QString("Ch %1").arg(i+1);
         if( (i+1) == defaultIndex ) {
             str.append('*');
         }
@@ -266,7 +291,7 @@ void MainWindow::timerEvent(QTimerEvent * e)
 	UpdateStatus();
 
 	Heartbeat++;
-	if( Heartbeat == 20 && ThrottleCalibrationCycle == 0 )	// don't send heartbeat during throttle calibration
+	if( Heartbeat >= 20 && ThrottleCalibrationCycle == 0 )	// don't send heartbeat during throttle calibration
 	{
 		Heartbeat = 0;
 		SendCommand( beatString );	// Send the connection heartbeat
@@ -358,7 +383,6 @@ void MainWindow::SetRadioMode(int mode)
 }
 
 
-
 const float PI = 3.141592654f;
 
 void MainWindow::ProcessPackets(void)
@@ -389,7 +413,17 @@ void MainWindow::ProcessPackets(void)
                 case 2:	// Sensor values
                     sensors.ReadFrom( p );
 
-                    //graphSources[0].Samples[SampleIndex].y = sensors.GyroX;
+					graphs[0]->addData( SampleIndex, sensors.GyroX );
+					graphs[1]->addData( SampleIndex, sensors.GyroY);
+					graphs[2]->addData( SampleIndex, sensors.GyroZ);
+					graphs[3]->addData( SampleIndex, sensors.AccelX);
+					graphs[4]->addData( SampleIndex, sensors.AccelY);
+					graphs[5]->addData( SampleIndex, sensors.AccelZ);
+					graphs[6]->addData( SampleIndex, sensors.MagX);
+					graphs[7]->addData( SampleIndex, sensors.MagY);
+					graphs[8]->addData( SampleIndex, sensors.MagZ);
+
+					//graphSources[0].Samples[SampleIndex].y = sensors.GyroX;
                     //graphSources[1].Samples[SampleIndex].y = sensors.GyroY;
                     //graphSources[2].Samples[SampleIndex].y = sensors.GyroZ;
                     //graphSources[3].Samples[SampleIndex].y = sensors.AccelX;
@@ -431,7 +465,8 @@ void MainWindow::ProcessPackets(void)
                     //graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
                     //graphSources[10].Samples[SampleIndex].y = (float)computed.AltiEst / 1000.0f;
 
-                    //SampleIndex = (SampleIndex + 1) % NumGraphDisplaySamples;
+					graphs[9]->addData( SampleIndex, (float)computed.Alt );
+					graphs[10]->addData( SampleIndex, (float)computed.AltiEst );
                     break;
 
                 case 5:	// Motor values
@@ -445,7 +480,14 @@ void MainWindow::ProcessPackets(void)
                     cq.setZ      ( p->GetFloat() );
                     cq.setScalar ( p->GetFloat() );
                     bTargetQuatChanged = true;
-                    break;
+
+					// this is actually the last packet sent by the quad, so use this to advance the sample index
+					SampleIndex++;
+					if( SampleIndex > 6000 ) {
+						SampleIndex = 0;
+					}
+					break;
+
 
                 case 7:	// Debug data
                     debugData.ReadFrom( p );
@@ -480,7 +522,7 @@ void MainWindow::ProcessPackets(void)
 
     if( bRadioChanged )
     {
-		QString volts = QString::asprintf("%d.%02d", radio.BatteryVolts/100, radio.BatteryVolts%100);
+		QString volts = QString::number((float)radio.BatteryVolts / 100.f, 'f', 2);
 
 		ui->batteryVal->setValue( radio.BatteryVolts );
 		ui->batteryVal->setRightLabel( volts );
@@ -576,20 +618,17 @@ void MainWindow::ProcessPackets(void)
 			ui->Orientation_display->setQuat(q);
 			ui->Orientation_Accel->setQuat(q);
 
-            QMatrix3x3 m;
-            m = q.toRotationMatrix();
+			QMatrix3x3 m;
+			m = QuatToMatrix( q );
 
-            float roll =   asin( m(1,0) ) * (180.0f/PI);
-            float pitch =  asin( m(1,2) ) * (180.0f/PI);
-            float yaw =  -atan2( m(2,0), m(2,2) ) * (180.0f/PI);
+			float roll =   asin( m(1,0) ) * (180.0f/PI);
+			float pitch =  asin( m(1,2) ) * (180.0f/PI);
+			float yaw =  -atan2( m(2,0), m(2,2) ) * (180.0f/PI);
 
-            ui->Horizon_display->setAngles( roll, pitch );
-            ui->Heading_display->setHeading(yaw);
+			ui->Horizon_display->setAngles( roll, pitch );
+			ui->Heading_display->setHeading(yaw);
         }
-        //else if(tcTabs.SelectedTab == tpAccelCalibration) {
-            //ocAccelOrient.Quat = q;
-        //}
-    }
+	}
 
 	if( bSensorsChanged )
 	{
@@ -634,22 +673,22 @@ void MainWindow::ProcessPackets(void)
 				int offsetZ = (int)round( ui->lfGyroGraph->dIntercept.z );
 
 				QString str;
-				str = QString::asprintf( "%d", scaleX );
+				str = QString::number( scaleX );
 				ui->lblGxScale->setText(str);
 
-				str = QString::asprintf( "%d", scaleY );
+				str = QString::number( scaleY );
 				ui->lblGyScale->setText(str);
 
-				str = QString::asprintf( "%d", scaleZ );
+				str = QString::number( scaleZ );
 				ui->lblGzScale->setText(str);
 
-				str = QString::asprintf( "%d", offsetX );
+				str = QString::number( offsetX );
 				ui->lblGxOffset->setText(str);
 
-				str = QString::asprintf( "%d", offsetY );
+				str = QString::number( offsetY );
 				ui->lblGyOffset->setText(str);
 
-				str = QString::asprintf( "%d", offsetZ );
+				str = QString::number( offsetZ );
 				ui->lblGzOffset->setText(str);
 			}
 		}
@@ -658,6 +697,10 @@ void MainWindow::ProcessPackets(void)
 			ui->gAccelXCal->setValue( sensors.AccelX );
 			ui->gAccelYCal->setValue( sensors.AccelY );
 			ui->gAccelZCal->setValue( sensors.AccelZ );
+		}
+		else if( ui->tabWidget->currentWidget() == ui->tpSensors )
+		{
+			sg->replot();
 		}
 	}
 
@@ -668,10 +711,10 @@ void MainWindow::ProcessPackets(void)
 
     if( bDebugChanged )
     {
-		labelFWVersion->setText( QString::asprintf( "Firmware Version %d.%02d", debugData.Version >> 8, debugData.Version & 255 ) );
+		labelFWVersion->setText( QString( "Firmware Version %1.%2" ).arg(debugData.Version >> 8).arg( debugData.Version & 255, 2, 10, QChar('0')) );
 
-		ui->lblCycles->setText( QString::asprintf(
-			"CPU time (uS): %d (min), %d (max), %d (avg)", debugData.MinCycles * 64/80, debugData.MaxCycles * 64/80, debugData.AvgCycles * 64/80 ) );
+		ui->lblCycles->setText( QString(
+			"CPU time (uS): %1 (min), %2 (max), %3 (avg)" ).arg( debugData.MinCycles * 64/80 ).arg( debugData.MaxCycles * 64/80 ).arg( debugData.AvgCycles * 64/80 ) );
     }
 
     if( bComputedChanged ) {
@@ -699,7 +742,7 @@ void MainWindow::TestMotor(int index)
 		CancelThrottleCalibration();	// just in case
 
         index++;
-        SendCommand( QString::asprintf( "M%dt%d", index, index) );	// Becomes M1t1, M2t2, etc..
+        SendCommand( QString( "M%1t%2").arg( index ).arg( index ) );	// Becomes M1t1, M2t2, etc..
     }
 }
 
@@ -774,6 +817,25 @@ quint8 txBuffer[1];
 		break;
 
 	case 1:
+		if( radio.BatteryVolts > 0 )
+		{
+			txBuffer[0] = (quint8)0x0;
+			comm.Send( txBuffer, 1 );
+
+			str = "You must disconnect your flight battery to calibrate your ESC throttle range.  Failure to do so is a serious safety hazard.";
+
+			QString backup = ui->lblCalibrateDocs->styleSheet();
+			ui->lblCalibrateDocs->setText(str);
+			ui->lblCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
+
+			qApp->processEvents();	// force the label we just updated to repaint
+
+			QThread::sleep( 5 );
+			ui->lblCalibrateDocs->setStyleSheet( backup );
+			CancelThrottleCalibration();
+			return;
+		}
+
 		txBuffer[0] = (quint8)0xFF;
 		comm.Send( txBuffer, 1 );
 		str = "Plug in your flight battery and wait for the ESCs to stop beeping (about 5 seconds), then press the Throttle Calibration button again";
@@ -954,7 +1016,7 @@ void MainWindow::ConfigureUIFromPreferences(void)
 	double RollAngle = asin( prefs.RollCorrectSin );
 	double PitchAngle = asin( prefs.PitchCorrectSin );
 
-	QString str = QString::asprintf( "%d, %d, %d", prefs.AccelOffsetX, prefs.AccelOffsetY, prefs.AccelOffsetZ );
+	QString str = QString( "%1, %2, %3" ).arg( prefs.AccelOffsetX ).arg( prefs.AccelOffsetY ).arg( prefs.AccelOffsetZ );
 	ui->lblAccelCalFinal->setText( str );
 
 	AttemptSetValue( ui->udRollCorrection,  RollAngle * 180.0 / PI );
@@ -1129,10 +1191,10 @@ void MainWindow::CheckCalibrateControls(void)
 			ui->gbControlSetup->setVisible(false);
 			ui->lblRadioCalibrateDocs->setVisible(true);
 
-			QString str = QString::asprintf( \
-						"Move both STICKS all the way to the RIGHT and UP, and all\n" \
-						"SWITCHES/KNOBS to their MAXIMUM value position. (1 or 2/clockwise)\n" \
-						"(Controls above may respond incorrectly) - %d", CalibrateTimer );
+			QString str = QString( \
+                    "Move both STICKS all the way to the RIGHT and UP, and all\n" \
+					"SWITCHES/KNOBS to their MAXIMUM value position. (1 or 2/clockwise)\n" \
+					"(Controls above may respond incorrectly) - %1").arg( CalibrateTimer );
 
 			ui->lblRadioCalibrateDocs->setText( str );
 
@@ -1160,9 +1222,9 @@ void MainWindow::CheckCalibrateControls(void)
 
 		case 3:
 		{
-			QString str = QString::asprintf( \
-				"Move both STICKS all the way to the LEFT and DOWN, and all\n" \
-				"SWITCHES/KNOBS to their MINIMUM value position (0/counter-clockwise) - %d", CalibrateTimer );
+			QString str = QString( \
+                    "Move both STICKS all the way to the LEFT and DOWN, and all\n" \
+				    "SWITCHES/KNOBS to their MINIMUM value position (0/counter-clockwise) - %1").arg( CalibrateTimer );
 
 			ui->lblRadioCalibrateDocs->setText( str );
 
@@ -1293,37 +1355,37 @@ void MainWindow::on_cbR_Channel8_currentIndexChanged(int index) {
 
 void MainWindow::on_hsAutoRollPitchSpeed_valueChanged(int value)
 {
-	QString str = QString::asprintf("%d deg", value);
+	QString str = QString("%1 deg").arg( value );
 	ui->lblAutoRollPitchSpeed->setText( str );
 }
 
 void MainWindow::on_hsAutoYawSpeed_valueChanged(int value)
 {
-	QString str = QString::asprintf("%d deg/s", value*10);
+	QString str = QString("%1 deg/s").arg( value*10 );
 	ui->lblAutoYawSpeed->setText( str );
 }
 
 void MainWindow::on_hsManualRollPitchSpeed_valueChanged(int value)
 {
-	QString str = QString::asprintf("%d deg/s", value*10);
+	QString str = QString("%1 deg/s").arg( value*10 );
 	ui->lblManualRollPitchSpeed->setText( str );
 }
 
 void MainWindow::on_hsManualYawSpeed_valueChanged(int value)
 {
-	QString str = QString::asprintf("%d deg/s", value*10);
+	QString str = QString("%1 deg/s").arg( value*10 );
 	ui->lblManualYawSpeed->setText( str );
 }
 
 void MainWindow::on_hsAccelCorrectionFilter_valueChanged(int value)
 {
-	QString str = QString::asprintf( "%0.3f", (float)value / 256.f );
+	QString str = QString::number((float) value / 256.f, 'f', 3);
 	ui->lblAccelCorrectionFilter->setText( str );
 }
 
 void MainWindow::on_hsThrustCorrection_valueChanged(int value)
 {
-	QString str = QString::asprintf( "%0.3f", (float)value / 256.f );
+	QString str = QString::number((float) value / 256.f, 'f', 3);
 	ui->lblThrustCorrection->setText( str );
 }
 
@@ -1340,7 +1402,7 @@ void MainWindow::on_hsPitchGain_valueChanged(int value)
 			ui->hsRollGain->setValue( value );
 		}
 	}
-	QString str = QString::asprintf( "%d", value );
+	QString str = QString::number( value );
 	ui->lblPitchGain->setText( str );
 }
 
@@ -1352,7 +1414,7 @@ void MainWindow::on_hsRollGain_valueChanged(int value)
 			ui->hsPitchGain->setValue( value );
 		}
 	}
-	QString str = QString::asprintf( "%d", value );
+	QString str = QString::number( value );
 	ui->lblRollGain->setText( str );
 }
 
@@ -1369,20 +1431,20 @@ void MainWindow::on_cbPitchRollLocked_stateChanged(int arg1)
 
 void MainWindow::on_hsYawGain_valueChanged(int value)
 {
-	QString str = QString::asprintf( "%d", value );
+	QString str = QString::number( value );
 	ui->lblYawGain->setText( str );
 }
 
 
 void MainWindow::on_hsAscentGain_valueChanged(int value)
 {
-	QString str = QString::asprintf( "%d", value );
+	QString str = QString::number( value );
 	ui->lblAscentGain->setText( str );
 }
 
 void MainWindow::on_hsAltiGain_valueChanged(int value)
 {
-	QString str = QString::asprintf( "%d", value );
+	QString str = QString::number( value );
 	ui->lblAltiGain->setText( str );
 }
 
@@ -1464,7 +1526,11 @@ void MainWindow::GetAccelAvgSasmple( int i )
 	accYCal[i] = ui->gAccelYCal->getMovingAverage();
 	accZCal[i] = ui->gAccelZCal->getMovingAverage();
 
-	QString str = QString::asprintf("%0.1f, %0.1f, %0.1f", accXCal[i], accYCal[i], accZCal[i] );
+	QString str = QString("%1, %2, %3")
+        .arg(QString::number(accXCal[i], 'f', 1))
+        .arg(QString::number(accYCal[i], 'f', 1))
+        .arg(QString::number(accZCal[i], 'f', 1));
+       
 	labels[i]->setText( str );
 }
 
@@ -1498,7 +1564,7 @@ void MainWindow::on_btnAccelCalUpload_clicked()
 	int ay = (int)roundf( fy );
 	int az = (int)roundf( fz );
 
-	QString str = QString::asprintf( "%d, %d, %d", ax, ay, az );
+	QString str = QString("%1, %2, %3").arg(ax).arg(ay).arg(az);
 	ui->lblAccelCalFinal->setText( str );
 
 	az -= 4096;	// OneG
@@ -1529,3 +1595,148 @@ void MainWindow::on_actionAbout_triggered()
 	QDialog * dlg = new AboutBox(this);
 	dlg->show();
 }
+
+
+void MainWindow::on_cbGyroX_clicked() {
+	graphs[0]->setVisible( ui->cbGyroX->isChecked() );
+}
+
+void MainWindow::on_cbGyroY_clicked() {
+	graphs[1]->setVisible( ui->cbGyroY->isChecked() );
+}
+
+void MainWindow::on_cbGyroZ_clicked() {
+	graphs[2]->setVisible( ui->cbGyroZ->isChecked() );
+}
+
+void MainWindow::on_cbAccelX_clicked() {
+	graphs[3]->setVisible( ui->cbAccelX->isChecked() );
+}
+
+void MainWindow::on_cbAccelY_clicked() {
+	graphs[4]->setVisible( ui->cbAccelY->isChecked() );
+}
+
+void MainWindow::on_cbAccelZ_clicked() {
+	graphs[5]->setVisible( ui->cbAccelZ->isChecked() );
+}
+
+void MainWindow::on_cbMagX_clicked()
+{
+	graphs[6]->setVisible( ui->cbMagX->isChecked() );
+}
+
+void MainWindow::on_cbMagY_clicked()
+{
+	graphs[7]->setVisible( ui->cbMagY->isChecked() );
+}
+
+void MainWindow::on_cbMagZ_clicked()
+{
+	graphs[8]->setVisible( ui->cbMagZ->isChecked() );
+}
+
+void MainWindow::on_cbAlti_clicked()
+{
+	graphs[9]->setVisible( ui->cbAlti->isChecked() );
+}
+
+void MainWindow::on_cbAltiEst_clicked()
+{
+	graphs[10]->setVisible( ui->cbAltiEst->isChecked() );
+}
+
+void MainWindow::on_actionExport_Settings_to_File_triggered()
+{
+#if 0	// Disabled until completed
+	// Get the filename from the user
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Settings File"), QDir::currentPath(), tr("Elev8 Settings Files (*.elev8set *.xml)"));
+	if (fileName.isEmpty())
+		return;
+
+	QFile file(fileName);
+	if(!file.open(QFile::WriteOnly | QFile::Text)) {
+		return;
+	}
+
+	// Serialize the data into a tagged file format suitable for editing
+#endif
+}
+
+/*
+void MainWindow::WriteSettings( QIODevice *device )
+{
+
+	int DriftScaleX,  DriftScaleY,  DriftScaleZ;
+	int DriftOffsetX, DriftOffsetY, DriftOffsetZ;
+	int AccelOffsetX, AccelOffsetY, AccelOffsetZ;
+	int MagOfsX, MagScaleX, MagOfsY, MagScaleY, MagOfsZ, MagScaleZ;
+
+	float RollCorrectSin, RollCorrectCos;
+	float PitchCorrectSin, PitchCorrectCos;
+
+	float AutoLevelRollPitch;
+	float AutoLevelYawRate;
+	float ManualRollPitchRate;
+	float ManualYawRate;
+
+	char  PitchGain;
+	char  RollGain;
+	char  YawGain;
+	char  AscentGain;
+
+	char  AltiGain;
+	char  PitchRollLocked;
+	char  UseAdvancedPID;
+	char  unused;
+
+	char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
+	char  unused2;
+	char  UseBattMon;
+	char  DisableMotors;
+
+	char  LowVoltageAlarm;
+	char  LowVoltageAscentLimit;
+	short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
+
+	short MinThrottle;      // Minimum motor output value
+	short MaxThrottle;      // Maximum motor output value
+	short CenterThrottle;   // Mid-point motor output value
+	short MinThrottleArmed; // Minimum throttle output value when armed - MUST be equal or greater than MinThrottle
+	short ArmDelay;
+	short DisarmDelay;
+
+	short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
+	short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
+
+	short VoltageOffset;    // Used to correct the difference between measured and actual voltage
+	short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
+
+	char  ThroChannel;      // Radio inputs to use for each value
+	char  AileChannel;
+	char  ElevChannel;
+	char  RuddChannel;
+	char  GearChannel;
+	char  Aux1Channel;
+	char  Aux2Channel;
+	char  Aux3Channel;
+
+	short ThroScale;
+	short AileScale;
+	short ElevScale;
+	short RuddScale;
+	short GearScale;
+	short Aux1Scale;
+	short Aux2Scale;
+	short Aux3Scale;
+
+	short ThroCenter;
+	short AileCenter;
+	short ElevCenter;
+	short RuddCenter;
+	short GearCenter;
+	short Aux1Center;
+	short Aux2Center;
+	short Aux3Center;
+}
+*/

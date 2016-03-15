@@ -19,7 +19,7 @@
  
   Actively In Development / To Be Developed:
   - Altitude Hold - currently disabled
-  - Heading Hold & Compass Calibratin 
+  - Heading Hold & Compass Calibration
   
   
   Written by Jason Dorie
@@ -120,11 +120,13 @@ static long PingZero, PingHeight;
 
 static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
+static short ReArmTimer = 0;          // ONLY used in throttle cut - set this value to non-zero to allow instant re-arm if throttle present until it expires
 
 static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
 static char IsHolding = 0;            // Are we currently in altitude hold? (hover mode)
-
+static char AllowThrottleCut = 1;     // < -1100 throttle is considered a system kill
+static char AllowRearm = 1;           // Will get moved into Prefs once tested
 static short StartupDelay;            //Used to change convergence rates for IMU, enable battery monitor
 
 static char MotorPin[4] = {PIN_MOTOR_FL, PIN_MOTOR_FR, PIN_MOTOR_BR, PIN_MOTOR_BL };            //Motor index to pin index table
@@ -251,8 +253,10 @@ int main()                                    // Main function
     {
       char NewFlightMode;
 
-      if( Radio.Gear > 512 )
-        NewFlightMode = FlightMode_Stable;    // Forward is "Stable"    (This was "Assist" but the altitude hold isn't working properly yet)
+      if( Radio.Gear > 512 ) {
+        NewFlightMode = FlightMode_Stable;    // Forward is "Stable"
+        //NewFlightMode = FlightMode_Assist;    // Forward is "Assist"  // un-comment this line to engage full-stability mode
+      }
       else if( Radio.Gear < -512 )
         NewFlightMode = FlightMode_Manual;    // Back is "Manual"
       else
@@ -601,7 +605,9 @@ void UpdateCycleStats(void)
 
 void UpdateFlightLoop(void)
 {
-  int ThroOut, ThrustMul, AltiThrust, v, gr, gp, gy;
+  static int ThroOut; // make this static so we can limit the rate of change
+
+  int ThrustMul, AltiThrust, v, gr, gp, gy;
   char DoIntegrate;  //Integration enabled in the flight PIDs?
 
   UpdateFlightLEDColor();
@@ -609,6 +615,24 @@ void UpdateFlightLoop(void)
   //Test for flight mode change-----------------------------------------------
   if( FlightEnabled == 0 )
   {
+    ThroOut = Prefs.MinThrottle;  // reset this when disarmed so we don't get weird results from filtering
+
+    if( ReArmTimer > 0 && AllowRearm )
+    {
+      ReArmTimer--;
+
+      if( Radio.Thro > -1100 )
+      {
+        ReArmTimer = 0;
+        FlightEnabled = 1;
+        FlightEnableStep = 0;
+        CompassConfigStep = 0;
+
+        DesiredAltitude = AltiEst;
+        loopTimer = CNT;
+      }
+    }      
+
     //Are the sticks being pushed down and toward the center?
 
     if( (Radio.Thro < -750)  &&  (Radio.Elev < -750) )
@@ -679,19 +703,37 @@ void UpdateFlightLoop(void)
     GyroYaw += ((gy - GyroYaw) * GyroYawFilter) >> 8;
 
 
-
     if( Radio.Thro < -900 )
     {
-      // When throttle is essentially zero, disable all control authority
+      if( Radio.Thro < -1100 && AllowThrottleCut )
+      {
+        // We're in throttle cut - disarm immediately, set a timer to allow rearm
+        for( int i=0; i<4; i++ ) {
+          Motor[i] = Prefs.MinThrottle;
+          Servo32_Set( MotorPin[i], Prefs.MinThrottle );
+        }
 
-      if( FlightMode == FlightMode_Manual ) {
-        QuatIMU_ResetDesiredOrientation();
-      }
-      else {
-        // Zero yaw target when throttle is off - makes for more stable liftoff
-        QuatIMU_ResetDesiredYaw();
-      }
+        FlightEnabled = 0;
+        FlightEnableStep = 0;
+        CompassConfigStep = 0;
+        ReArmTimer = 250;
 
+        All_LED( LED_Green & LED_Half );
+        loopTimer = CNT;
+        return;   // Exit the loop so the motors stay killed, no additional flight code runs
+      }
+      else
+      {
+        // When throttle is essentially zero, disable all control authority
+  
+        if( FlightMode == FlightMode_Manual ) {
+          QuatIMU_ResetDesiredOrientation();
+        }
+        else {
+          // Zero yaw target when throttle is off - makes for more stable liftoff
+          QuatIMU_ResetDesiredYaw();
+        }
+      }
       DoIntegrate = 0;          // Disable PID integral terms until throttle is applied      
     }      
     else {
@@ -708,13 +750,11 @@ void UpdateFlightLoop(void)
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
-    ThroOut = (Radio.Thro << 2) + 12000;
+    int NewThroOut = (Radio.Thro << 2) + 12000;
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
     {
-      /*  // Altitude hold is currently disabled becuase it's not working right yet - I suspect a bug in the altitude estimate
-
       if( FlightMode == FlightMode_Assist )
       {
         //int T0 = max( 0, (Radio.Aux1 + 1024) >> 2);
@@ -751,8 +791,14 @@ void UpdateFlightLoop(void)
         }
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
-        ThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
-      }*/
+        NewThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
+
+        ThroOut += ((NewThroOut - ThroOut) * 192) >> 8;   // Small amount of filtering to keep the throttle from changing too abruptly in Assist mode
+      }
+      else
+      {
+        ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
+      }
 
       if( AccelAssistZFactor > 0 )
       {
@@ -770,6 +816,10 @@ void UpdateFlightLoop(void)
         ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
       }        
     }
+    else  // in manual mode
+    {
+      ThroOut = NewThroOut;   // Direct to motors - no filtering in Manual mode
+    }      
     //-------------------------------------------
 
 
@@ -783,10 +833,19 @@ void UpdateFlightLoop(void)
     // The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
     // Some ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment, so avoid that
 
-    Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
-    Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
-    Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
-    Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    if( UsbPulse > 0 ) {
+      // If USB is connected, don't allow throttle to go above test value for added safety.
+      Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+    }
+    else {
+      Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+    }
 
     if( Prefs.DisableMotors == 0 ) {
       //Copy new Ouput array into servo values
@@ -808,7 +867,7 @@ void UpdateFlightLoop(void)
 
       if( (BatteryVolts < Prefs.LowVoltageAlarmThreshold) && (BatteryVolts > 200) && ((counter & 63) == 0) )  // Make sure the voltage is above the (0 + VoltageOffset) range
       {
-        BeepOn( 'A' , PIN_BUZZER_1, 5000 );
+        BeepOn( 'A' , PIN_BUZZER_1, 4800 );
       }
       else if( (counter & 63) > 32 )
       {
@@ -852,7 +911,6 @@ void UpdateFlightLEDColor(void)
     else {
       LEDModeColor = ((LED_Red | (LED_Yellow & LED_Half)) & LEDBrightMask) >> LEDBrightShift;   // Fast flash orange for battery warning
     }
-
   }
   else {
     int index = (counter >> 3) & 15;

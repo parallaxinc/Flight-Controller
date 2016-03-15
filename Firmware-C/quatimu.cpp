@@ -758,21 +758,18 @@ unsigned char QuatUpdateCommands[] = {
         F32_opShift, fay,  const_neg12, forceY,
         F32_opShift, faz,  const_neg12, forceZ,
 
-  //force -= m[1,0], m[1,1], m[1,2]  - Subtract gravity (1G, straight down)
-        F32_opSub, forceX,  m10, forceX,    
-        F32_opSub, forceY,  m11, forceY,    
-        F32_opSub, forceZ,  m12, forceZ,    
-
   //forceWY := M.Transpose().Mul(Force).y                 //Orient force vector into world frame
   //forceWY = m01*forceX + m11*forceY + m21*forceZ
 
-        F32_opMul, forceX,  m01, forceWY,  
+        F32_opMul, forceX,  m10, forceWY,  
    
         F32_opMul, forceY,  m11, temp,  
         F32_opAdd, forceWY, temp, forceWY,  
 
-        F32_opMul, forceZ,  m21, temp,  
+        F32_opMul, forceZ,  m12, temp,  
         F32_opAdd, forceWY, temp, forceWY,  
+
+        F32_opSub, forceWY, const_F1, forceWY,                    //Subtract 1G (removes gravity)
 
   //forceWY *= 9.8 * 1000.0                                       //Convert to mm/sec^2
         F32_opMul, forceWY,  const_G_mm_PerSec, forceWY,

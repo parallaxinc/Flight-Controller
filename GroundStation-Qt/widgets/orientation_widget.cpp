@@ -1,6 +1,7 @@
 #include "orientation_widget.h"
 #include <QPainter>
 #include <QBitmap>
+#include "quatutil.h"
 #include <math.h>
 
 Orientation_Widget::Orientation_Widget(QWidget *parent) : QWidget(parent)
@@ -82,7 +83,7 @@ void Orientation_Widget::Init(void)
 void Orientation_Widget::setQuat( QQuaternion q )
 {
 	quat = q;
-	QMatrix3x3 m = quat.toRotationMatrix();
+	QMatrix3x3 m = QuatToMatrix( quat );
 	mat = QMatrix4x4(m);
 
 	update();
@@ -91,7 +92,7 @@ void Orientation_Widget::setQuat( QQuaternion q )
 void Orientation_Widget::setQuat2( QQuaternion q )
 {
 	quat2 = q;
-	QMatrix3x3 m = quat2.toRotationMatrix();
+	QMatrix3x3 m = QuatToMatrix( quat2 );
 	mat2 = QMatrix4x4(m);
 	bQuat2Valid = true;
 

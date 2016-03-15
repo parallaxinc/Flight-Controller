@@ -1,0 +1,10 @@
+build/
+
+*.o
+moc_*.cpp
+ui_*.h
+Makefile
+qrc_*.cpp
+
+*.swp
+groundstation
