@@ -288,7 +288,7 @@ int main()                                    // Main function
       if( StartupDelay > 0 ) {
         StartupDelay--;       // Count down until the startup delay has passed
         LEDModeColor = LED_Blue;
-        
+
         if( StartupDelay == 0 ) { // Did we JUST hit zero?
           QuatIMU_SetErrScaleMode(0);   // No longer in power-up (fast-convergence) mode
         }          
@@ -347,8 +347,6 @@ void Initialize(void)
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
-  GyroRPFilter = 224;                                   //Tunable damping filters for gyro noise, 1 (HEAVY) to 256 (NO) filtering 
-  GyroYawFilter = 224;
   Stats.Version = 0x0100;
 
   InitSerial();
@@ -638,7 +636,7 @@ void UpdateFlightLoop(void)
         FlightEnableStep++;
         CompassConfigStep = 0;
         LEDModeColor = LED_Yellow & LED_Half;
-                
+
         if( FlightEnableStep >= Prefs.ArmDelay ) {   //Hold for delay time
           ArmFlightMode();
         }          
@@ -689,14 +687,9 @@ void UpdateFlightLoop(void)
     //------------------------------------------------------------------------
 
 
-    gr =  sens.GyroY - GyroZY;
-    gp = -(sens.GyroX - GyroZX);
-    gy = -(sens.GyroZ - GyroZZ);
-
-    // TODO: Flight test - is this filtering necessary?
-    GyroRoll += ((gr - GyroRoll) * GyroRPFilter) >> 8;
-    GyroPitch += ((gp - GyroPitch) * GyroRPFilter) >> 8;
-    GyroYaw += ((gy - GyroYaw) * GyroYawFilter) >> 8;
+    GyroRoll =  sens.GyroY - GyroZY;
+    GyroPitch = -(sens.GyroX - GyroZX);
+    GyroYaw = -(sens.GyroZ - GyroZZ);
 
 
     if( Radio.Thro < -900 )
