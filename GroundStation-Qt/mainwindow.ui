@@ -447,7 +447,7 @@
        <widget class="QWidget" name="layoutWidget4">
         <property name="geometry">
          <rect>
-          <x>70</x>
+          <x>60</x>
           <y>25</y>
           <width>391</width>
           <height>291</height>
@@ -667,7 +667,7 @@ Calibration</string>
        <widget class="QLabel" name="label">
         <property name="geometry">
          <rect>
-          <x>475</x>
+          <x>485</x>
           <y>85</y>
           <width>236</width>
           <height>181</height>
@@ -700,7 +700,7 @@ will spin very briefly.</string>
         <property name="geometry">
          <rect>
           <x>75</x>
-          <y>320</y>
+          <y>340</y>
           <width>386</width>
           <height>51</height>
          </rect>
@@ -712,6 +712,24 @@ will spin very briefly.</string>
          <set>Qt::AlignCenter</set>
         </property>
         <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btnSafetyCheck">
+        <property name="geometry">
+         <rect>
+          <x>500</x>
+          <y>280</y>
+          <width>206</width>
+          <height>66</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>I have removed the
+propellers for
+throttle calibration.</string>
+        </property>
+        <property name="checkable">
          <bool>true</bool>
         </property>
        </widget>
