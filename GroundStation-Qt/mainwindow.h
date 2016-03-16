@@ -26,34 +26,35 @@ class MainWindow;
 
 class MainWindow : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
+	explicit MainWindow(QWidget *parent = 0);
+	~MainWindow();
 
-    void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
+	void timerEvent(QTimerEvent *event) Q_DECL_OVERRIDE;
 
-    void UpdateStatus(void);
+	void UpdateStatus(void);
 	void SendCommand(const char *command);
-    void SendCommand(QString command);
-    void ProcessPackets(void);
+	void SendCommand(QString command);
+	void ProcessPackets(void);
 
-    void ConfigureUIFromPreferences(void);
+	void ConfigureUIFromPreferences(void);
 	void UpdateElev8Preferences(void);
 
 
 private slots:
-    void on_btnBeeper_pressed();
-    void on_btnLED_pressed();
-    void on_btnMotorTest_FL_pressed();
-    void on_btnMotorTest_FR_pressed();
-    void on_btnMotorTest_BR_pressed();
-    void on_btnMotorTest_BL_pressed();
+	void on_btnBeeper_pressed();
+	void on_btnLED_pressed();
+	void on_btnMotorTest_FL_pressed();
+	void on_btnMotorTest_FR_pressed();
+	void on_btnMotorTest_BR_pressed();
+	void on_btnMotorTest_BL_pressed();
 
 	void on_btnThrottleCalibrate_clicked();
+	void on_btnSafetyCheck_clicked();
 
-    void on_connectionMade();
+	void on_connectionMade();
 
 	void on_revR_Channel1_clicked(bool checked);
 	void on_revR_Channel2_clicked(bool checked);
@@ -130,7 +131,7 @@ private slots:
 	void on_actionExport_Settings_to_File_triggered();
 
 private:
-    void FillChannelComboBox( QComboBox *cb , int defaultIndex );
+	void FillChannelComboBox( QComboBox *cb , int defaultIndex );
 	void SetChannelMapping( int DestChannel, int SourceChannel );
 
 	void SetRadioMode( int mode );
@@ -143,6 +144,7 @@ private:
 
 	void TestMotor(int);
 	void CancelThrottleCalibration(void);
+	void AbortThrottleCalibrationWithMessage( QString & msg , int delay );
 	void CheckCalibrateControls(void);
 
 	void loadSettings(void);
@@ -164,24 +166,24 @@ private:
 
 	Mode currentMode;
 
-    Ui::MainWindow *ui;
+	Ui::MainWindow *ui;
 	QLabel * labelStatus;
 	QLabel * labelGSVersion;
 	QLabel * labelFWVersion;
 
-    int Heartbeat;
+	int Heartbeat;
 	int RadioMode;	// Mode == 1 or 2
 
-    Connection comm;
-    CommStatus stat;
+	Connection comm;
+	CommStatus stat;
 
-    RadioData radio;
-    SensorData sensors;
-    QQuaternion q;
-    QQuaternion cq;
-    MotorData motors;
-    ComputedData computed;
-    DebugValues debugData;
+	RadioData radio;
+	SensorData sensors;
+	QQuaternion q;
+	QQuaternion cq;
+	MotorData motors;
+	ComputedData computed;
+	DebugValues debugData;
 
 	float accXCal[4];
 	float accYCal[4];
@@ -200,7 +202,7 @@ private:
 	QCPGraph * graphs[16];
 	QCustomPlot * sg;
 
-    PREFS prefs;
+	PREFS prefs;
 };
 
 #endif // MAINWINDOW_H

@@ -800,6 +800,14 @@ void MainWindow::on_tabWidget_currentChanged(int index)
 }
 
 
+void MainWindow::on_btnSafetyCheck_clicked()
+{
+	if( ui->btnSafetyCheck->isChecked() == false ) {
+		CancelThrottleCalibration();	// If they press it DURING throttle calibration, it's an escape button
+	}
+}
+
+
 void MainWindow::on_btnThrottleCalibrate_clicked()
 {
 QString str;
@@ -808,8 +816,15 @@ quint8 txBuffer[1];
 	switch(ThrottleCalibrationCycle)
 	{
 	case 0:
+		if( ui->btnSafetyCheck->isChecked() == false )
+		{
+			str = "You must verify that you have removed your propellers by pressing the button to the right.";
+			AbortThrottleCalibrationWithMessage( str , 3 );
+			return;
+		}
 		TestMotor( 6 );
 		str = "Throttle calibration has started.  Be sure your flight battery is UNPLUGGED, then press the Throttle Calibration button again.  (Click any other button to cancel)";
+		ui->lblCalibrateDocs->setVisible(true);
 		ui->lblCalibrateDocs->setText(str);
 		ThrottleCalibrationCycle = 1;
 
@@ -819,20 +834,8 @@ quint8 txBuffer[1];
 	case 1:
 		if( radio.BatteryVolts > 0 )
 		{
-			txBuffer[0] = (quint8)0x0;
-			comm.Send( txBuffer, 1 );
-
 			str = "You must disconnect your flight battery to calibrate your ESC throttle range.  Failure to do so is a serious safety hazard.";
-
-			QString backup = ui->lblCalibrateDocs->styleSheet();
-			ui->lblCalibrateDocs->setText(str);
-			ui->lblCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
-
-			qApp->processEvents();	// force the label we just updated to repaint
-
-			QThread::sleep( 5 );
-			ui->lblCalibrateDocs->setStyleSheet( backup );
-			CancelThrottleCalibration();
+			AbortThrottleCalibrationWithMessage( str , 5 );
 			return;
 		}
 
@@ -859,6 +862,26 @@ quint8 txBuffer[1];
 		// TODO: Re-enable all other buttons, hide the abort button
 		break;
 	}
+}
+
+void MainWindow::AbortThrottleCalibrationWithMessage( QString & msg , int delay )
+{
+quint8 txBuffer[1];
+
+	txBuffer[0] = (quint8)0x0;
+	comm.Send( txBuffer, 1 );
+
+	QString backup = ui->lblCalibrateDocs->styleSheet();
+	ui->lblCalibrateDocs->setVisible(true);
+	ui->lblCalibrateDocs->setText(msg);
+	ui->lblCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
+
+	qApp->processEvents();	// force the label we just updated to repaint
+
+	QThread::sleep( delay );
+	ui->lblCalibrateDocs->setStyleSheet( backup );
+	ui->lblCalibrateDocs->setText("");
+	CancelThrottleCalibration();
 }
 
 
