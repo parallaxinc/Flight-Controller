@@ -63,7 +63,7 @@ short XBeePulse = 0;
 
 
 // Potential new settings values
-const int AltiThrottleDeadband = 100;
+const int AltiThrottleDeadband = 200;   // was 100
 
 
 //Working variables for the flight controller
@@ -251,10 +251,8 @@ int main()                                    // Main function
     {
       char NewFlightMode;
 
-      if( Radio.Gear > 512 ) {
-        NewFlightMode = FlightMode_Stable;    // Forward is "Stable"
-        //NewFlightMode = FlightMode_Assist;    // Forward is "Assist"  // un-comment this line to engage full-stability mode
-      }
+      if( Radio.Gear > 512 )
+        NewFlightMode = FlightMode_Assist;    // Forward is "Assist" - IE altitude hold
       else if( Radio.Gear < -512 )
         NewFlightMode = FlightMode_Manual;    // Back is "Manual"
       else
