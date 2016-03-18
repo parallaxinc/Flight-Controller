@@ -18,7 +18,7 @@
   
  
   Actively In Development / To Be Developed:
-  - Altitude Hold - currently disabled
+  - Altitude Hold
   - Heading Hold & Compass Calibration
   
   
@@ -63,8 +63,8 @@ short XBeePulse = 0;
 
 
 // Potential new settings values
-const int AltiThrottleDeadband = 200;   // was 100
-
+const int AltiThrottleDeadband = 150;   // was 100
+const int MaxVerticalRate = 5000;       // 5000mm/sec = 5M/sec
 
 //Working variables for the flight controller
 
@@ -91,9 +91,9 @@ static long  GyroZX, GyroZY, GyroZZ;  // Gyro zero values
 static long  AccelZSmooth;            // Smoothed (filtered) accelerometer Z value (used for height fluctuation damping)
 
 //Debug output mode, working variables  
-static long   counter = 0;    //Main loop iteration counter
-static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
-static char   Quat[16];       //Current quaternion from the IMU functions
+static unsigned long  counter = 0;    //Main loop iteration counter
+static short  TxData[12];             //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
+static char   Quat[16];               //Current quaternion from the IMU functions
 
 static char Mode = MODE_None;         //Debug communication mode
 static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1 == no motor)
@@ -152,6 +152,9 @@ const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask 
 
 
 LASER_RANGE LaserRange;
+long LaserCorrected = 0;
+static long  DesiredLaser = 0;
+unsigned long LaserValidCount = 0;  // records the loop iteration when we got our last good laser reading
 
 
 #ifdef ENABLE_LOGGING
@@ -272,6 +275,7 @@ int main()                                    // Main function
 
         if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
+          DesiredLaser = LaserCorrected;
         }
 
         // ANY flight mode change means you're not currently holding altitude
@@ -498,10 +502,12 @@ static int clamp( int v, int min, int max ) {
   return v;
 }
 
+/*
 static int abs(int v) {
   v = (v<0) ? -v : v;
   return v;
 }
+*/
 
 static int max( int a, int b ) { return a > b ? a : b; }
 static int min( int a, int b ) { return a < b ? a : b; }
@@ -741,7 +747,7 @@ void UpdateFlightLoop(void)
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
-    int NewThroOut = (Radio.Thro << 2) + 12000;
+    ThroOut = (Radio.Thro << 2) + 12000;
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
@@ -766,29 +772,42 @@ void UpdateFlightLoop(void)
           // Remove the deadband area from center stick so we don't get a hiccup as you transition out of it
           AdjustedThrottle = (Radio.Thro > 0) ? (Radio.Thro - AltiThrottleDeadband) : (Radio.Thro + AltiThrottleDeadband);
 
-          // 6 m/sec maximum rate of ascent/descent
-          DesiredAscentRate = AdjustedThrottle * 6000 / (1024 - AltiThrottleDeadband);
+          // 5 M/sec maximum rate of ascent/descent
+          DesiredAscentRate = AdjustedThrottle * MaxVerticalRate / (1024 - AltiThrottleDeadband);
         }
         else
         {
+          bool GoodLaser = false; // (counter - LaserValidCount) < 30;
+          static bool UsedLaser = false;
+
           // Are we just entering altitude hold mode?
-          if( IsHolding == 0 ) {
+          if( IsHolding == 0 || UsedLaser != GoodLaser ) {
             IsHolding = 1;
-            DesiredAltitude = AltiEst;  // Start with our current altitude as the hold height
+            DesiredAltitude = AltiEst;      // Start with our current altitude as the hold height
+            DesiredLaser = LaserCorrected;  // Also record the laser rangefinder height
+
+            AltPID.Reset();
           }
 
-          // Use a PID object to compute velocity requirements for the AscentPID object
-          DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
+          if( GoodLaser ) {
+            // Use a PID object to compute velocity requirements for the AscentPID object
+            DesiredAscentRate = AltPID.Calculate( DesiredLaser , LaserCorrected, DoIntegrate );
+          }
+          else {
+            // Use a PID object to compute velocity requirements for the AscentPID object
+            DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
+          }                        
+          UsedLaser = GoodLaser;
         }
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
-        NewThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
+        ThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
 
-        ThroOut += ((NewThroOut - ThroOut) * 192) >> 8;   // Small amount of filtering to keep the throttle from changing too abruptly in Assist mode
+        //ThroOut += ((NewThroOut - ThroOut) * 192) >> 8;   // Small amount of filtering to keep the throttle from changing too abruptly in Assist mode
       }
       else
       {
-        ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
+        //ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
       }
 
       if( AccelAssistZFactor > 0 )
@@ -805,12 +824,12 @@ void UpdateFlightLoop(void)
         ThrustMul = 256 + ((QuatIMU_GetThrustFactor() - 256) * Prefs.ThrustCorrectionScale) / 256;
         ThrustMul = clamp( ThrustMul, 256 , 384 );    //Limit the effect of the thrust modifier
         ThroOut = Prefs.MinThrottle + (((ThroOut-Prefs.MinThrottle) * ThrustMul) >> 8);
-      }        
+      }
     }
     else  // in manual mode
     {
-      ThroOut = NewThroOut;   // Direct to motors - no filtering in Manual mode
-    }      
+      //ThroOut = NewThroOut;   // Direct to motors - no filtering in Manual mode
+    }
     //-------------------------------------------
 
 
@@ -824,8 +843,8 @@ void UpdateFlightLoop(void)
     // The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
     // Some ESCs appear to stall (go into "stop" mode) if the throttle gets too close to zero, even for a moment, so avoid that
 
-    if( UsbPulse > 0 ) {
-      // If USB is connected, don't allow throttle to go above test value for added safety.
+    if( UsbPulse > 0 && Prefs.DisableMotors == 0 ) {
+      // If USB is connected and motors aren't disabled, don't allow throttle to go above test value for added safety.
       Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
       Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
       Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
@@ -967,14 +986,27 @@ void CheckDebugInput(void)
   do {
     c = S4_Check(2);
     if( c >= 0 ) {
-      LaserRange.AddChar( (char)c );
+      if( LaserRange.AddChar( (char)c ) ) { // When we add a char, did the height update?
+        // Laser reading needs to be tilt corrected
+        long tiltCorrected = (LaserRange.Height * 2560) / QuatIMU_GetThrustFactor();  // * 256 * 10 - Scale*10 to convert cm to mm for alti PID use
+        long diff = tiltCorrected - LaserCorrected;
+        if( abs(diff) > 1000 ) {
+          // Filter it hard if it changes dramatically from one reading to the next
+          LaserCorrected += (diff * 32) / 256;
+        }
+        else {
+          // Filter it a bit to keep it from changing too fast
+          LaserCorrected += (diff * 96) / 256;
+        }
+        LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
+      }
       laserCount = 16;
     }
   } while( c >= 0 );
 
   if( laserCount == 0 ) {
     S4_Put(2,'A');
-    laserCount = 16;
+    laserCount = 16;      // Ping the laser occasionally for a new reading
   }
   else {
     laserCount--;
@@ -1195,8 +1227,8 @@ void DoDebugModeOutput(void)
         COMMLINK::AddPacketData( &RollDifference, 4 );
         COMMLINK::AddPacketData( &YawDifference, 4 );
 
-        COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for @Alt
-        COMMLINK::AddPacketData( &sens.AltTemp, 4 );   //Send 4 bytes of data for @AltTemp
+        COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for Alt
+        COMMLINK::AddPacketData( &LaserCorrected, 4 ); //Send 4 bytes of data for laser height
         COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);

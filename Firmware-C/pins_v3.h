@@ -43,6 +43,8 @@
 
 #define PIN_MOTOR_AUX1  17
 #define PIN_MOTOR_AUX2  18
+#define PIN_EXP_TX      19
+#define PIN_EXP_RX      20
 
 #define PIN_VBATT  16
 

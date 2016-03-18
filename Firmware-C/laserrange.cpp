@@ -9,7 +9,7 @@ LASER_RANGE::LASER_RANGE()
 	FoundDecimal = 0;
 }
 
-void LASER_RANGE::AddChar(char c)
+bool LASER_RANGE::AddChar(char c)
 {
 	switch( c )
 	{
@@ -46,6 +46,8 @@ void LASER_RANGE::AddChar(char c)
 		Negative = 0;
 		FoundDecimal = 0;
       Working = 0;
-		break;
+      return true;  // Height value was updated
 	}
+
+   return false;  // Height value hasn't changed
 }

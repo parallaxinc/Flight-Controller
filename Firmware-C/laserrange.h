@@ -7,8 +7,8 @@ class LASER_RANGE
 public:
 	LASER_RANGE();
 
-	void  AddChar(char c);
-	int   Height;
+  bool AddChar(char c); // returns true when the Height value is updated
+  int   Height;
 
 private:
 	int   Working;

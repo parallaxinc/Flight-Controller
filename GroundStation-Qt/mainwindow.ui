@@ -3212,6 +3212,15 @@ throttle calibration.</string>
                <property name="toolTip">
                 <string>Use this to trim the roll value in level hover</string>
                </property>
+               <property name="minimum">
+                <double>-15.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>15.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
               </widget>
              </item>
              <item row="1" column="0">
@@ -3247,6 +3256,15 @@ throttle calibration.</string>
                <property name="toolTip">
                 <string>Use this to trim the pitch value in level hover</string>
                </property>
+               <property name="minimum">
+                <double>-15.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>15.000000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
               </widget>
              </item>
             </layout>
@@ -3269,7 +3287,7 @@ throttle calibration.</string>
           <item>
            <widget class="QFrame" name="frame_9">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
               <horstretch>1</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -3386,6 +3404,16 @@ throttle calibration.</string>
                 </widget>
                </item>
                <item>
+                <widget class="QCheckBox" name="cbGyroTemp">
+                 <property name="text">
+                  <string>Gyro Temperature</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QCheckBox" name="cbVoltage">
                  <property name="text">
                   <string>Voltage</string>
@@ -3409,6 +3437,16 @@ throttle calibration.</string>
                 <widget class="QCheckBox" name="cbAltiEst">
                  <property name="text">
                   <string>Altitude (fused)</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="cbLaserHeight">
+                 <property name="text">
+                  <string>Laser Height</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
