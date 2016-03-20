@@ -4,7 +4,7 @@ LASER_RANGE::LASER_RANGE()
 {
 	Height = 0;
 	Working = 0;
-	DigitMult = 1000;
+	DigitMult = 1000;    // Readings are in meters, we want millimeters.  Whole digits are multiplied by this value until we hit a decimal point.
 	Negative = 0;
 	FoundDecimal = 0;
 }

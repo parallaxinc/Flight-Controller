@@ -46,7 +46,7 @@
 #include "serial_4x.h"          // 4 port simultaneous serial I/O                               (1 COG)
 #include "servo32_highres.h"    // 32 port, high precision / high rate PWM servo output driver  (1 COG)
 
-#define ENABLE_LOGGING
+//#define ENABLE_LOGGING
 
 #ifdef ENABLE_LOGGING
 void DoLogOutput(void);
@@ -91,9 +91,9 @@ static long  GyroZX, GyroZY, GyroZZ;  // Gyro zero values
 static long  AccelZSmooth;            // Smoothed (filtered) accelerometer Z value (used for height fluctuation damping)
 
 //Debug output mode, working variables  
-static unsigned long  counter = 0;    //Main loop iteration counter
-static short  TxData[12];             //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
-static char   Quat[16];               //Current quaternion from the IMU functions
+static long   counter = 0;    //Main loop iteration counter
+static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
+static char   Quat[16];       //Current quaternion from the IMU functions
 
 static char Mode = MODE_None;         //Debug communication mode
 static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1 == no motor)
@@ -154,7 +154,7 @@ const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask 
 LASER_RANGE LaserRange;
 long LaserCorrected = 0;
 static long  DesiredLaser = 0;
-unsigned long LaserValidCount = 0;  // records the loop iteration when we got our last good laser reading
+long LaserValidCount = 0;  // records the loop iteration when we got our last good laser reading
 
 
 #ifdef ENABLE_LOGGING
@@ -416,14 +416,14 @@ void Initialize(void)
   YawPID.SetMaxIntegral( 2000 );
   YawPID.SetDervativeFilter( 192 );
 
-  int AltP = (900 * (Prefs.AltiGain+1)) >> 7;
+  int AltP = (800 * (Prefs.AltiGain+1)) >> 7;
   int AltI = (0 * (Prefs.AltiGain+1)) >> 7;
 
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
   AltPID.Init( AltP, AltI, 0, Const_UpdateRate );
   AltPID.SetPrecision( 8 );
-  AltPID.SetMaxOutput( 6000 );    // Fastest the altitude hold object will ask for is 6000 mm/sec (6 M/sec)
+  AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
 
@@ -502,12 +502,10 @@ static int clamp( int v, int min, int max ) {
   return v;
 }
 
-/*
 static int abs(int v) {
   v = (v<0) ? -v : v;
   return v;
 }
-*/
 
 static int max( int a, int b ) { return a > b ? a : b; }
 static int min( int a, int b ) { return a < b ? a : b; }
@@ -747,7 +745,7 @@ void UpdateFlightLoop(void)
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
     //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
-    ThroOut = (Radio.Thro << 2) + 12000;
+    int NewThroOut = (Radio.Thro << 2) + 12000;
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
@@ -777,37 +775,46 @@ void UpdateFlightLoop(void)
         }
         else
         {
-          bool GoodLaser = false; // (counter - LaserValidCount) < 30;
+          bool GoodLaser = ((counter - LaserValidCount) < 30) && (Radio.Aux1 > 0);
           static bool UsedLaser = false;
 
+          // Laser hold bounces a little - need derivative?  Need less filtering?
+          // Also need to play with PID on ascent - rate of change needs to be lowered
+
           // Are we just entering altitude hold mode?
-          if( IsHolding == 0 || UsedLaser != GoodLaser ) {
+          if( IsHolding == 0 ) {
             IsHolding = 1;
             DesiredAltitude = AltiEst;      // Start with our current altitude as the hold height
             DesiredLaser = LaserCorrected;  // Also record the laser rangefinder height
 
             AltPID.Reset();
           }
+          else {
+            if( !UsedLaser && GoodLaser ) {   // If we're going back to using the laser in hold, make sure we have a good reading
+              DesiredLaser = LaserCorrected;
+            }              
+          }
 
           if( GoodLaser ) {
             // Use a PID object to compute velocity requirements for the AscentPID object
             DesiredAscentRate = AltPID.Calculate( DesiredLaser , LaserCorrected, DoIntegrate );
+            DesiredAltitude = AltiEst;      // Cache the current altitude as a good altitude in case the laser stops reading
           }
           else {
             // Use a PID object to compute velocity requirements for the AscentPID object
             DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
-          }                        
+          }
           UsedLaser = GoodLaser;
         }
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
-        ThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
+        NewThroOut = Prefs.CenterThrottle + AltiThrust + (AdjustedThrottle<<1); // Feed in a bit of the user throttle to help with quick throttle changes
 
-        //ThroOut += ((NewThroOut - ThroOut) * 192) >> 8;   // Small amount of filtering to keep the throttle from changing too abruptly in Assist mode
+        ThroOut += ((NewThroOut - ThroOut) * 192) / 256;   // Small amount of filtering to keep the throttle from changing too abruptly in Assist mode
       }
       else
       {
-        //ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
+        ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
       }
 
       if( AccelAssistZFactor > 0 )
@@ -828,10 +835,9 @@ void UpdateFlightLoop(void)
     }
     else  // in manual mode
     {
-      //ThroOut = NewThroOut;   // Direct to motors - no filtering in Manual mode
+      ThroOut = NewThroOut;   // Direct to motors - no filtering in Manual mode
     }
     //-------------------------------------------
-
 
     //X configuration
     Motor[OUT_FL] = ThroOut + (((+PitchOut + RollOut - YawOut) * ThroMix) >> 7);
@@ -924,7 +930,7 @@ void UpdateFlightLEDColor(void)
   }
   else {
     int index = (counter >> 3) & 15;
-    if( index < 3 || IsHolding ) {  // Temporary, so I can tell
+    if( index < 5 || IsHolding ) {  // Temporary, so I can tell
       LEDModeColor = (LEDColorTable[FlightMode & 3] & LEDBrightMask) >> LEDBrightShift;
     }    
     else {
@@ -988,19 +994,22 @@ void CheckDebugInput(void)
     if( c >= 0 ) {
       if( LaserRange.AddChar( (char)c ) ) { // When we add a char, did the height update?
         // Laser reading needs to be tilt corrected
-        long tiltCorrected = (LaserRange.Height * 2560) / QuatIMU_GetThrustFactor();  // * 256 * 10 - Scale*10 to convert cm to mm for alti PID use
+        long tiltScale = QuatIMU_GetThrustFactor();
+        if( tiltScale > 512 ) tiltScale = 512;
+        long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
+
         long diff = tiltCorrected - LaserCorrected;
-        if( abs(diff) > 1000 ) {
+        if( abs(diff) > 500 ) {
           // Filter it hard if it changes dramatically from one reading to the next
-          LaserCorrected += (diff * 32) / 256;
+          LaserCorrected += (diff * 16) / 256;
         }
         else {
           // Filter it a bit to keep it from changing too fast
-          LaserCorrected += (diff * 96) / 256;
+          LaserCorrected += (diff * 64) / 256;
         }
         LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
       }
-      laserCount = 16;
+      laserCount = 4; // Wait 4 cycles before pinging it again
     }
   } while( c >= 0 );
 
@@ -1347,18 +1356,18 @@ void DataLogThread(void *par)
       static char tempBuf[128];
       char count = 0;
 
-      count =  LogInt( sens.Alt , tempBuf+count );
-      count += LogInt( sens.AccelX , tempBuf+count );
-      count += LogInt( sens.AccelY , tempBuf+count );
-      count += LogInt( sens.AccelZ , tempBuf+count );
-      
-      int * Q = (int *)QuatIMU_GetQuaternion();
+      count =  LogInt( DesiredAscentRate , tempBuf+count );
+      count += LogInt( AscentEst , tempBuf+count );
+      count += LogInt( AscentPID.LastPError , tempBuf+count );
+      count += LogInt( AscentPID.IError , tempBuf+count );
+      count += LogInt( AscentPID.Output , tempBuf+count );
+      count += LogInt( DesiredAltitude , tempBuf+count );
+      count += LogInt( AltiEst, tempBuf+count );
+      count += LogInt( AltPID.LastPError , tempBuf+count );
+      count += LogInt( AltPID.IError , tempBuf+count );
+      count += LogInt( FlightMode , tempBuf+count);
 
-      count += LogInt( Q[0] , tempBuf+count );
-      count += LogInt( Q[1] , tempBuf+count );
-      count += LogInt( Q[2] , tempBuf+count );
-      count += LogInt( Q[3] , tempBuf+count );
-
+      count += LogInt( Radio.Thro , tempBuf+count );
       tempBuf[count++] = 13;  // overwrite the last comma with a carriage return
 
       S4_Put_Bytes( 3, tempBuf, count );
@@ -1368,7 +1377,7 @@ void DataLogThread(void *par)
 
     // Reset the log trigger
     LogTrigger = 0;
-  }    
+  }
 }
 #endif
 
