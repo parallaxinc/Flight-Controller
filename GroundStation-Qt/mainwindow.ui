@@ -2229,7 +2229,7 @@ throttle calibration.</string>
          <rect>
           <x>5</x>
           <y>10</y>
-          <width>271</width>
+          <width>296</width>
           <height>236</height>
          </rect>
         </property>
@@ -2241,7 +2241,7 @@ throttle calibration.</string>
           <rect>
            <x>5</x>
            <y>21</y>
-           <width>261</width>
+           <width>286</width>
            <height>211</height>
           </rect>
          </property>
@@ -2462,7 +2462,7 @@ throttle calibration.</string>
        <widget class="QGroupBox" name="groupBox_2">
         <property name="geometry">
          <rect>
-          <x>280</x>
+          <x>305</x>
           <y>15</y>
           <width>221</width>
           <height>176</height>
@@ -2603,7 +2603,7 @@ throttle calibration.</string>
        <widget class="QPushButton" name="btnUploadSystemSetup">
         <property name="geometry">
          <rect>
-          <x>320</x>
+          <x>345</x>
           <y>200</y>
           <width>141</width>
           <height>26</height>
@@ -2893,114 +2893,21 @@ throttle calibration.</string>
         <property name="geometry">
          <rect>
           <x>5</x>
-          <y>5</y>
+          <y>155</y>
           <width>356</width>
-          <height>366</height>
+          <height>216</height>
          </rect>
         </property>
         <property name="title">
          <string>Fixed Offset Compensation</string>
         </property>
-        <widget class="Gauge_Widget" name="gAccelXCal" native="true">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>25</y>
-           <width>101</width>
-           <height>101</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-        </widget>
-        <widget class="Gauge_Widget" name="gAccelYCal" native="true">
-         <property name="geometry">
-          <rect>
-           <x>125</x>
-           <y>25</y>
-           <width>101</width>
-           <height>101</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-        </widget>
-        <widget class="Gauge_Widget" name="gAccelZCal" native="true">
-         <property name="geometry">
-          <rect>
-           <x>240</x>
-           <y>25</y>
-           <width>101</width>
-           <height>101</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_24">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>125</y>
-           <width>101</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Accel X</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_25">
-         <property name="geometry">
-          <rect>
-           <x>125</x>
-           <y>125</y>
-           <width>101</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Accel Y</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_26">
-         <property name="geometry">
-          <rect>
-           <x>240</x>
-           <y>125</y>
-           <width>101</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Accel Z</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
         <widget class="QWidget" name="layoutWidget">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>160</y>
+           <y>15</y>
            <width>331</width>
-           <height>201</height>
+           <height>191</height>
           </rect>
          </property>
          <layout class="QFormLayout" name="formLayout_4">
@@ -3311,6 +3218,99 @@ throttle calibration.</string>
           <widget class="Orientation_Widget" name="Orientation_Accel" native="true"/>
          </item>
         </layout>
+       </widget>
+       <widget class="QLabel" name="label_26">
+        <property name="geometry">
+         <rect>
+          <x>245</x>
+          <y>115</y>
+          <width>101</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Accel Z</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_24">
+        <property name="geometry">
+         <rect>
+          <x>15</x>
+          <y>115</y>
+          <width>101</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Accel X</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="Gauge_Widget" name="gAccelYCal" native="true">
+        <property name="geometry">
+         <rect>
+          <x>130</x>
+          <y>15</y>
+          <width>101</width>
+          <height>101</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+       </widget>
+       <widget class="Gauge_Widget" name="gAccelZCal" native="true">
+        <property name="geometry">
+         <rect>
+          <x>245</x>
+          <y>15</y>
+          <width>101</width>
+          <height>101</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+       </widget>
+       <widget class="Gauge_Widget" name="gAccelXCal" native="true">
+        <property name="geometry">
+         <rect>
+          <x>15</x>
+          <y>15</y>
+          <width>101</width>
+          <height>101</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_25">
+        <property name="geometry">
+         <rect>
+          <x>130</x>
+          <y>115</y>
+          <width>101</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Accel Y</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
        </widget>
       </widget>
       <widget class="QWidget" name="tpSensors">
