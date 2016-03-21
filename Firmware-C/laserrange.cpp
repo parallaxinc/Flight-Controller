@@ -4,12 +4,12 @@ LASER_RANGE::LASER_RANGE()
 {
 	Height = 0;
 	Working = 0;
-	DigitMult = 1000;
+	DigitMult = 1000;    // Readings are in meters, we want millimeters.  Whole digits are multiplied by this value until we hit a decimal point.
 	Negative = 0;
 	FoundDecimal = 0;
 }
 
-void LASER_RANGE::AddChar(char c)
+bool LASER_RANGE::AddChar(char c)
 {
 	switch( c )
 	{
@@ -46,6 +46,8 @@ void LASER_RANGE::AddChar(char c)
 		Negative = 0;
 		FoundDecimal = 0;
       Working = 0;
-		break;
+      return true;  // Height value was updated
 	}
+
+   return false;  // Height value hasn't changed
 }

@@ -125,8 +125,10 @@ private slots:
 	void on_cbMagX_clicked();
 	void on_cbMagY_clicked();
 	void on_cbMagZ_clicked();
+	void on_cbGyroTemp_clicked();
 	void on_cbAlti_clicked();
 	void on_cbAltiEst_clicked();
+	void on_cbLaserHeight_clicked();
 
 	void on_actionExport_Settings_to_File_triggered();
 

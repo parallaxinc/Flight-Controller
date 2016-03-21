@@ -20,6 +20,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+	QFont smallFont = ui->btnReceiverReset->font();
+	smallFont.setPointSize(10);
+
+	// Do this here because Mac font defaults are not the same point size as PC
+	ui->btnReceiverReset->setFont(smallFont);
+	ui->btnReceiverCalibrate->setFont(smallFont);
+	ui->label_2->setFont(smallFont);
+	ui->cbReceiverType->setFont(smallFont);
+	ui->cbR_Channel1->setFont(smallFont);
+	ui->cbR_Channel2->setFont(smallFont);
+	ui->cbR_Channel3->setFont(smallFont);
+	ui->cbR_Channel4->setFont(smallFont);
+	ui->cbR_Channel5->setFont(smallFont);
+	ui->cbR_Channel6->setFont(smallFont);
+	ui->cbR_Channel7->setFont(smallFont);
+	ui->cbR_Channel8->setFont(smallFont);
+	ui->btnUploadRadioChanges->setFont(smallFont);
+	ui->btnDisableMotors->setFont(smallFont);
+	ui->btnUploadSystemSetup->setFont(smallFont);
+
+
 	ui->lblRadioCalibrateDocs->setVisible(false);	// Hide this until calibration mode
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
@@ -187,12 +208,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelGSVersion->setFrameStyle(QFrame::NoFrame);
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
 
-	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ",
-							   "AltiRaw", "AltiEst", };
+	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
+							   "AltiRaw", "AltiEst", "LaserHeight" };
 	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
 									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
-									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255),
-								   Qt::gray, Qt::black,
+									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
+								   Qt::gray, Qt::black, QColor(255,128,0),
 								 };
 
 
@@ -202,7 +223,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	sg->setAutoAddPlottableToLegend(true);
 	sg->xAxis->setRange(0, 2000);
 	sg->yAxis->setRange(-2048, 2048);
-	for( int i=0; i<11; i++ )
+	for( int i=0; i<13; i++ )
 	{
 		graphs[i] = sg->addGraph();
 		graphs[i]->setName(graphNames[i]);
@@ -422,16 +443,7 @@ void MainWindow::ProcessPackets(void)
 					graphs[6]->addData( SampleIndex, sensors.MagX);
 					graphs[7]->addData( SampleIndex, sensors.MagY);
 					graphs[8]->addData( SampleIndex, sensors.MagZ);
-
-					//graphSources[0].Samples[SampleIndex].y = sensors.GyroX;
-                    //graphSources[1].Samples[SampleIndex].y = sensors.GyroY;
-                    //graphSources[2].Samples[SampleIndex].y = sensors.GyroZ;
-                    //graphSources[3].Samples[SampleIndex].y = sensors.AccelX;
-                    //graphSources[4].Samples[SampleIndex].y = sensors.AccelY;
-                    //graphSources[5].Samples[SampleIndex].y = sensors.AccelZ;
-                    //graphSources[6].Samples[SampleIndex].y = sensors.MagX;
-                    //graphSources[7].Samples[SampleIndex].y = sensors.MagY;
-                    //graphSources[8].Samples[SampleIndex].y = sensors.MagZ;
+					graphs[9]->addData( SampleIndex, sensors.Temp );
 
 					bSensorsChanged = true;
                     break;
@@ -450,9 +462,9 @@ void MainWindow::ProcessPackets(void)
                     //double pitch = Math.Asin( m.m[1, 2] ) * (180.0 / Math.PI);
                     //double yaw = -Math.Atan2( m.m[2, 0], m.m[2, 2] ) * (180.0 / Math.PI);
 
-                    //graphSources[11].Samples[SampleIndex].y = (float)pitch;
-                    //graphSources[12].Samples[SampleIndex].y = (float)roll;
-                    //graphSources[13].Samples[SampleIndex].y = (float)yaw;
+					//graphSources[13].Samples[SampleIndex].y = (float)pitch;
+					//graphSources[14].Samples[SampleIndex].y = (float)roll;
+					//graphSources[15].Samples[SampleIndex].y = (float)yaw;
 
                     bQuatChanged = true;
                     }
@@ -465,9 +477,10 @@ void MainWindow::ProcessPackets(void)
                     //graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
                     //graphSources[10].Samples[SampleIndex].y = (float)computed.AltiEst / 1000.0f;
 
-					graphs[9]->addData( SampleIndex, (float)computed.Alt );
-					graphs[10]->addData( SampleIndex, (float)computed.AltiEst );
-                    break;
+					graphs[10]->addData( SampleIndex, (float)computed.Alt );
+					graphs[11]->addData( SampleIndex, (float)computed.AltiEst );
+					graphs[12]->addData( SampleIndex, (float)computed.AltTemp );
+					break;
 
                 case 5:	// Motor values
                     motors.ReadFrom( p );
@@ -1644,30 +1657,37 @@ void MainWindow::on_cbAccelZ_clicked() {
 	graphs[5]->setVisible( ui->cbAccelZ->isChecked() );
 }
 
-void MainWindow::on_cbMagX_clicked()
-{
+void MainWindow::on_cbMagX_clicked() {
 	graphs[6]->setVisible( ui->cbMagX->isChecked() );
 }
 
-void MainWindow::on_cbMagY_clicked()
-{
+void MainWindow::on_cbMagY_clicked() {
 	graphs[7]->setVisible( ui->cbMagY->isChecked() );
 }
 
-void MainWindow::on_cbMagZ_clicked()
-{
+void MainWindow::on_cbMagZ_clicked() {
 	graphs[8]->setVisible( ui->cbMagZ->isChecked() );
+}
+
+void MainWindow::on_cbGyroTemp_clicked() {
+	graphs[9]->setVisible( ui->cbGyroTemp->isChecked() );
 }
 
 void MainWindow::on_cbAlti_clicked()
 {
-	graphs[9]->setVisible( ui->cbAlti->isChecked() );
+	graphs[10]->setVisible( ui->cbAlti->isChecked() );
 }
 
 void MainWindow::on_cbAltiEst_clicked()
 {
-	graphs[10]->setVisible( ui->cbAltiEst->isChecked() );
+	graphs[11]->setVisible( ui->cbAltiEst->isChecked() );
 }
+
+void MainWindow::on_cbLaserHeight_clicked()
+{
+	graphs[12]->setVisible( ui->cbLaserHeight->isChecked() );
+}
+
 
 void MainWindow::on_actionExport_Settings_to_File_triggered()
 {

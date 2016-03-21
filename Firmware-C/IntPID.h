@@ -52,6 +52,8 @@ public:
   void ResetIntegralError(void) { IError = 0; }
   int GetIError(void)           { return IError; }
 
+  // Use Reset if running a PID that's been idle for a while
+  void Reset(void)              { IError = 0; LastPError = 0; }
 
   int Calculate( int SetPoint , int Measured , char DoIntegrate );
   //int Calculate_ForceD( int SetPoint , int Measured , int Deriv , char DoIntegrate );

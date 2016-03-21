@@ -225,8 +225,8 @@ void QuatIMU_Start(void)
   IMU_VARS[const_velAccScale]       =    0.9995f;     // was 0.9995     - Used to generate the vertical velocity estimate
   IMU_VARS[const_velAltiScale]      =    0.0005f;     // was 0.0005
 
-  IMU_VARS[const_velAccTrust]       =    0.9990f;      // was 0.9990    - used to generate the absolute altitude estimate
-  IMU_VARS[const_velAltiTrust]      =    0.0010f;      // was 0.0010
+  IMU_VARS[const_velAccTrust]       =    0.9993f;      // was 0.9990    - used to generate the absolute altitude estimate
+  IMU_VARS[const_velAltiTrust]      =    0.0007f;      // was 0.0010
 
   IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;

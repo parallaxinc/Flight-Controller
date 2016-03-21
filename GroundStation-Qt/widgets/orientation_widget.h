@@ -34,8 +34,8 @@ private:
 
 	float CenterX, CenterY;
 
-	static const float ViewDist = 9.0f;
-	static const float ViewScale = 1200.0f;
+    const float ViewDist = 9.0f;
+    const float ViewScale = 1200.0f;
 
 	float DrawScale;
 
