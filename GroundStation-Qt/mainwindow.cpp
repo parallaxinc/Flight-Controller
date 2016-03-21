@@ -20,6 +20,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+	QFont smallFont = ui->btnReceiverReset->font();
+	smallFont.setPointSize(10);
+
+	// Do this here because Mac font defaults are not the same point size as PC
+	ui->btnReceiverReset->setFont(smallFont);
+	ui->btnReceiverCalibrate->setFont(smallFont);
+	ui->label_2->setFont(smallFont);
+	ui->cbReceiverType->setFont(smallFont);
+	ui->cbR_Channel1->setFont(smallFont);
+	ui->cbR_Channel2->setFont(smallFont);
+	ui->cbR_Channel3->setFont(smallFont);
+	ui->cbR_Channel4->setFont(smallFont);
+	ui->cbR_Channel5->setFont(smallFont);
+	ui->cbR_Channel6->setFont(smallFont);
+	ui->cbR_Channel7->setFont(smallFont);
+	ui->cbR_Channel8->setFont(smallFont);
+	ui->btnUploadRadioChanges->setFont(smallFont);
+	ui->btnDisableMotors->setFont(smallFont);
+	ui->btnUploadSystemSetup->setFont(smallFont);
+
+
 	ui->lblRadioCalibrateDocs->setVisible(false);	// Hide this until calibration mode
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 

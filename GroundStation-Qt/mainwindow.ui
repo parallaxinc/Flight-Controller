@@ -1852,7 +1852,7 @@ throttle calibration.</string>
           <rect>
            <x>20</x>
            <y>20</y>
-           <width>221</width>
+           <width>331</width>
            <height>17</height>
           </rect>
          </property>
@@ -2255,6 +2255,9 @@ throttle calibration.</string>
           <property name="leftMargin">
            <number>5</number>
           </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
           <item row="0" column="0">
            <widget class="QLabel" name="label_6">
             <property name="sizePolicy">
@@ -2478,6 +2481,9 @@ throttle calibration.</string>
           </rect>
          </property>
          <layout class="QFormLayout" name="formLayout_3">
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
           <item row="0" column="0" colspan="2">
            <widget class="ValueBar_Widget" name="vbVoltage2" native="true">
             <property name="sizePolicy">
