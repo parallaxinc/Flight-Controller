@@ -762,6 +762,11 @@ throttle calibration.</string>
            <height>23</height>
           </rect>
          </property>
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="toolTip">
           <string>Reset all channel scale / reverse assignments</string>
          </property>
@@ -777,6 +782,11 @@ throttle calibration.</string>
            <width>91</width>
            <height>23</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
          </property>
          <property name="toolTip">
           <string>Automatically determine channel ranges and reverse settings</string>
@@ -806,6 +816,11 @@ throttle calibration.</string>
            <width>81</width>
            <height>16</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
          </property>
          <property name="text">
           <string>Receiver Type</string>
@@ -1775,6 +1790,11 @@ throttle calibration.</string>
           <height>26</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
+        </property>
         <property name="toolTip">
          <string>Upload changes on this page to the flight controller</string>
         </property>
@@ -1832,7 +1852,7 @@ throttle calibration.</string>
           <rect>
            <x>20</x>
            <y>20</y>
-           <width>146</width>
+           <width>221</width>
            <height>17</height>
           </rect>
          </property>
@@ -2377,6 +2397,11 @@ throttle calibration.</string>
               <height>20</height>
              </size>
             </property>
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
             <property name="toolTip">
              <string>Used to completely disable motor outputs for testing.</string>
             </property>
@@ -2577,6 +2602,11 @@ throttle calibration.</string>
           <width>141</width>
           <height>26</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>8</pointsize>
+         </font>
         </property>
         <property name="text">
          <string>Upload Changes</string>
