@@ -20,8 +20,8 @@
   Actively In Development / To Be Developed:
   - Altitude Hold
   - Heading Hold & Compass Calibration
-  
-  
+
+
   Written by Jason Dorie
 
   Dedicated to the memory of my father, Jim Dorie, who encouraged me endlessly
@@ -416,7 +416,7 @@ void Initialize(void)
   YawPID.SetMaxIntegral( 2000 );
   YawPID.SetDervativeFilter( 192 );
 
-  int AltP = (800 * (Prefs.AltiGain+1)) >> 7;
+  int AltP = (1000 * (Prefs.AltiGain+1)) >> 7;
   int AltI = (0 * (Prefs.AltiGain+1)) >> 7;
 
   // Altitude hold PID object
@@ -427,13 +427,13 @@ void Initialize(void)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
 
-  int AscentP = (300 * (Prefs.AscentGain+1)) >> 7;
+  int AscentP = (250 * (Prefs.AscentGain+1)) >> 7;
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
   AscentPID.Init( AscentP, 0, 0 , Const_UpdateRate );
   AscentPID.SetPrecision( 8 );
-  AscentPID.SetMaxOutput( 4000 );   // Limit of the control rate applied to the throttle
+  AscentPID.SetMaxOutput( 3000 );   // Limit of the control rate applied to the throttle
   AscentPID.SetPIMax( 500 );
   AscentPID.SetMaxIntegral( 2000 );
 
@@ -752,13 +752,12 @@ void UpdateFlightLoop(void)
     {
       if( FlightMode == FlightMode_Assist )
       {
-        //int T0 = max( 0, (Radio.Aux1 + 1024) >> 2);
-        //int T1 = max( 0, (Radio.Aux2 + 1024));
-        //int T2 = max( 0, (Radio.Aux3 + 1024) >> 1);
+        //int T0 = max( 0, (Radio.Aux2 + 1024) >> 2);
+        //int T1 = max( 0, (Radio.Aux3 + 1024) >> 1);
 
         //AscentPID.SetPGain( T0 );
         //AltPID.SetPGain( T1 );
-        //AltPID.SetIGain( T2 );
+
 
         int AdjustedThrottle = 0;
 
@@ -775,11 +774,11 @@ void UpdateFlightLoop(void)
         }
         else
         {
-          bool GoodLaser = ((counter - LaserValidCount) < 30) && (Radio.Aux1 > 0);
+          // Laser hold bounces a little, particularly when hard banking - need derivative?  Need less filtering?  Could be accumulated thrust scale + accel scale?
+
+          bool GoodLaser = ((counter - LaserValidCount) < 30) && (Radio.Aux1 > 0) && (QuatIMU_GetThrustFactor() < 384);
           static bool UsedLaser = false;
 
-          // Laser hold bounces a little - need derivative?  Need less filtering?
-          // Also need to play with PID on ascent - rate of change needs to be lowered
 
           // Are we just entering altitude hold mode?
           if( IsHolding == 0 ) {
@@ -995,19 +994,20 @@ void CheckDebugInput(void)
       if( LaserRange.AddChar( (char)c ) ) { // When we add a char, did the height update?
         // Laser reading needs to be tilt corrected
         long tiltScale = QuatIMU_GetThrustFactor();
-        if( tiltScale > 512 ) tiltScale = 512;
-        long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
+        if( tiltScale <= 512 ) {  // Don't use the laser if the readings are too skewed
+          long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
 
-        long diff = tiltCorrected - LaserCorrected;
-        if( abs(diff) > 500 ) {
-          // Filter it hard if it changes dramatically from one reading to the next
-          LaserCorrected += (diff * 16) / 256;
+          long diff = tiltCorrected - LaserCorrected;
+          if( abs(diff) > 700 ) {
+            // Filter it hard if it changes dramatically from one reading to the next
+            LaserCorrected += (diff * 32) / 256;
+          }
+          else {
+            // Filter it a bit to keep it from changing too fast
+            LaserCorrected += (diff * 128) / 256;
+          }
+          LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
         }
-        else {
-          // Filter it a bit to keep it from changing too fast
-          LaserCorrected += (diff * 64) / 256;
-        }
-        LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
       }
       laserCount = 4; // Wait 4 cycles before pinging it again
     }
