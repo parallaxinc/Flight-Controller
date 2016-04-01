@@ -34,9 +34,6 @@ private:
 
 	float CenterX, CenterY;
 
-    const float ViewDist = 9.0f;
-    const float ViewScale = 1200.0f;
-
 	float DrawScale;
 
 	QQuaternion quat, quat2;

@@ -4,6 +4,10 @@
 #include "quatutil.h"
 #include <math.h>
 
+const float ViewDist = 9.0f;
+const float ViewScale = 1200.0f;
+
+
 Orientation_Widget::Orientation_Widget(QWidget *parent) : QWidget(parent)
 {
 	Init();
