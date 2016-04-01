@@ -3532,8 +3532,10 @@ throttle calibration.</string>
     <addaction name="separator"/>
     <addaction name="actionReset_Flight_Controller"/>
     <addaction name="separator"/>
-    <addaction name="actionRestore_Factory_Defaults"/>
     <addaction name="actionExport_Settings_to_File"/>
+    <addaction name="actionImport_Settings_from_File"/>
+    <addaction name="separator"/>
+    <addaction name="actionRestore_Factory_Defaults"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -3597,7 +3599,12 @@ throttle calibration.</string>
     <string>Export Settings to File</string>
    </property>
    <property name="visible">
-    <bool>false</bool>
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="actionImport_Settings_from_File">
+   <property name="text">
+    <string>Import Settings from File</string>
    </property>
   </action>
  </widget>

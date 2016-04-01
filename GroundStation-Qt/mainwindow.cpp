@@ -1691,7 +1691,6 @@ void MainWindow::on_cbLaserHeight_clicked()
 
 void MainWindow::on_actionExport_Settings_to_File_triggered()
 {
-#if 0	// Disabled until completed
 	// Get the filename from the user
 	QString fileName = QFileDialog::getSaveFileName(this, tr("Save Settings File"), QDir::currentPath(), tr("Elev8 Settings Files (*.elev8set *.xml)"));
 	if (fileName.isEmpty())
@@ -1702,84 +1701,332 @@ void MainWindow::on_actionExport_Settings_to_File_triggered()
 		return;
 	}
 
-	// Serialize the data into a tagged file format suitable for editing
-#endif
+	// Serialize the settings data into an XML file
+	WriteSettings( &file );
+
+	file.close();
 }
 
-/*
-void MainWindow::WriteSettings( QIODevice *device )
+
+void MainWindow::on_actionImport_Settings_from_File_triggered()
 {
+	// Get the filename from the user
+	QString fileName = QFileDialog::getOpenFileName(this, tr("Open Settings File"), QDir::currentPath(), tr("Elev8 Settings Files (*.elev8set *.xml)"));
+	if (fileName.isEmpty())
+		return;
 
-	int DriftScaleX,  DriftScaleY,  DriftScaleZ;
-	int DriftOffsetX, DriftOffsetY, DriftOffsetZ;
-	int AccelOffsetX, AccelOffsetY, AccelOffsetZ;
-	int MagOfsX, MagScaleX, MagOfsY, MagScaleY, MagOfsZ, MagScaleZ;
+	QFile file(fileName);
+	if(!file.open(QFile::ReadOnly | QFile::Text)) {
+		return;
+	}
 
-	float RollCorrectSin, RollCorrectCos;
-	float PitchCorrectSin, PitchCorrectCos;
+	// Deserialize the settings data from the XML file
+	ReadSettings( &file );
 
-	float AutoLevelRollPitch;
-	float AutoLevelYawRate;
-	float ManualRollPitchRate;
-	float ManualYawRate;
-
-	char  PitchGain;
-	char  RollGain;
-	char  YawGain;
-	char  AscentGain;
-
-	char  AltiGain;
-	char  PitchRollLocked;
-	char  UseAdvancedPID;
-	char  unused;
-
-	char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
-	char  unused2;
-	char  UseBattMon;
-	char  DisableMotors;
-
-	char  LowVoltageAlarm;
-	char  LowVoltageAscentLimit;
-	short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
-
-	short MinThrottle;      // Minimum motor output value
-	short MaxThrottle;      // Maximum motor output value
-	short CenterThrottle;   // Mid-point motor output value
-	short MinThrottleArmed; // Minimum throttle output value when armed - MUST be equal or greater than MinThrottle
-	short ArmDelay;
-	short DisarmDelay;
-
-	short ThrustCorrectionScale;  // 0 to 256  =  0 to 1
-	short AccelCorrectionFilter;  // 0 to 256  =  0 to 1
-
-	short VoltageOffset;    // Used to correct the difference between measured and actual voltage
-	short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
-
-	char  ThroChannel;      // Radio inputs to use for each value
-	char  AileChannel;
-	char  ElevChannel;
-	char  RuddChannel;
-	char  GearChannel;
-	char  Aux1Channel;
-	char  Aux2Channel;
-	char  Aux3Channel;
-
-	short ThroScale;
-	short AileScale;
-	short ElevScale;
-	short RuddScale;
-	short GearScale;
-	short Aux1Scale;
-	short Aux2Scale;
-	short Aux3Scale;
-
-	short ThroCenter;
-	short AileCenter;
-	short ElevCenter;
-	short RuddCenter;
-	short GearCenter;
-	short Aux1Center;
-	short Aux2Center;
-	short Aux3Center;
+	file.close();
 }
-*/
+
+
+// With QString::number handling overloads for most types, this function should work for just about anything
+template<typename TYPE> static void WritePref( QXmlStreamWriter & writer , const char * pPrefName , TYPE Value )
+{
+	writer.writeStartElement( pPrefName );
+	writer.writeAttribute( "Value" , QString::number(Value) );
+	writer.writeEndElement();
+}
+
+
+void MainWindow::WriteSettings( QIODevice *file )
+{
+	QXmlStreamWriter writer( file );
+	writer.setAutoFormatting(true);
+	writer.writeStartDocument();
+
+	writer.writeStartElement("Elev8-Prefs");
+
+	QString verString = QString( "%1.%2" ).arg(debugData.Version >> 8).arg( debugData.Version & 255, 2, 10, QChar('0'));
+	writer.writeAttribute("Version", verString );
+
+	WritePref( writer, "DriftScaleX", prefs.DriftScaleX );
+	WritePref( writer, "DriftScaleY", prefs.DriftScaleY );
+	WritePref( writer, "DriftScaleZ", prefs.DriftScaleZ );
+
+	WritePref( writer, "DriftOffsetX", prefs.DriftOffsetX );
+	WritePref( writer, "DriftOffsetY", prefs.DriftOffsetY );
+	WritePref( writer, "DriftOffsetZ", prefs.DriftOffsetZ );
+
+	WritePref( writer, "AccelOffsetX", prefs.AccelOffsetX );
+	WritePref( writer, "AccelOffsetY", prefs.AccelOffsetY );
+	WritePref( writer, "AccelOffsetZ", prefs.AccelOffsetZ );
+
+	WritePref( writer, "MagOfsX", prefs.MagOfsX );
+	WritePref( writer, "MagOfsY", prefs.MagOfsY );
+	WritePref( writer, "MagOfsZ", prefs.MagOfsZ );
+
+	WritePref( writer, "MagScaleX", prefs.MagScaleX );
+	WritePref( writer, "MagScaleY", prefs.MagScaleY );
+	WritePref( writer, "MagScaleZ", prefs.MagScaleZ );
+
+	WritePref( writer, "RollCorrectSin", prefs.RollCorrectSin );
+	WritePref( writer, "RollCorrectCos", prefs.RollCorrectCos );
+
+	WritePref( writer, "PitchCorrectSin", prefs.PitchCorrectSin );
+	WritePref( writer, "PitchCorrectCos", prefs.PitchCorrectCos );
+
+
+	float RateScale = 2.0f / (PI/180.0f) * 1024.0;
+	WritePref( writer, "AutoLevelRollPitch", prefs.AutoLevelRollPitch * RateScale );
+	WritePref( writer, "AutoLevelYawRate", prefs.AutoLevelYawRate * RateScale * 250.0f );
+	WritePref( writer, "ManualRollPitchRate", prefs.ManualRollPitchRate * RateScale * 250.0f );
+	WritePref( writer, "ManualYawRate", prefs.ManualYawRate * RateScale * 250.0f );
+
+	WritePref( writer, "PitchGain", prefs.PitchGain );
+	WritePref( writer, "RollGain", prefs.RollGain );
+	WritePref( writer, "YawGain", prefs.YawGain );
+	WritePref( writer, "AscentGain", prefs.AscentGain );
+
+	WritePref( writer, "AltiGain", prefs.AltiGain );
+	WritePref( writer, "PitchRollLocked", prefs.PitchRollLocked );
+	WritePref( writer, "UseAdvancedPID", prefs.UseAdvancedPID );
+	WritePref( writer, "ReceiverType", prefs.ReceiverType );
+
+	WritePref( writer, "UseBattMon", prefs.UseBattMon );
+	WritePref( writer, "DisableMotors", prefs.DisableMotors );
+	WritePref( writer, "LowVoltageAlarm", prefs.LowVoltageAlarm );
+	WritePref( writer, "LowVoltageAscentLimit", prefs.LowVoltageAscentLimit );
+
+	WritePref( writer, "ThrottleTest", prefs.ThrottleTest );
+	WritePref( writer, "MinThrottle", prefs.MinThrottle );
+	WritePref( writer, "MaxThrottle", prefs.MaxThrottle );
+	WritePref( writer, "CenterThrottle", prefs.CenterThrottle );
+	WritePref( writer, "MinThrottleArmed", prefs.MinThrottleArmed );
+	WritePref( writer, "ArmDelay", prefs.ArmDelay );
+	WritePref( writer, "DisarmDelay", prefs.DisarmDelay );
+
+	WritePref( writer, "ThrustCorrectionScale", prefs.ThrustCorrectionScale );
+	WritePref( writer, "AccelCorrectionFilter", prefs.AccelCorrectionFilter );
+
+	WritePref( writer, "VoltageOffset", prefs.VoltageOffset );
+	WritePref( writer, "LowVoltageAlarmThreshold", prefs.LowVoltageAlarmThreshold );
+
+	WritePref( writer, "ThroChannel", prefs.ThroChannel );
+	WritePref( writer, "AileChannel", prefs.AileChannel );
+	WritePref( writer, "ElevChannel", prefs.ElevChannel );
+	WritePref( writer, "RuddChannel", prefs.RuddChannel );
+	WritePref( writer, "GearChannel", prefs.GearChannel );
+	WritePref( writer, "Aux1Channel", prefs.Aux1Channel );
+	WritePref( writer, "Aux2Channel", prefs.Aux2Channel );
+	WritePref( writer, "Aux3Channel", prefs.Aux3Channel );
+
+	WritePref( writer, "ThroScale", prefs.ThroScale );
+	WritePref( writer, "ThroCenter", prefs.ThroCenter );
+
+	WritePref( writer, "AileScale", prefs.AileScale );
+	WritePref( writer, "AileCenter", prefs.AileCenter );
+
+	WritePref( writer, "ElevScale", prefs.ElevScale );
+	WritePref( writer, "ElevCenter", prefs.ElevCenter );
+
+	WritePref( writer, "RuddScale", prefs.RuddScale );
+	WritePref( writer, "RuddCenter", prefs.RuddCenter );
+
+	WritePref( writer, "GearScale", prefs.GearScale );
+	WritePref( writer, "GearCenter", prefs.GearCenter );
+
+	WritePref( writer, "Aux1Scale", prefs.Aux1Scale );
+	WritePref( writer, "Aux1Center", prefs.Aux1Center );
+
+	WritePref( writer, "Aux2Scale", prefs.Aux2Scale );
+	WritePref( writer, "Aux2Center", prefs.Aux2Center );
+
+	WritePref( writer, "Aux3Scale", prefs.Aux3Scale );
+	WritePref( writer, "Aux3Center", prefs.Aux3Center );
+
+	writer.writeEndElement();	// prefs block
+	writer.writeEndDocument();
+}
+
+void MainWindow::ReadSettings( QIODevice *file )
+{
+	QXmlStreamReader reader;
+
+	// Read the settings from the XML file
+	reader.setDevice( file );
+	reader.readNext();
+
+	while(!reader.atEnd())
+	{
+		if(reader.isStartElement())
+		{
+			if(reader.name() == "Elev8-Prefs")
+			{
+				if( reader.attributes().length() > 0 )
+				{
+					QXmlStreamAttribute attr = reader.attributes()[0];
+					if( attr.name() == "Version" )
+					{
+						QString val = attr.value().toString();
+						ReadSettingsContents( reader );
+					}
+				}
+			}
+			else {
+				// This is not an elev8 settings file
+				// TODO: Display an error
+				return;
+			}
+			reader.readNext();
+		}
+		else if( reader.isEndElement() ) {
+			reader.readNext();
+		}
+		else
+			reader.readNext();
+	}
+
+	// Finally, set the UI from the prefs
+	ConfigureUIFromPreferences();
+}
+
+
+static bool ReadInt( QXmlStreamReader & reader , int & val )
+{
+	bool ok = false;
+	QXmlStreamAttribute attr = reader.attributes()[0];
+	if( attr.name() == "Value" ) {
+		int temp = attr.value().toInt( &ok );
+		if( ok ) val = temp;
+	}
+	return ok;
+}
+
+static bool ReadInt( QXmlStreamReader & reader , short & val )
+{
+	bool ok = false;
+	QXmlStreamAttribute attr = reader.attributes()[0];
+	if( attr.name() == "Value" ) {
+		int temp = attr.value().toInt( &ok );
+		if( ok ) val = (short)temp;
+	}
+	return ok;
+}
+
+static bool ReadInt( QXmlStreamReader & reader , char & val )
+{
+	bool ok = false;
+	QXmlStreamAttribute attr = reader.attributes()[0];
+	if( attr.name() == "Value" ) {
+		int temp = attr.value().toInt( &ok );
+		if( ok ) val = (char)temp;
+	}
+	return ok;
+}
+
+
+static bool ReadFloat( QXmlStreamReader & reader , float & val , float scale = 1.0f )
+{
+	bool ok = false;
+	QXmlStreamAttribute attr = reader.attributes()[0];
+	if( attr.name() == "Value" ) {
+		float temp = attr.value().toFloat( &ok );
+		if( ok ) val = temp / scale;
+	}
+	return ok;
+}
+
+
+void MainWindow::ReadSettingsContents( QXmlStreamReader & reader )
+{
+	reader.readNext();
+
+	const float RateScale = 1.0 / (2.0f / (PI/180.0f) * 1024.0);
+
+	while( !(reader.isEndElement() && reader.name() == "Elev8-Prefs") )
+	{
+		if( reader.isStartElement() )
+		{
+			if(      reader.name() == "DriftScaleX")			ReadInt(reader, prefs.DriftScaleX);
+			else if( reader.name() == "DriftScaleY" )			ReadInt(reader, prefs.DriftScaleY);
+			else if( reader.name() == "DriftScaleZ")			ReadInt(reader, prefs.DriftScaleZ);
+			else if( reader.name() == "DriftOffsetX")			ReadInt(reader, prefs.DriftOffsetX);
+			else if( reader.name() == "DriftOffsetY")			ReadInt(reader, prefs.DriftOffsetY);
+			else if( reader.name() == "DriftOffsetZ")			ReadInt(reader, prefs.DriftOffsetZ);
+
+			else if( reader.name() == "AccelOffsetX")			ReadInt(reader, prefs.AccelOffsetX);
+			else if( reader.name() == "AccelOffsetY")			ReadInt(reader, prefs.AccelOffsetY);
+			else if( reader.name() == "AccelOffsetZ")			ReadInt(reader, prefs.AccelOffsetZ);
+
+			else if( reader.name() == "MagOfsX")				ReadInt(reader, prefs.MagOfsX);
+			else if( reader.name() == "MagOfsY")				ReadInt(reader, prefs.MagOfsY);
+			else if( reader.name() == "MagOfsZ")				ReadInt(reader, prefs.MagOfsZ);
+			else if( reader.name() == "MagScaleX")				ReadInt(reader, prefs.MagScaleX);
+			else if( reader.name() == "MagScaleY")				ReadInt(reader, prefs.MagScaleY);
+			else if( reader.name() == "MagScaleZ")				ReadInt(reader, prefs.MagScaleZ);
+
+			else if( reader.name() == "RollCorrectSin")			ReadFloat(reader, prefs.RollCorrectSin);
+			else if( reader.name() == "RollCorrectCos")			ReadFloat(reader, prefs.RollCorrectCos);
+			else if( reader.name() == "PitchCorrectSin")		ReadFloat(reader, prefs.PitchCorrectSin);
+			else if( reader.name() == "PitchCorrectCos")		ReadFloat(reader, prefs.PitchCorrectCos);
+
+			else if( reader.name() == "AutoLevelRollPitch")		ReadFloat(reader, prefs.AutoLevelRollPitch, RateScale );
+			else if( reader.name() == "AutoLevelYawRate")		ReadFloat(reader, prefs.AutoLevelYawRate, RateScale / 250.0f );
+			else if( reader.name() == "ManualRollPitchRate")	ReadFloat(reader, prefs.ManualRollPitchRate, RateScale / 250.0f );
+			else if( reader.name() == "ManualYawRate")			ReadFloat(reader, prefs.ManualYawRate, RateScale / 250.0f );
+
+			else if( reader.name() == "PitchGain")				ReadInt(reader, prefs.PitchGain);
+			else if( reader.name() == "RollGain")				ReadInt(reader, prefs.RollGain);
+			else if( reader.name() == "YawGain")				ReadInt(reader, prefs.YawGain);
+			else if( reader.name() == "AscentGain")				ReadInt(reader, prefs.AscentGain);
+			else if( reader.name() == "AltiGain")				ReadInt(reader, prefs.AltiGain);
+			else if( reader.name() == "PitchRollLocked")		ReadInt(reader, prefs.PitchRollLocked);
+			else if( reader.name() == "UseAdvancedPID")			ReadInt(reader, prefs.UseAdvancedPID);
+
+			else if( reader.name() == "ReceiverType")			ReadInt(reader, prefs.ReceiverType);
+			else if( reader.name() == "UseBattMon")				ReadInt(reader, prefs.UseBattMon);
+			else if( reader.name() == "DisableMotors")			ReadInt(reader, prefs.DisableMotors);
+			else if( reader.name() == "LowVoltageAlarm")		ReadInt(reader, prefs.LowVoltageAlarm);
+			else if( reader.name() == "LowVoltageAscentLimit")	ReadInt(reader, prefs.LowVoltageAscentLimit);
+
+			else if( reader.name() == "ThrottleTest")			ReadInt(reader, prefs.ThrottleTest);
+			else if( reader.name() == "MinThrottle")			ReadInt(reader, prefs.MinThrottle);
+			else if( reader.name() == "MaxThrottle")			ReadInt(reader, prefs.MaxThrottle);
+			else if( reader.name() == "CenterThrottle")			ReadInt(reader, prefs.CenterThrottle);
+			else if( reader.name() == "MinThrottleArmed")		ReadInt(reader, prefs.MinThrottleArmed);
+			else if( reader.name() == "ArmDelay")				ReadInt(reader, prefs.ArmDelay);
+			else if( reader.name() == "DisarmDelay")			ReadInt(reader, prefs.DisarmDelay);
+			else if( reader.name() == "ThrustCorrectionScale")	ReadInt(reader, prefs.ThrustCorrectionScale);
+			else if( reader.name() == "AccelCorrectionFilter")	ReadInt(reader, prefs.AccelCorrectionFilter);
+			else if( reader.name() == "VoltageOffset")			ReadInt(reader, prefs.VoltageOffset);
+			else if( reader.name() == "LowVoltageAlarmThreshold")	ReadInt(reader, prefs.LowVoltageAlarmThreshold);
+
+			else if( reader.name() == "ThroChannel")			ReadInt(reader, prefs.ThroChannel);
+			else if( reader.name() == "AileChannel")			ReadInt(reader, prefs.AileChannel);
+			else if( reader.name() == "ElevChannel")			ReadInt(reader, prefs.ElevChannel);
+			else if( reader.name() == "RuddChannel")			ReadInt(reader, prefs.RuddChannel);
+			else if( reader.name() == "GearChannel")			ReadInt(reader, prefs.GearChannel);
+			else if( reader.name() == "Aux1Channel")			ReadInt(reader, prefs.Aux1Channel);
+			else if( reader.name() == "Aux2Channel")			ReadInt(reader, prefs.Aux2Channel);
+			else if( reader.name() == "Aux3Channel")			ReadInt(reader, prefs.Aux3Channel);
+
+			else if( reader.name() == "ThroScale")				ReadInt(reader, prefs.ThroScale);
+			else if( reader.name() == "AileScale")				ReadInt(reader, prefs.AileScale);
+			else if( reader.name() == "ElevScale")				ReadInt(reader, prefs.ElevScale);
+			else if( reader.name() == "RuddScale") 				ReadInt(reader, prefs.RuddScale);
+			else if( reader.name() == "GearScale") 				ReadInt(reader, prefs.GearScale);
+			else if( reader.name() == "Aux1Scale") 				ReadInt(reader, prefs.Aux1Scale);
+			else if( reader.name() == "Aux2Scale") 				ReadInt(reader, prefs.Aux2Scale);
+			else if( reader.name() == "Aux3Scale") 				ReadInt(reader, prefs.Aux3Scale);
+
+			else if( reader.name() == "ThroCenter")				ReadInt(reader, prefs.ThroCenter);
+			else if( reader.name() == "AileCenter")				ReadInt(reader, prefs.AileCenter);
+			else if( reader.name() == "ElevCenter")				ReadInt(reader, prefs.ElevCenter);
+			else if( reader.name() == "RuddCenter")				ReadInt(reader, prefs.RuddCenter);
+			else if( reader.name() == "GearCenter")				ReadInt(reader, prefs.GearCenter);
+			else if( reader.name() == "Aux1Center")				ReadInt(reader, prefs.Aux1Center);
+			else if( reader.name() == "Aux2Center")				ReadInt(reader, prefs.Aux2Center);
+			else if( reader.name() == "Aux3Center")				ReadInt(reader, prefs.Aux3Center);
+		}
+
+		reader.readNext();
+	}
+}

@@ -131,6 +131,7 @@ private slots:
 	void on_cbLaserHeight_clicked();
 
 	void on_actionExport_Settings_to_File_triggered();
+	void on_actionImport_Settings_from_File_triggered();
 
 private:
 	void FillChannelComboBox( QComboBox *cb , int defaultIndex );
@@ -151,6 +152,10 @@ private:
 
 	void loadSettings(void);
 	void saveSettings(void);
+
+	void WriteSettings( QIODevice *file );
+	void ReadSettings( QIODevice *file );
+	void ReadSettingsContents( QXmlStreamReader & reader );
 
 	void GetAccelAvgSasmple( int i );
 
