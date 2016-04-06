@@ -47,7 +47,10 @@ enum IMU_VarLabels {
 
     ConstNull,                                   // Basically a placeholder for real zero / null
 
-    //Yaw,                                         // Current heading (yaw), scaled units
+    Yaw,                                         // Current yaw, scaled units (0 to 65535)
+    Pitch,                                       // Current pitch, scaled units (0 to 65535)
+    Roll,                                        // Current roll, scaled units (0 to 65535)
+
     ThrustFactor,
     
     // Inputs
@@ -67,7 +70,7 @@ enum IMU_VarLabels {
 	// Internal orientation storage
     qx, qy, qz, qw,                              // Body orientation quaternion
       
-    /*m00,*/ m01, /*m02,*/
+    m00, m01, m02,
     m10, m11, m12,                               // Body orientation as a 3x3 matrix
     m20, m21, m22,
 
@@ -162,6 +165,8 @@ enum IMU_VarLabels {
     const_ManualBankScale,
     const_TwoPI,
     
+    const_outAngleScale,
+    const_outNegAngleScale,
     const_OutControlShift,
 
     IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
@@ -235,6 +240,10 @@ void QuatIMU_Start(void)
   IMU_VARS[const_ManualBankScale]   =   ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
+
+  IMU_VARS[const_outAngleScale]     =    65536.0f / PI;
+  IMU_VARS[const_outNegAngleScale]  =   -65536.0f / PI;
+
   INT_VARS[const_OutControlShift]   =    12;
 
   QuatIMU_InitFunctions();
@@ -253,9 +262,17 @@ void QuatIMU_SetErrScaleMode( int IsStartup )
 
 
 
-//int QuatIMU_GetYaw(void) {
-//  return INT_VARS[ Yaw ];
-//}
+int QuatIMU_GetYaw(void) {
+  return INT_VARS[ Yaw ];
+}
+
+int QuatIMU_GetRoll(void) {
+  return INT_VARS[ Roll ];
+}
+
+int QuatIMU_GetPitch(void) {
+  return INT_VARS[ Pitch ];
+}
 
 int QuatIMU_GetThrustFactor(void) {
   return INT_VARS[ ThrustFactor ];
@@ -265,9 +282,9 @@ int QuatIMU_GetThrustFactor(void) {
 //  return &INT_VARS[gx];
 //}
 
-//float * QuatIMU_GetMatrix(void) {
-//  return &IMU_VARS[m00];
-//}  
+float * QuatIMU_GetMatrix(void) {
+  return &IMU_VARS[m00];
+}  
 
 float * QuatIMU_GetQuaternion(void) {
   return &IMU_VARS[qx];
@@ -561,20 +578,19 @@ unsigned char QuatUpdateCommands[] = {
   //3 instructions (86)
 
 
-  // m00 and m02 results are never actually used in the code, so they're commented out here
-   
+  
   //m00 = 1.0f - 2.0f * (y2 + z2)
-//        F32_opAdd, fy2,  fz2, temp,                //temp = fy2+fz2
-//        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
-//        F32_opSub, const_F1,  temp, m00,           //m00 = 1.0 - temp
+        F32_opAdd, fy2,  fz2, temp,                //temp = fy2+fz2
+        F32_opShift, temp,  const_1, temp,         //temp *= 2.0
+        F32_opSub, const_F1,  temp, m00,           //m00 = 1.0 - temp
 
   //m01 =        2.0f * (fxy - fwz)
         F32_opSub, fxy,  fwz, temp,                //temp = fxy-fwz
         F32_opShift, temp,  const_1, m01,          //m01 = 2.0 * temp
 
   //m02 =        2.0f * (fxz + fwy)
-//        F32_opAdd, fxz,  fwy, temp,                //temp = fxz+fwy
-//        F32_opShift, temp,  const_1, m02,          //m02 = 2.0 * temp
+        F32_opAdd, fxz,  fwy, temp,                //temp = fxz+fwy
+        F32_opShift, temp,  const_1, m02,          //m02 = 2.0 * temp
   //7 instructions (93)
 
 
@@ -738,6 +754,16 @@ unsigned char QuatUpdateCommands[] = {
         // to be fed into the quaternion construction code.  This HalfYaw value serves that purpose
         F32_opShift, FloatYaw, const_neg1, HalfYaw,
 
+
+        // Compute pitch and roll in integer form, used by compass calibration, possible user code
+
+        F32_opASinCos, m12,  const_1, temp,      // 2nd arg is const_0 == acos, const_1 == asin
+        F32_opMul, temp,  const_outAngleScale, temp,
+        F32_opTruncRound, temp,  const_0, Pitch,
+
+        F32_opASinCos, m10,  const_1, temp,
+        F32_opMul, temp,  const_outNegAngleScale, temp,
+        F32_opTruncRound, temp,  const_0, Roll,
 
         F32_opDiv, const_F1,  m11, temp,                          // 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
         F32_opShift, temp,  const_ThrustShift, temp,              // *= 256.0  

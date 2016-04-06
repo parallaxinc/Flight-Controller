@@ -28,7 +28,9 @@
 void QuatIMU_Start(void);
 void QuatIMU_SetErrScaleMode( int IsStartup );
 
-int QuatIMU_GetYaw(void);
+//int QuatIMU_GetYaw(void);
+int QuatIMU_GetRoll(void);
+int QuatIMU_GetPitch(void);
 
 float QuatIMU_GetFloatYaw(void);
 float QuatIMU_GetFloatHeading(void);
