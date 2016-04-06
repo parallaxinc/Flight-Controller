@@ -136,9 +136,9 @@ static long LEDModeColor;
 static short BatteryVolts = 0;
 
 
-static char calib_startQuadrant;
+static char calib_StartQuadrant;
 static char calib_Quadrants;
-static char calib_step;
+static char calib_Step;
 static long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
 // PIDs for roll, pitch, yaw, altitude
@@ -341,7 +341,23 @@ int main()                                    // Main function
 
     ++counter;
     loopTimer += Const_UpdateCycles;
-    waitcnt( loopTimer );
+
+
+    // If we go "enough" over our loop allotment (1%) trigger an alarm
+    if( ((long)CNT - loopTimer) > (Const_UpdateCycles/10) ) {
+      BeepOn( 'A' , PIN_BUZZER_1, 4500 );
+      loopTimer = CNT;
+    }
+
+    // This used to be a waitcnt, which is technically more accurate, but if the main loop
+    // ever goes over its time allotment the waitcnt() will hold until the counter wraps
+    // around, which is about 53 seconds without control.
+
+    while( ((long)CNT - loopTimer) < 0 ) {
+      // do nothing until the loop elapses
+    }
+
+    //waitcnt( loopTimer );
   }
 }
 
@@ -441,7 +457,21 @@ void Initialize(void)
 #ifdef ENABLE_LOGGING
   cogstart( &DataLogThread , NULL, log_stack, sizeof(log_stack) );
 #endif
-  
+
+#if defined(EXTRA_LIGHTS)
+  LEDValue[3 +  0] = LED_Green;
+  LEDValue[4 +  0] = LED_Green;
+  LEDValue[5 +  0] = LED_Green;
+  LEDValue[3 +  5] = LED_Green;
+  LEDValue[4 +  5] = LED_Green;
+  LEDValue[5 +  5] = LED_Green;
+  LEDValue[3 + 10] = LED_Red;
+  LEDValue[4 + 10] = LED_Red;
+  LEDValue[5 + 10] = LED_Red;
+  LEDValue[3 + 15] = LED_Red;
+  LEDValue[4 + 15] = LED_Red;
+  LEDValue[5 + 15] = LED_Red;
+#endif
   
   FindGyroZero();
 }
@@ -647,7 +677,7 @@ void UpdateFlightLoop(void)
           ArmFlightMode();
         }          
       }
-      /* // Compass calibration not enabled yet
+      // Compass calibration not enabled yet
       else if( (Radio.Rudd > 750)  &&  (Radio.Aile > 750) )
       {
         CompassConfigStep++;
@@ -659,7 +689,6 @@ void UpdateFlightLoop(void)
           StartCompassCalibrate();
         }
       }
-      */
       else
       {
         CompassConfigStep = 0;
@@ -974,12 +1003,193 @@ void DisarmFlightMode(void)
 
 void StartCompassCalibrate(void)
 {
-  // Placeholder
+  // Make sure the motors are totally off
+  for( int i=0; i<4; i++ ) {
+    Motor[i] = Prefs.MinThrottle;
+    Servo32_Set( MotorPin[i], Prefs.MinThrottle );
+  }
+
+  FlightEnabled = false;
+  FlightMode = FlightMode_CalibrateCompass;
+
+  Beep();
+  waitcnt( 10000000 + CNT );
+  Beep2();
+  waitcnt( 10000000 + CNT );
+  Beep();
+
+  calib_Step = 0;
+  calib_Quadrants = 0;
+  calib_StartQuadrant = 0xff;
+
+  c_xmin = c_ymin = c_zmin =  10000;
+  c_xmax = c_ymax = c_zmax = -10000;
+
+  Sensors_ZeroMagnetometerScaleOffsets();
+
+  loopTimer = CNT;
 }
+
+static char Calib_ComputeQuadrant( unsigned int x, unsigned int y )
+{
+  char result = ((x>>31) ^ 1) | ((y>>30) & 2);
+  return result;
+}          
+
 
 void DoCompassCalibrate(void)
 {
-  // Placeholder
+  int Pitch = QuatIMU_GetPitch();
+  int Roll = QuatIMU_GetRoll();
+
+  //int q, xc, xs, yc, ys, zc, zs, xr, yr, zr, mr;
+  if( calib_Step == 0 )
+  {
+    //First cycle requires the quad to be level, and spun 360 degrees
+
+    // TODO:  Rather than pitch/roll, check Y axis Y value - make sure it's close to 1.0
+
+    //Check the roll & pitch to make sure they're within some tolerance of level
+    if( abs(Roll) > 3000  || abs(Pitch) > 3000 ) {
+      LEDModeColor = LED_Yellow;
+    }
+    else
+    {
+      LEDModeColor = LED_Violet;
+      if( ((counter >> 5) & 3 ) == 0 ) {
+        LEDModeColor = LED_Green;
+      }        
+
+      unsigned int * IMUMatrix = (unsigned int *)QuatIMU_GetMatrix();
+      // Monitor yaw to see which quadrant we're in, keep going until we're in the same one we started, and have touched all four
+      // We only really care about the signs of the quadrant, IE the highest bits of these values, so it doesn't matter that
+      // they're actually floats
+      char q = Calib_ComputeQuadrant( IMUMatrix[6], IMUMatrix[8] );
+
+      if( calib_StartQuadrant == 0xff )
+        calib_StartQuadrant = q;
+
+      // are we in a new quadrant?
+      if( ((1<<q) | calib_Quadrants) != calib_Quadrants )
+      {
+        BeepHz( 5000, 10 );
+        loopTimer = CNT;
+        calib_Quadrants |= (1<<q);
+      }        
+
+      c_xmin = min(sens.MagX, c_xmin);
+      c_xmax = max(sens.MagX, c_xmax);
+      c_ymin = min(sens.MagY, c_ymin);
+      c_ymax = max(sens.MagY, c_ymax);
+      c_zmin = min(sens.MagZ, c_zmin);
+      c_zmax = max(sens.MagZ, c_zmax);
+
+      // Wait for the user to have hit all quadrants
+      if( calib_Quadrants == 0x0f && q == calib_StartQuadrant )
+      {
+        calib_Step = 1;
+        Beep3();
+
+        //Reset these for the next phase
+        calib_Quadrants = 0;
+        calib_StartQuadrant = 0xff;
+
+        loopTimer = CNT;       //Keep the outer counter happy - the beep has a delay, which messes it up
+        return;
+      }
+    }
+  }
+
+  if( calib_Step == 1 )
+  {
+    // TODO:  Rather than pitch, check the Y 
+
+    //Check to make sure the craft is vertical along the PITCH axis, nose up
+    if( abs(Pitch) < 29000 ) {
+      LEDModeColor = LED_Yellow;
+    }
+    else
+    {
+      LEDModeColor = LED_Violet;
+      if( ((counter >> 5) & 3 ) == 0 ) {
+        LEDModeColor = LED_Green;
+      }        
+
+      unsigned int * IMUMatrix = (unsigned int *)QuatIMU_GetMatrix();
+
+      // Monitor rotation around the Z axis to see which quadrant we're in, otherwise same as above
+      char q = Calib_ComputeQuadrant( IMUMatrix[0], IMUMatrix[1] );
+
+      if( calib_StartQuadrant == 0xff )
+        calib_StartQuadrant = q;
+
+      if( ((1<<q) | calib_Quadrants) != calib_Quadrants )
+      {
+        BeepHz( 5000, 10 );
+        loopTimer = CNT;
+        calib_Quadrants |= 1<<q;
+      }
+
+      c_xmin = min(sens.MagX, c_xmin);
+      c_xmax = max(sens.MagX, c_xmax);
+      c_ymin = min(sens.MagY, c_ymin);
+      c_ymax = max(sens.MagY, c_ymax);
+      c_zmin = min(sens.MagZ, c_zmin);
+      c_zmax = max(sens.MagZ, c_zmax);
+
+      if( calib_Quadrants == 0x0f && q == calib_StartQuadrant )
+      {
+        calib_Step = 2;
+        loopTimer = CNT;        //Keep the outer counter happy - the beep has a delay, which messes it up
+        return;
+      }
+    }
+  }
+
+  if( calib_Step == 2 )
+  {
+    // Yay!  We're done! - Compute the necessary scales and offsets
+
+    //xr = x_range
+    //xc = x center
+    //mr = maximum range of all 3 components
+    //xs = x scale, IE a multiplier that such that (x * mult) / 2048 will normalize readings relative to each other
+
+    int xr = c_xmax - c_xmin;
+    int yr = c_ymax - c_ymin;
+    int zr = c_zmax - c_zmin;
+
+    int mr = max(xr, max(yr, zr));
+
+    int xc = (c_xmin + c_xmax) / 2;
+    int yc = (c_ymin + c_ymax) / 2;
+    int zc = (c_zmin + c_zmax) / 2;
+
+    int xs = (mr * 2048) / xr;
+    int ys = (mr * 2048) / yr;
+    int zs = (mr * 2048) / zr;
+
+    Prefs.MagScaleOfs[0] = xc;
+    Prefs.MagScaleOfs[1] = xs;
+    Prefs.MagScaleOfs[2] = yc;
+    Prefs.MagScaleOfs[3] = ys;
+    Prefs.MagScaleOfs[4] = zc;
+    Prefs.MagScaleOfs[5] = zs;
+
+    ApplyPrefs();
+
+    Prefs_Save();
+
+    FlightMode = FlightMode_Stable;
+
+    Beep2();
+    waitcnt( 10000000 + CNT );
+    Beep2();
+    waitcnt( 10000000 + CNT );
+    Beep2();
+
+    loopTimer = CNT;        // Keep the outer counter happy - the beep has a delay, which messes it up
+  }
 }
 
 
@@ -1000,11 +1210,11 @@ void CheckDebugInput(void)
           long diff = tiltCorrected - LaserCorrected;
           if( abs(diff) > 700 ) {
             // Filter it hard if it changes dramatically from one reading to the next
-            LaserCorrected += (diff * 32) / 256;
+            LaserCorrected += (diff * 32) >> 8;
           }
           else {
             // Filter it a bit to keep it from changing too fast
-            LaserCorrected += (diff * 128) / 256;
+            LaserCorrected += (diff * 128) >> 8;
           }
           LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
         }
@@ -1019,7 +1229,7 @@ void CheckDebugInput(void)
   }
   else {
     laserCount--;
-  }        
+  }
 
   char port = 0;
   c = S4_Check(0);
@@ -1412,7 +1622,36 @@ void ApplyPrefs(void)
 
 void All_LED( int Color )
 {
+#if defined(EXTRA_LIGHTS)
+  LEDValue[0] = Color;
+
+  LEDValue[1 +  0] = Color;
+  LEDValue[2 +  0] = Color;
+
+  LEDValue[1 +  5] = Color;
+  LEDValue[2 +  5] = Color;
+
+  LEDValue[1 + 10] = Color;
+  LEDValue[2 + 10] = Color;
+
+  LEDValue[1 + 15] = Color;
+  LEDValue[2 + 15] = Color;
+
+  /*
+  for( int i=0; i<16; i++ ) {
+    if( i == 0 )
+      LEDValue[i + 21] = LED_Red;
+    else
+      LEDValue[i + 21] = 0;
+
+    if( i == ((counter>>3) & 15) ) {
+      LEDValue[i+21] = LED_White & LED_Eighth;
+    }
+  }
+  */
+
+#else
   for( int i=0; i<LED_COUNT; i++ )
     LEDValue[i] = Color;
-}  
-
+#endif
+}
