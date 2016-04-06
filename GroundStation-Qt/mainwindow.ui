@@ -3489,6 +3489,36 @@ throttle calibration.</string>
                  </property>
                 </widget>
                </item>
+               <item>
+                <widget class="QCheckBox" name="cbPitch">
+                 <property name="text">
+                  <string>Pitch</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="cbRoll">
+                 <property name="text">
+                  <string>Roll</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QCheckBox" name="cbYaw">
+                 <property name="text">
+                  <string>Yaw</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </item>
             </layout>

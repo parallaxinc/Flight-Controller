@@ -209,11 +209,13 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
 
 	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
-							   "AltiRaw", "AltiEst", "LaserHeight" };
+							   "AltiRaw", "AltiEst", "LaserHeight",
+							   "Pitch", "Roll", "Yaw", "Voltage"};
 	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
 									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
 									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
 								   Qt::gray, Qt::black, QColor(255,128,0),
+								   QColor(255,0,255), QColor(0,255,255), QColor(255,255,128), QColor(255,0,255)
 								 };
 
 
@@ -223,7 +225,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	sg->setAutoAddPlottableToLegend(true);
 	sg->xAxis->setRange(0, 2000);
 	sg->yAxis->setRange(-2048, 2048);
-	for( int i=0; i<13; i++ )
+	for( int i=0; i<17; i++ )
 	{
 		graphs[i] = sg->addGraph();
 		graphs[i]->setName(graphNames[i]);
@@ -427,7 +429,7 @@ void MainWindow::ProcessPackets(void)
                 case 1:	// Radio data
                     radio.ReadFrom( p );
 
-                    //graphSources[14].Samples[SampleIndex].y = (float)radio.BatteryVolts / 100.0f;
+					graphs[16]->addData( SampleIndex, (float)radio.BatteryVolts / 100.0f );
                     bRadioChanged = true;
                     break;
 
@@ -455,16 +457,16 @@ void MainWindow::ProcessPackets(void)
                     q.setZ(      p->GetFloat() );
                     q.setScalar( p->GetFloat() );
 
-                    //Matrix m = new Matrix();
-                    //m.From( q );
+					QMatrix3x3 m;
+					m = QuatToMatrix( q );
 
-                    //double roll = Math.Asin( m.m[1, 0] ) * (180.0 / Math.PI);
-                    //double pitch = Math.Asin( m.m[1, 2] ) * (180.0 / Math.PI);
-                    //double yaw = -Math.Atan2( m.m[2, 0], m.m[2, 2] ) * (180.0 / Math.PI);
+					double roll = asin(  m(1, 0) ) * (180.0 / PI);
+					double pitch = asin( m(1, 2) ) * (180.0 / PI);
+					double yaw = -atan2( m(2, 0), m(2, 2) ) * (180.0 / PI);
 
-					//graphSources[13].Samples[SampleIndex].y = (float)pitch;
-					//graphSources[14].Samples[SampleIndex].y = (float)roll;
-					//graphSources[15].Samples[SampleIndex].y = (float)yaw;
+					graphs[13]->addData( SampleIndex, (float)pitch );
+					graphs[14]->addData( SampleIndex, (float)roll );
+					graphs[15]->addData( SampleIndex, (float)yaw );
 
                     bQuatChanged = true;
                     }
@@ -473,9 +475,6 @@ void MainWindow::ProcessPackets(void)
                 case 4:	// Compute values
                     computed.ReadFrom( p );
                     bComputedChanged = true;
-
-                    //graphSources[9].Samples[SampleIndex].y = (float)computed.Alt / 1000.0f;
-                    //graphSources[10].Samples[SampleIndex].y = (float)computed.AltiEst / 1000.0f;
 
 					graphs[10]->addData( SampleIndex, (float)computed.Alt );
 					graphs[11]->addData( SampleIndex, (float)computed.AltiEst );
@@ -1632,61 +1631,23 @@ void MainWindow::on_actionAbout_triggered()
 	dlg->show();
 }
 
-
-void MainWindow::on_cbGyroX_clicked() {
-	graphs[0]->setVisible( ui->cbGyroX->isChecked() );
-}
-
-void MainWindow::on_cbGyroY_clicked() {
-	graphs[1]->setVisible( ui->cbGyroY->isChecked() );
-}
-
-void MainWindow::on_cbGyroZ_clicked() {
-	graphs[2]->setVisible( ui->cbGyroZ->isChecked() );
-}
-
-void MainWindow::on_cbAccelX_clicked() {
-	graphs[3]->setVisible( ui->cbAccelX->isChecked() );
-}
-
-void MainWindow::on_cbAccelY_clicked() {
-	graphs[4]->setVisible( ui->cbAccelY->isChecked() );
-}
-
-void MainWindow::on_cbAccelZ_clicked() {
-	graphs[5]->setVisible( ui->cbAccelZ->isChecked() );
-}
-
-void MainWindow::on_cbMagX_clicked() {
-	graphs[6]->setVisible( ui->cbMagX->isChecked() );
-}
-
-void MainWindow::on_cbMagY_clicked() {
-	graphs[7]->setVisible( ui->cbMagY->isChecked() );
-}
-
-void MainWindow::on_cbMagZ_clicked() {
-	graphs[8]->setVisible( ui->cbMagZ->isChecked() );
-}
-
-void MainWindow::on_cbGyroTemp_clicked() {
-	graphs[9]->setVisible( ui->cbGyroTemp->isChecked() );
-}
-
-void MainWindow::on_cbAlti_clicked()
-{
-	graphs[10]->setVisible( ui->cbAlti->isChecked() );
-}
-
-void MainWindow::on_cbAltiEst_clicked()
-{
-	graphs[11]->setVisible( ui->cbAltiEst->isChecked() );
-}
-
-void MainWindow::on_cbLaserHeight_clicked()
-{
-	graphs[12]->setVisible( ui->cbLaserHeight->isChecked() );
-}
+void MainWindow::on_cbGyroX_clicked(bool checked)		{graphs[ 0]->setVisible( checked ); }
+void MainWindow::on_cbGyroY_clicked(bool checked)		{graphs[ 1]->setVisible( checked ); }
+void MainWindow::on_cbGyroZ_clicked(bool checked)		{graphs[ 2]->setVisible( checked ); }
+void MainWindow::on_cbAccelX_clicked(bool checked)		{graphs[ 3]->setVisible( checked ); }
+void MainWindow::on_cbAccelY_clicked(bool checked)		{graphs[ 4]->setVisible( checked ); }
+void MainWindow::on_cbAccelZ_clicked(bool checked)		{graphs[ 5]->setVisible( checked ); }
+void MainWindow::on_cbMagX_clicked(bool checked)		{graphs[ 6]->setVisible( checked ); }
+void MainWindow::on_cbMagY_clicked(bool checked)		{graphs[ 7]->setVisible( checked ); }
+void MainWindow::on_cbMagZ_clicked(bool checked)		{graphs[ 8]->setVisible( checked ); }
+void MainWindow::on_cbGyroTemp_clicked(bool checked)	{graphs[ 9]->setVisible( checked ); }
+void MainWindow::on_cbAlti_clicked(bool checked)		{graphs[10]->setVisible( checked ); }
+void MainWindow::on_cbAltiEst_clicked(bool checked)		{graphs[11]->setVisible( checked ); }
+void MainWindow::on_cbLaserHeight_clicked(bool checked) {graphs[12]->setVisible( checked ); }
+void MainWindow::on_cbPitch_clicked(bool checked)		{graphs[13]->setVisible( checked ); }
+void MainWindow::on_cbRoll_clicked(bool checked)		{graphs[14]->setVisible( checked ); }
+void MainWindow::on_cbYaw_clicked(bool checked)			{graphs[15]->setVisible( checked ); }
+void MainWindow::on_cbVoltage_clicked(bool checked)		{graphs[16]->setVisible( checked ); }
 
 
 void MainWindow::on_actionExport_Settings_to_File_triggered()

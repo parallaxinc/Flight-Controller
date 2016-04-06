@@ -116,22 +116,27 @@ private slots:
 
 	void on_actionAbout_triggered();
 
-	void on_cbGyroX_clicked();
-	void on_cbGyroY_clicked();
-	void on_cbGyroZ_clicked();
-	void on_cbAccelX_clicked();
-	void on_cbAccelY_clicked();
-	void on_cbAccelZ_clicked();
-	void on_cbMagX_clicked();
-	void on_cbMagY_clicked();
-	void on_cbMagZ_clicked();
-	void on_cbGyroTemp_clicked();
-	void on_cbAlti_clicked();
-	void on_cbAltiEst_clicked();
-	void on_cbLaserHeight_clicked();
+	void on_cbGyroX_clicked(bool checked);
+	void on_cbGyroY_clicked(bool checked);
+	void on_cbGyroZ_clicked(bool checked);
+	void on_cbAccelX_clicked(bool checked);
+	void on_cbAccelY_clicked(bool checked);
+	void on_cbAccelZ_clicked(bool checked);
+	void on_cbMagX_clicked(bool checked);
+	void on_cbMagY_clicked(bool checked);
+	void on_cbMagZ_clicked(bool checked);
+	void on_cbGyroTemp_clicked(bool checked);
+	void on_cbAlti_clicked(bool checked);
+	void on_cbAltiEst_clicked(bool checked);
+	void on_cbLaserHeight_clicked(bool checked);
+	void on_cbPitch_clicked(bool checked);
+	void on_cbRoll_clicked(bool checked);
+	void on_cbYaw_clicked(bool checked);
+	void on_cbVoltage_clicked(bool checked);
 
 	void on_actionExport_Settings_to_File_triggered();
 	void on_actionImport_Settings_from_File_triggered();
+
 
 private:
 	void FillChannelComboBox( QComboBox *cb , int defaultIndex );
@@ -206,7 +211,7 @@ private:
 	ChannelData channelData[8];
 
 	int SampleIndex;
-	QCPGraph * graphs[16];
+	QCPGraph * graphs[17];
 	QCustomPlot * sg;
 
 	PREFS prefs;
