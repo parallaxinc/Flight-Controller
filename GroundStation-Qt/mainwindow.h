@@ -163,6 +163,7 @@ private:
 	void ReadSettingsContents( QXmlStreamReader & reader );
 
 	void GetAccelAvgSasmple( int i );
+	void AddGraphSample( int GraphIndex , float SampleValue );
 
 	QString m_sSettingsFile;
 
@@ -210,7 +211,7 @@ private:
 
 	ChannelData channelData[8];
 
-	int SampleIndex;
+	int SampleIndex, SamplesWrapped;
 	QCPGraph * graphs[17];
 	QCustomPlot * sg;
 

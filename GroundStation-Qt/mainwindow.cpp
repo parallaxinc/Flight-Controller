@@ -215,11 +215,13 @@ MainWindow::MainWindow(QWidget *parent) :
 									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
 									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
 								   Qt::gray, Qt::black, QColor(255,128,0),
-								   QColor(255,0,255), QColor(0,255,255), QColor(255,255,128), QColor(255,0,255)
+								   QColor(255,0,255), QColor(0,255,255), QColor(160,160,32), QColor(255,0,255)
 								 };
 
 
 	SampleIndex = 0;
+	SamplesWrapped = 0;
+
 	sg = ui->sensorGraph;
 	sg->legend->setVisible(true);
 	sg->setAutoAddPlottableToLegend(true);
@@ -406,6 +408,14 @@ void MainWindow::SetRadioMode(int mode)
 }
 
 
+void MainWindow::AddGraphSample(int GraphIndex, float SampleValue)
+{
+	//graphs[GraphIndex]->removeDataBefore( SampleIndex );
+	graphs[GraphIndex]->removeData( SampleIndex );
+	graphs[GraphIndex]->addData( SampleIndex, SampleValue );
+}
+
+
 const float PI = 3.141592654f;
 
 void MainWindow::ProcessPackets(void)
@@ -429,23 +439,24 @@ void MainWindow::ProcessPackets(void)
                 case 1:	// Radio data
                     radio.ReadFrom( p );
 
-					graphs[16]->addData( SampleIndex, (float)radio.BatteryVolts );
+					AddGraphSample( 16, (float)radio.BatteryVolts );
+					//graphs[16]->addData( SampleIndex, (float)radio.BatteryVolts );
                     bRadioChanged = true;
                     break;
 
                 case 2:	// Sensor values
                     sensors.ReadFrom( p );
 
-					graphs[0]->addData( SampleIndex, sensors.GyroX );
-					graphs[1]->addData( SampleIndex, sensors.GyroY);
-					graphs[2]->addData( SampleIndex, sensors.GyroZ);
-					graphs[3]->addData( SampleIndex, sensors.AccelX);
-					graphs[4]->addData( SampleIndex, sensors.AccelY);
-					graphs[5]->addData( SampleIndex, sensors.AccelZ);
-					graphs[6]->addData( SampleIndex, sensors.MagX);
-					graphs[7]->addData( SampleIndex, sensors.MagY);
-					graphs[8]->addData( SampleIndex, sensors.MagZ);
-					graphs[9]->addData( SampleIndex, sensors.Temp );
+					AddGraphSample( 0, sensors.GyroX );
+					AddGraphSample( 1, sensors.GyroY );
+					AddGraphSample( 2, sensors.GyroZ );
+					AddGraphSample( 3, sensors.AccelX );
+					AddGraphSample( 4, sensors.AccelY );
+					AddGraphSample( 5, sensors.AccelZ );
+					AddGraphSample( 6, sensors.MagX );
+					AddGraphSample( 7, sensors.MagY );
+					AddGraphSample( 8, sensors.MagZ );
+					AddGraphSample( 9, sensors.Temp );
 
 					bSensorsChanged = true;
                     break;
@@ -464,9 +475,9 @@ void MainWindow::ProcessPackets(void)
 					double pitch = asin( m(1, 2) ) * (180.0 / PI) * 100.0;
 					double yaw = -atan2( m(2, 0), m(2, 2) ) * (180.0 / PI) * 100.0;
 
-					graphs[13]->addData( SampleIndex, (float)pitch );
-					graphs[14]->addData( SampleIndex, (float)roll );
-					graphs[15]->addData( SampleIndex, (float)yaw );
+					AddGraphSample( 13, (float)pitch );
+					AddGraphSample( 14, (float)roll );
+					AddGraphSample( 15, (float)yaw );
 
                     bQuatChanged = true;
                     }
@@ -476,9 +487,9 @@ void MainWindow::ProcessPackets(void)
                     computed.ReadFrom( p );
                     bComputedChanged = true;
 
-					graphs[10]->addData( SampleIndex, (float)computed.Alt );
-					graphs[11]->addData( SampleIndex, (float)computed.AltiEst );
-					graphs[12]->addData( SampleIndex, (float)computed.AltTemp );
+					AddGraphSample( 10, (float)computed.Alt );
+					AddGraphSample( 11, (float)computed.AltiEst );
+					AddGraphSample( 12, (float)computed.AltTemp );
 					break;
 
                 case 5:	// Motor values
@@ -497,6 +508,7 @@ void MainWindow::ProcessPackets(void)
 					SampleIndex++;
 					if( SampleIndex > 6000 ) {
 						SampleIndex = 0;
+						SamplesWrapped = 1;
 					}
 					break;
 
