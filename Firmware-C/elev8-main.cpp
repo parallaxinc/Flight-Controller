@@ -151,10 +151,14 @@ const int LEDSingleMask = 0xFF - ((1<<LEDBrightShift)-1);
 const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask << 16);
 
 
-LASER_RANGE LaserRange;
-long LaserCorrected = 0;
-static long  DesiredLaser = 0;
+long GroundHeight = 0;  // This one is global so we can transmit it to GroundStation
+long DesiredGroundHeight = 0;
+
+
+#ifdef ENABLE_LASER_RANGE
 long LaserValidCount = 0;  // records the loop iteration when we got our last good laser reading
+void LaserRangeThread( void *par );
+#endif
 
 
 #ifdef ENABLE_LOGGING
@@ -275,7 +279,7 @@ int main()                                    // Main function
 
         if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
-          DesiredLaser = LaserCorrected;
+          DesiredGroundHeight = GroundHeight;
         }
 
         // ANY flight mode change means you're not currently holding altitude
@@ -474,6 +478,10 @@ void Initialize(void)
 #endif
   
   FindGyroZero();
+
+#ifdef ENABLE_LASER_RANGE
+  cogstart( &LaserRangeThread , NULL, laser_stack, sizeof(laser_stack) );
+#endif
 }
 
 
@@ -659,6 +667,7 @@ void UpdateFlightLoop(void)
         CompassConfigStep = 0;
 
         DesiredAltitude = AltiEst;
+        DesiredGroundHeight = GroundHeight;
         loopTimer = CNT;
       }
     }      
@@ -803,36 +812,41 @@ void UpdateFlightLoop(void)
         }
         else
         {
-          // Laser hold bounces a little, particularly when hard banking - need derivative?  Need less filtering?  Could be accumulated thrust scale + accel scale?
-
-          bool GoodLaser = ((counter - LaserValidCount) < 30) && (Radio.Aux1 > 0) && (QuatIMU_GetThrustFactor() < 384);
+        #ifdef ENABLE_LASER_RANGE
+          bool GoodLaser = (Radio.Aux1 > 0) && ((counter - LaserValidCount) < 30);
           static bool UsedLaser = false;
-
+        #endif
 
           // Are we just entering altitude hold mode?
           if( IsHolding == 0 ) {
             IsHolding = 1;
-            DesiredAltitude = AltiEst;      // Start with our current altitude as the hold height
-            DesiredLaser = LaserCorrected;  // Also record the laser rangefinder height
+            DesiredAltitude = AltiEst;          // Start with our current altitude as the hold height
+            DesiredGroundHeight = GroundHeight;  // Also record the height above ground, if available
 
             AltPID.Reset();
           }
+        #ifdef ENABLE_LASER_RANGE
           else {
             if( !UsedLaser && GoodLaser ) {   // If we're going back to using the laser in hold, make sure we have a good reading
-              DesiredLaser = LaserCorrected;
+              DesiredGroundHeight = GroundHeight;
             }              
           }
 
           if( GoodLaser ) {
             // Use a PID object to compute velocity requirements for the AscentPID object
-            DesiredAscentRate = AltPID.Calculate( DesiredLaser , LaserCorrected, DoIntegrate );
+            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight, DoIntegrate );
             DesiredAltitude = AltiEst;      // Cache the current altitude as a good altitude in case the laser stops reading
           }
-          else {
+          else
+        #endif
+          {
             // Use a PID object to compute velocity requirements for the AscentPID object
             DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
           }
+
+        #ifdef ENABLE_LASER_RANGE
           UsedLaser = GoodLaser;
+        #endif
         }
 
         AltiThrust = AscentPID.Calculate( DesiredAscentRate , AscentEst , DoIntegrate );
@@ -1196,40 +1210,6 @@ void DoCompassCalibrate(void)
 void CheckDebugInput(void)
 {
   int i, c, HostCommand;
-  static char laserCount = 0;
-
-  do {
-    c = S4_Check(2);
-    if( c >= 0 ) {
-      if( LaserRange.AddChar( (char)c ) ) { // When we add a char, did the height update?
-        // Laser reading needs to be tilt corrected
-        long tiltScale = QuatIMU_GetThrustFactor();
-        if( tiltScale <= 512 ) {  // Don't use the laser if the readings are too skewed
-          long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
-
-          long diff = tiltCorrected - LaserCorrected;
-          if( abs(diff) > 700 ) {
-            // Filter it hard if it changes dramatically from one reading to the next
-            LaserCorrected += (diff * 32) >> 8;
-          }
-          else {
-            // Filter it a bit to keep it from changing too fast
-            LaserCorrected += (diff * 128) >> 8;
-          }
-          LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
-        }
-      }
-      laserCount = 4; // Wait 4 cycles before pinging it again
-    }
-  } while( c >= 0 );
-
-  if( laserCount == 0 ) {
-    S4_Put(2,'A');
-    laserCount = 16;      // Ping the laser occasionally for a new reading
-  }
-  else {
-    laserCount--;
-  }
 
   char port = 0;
   c = S4_Check(0);
@@ -1447,7 +1427,7 @@ void DoDebugModeOutput(void)
         COMMLINK::AddPacketData( &YawDifference, 4 );
 
         COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for Alt
-        COMMLINK::AddPacketData( &LaserCorrected, 4 ); //Send 4 bytes of data for laser height
+        COMMLINK::AddPacketData( &GroundHeight, 4 );   //Send 4 bytes of data for height above ground
         COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
@@ -1588,6 +1568,49 @@ void DataLogThread(void *par)
     // Reset the log trigger
     LogTrigger = 0;
   }
+}
+#endif
+
+
+#ifdef ENABLE_LASER_RANGE
+void LaserRangeThread( void *par )
+{
+  while(true)
+  {
+    static char laserCount = 0;
+    short c;
+
+    // reduce the frequency that we update this
+    waitcnt( CNT + Const_UpdateCycles );
+
+    do {
+      c = S4_Check(2);
+      if( c >= 0 ) {
+        if( LaserRange.AddChar( (char)c ) ) { // When we add a char, did the height update?
+          // Laser reading needs to be tilt corrected
+          short tiltScale = QuatIMU_GetThrustFactor();
+          if( tiltScale <= 384 ) {  // Don't use the laser if the readings are too skewed (this should allow slightly over 45 deg)
+            long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
+  
+            long diff = tiltCorrected - GroundHeight;
+
+            // Filter it to keep it from changing too fast
+            GroundHeight += diff >> 3;
+            LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
+          }
+        }
+        laserCount = 4; // Wait 4 cycles before pinging it again
+      }
+    } while( c >= 0 );
+  
+    if( laserCount == 0 ) {
+      S4_Put(2,'A');
+      laserCount = 16;      // Ping the laser occasionally for a new reading
+    }
+    else {
+      laserCount--;
+    }
+  }    
 }
 #endif
 

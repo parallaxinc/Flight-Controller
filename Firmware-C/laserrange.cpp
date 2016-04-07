@@ -1,13 +1,12 @@
 #include "laserrange.h"
 
-LASER_RANGE::LASER_RANGE()
-{
-	Height = 0;
-	Working = 0;
-	DigitMult = 1000;    // Readings are in meters, we want millimeters.  Whole digits are multiplied by this value until we hit a decimal point.
-	Negative = 0;
-	FoundDecimal = 0;
-}
+#ifdef ENABLE_LASER_RANGE
+
+
+// Declare the global laser height parsing object
+LASER_RANGE LaserRange;
+int laser_stack[LASER_STACK_SIZE];
+
 
 bool LASER_RANGE::AddChar(char c)
 {
@@ -51,3 +50,5 @@ bool LASER_RANGE::AddChar(char c)
 
    return false;  // Height value hasn't changed
 }
+
+#endif
