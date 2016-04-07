@@ -21,6 +21,13 @@ Written by Jason Dorie
 
 Current Flight Mode Capabilities:
 
+Assisted:
+  - Altitude hold
+  - Ascent / descent rate limiting
+  - Automatic leveling
+  - Tilt-compensated thrust
+  - Accelerometer disturbance thrust adjustment
+
 Stable:
   - Automatic leveling
   - Tilt-compensated thrust
