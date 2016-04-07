@@ -265,17 +265,17 @@ main_loop
 
 
                         '---- Gyro X -------------------
-                        mov     spi_reg, #$18     
+                        mov     spi_reg, #$18
                         call    #SPI_ReadWord           'Read the Gyro X register
                         mov     OutGX, spi_data
 
                         '---- Gyro Y ----
-                        mov     spi_reg, #$1A     
+                        mov     spi_reg, #$1A
                         call    #SPI_ReadWord           'Read the Gyro Y register
                         mov     OutGY, spi_data
 
                         '---- Gyro Z ----
-                        mov     spi_reg, #$1C     
+                        mov     spi_reg, #$1C
                         call    #SPI_ReadWord           'Read the Gyro Z register
                         mov     OutGZ, spi_data
                         
@@ -309,32 +309,18 @@ main_loop
 
 
 :Mag_Read_X
-'                        test    t3, #1          wc      'X data available?
-'              if_nc     jmp     #:Mag_Done_X                                            
-
 
                         mov     spi_reg, #$68           'read the Magnetometer X register ($28 | $40 = continuous read mode)              
                         call    #SPI_ReadWord
                         mov     OutMX, spi_data
-:Mag_Done_X
-
 :Mag_Read_Y
-'                        test    t3, #2          wc      'Y data available?
-'              if_nc     jmp     #:Mag_Done_Y                                            
-
                         mov     spi_reg, #$6a           'read the Magnetometer Y register ($2a | $40 = continuous read mode)              
                         call    #SPI_ReadWord
                         mov     OutMY, spi_data
-:Mag_Done_Y
-
 :Mag_Read_Z
-'                        test    t3, #4          wc      'Z data available?
-'              if_nc     jmp     #:Mag_Done_Z                                            
-
                         mov     spi_reg, #$6c           'read the Magnetometer Z register ($2c | $40 = continuous read mode)              
                         call    #SPI_ReadWord
                         mov     OutMZ, spi_data
-:Mag_Done_Z
 
                         '---- End Magnetometer----------
 
@@ -684,13 +670,13 @@ SPI_ReadWord
                         mov     spi_bitcount, #8        '8 more bits to receive
 
                         call    #SPI_RecvBits
-                        
+
                         'The high byte was just read into the lowest 8-bits, so it now looks like this: L_0_0_H
                         'Rotate the bits to the left by 8, to move them like this: 0_0_H_L 
                         rol     spi_data, #8
 
                         or      outa, spi_cs_mask       'Set CS high
-                        
+
                         test    spi_data, bit_15   wc   'Test the sign bit of the result
                         muxc    spi_data, sign_extend   'Replicate the sign bit to the upper-16 bits of the long
 
@@ -737,10 +723,7 @@ SPI_SendBits
                         muxc    outa, imask             'Set SDI to output bit
 
                         andn    outa, cmask             'Set CLK low
-                        nop                             'Wait a teeny bit, just in case 
-
-                        or      outa, cmask             'Set CLK high (device tests bit during transition)
-                        nop                             'Wait a teeny bit, just in case 
+                        or      outa, cmask             'Set CLK high (device samples bit during transition)
 
                         djnz    spi_bitcount, #:_loop   'Loop for all the bits                   
 
@@ -754,13 +737,11 @@ SPI_RecvBits
 
 :_loop
                         andn    outa, cmask             'Set CLK low
-                        nop                             'Wait a teeny bit, just in case 
 
                         test    omask, ina      wc      'Test input bit, sets the carry based on result
                         rcl     spi_data, #1            'Rotate the carry bit into the low bit of the output
 
                         or      outa, cmask             'Set CLK high
-                        nop                             'Wait a teeny bit, just in case 
 
                         djnz    spi_bitcount, #:_loop   'Loop for all the bits
 
@@ -1088,14 +1069,12 @@ ComputeAltitude
                         adds    alt_A1, #260
                         shl     alt_A1, #12
 
-                        mov     mul_y, OutAltPressure'Compute the difference between the first table pressure and our reading
+                        mov     mul_y, OutAltPressure   'Compute the difference between the first table pressure and our reading
                         subs    mul_y, alt_A1
 
-                        mov     mul_x, t3            'Compute the difference between the two sequential table entries
+                        mov     mul_x, t3               'Compute the difference between the two sequential table entries
                         subs    mul_x, t2                        
 
-                        'mov     mul_x, alt_diff
-                        'mov     mul_y, alt_frac
                         call    #multiply               '(Diff * Frac)
 
                         adds    mul_x, ALT_ROUND        ' + Alt_Round
