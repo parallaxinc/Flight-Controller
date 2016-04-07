@@ -581,13 +581,16 @@ void FindGyroZero(void)
         avg[a] += v;
       }
 
-      waitcnt( CNT + Const_ClockFreq/500 );
+      waitcnt( CNT + Const_ClockFreq/250 );
     }
 
     // Compute the mid-point between the min & max, and how different that is from the average (variation)
     int maxVar = 0;
     for( int a=0; a<3; a++)
     {
+      if( avg[a] >= 0 ) avg[a] += 32;   // rounding to reduce drift
+      else avg[a] -= 32;
+
       avg[a] /= 64;
 
       // range is the difference between min and max over the sample period.
