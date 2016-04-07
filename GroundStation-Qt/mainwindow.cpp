@@ -429,7 +429,7 @@ void MainWindow::ProcessPackets(void)
                 case 1:	// Radio data
                     radio.ReadFrom( p );
 
-					graphs[16]->addData( SampleIndex, (float)radio.BatteryVolts / 100.0f );
+					graphs[16]->addData( SampleIndex, (float)radio.BatteryVolts );
                     bRadioChanged = true;
                     break;
 
@@ -460,9 +460,9 @@ void MainWindow::ProcessPackets(void)
 					QMatrix3x3 m;
 					m = QuatToMatrix( q );
 
-					double roll = asin(  m(1, 0) ) * (180.0 / PI);
-					double pitch = asin( m(1, 2) ) * (180.0 / PI);
-					double yaw = -atan2( m(2, 0), m(2, 2) ) * (180.0 / PI);
+					double roll = asin(  m(1, 0) ) * (180.0 / PI) * 100.0;
+					double pitch = asin( m(1, 2) ) * (180.0 / PI) * 100.0;
+					double yaw = -atan2( m(2, 0), m(2, 2) ) * (180.0 / PI) * 100.0;
 
 					graphs[13]->addData( SampleIndex, (float)pitch );
 					graphs[14]->addData( SampleIndex, (float)roll );
@@ -646,7 +646,7 @@ void MainWindow::ProcessPackets(void)
 	{
 		if( ui->tabWidget->currentWidget() == ui->tpGyroCalib )
 		{
-			static int sampleIndex = 0;
+			static int calibSampleIndex = 0;
 
 			LFSample sample;
 			sample.t = sensors.Temp;
@@ -659,9 +659,9 @@ void MainWindow::ProcessPackets(void)
 			ui->gCalibY->setValue( sensors.GyroY );
 			ui->gCalibZ->setValue( sensors.GyroZ );
 
-			sampleIndex++;
+			calibSampleIndex++;
 
-			bool bDoRedraw = (sampleIndex & 3) == 3;
+			bool bDoRedraw = (calibSampleIndex & 3) == 3;
 			ui->lfGyroGraph->AddSample(sample , bDoRedraw );
 
 			if( bDoRedraw == false )
