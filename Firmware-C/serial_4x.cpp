@@ -1,5 +1,5 @@
 
-#include <Propeller.h>
+#include <propeller.h>
 #include "serial_4x.h"
 
 //__________________________________________________________________________________
