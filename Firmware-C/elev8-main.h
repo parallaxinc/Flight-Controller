@@ -48,7 +48,7 @@ void All_LED( int Color );
 #define EXTRA_LIGHTS
 
 #if defined(EXTRA_LIGHTS)
-#define LED_COUNT (1 + 20 + 16)    // Add-on light kit
+#define LED_COUNT (1 + 20)    // Add-on light kit
 #else
 #define LED_COUNT 2   // basic - one additional status LED automatic
 #endif

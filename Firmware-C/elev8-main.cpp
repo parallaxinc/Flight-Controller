@@ -1663,19 +1663,6 @@ void All_LED( int Color )
   LEDValue[1 + 15] = Color;
   LEDValue[2 + 15] = Color;
 
-  /*
-  for( int i=0; i<16; i++ ) {
-    if( i == 0 )
-      LEDValue[i + 21] = LED_Red;
-    else
-      LEDValue[i + 21] = 0;
-
-    if( i == ((counter>>3) & 15) ) {
-      LEDValue[i+21] = LED_White & LED_Eighth;
-    }
-  }
-  */
-
 #else
   for( int i=0; i<LED_COUNT; i++ )
     LEDValue[i] = Color;
