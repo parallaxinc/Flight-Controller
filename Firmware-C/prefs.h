@@ -50,7 +50,7 @@ typedef struct {
   char  UseAdvancedPID;
   char  unused;
 
-  char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
+  char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM, 3 = RemoteRX
   char  unused2;
   char  UseBattMon;
   char  DisableMotors;

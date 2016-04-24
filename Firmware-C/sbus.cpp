@@ -32,18 +32,27 @@ static struct DATA {
 } data;
 
 
-void SBUS::Start( int InputPin )
+void SBUS::Start( int InputPin , bool UseRemoteRX )
 {
   data.InputMask = 1 << InputPin;
-  data.BaudDelay = Const_ClockFreq / 100000;                        // SBUS is 100,000 bps 
 
   data.Channels[0] = 0;          // Throttle is zero'd
   for( int i=1; i<18; i++ ) {
     data.Channels[i] = 1024;     // All other channels are centered
   }
 
-  use_cog_driver(sbus_driver);
-  Cog = load_cog_driver(sbus_driver, &data) + 1;
+  if( UseRemoteRX == false )
+  {
+    data.BaudDelay = Const_ClockFreq / 100000;                        // SBUS is 100,000 bps 
+    use_cog_driver(sbus_driver);
+    Cog = load_cog_driver(sbus_driver, &data) + 1;
+  }
+  else 
+  {
+    data.BaudDelay = Const_ClockFreq / 115200;                        // RemoteRX is 115,200 bps
+    use_cog_driver(remote_rx_driver);
+    Cog = load_cog_driver(remote_rx_driver, &data) + 1;
+  }    
 }
 
 

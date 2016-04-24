@@ -38,6 +38,14 @@ void ApplyPrefs(void);
 void All_LED( int Color );
 
 
+// defines to enable the ping sensor or laser sensor - only one can be active
+// #define ENABLE_PING_SENSOR
+// #define ENABLE_LASER_RANGE
+
+
+#define EXTRA_LIGHTS
+
+
  // ESC output array indices for corresponding motors
 #define   OUT_FL  0
 #define   OUT_FR  1
@@ -45,10 +53,18 @@ void All_LED( int Color );
 #define   OUT_BL  3
 
 
-#define EXTRA_LIGHTS
+#if defined(ENABLE_PING_SENSOR) && defined(ENABLE_LASER_RANGE)
+#error - Only one ground height sensor may be enabled!
+#endif
+
+
+#ifdef ENABLE_PING_SENSOR
+#define ENABLE_GROUND_HEIGHT
+#endif
+
 
 #if defined(EXTRA_LIGHTS)
-#define LED_COUNT (1 + 20)    // Add-on light kit
+#define LED_COUNT (1 + 20 + 16)    // Add-on light kit + 16 neopixel ring
 #else
 #define LED_COUNT 2   // basic - one additional status LED automatic
 #endif

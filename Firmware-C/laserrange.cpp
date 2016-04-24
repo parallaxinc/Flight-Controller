@@ -1,7 +1,5 @@
 #include "laserrange.h"
 
-#ifdef ENABLE_LASER_RANGE
-
 
 // Declare the global laser height parsing object
 LASER_RANGE LaserRange;
@@ -50,5 +48,3 @@ bool LASER_RANGE::AddChar(char c)
 
    return false;  // Height value hasn't changed
 }
-
-#endif

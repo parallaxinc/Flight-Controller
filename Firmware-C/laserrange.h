@@ -2,13 +2,8 @@
 #define LASERRANGE_H_
 
 
-// un-comment this define to enable the laser rangefinder, comment it out to disable it
-//----------------------------
-#define ENABLE_LASER_RANGE
-//----------------------------
+#define ENABLE_GROUND_HEIGHT
 
-
-#ifdef ENABLE_LASER_RANGE
 
 class LASER_RANGE
 {
@@ -30,7 +25,5 @@ extern LASER_RANGE LaserRange;
 
 #define LASER_STACK_SIZE (16 + 40)          // stack needs to accomodate thread control structure (40) plus room for functions (16)
 extern int laser_stack[LASER_STACK_SIZE];
-
-#endif
 
 #endif

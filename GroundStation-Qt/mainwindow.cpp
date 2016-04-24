@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "ahrs.h"
 #include <QCoreApplication>
 #include "aboutbox.h"
 #include "quatutil.h"
@@ -7,6 +8,7 @@
 
 static char beatString[] = "BEAT";
 
+AHRS ahrs;
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -162,6 +164,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->cbReceiverType->addItem(QString("PWM"));
     ui->cbReceiverType->addItem(QString("S-Bus"));
     ui->cbReceiverType->addItem(QString("PPM"));
+	ui->cbReceiverType->addItem(QString("RemoteRX"));
 
 	ui->cbArmingDelay->addItem(QString("1.00 sec"));
 	ui->cbArmingDelay->addItem(QString("0.50 sec"));
@@ -440,8 +443,7 @@ void MainWindow::ProcessPackets(void)
                     radio.ReadFrom( p );
 
 					AddGraphSample( 16, (float)radio.BatteryVolts );
-					//graphs[16]->addData( SampleIndex, (float)radio.BatteryVolts );
-                    bRadioChanged = true;
+					bRadioChanged = true;
                     break;
 
                 case 2:	// Sensor values
@@ -458,15 +460,19 @@ void MainWindow::ProcessPackets(void)
 					AddGraphSample( 8, sensors.MagZ );
 					AddGraphSample( 9, sensors.Temp );
 
+					ahrs.Update( sensors , (1.0/250.f) * 8.0f , false );
+
 					bSensorsChanged = true;
                     break;
 
                 case 3:	// Quaternion
                     {
-                    q.setX(      p->GetFloat() );
-                    q.setY(      p->GetFloat() );
-                    q.setZ(      p->GetFloat() );
-                    q.setScalar( p->GetFloat() );
+					//q.setX(      p->GetFloat() );
+					//q.setY(      p->GetFloat() );
+					//q.setZ(      p->GetFloat() );
+					//q.setScalar( p->GetFloat() );
+
+					q = ahrs.quat;
 
 					QMatrix3x3 m;
 					m = QuatToMatrix( q );
@@ -489,7 +495,7 @@ void MainWindow::ProcessPackets(void)
 
 					AddGraphSample( 10, (float)computed.Alt );
 					AddGraphSample( 11, (float)computed.AltiEst );
-					AddGraphSample( 12, (float)computed.AltTemp );
+					AddGraphSample( 12, (float)computed.GroundHeight );
 					break;
 
                 case 5:	// Motor values
@@ -498,10 +504,10 @@ void MainWindow::ProcessPackets(void)
                     break;
 
                 case 6:	// Control quaternion
-                    cq.setX      ( p->GetFloat() );
-                    cq.setY      ( p->GetFloat() );
-                    cq.setZ      ( p->GetFloat() );
-                    cq.setScalar ( p->GetFloat() );
+					cq.setX      ( p->GetFloat() );
+					cq.setY      ( p->GetFloat() );
+					cq.setZ      ( p->GetFloat() );
+					cq.setScalar ( p->GetFloat() );
                     bTargetQuatChanged = true;
 
 					// this is actually the last packet sent by the quad, so use this to advance the sample index
@@ -553,6 +559,7 @@ void MainWindow::ProcessPackets(void)
 
 		ui->vbVoltage2->setValue( radio.BatteryVolts );
 		ui->vbVoltage2->setRightLabel( volts );
+		ui->lblVoltage->setText( volts );
 
 		if( RadioMode == 2 )
 		{
@@ -649,6 +656,13 @@ void MainWindow::ProcessPackets(void)
 			float pitch =  asin( m(1,2) ) * (180.0f/PI);
 			float yaw =  -atan2( m(2,0), m(2,2) ) * (180.0f/PI);
 
+			ui->lblRoll->setText( QString::number( roll, 'f', 1) );
+			ui->lblPitch->setText( QString::number( pitch, 'f', 1) );
+			ui->lblYaw->setText( QString::number( yaw, 'f', 1) );
+
+
+			// Use the matrix and magnetometer here to experiment
+
 			ui->Horizon_display->setAngles( roll, pitch );
 			ui->Heading_display->setHeading(yaw);
         }
@@ -724,6 +738,19 @@ void MainWindow::ProcessPackets(void)
 		}
 		else if( ui->tabWidget->currentWidget() == ui->tpSensors )
 		{
+			ui->lblGyroX->setText( QString::number(sensors.GyroX) );
+			ui->lblGyroY->setText( QString::number(sensors.GyroY) );
+			ui->lblGyroZ->setText( QString::number(sensors.GyroZ) );
+			ui->lblGyroTemp->setText( QString::number(sensors.Temp) );
+
+			ui->lblAccelX->setText( QString::number(sensors.AccelX) );
+			ui->lblAccelY->setText( QString::number(sensors.AccelY) );
+			ui->lblAccelZ->setText( QString::number(sensors.AccelZ) );
+
+			ui->lblMagX->setText( QString::number(sensors.MagX) );
+			ui->lblMagY->setText( QString::number(sensors.MagY) );
+			ui->lblMagZ->setText( QString::number(sensors.MagZ) );
+
 			sg->replot();
 		}
 	}
@@ -752,7 +779,14 @@ void MainWindow::ProcessPackets(void)
 
         ui->yawPowerVal->setValue( computed.Yaw );
         ui->yawPowerVal->setRightLabel( computed.Yaw );
-    }
+
+		if( ui->tabWidget->currentWidget() == ui->tpSensors )
+		{
+			ui->lblAltPressure->setText( QString::number(computed.Alt / 1000.0f, 'f', 2) );
+			ui->lblAltiEst->setText( QString::number(computed.AltiEst / 1000.0f, 'f', 2) );
+			ui->lblGroundHeight->setText( QString::number(computed.GroundHeight) );
+		}
+	}
 
 	if( bPrefsChanged ) {
         ConfigureUIFromPreferences();
@@ -1179,6 +1213,8 @@ void MainWindow::on_revR_Channel8_clicked(bool checked) {
 
 void MainWindow::on_btnUploadRadioChanges_clicked()
 {
+	prefs.ReceiverType = ui->cbReceiverType->currentIndex();
+
 	int Value = ui->hsAutoRollPitchSpeed->value();
 	float Rate = ((float)Value / 1024.0f) * (PI / 180.0f) * 0.5f;
 	prefs.AutoLevelRollPitch = Rate;

@@ -106,7 +106,7 @@ class ComputedData
 {
 public:
     int Pitch, Roll, Yaw;								// IMU = 12 bytes
-    int Alt, AltTemp, AltiEst;							// Altimeter = 12 bytes
+	int Alt, GroundHeight, AltiEst;						// Altimeter = 12 bytes
 
     void ReadFrom( packet * p )
     {
@@ -115,7 +115,7 @@ public:
         Yaw =   p->GetInt();
 
         Alt =     p->GetInt();
-        AltTemp = p->GetInt();
+		GroundHeight = p->GetInt();
         AltiEst = p->GetInt();
     }
 };

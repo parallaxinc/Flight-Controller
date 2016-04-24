@@ -85,6 +85,8 @@ enum IMU_VarLabels {
 
     rx, ry, rz,                                  // Float versions of rotation components
     fax, fay, faz,                               // Float version of accelerometer vector
+    fmx, fmy, fmz,                               // Float version of magnetometer vector
+    omx, omy, omz,                               // Oriented version of magnetometer vector
 
     faxn, fayn, fazn,                            // Float version of accelerometer vector (normalized)
     rmag, cosr, sinr,                            // magnitude, cos, sin values
@@ -147,7 +149,8 @@ enum IMU_VarLabels {
     
     const_neghalf,
 
-    const_ErrScale,
+    const_AccErrScale,
+    const_MagErrScale,
     const_AccScale,
     const_ThrustShift,
     const_G_mm_PerSec,
@@ -221,7 +224,8 @@ void QuatIMU_Start(void)
   IMU_VARS[const_neghalf]           =   -0.5f;
 
 
-  IMU_VARS[const_ErrScale]          =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
+  IMU_VARS[const_AccErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
+  IMU_VARS[const_MagErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
   INT_VARS[const_ThrustShift]       =    8;
   IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
@@ -253,10 +257,12 @@ void QuatIMU_Start(void)
 void QuatIMU_SetErrScaleMode( int IsStartup )
 {
   if( IsStartup ) {
-    IMU_VARS[const_ErrScale] = Startup_ErrScale;
+    IMU_VARS[const_AccErrScale] = Startup_ErrScale;
+    IMU_VARS[const_MagErrScale] = Startup_ErrScale;
   }
   else {
-    IMU_VARS[const_ErrScale] = Running_ErrScale;
+    IMU_VARS[const_AccErrScale] = Running_ErrScale;
+    IMU_VARS[const_MagErrScale] = Running_ErrScale;
   }
 }
 
@@ -728,8 +734,8 @@ unsigned char QuatUpdateCommands[] = {
         F32_opMul, fayn,  m10, temp,
         F32_opSub, errDiffZ,  temp, errDiffZ, 
 
-  //accWeight *= const_ErrScale   
-        F32_opMul, const_ErrScale,  accWeight, accWeight,
+  //accWeight *= const_AccErrScale
+        F32_opMul, const_AccErrScale,  accWeight, accWeight,
 
   //--------------------------------------------------------------
   // Scale the resulting difference by the weighting factor.  This
@@ -769,6 +775,79 @@ unsigned char QuatUpdateCommands[] = {
         F32_opShift, temp,  const_ThrustShift, temp,              // *= 256.0  
         F32_opTruncRound, temp,  const_0, ThrustFactor,  
 
+
+/*
+        // Magnetometer (compass) update
+
+        F32_opFloat, mx, 0, fmx,                           //fmx = float(mx)
+        F32_opFloat, my, 0, fmy,                           //fmy = float(my)
+        F32_opFloat, mz, 0, fmz,                           //fmz = float(mz)
+
+
+        // compute the length of the magnetometer vector and normalize it
+
+  //rmag = facc.length
+        F32_opMul, fmx,fmx, rmag,                  //rmag = fmx*fmx
+        F32_opMul, fmy,fmy, temp,                  //temp = fmy*fmy
+        F32_opAdd, rmag,  temp, rmag,              //rmag += temp
+        F32_opMul, fmz,fmz, temp,                  //temp = fmz*fmz
+        F32_opAdd, rmag,  temp, rmag,              //rmag += temp
+        F32_opAdd, rmag,  const_epsilon, rmag,     //rmag += 0.00000001
+        F32_opSqrt, rmag,  0, rmag,                //rmag = Sqrt(rmag)
+
+  //fmag /= rmag
+        F32_opDiv, fmx,  rmag, fmx,                //fmx = fmx / rmag 
+        F32_opDiv, fmy,  rmag, fmy,                //fmy = fmy / rmag 
+        F32_opDiv, fmz,  rmag, fmz,                //fmz = fmz / rmag 
+
+
+
+  //--------------------------------------------------------------
+  // Compute the cross product of our normalized magnetometer vector
+  // and our current orientation "left" vector.  If they're identical,
+  // the cross product will be zeros.  Any difference produces an
+  // axis of rotation between the two vectors, and the magnitude of
+  // the vector is the amount to rotate to align them.
+  //
+  // THIS doesn't work because the magnetometer has a Z component that
+  // slopes - That needs to be cancelled out, likely by rotating it into
+  // world frame, killing the Z, zeroing the Z, then rotating it back
+  //--------------------------------------------------------------
+
+
+  //errDiffX = fayn * m02 - fazn * m01
+        F32_opMul, fmy,  m02, errDiffX, 
+        F32_opMul, fmz,  m01, temp, 
+        F32_opSub, errDiffX,  temp, errDiffX, 
+
+  //errDiffY = fazn * m00 - faxn * m02
+        F32_opMul, fmz,  m00, errDiffY, 
+        F32_opMul, fmx,  m02, temp, 
+        F32_opSub, errDiffY,  temp, errDiffY, 
+
+  //errDiffZ = faxn * m01 - fayn * m00
+        F32_opMul, fmx,  m01, errDiffZ, 
+        F32_opMul, fmy,  m00, temp,
+        F32_opSub, errDiffZ,  temp, errDiffZ, 
+
+
+  //--------------------------------------------------------------
+  // Scale the resulting difference by the weighting factor.  This
+  // gets mixed in with the gyro values on the next update to pull
+  // the "up" part of our rotation back into alignment with gravity
+  // over time.
+  //--------------------------------------------------------------
+
+  //errCorr += errDiff * MagErrScale
+        F32_opMul, errDiffX,  const_MagErrScale, temp,
+        F32_opAdd, temp, errCorrX, errCorrX,
+
+        F32_opMul, errDiffY,  const_MagErrScale, temp,
+        F32_opAdd, temp, errCorrY, errCorrY,
+
+        F32_opMul, errDiffZ,  const_MagErrScale, temp,
+        F32_opAdd, temp, errCorrZ, errCorrZ,
+*/
 
 
   //--------------------------------------------------------------

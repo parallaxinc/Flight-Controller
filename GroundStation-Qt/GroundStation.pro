@@ -29,7 +29,8 @@ SOURCES += main.cpp\
     widgets/valuebar_widget.cpp \
     aboutbox.cpp \
     quatutil.cpp \
-    qcustomplot.cpp
+    qcustomplot.cpp \
+    ahrs.cpp
 
 HEADERS  += mainwindow.h \
     connection.h \
@@ -48,7 +49,8 @@ HEADERS  += mainwindow.h \
     widgets/valuebar_widget.h \
     aboutbox.h \
     quatutil.h \
-    qcustomplot.h
+    qcustomplot.h \
+    ahrs.h
 
 FORMS    += mainwindow.ui \
     aboutbox.ui

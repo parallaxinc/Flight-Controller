@@ -24,7 +24,7 @@
 class SBUS
 {
 public:
-	static void Start( int InputPin );
+	static void Start( int InputPin , bool UseRemoteRX );
 	static void Stop(void);
 
 	//static short Get( int i );

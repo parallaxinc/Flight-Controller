@@ -36,7 +36,11 @@
 #include "elev8-main.h"         // Main thread functions and defines                            (Main thread takes 1 COG)
 #include "f32.h"                // 32 bit IEEE floating point math and stream processor         (1 COG)
 #include "intpid.h"             // Integer PID functions
+
+#if defined(ENABLE_LASER_RANGE)
 #include "laserrange.h"         // Laser Rangefinder
+#endif
+
 #include "pins.h"               // Pin assignments for the hardware
 #include "prefs.h"              // User preferences storage
 #include "quatimu.h"            // Quaternion IMU and control functions
@@ -116,8 +120,6 @@ static long  LEDValue[LED_COUNT];           //LED outputs (copied to the LEDs by
 
 static long loopTimer;                      //Master flight loop counter - used to keep a steady update rate
 
-static long PingZero, PingHeight;
-
 static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
 static short ReArmTimer = 0;          // ONLY used in throttle cut - set this value to non-zero to allow instant re-arm if throttle present until it expires
@@ -154,9 +156,11 @@ const int LEDBrightMask = LEDSingleMask | (LEDSingleMask << 8) | (LEDSingleMask 
 long GroundHeight = 0;  // This one is global so we can transmit it to GroundStation
 long DesiredGroundHeight = 0;
 
+#ifdef ENABLE_GROUND_HEIGHT
+long GroundHeightValidCount = 0;  // records the loop iteration when we got our last good ground height reading
+#endif
 
 #ifdef ENABLE_LASER_RANGE
-long LaserValidCount = 0;  // records the loop iteration when we got our last good laser reading
 void LaserRangeThread( void *par );
 #endif
 
@@ -224,7 +228,7 @@ int main()                                    // Main function
     QuatIMU_Update( (int*)&sens.GyroX );        //Entire IMU takes ~125000 cycles
     AccelZSmooth += (sens.AccelZ - AccelZSmooth) * Prefs.AccelCorrectionFilter / 256;
 
-    if( Prefs.ReceiverType == 1 ) // SBUS?
+    if( Prefs.ReceiverType & 1 ) // SBUS or RemoteRX?
     {
       // Unrolling these loops saves about 10000 cycles, but costs a little over 1/2kb of code space
       for( int i=0; i<8; i++ ) {
@@ -240,14 +244,6 @@ int main()                                    // Main function
         Radio.Channel(i) =  (RC::GetRC( Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
       }        
     }
-
-    
-    //if( UsePing )
-    //  PingCycle := counter & 15
-    //  if( PingCycle == 0 )
-    //    Ping.Fire( PIN#PING )
-    //  elseif( PingCycle == 15 )
-    //    PingHeight := Ping.Millimeters( PIN#PING ) - PingZero 
 
       //-------------------------------------------------
     if( FlightMode == FlightMode_CalibrateCompass )
@@ -290,7 +286,25 @@ int main()                                    // Main function
 
       UpdateFlightLoop();            //~72000 cycles when in flight mode
       //-------------------------------------------------
-    }  
+
+      // Sound travels approx 343m/sec in 20C air, but it varies with temperature and pressure (faster at higher temps or lower pressure).
+      // This works out to about 232 clock ticks per millimeter (80000000hz / 345 = ~232000 ticks per meter)
+      // Dividing by 256 is relatively close to that, and we don't need the value to be exact, just close
+      // Also, the ping sensor time must be cut in half, because the sound travels to the target, then back again
+      // So I use >> 9 to approximate / 512 (or / 256*2)
+
+      #ifdef ENABLE_PING_SENSOR
+      int TempHeight = Servo32_GetPing() >> 9;
+      if( TempHeight < 3000 )   // 10ft == 3048mm, so check to see if we're just under that
+      {
+        long diff = TempHeight - GroundHeight;
+
+        // Filter it to keep it from changing too fast
+        GroundHeight += diff >> 3;
+        GroundHeightValidCount = counter;    // Record the last loop iteration we had a good reading
+      }
+      #endif
+    }
 
 
     if( Prefs.UseBattMon )
@@ -405,14 +419,18 @@ void Initialize(void)
   for( int i=0; i<4; i++ ) {
     Servo32_AddFastPin( MotorPin[i] );
     Servo32_Set( MotorPin[i], Prefs.MinThrottle );
-  }    
+  }
+
+  #ifdef ENABLE_PING_SENSOR
+  Servo32_SetPingPin( PIN_MOTOR_AUX1 );
+  #endif
+
   Servo32_Start();
 
   int RollPitch_P = 500;
   int RollPitch_D = 1560 * Const_UpdateRate;
 
   RollPID.Init( (RollPitch_P * (Prefs.RollGain+1)) >> 7, 0,  (RollPitch_D * (Prefs.RollGain+1)) >> 7 , Const_UpdateRate );
-  RollPID.SetPrecision( 8 );
   RollPID.SetMaxOutput( 3000 );
   RollPID.SetPIMax( 100 );
   RollPID.SetMaxIntegral( 1900 );
@@ -420,7 +438,6 @@ void Initialize(void)
 
 
   PitchPID.Init( (RollPitch_P * (Prefs.PitchGain+1)) >> 7, 0,  (RollPitch_D * (Prefs.PitchGain+1)) >> 7 , Const_UpdateRate );
-  PitchPID.SetPrecision( 8 );
   PitchPID.SetMaxOutput( 3000 );
   PitchPID.SetPIMax( 100 );
   PitchPID.SetMaxIntegral( 1900 );
@@ -430,7 +447,6 @@ void Initialize(void)
   int YawD = (625 * Const_UpdateRate * (Prefs.YawGain+1)) >> 7;
 
   YawPID.Init( YawP,  0,  YawD , Const_UpdateRate );
-  YawPID.SetPrecision( 8 );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetPIMax( 100 );
   YawPID.SetMaxIntegral( 2000 );
@@ -442,7 +458,6 @@ void Initialize(void)
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
   AltPID.Init( AltP, AltI, 0, Const_UpdateRate );
-  AltPID.SetPrecision( 8 );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
@@ -452,7 +467,6 @@ void Initialize(void)
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
   AscentPID.Init( AscentP, 0, 0 , Const_UpdateRate );
-  AscentPID.SetPrecision( 8 );
   AscentPID.SetMaxOutput( 3000 );   // Limit of the control rate applied to the throttle
   AscentPID.SetPIMax( 500 );
   AscentPID.SetMaxIntegral( 2000 );
@@ -502,7 +516,11 @@ void InitReceiver(void)
       break;
 
     case 1:
-      SBUS::Start( PIN_RC_0 );
+      SBUS::Start( PIN_RC_0, false ); // SBUS mode
+      break;
+
+    case 3:
+      SBUS::Start( PIN_RC_0 , true ); // RemoteRX mode - DSM2/2048
       break;
   }
 }
@@ -815,9 +833,9 @@ void UpdateFlightLoop(void)
         }
         else
         {
-        #ifdef ENABLE_LASER_RANGE
-          bool GoodLaser = (Radio.Aux1 > 0) && ((counter - LaserValidCount) < 30);
-          static bool UsedLaser = false;
+        #ifdef ENABLE_GROUND_HEIGHT
+          bool GoodHeight = (Radio.Aux1 > 0) && ((counter - GroundHeightValidCount) < 30);
+          static bool UsedHeight = false;
         #endif
 
           // Are we just entering altitude hold mode?
@@ -828,14 +846,14 @@ void UpdateFlightLoop(void)
 
             AltPID.Reset();
           }
-        #ifdef ENABLE_LASER_RANGE
+        #ifdef ENABLE_GROUND_HEIGHT
           else {
-            if( !UsedLaser && GoodLaser ) {   // If we're going back to using the laser in hold, make sure we have a good reading
+            if( !UsedHeight && GoodHeight) {   // If we're going back to using the laser in hold, make sure we have a good reading
               DesiredGroundHeight = GroundHeight;
             }              
           }
 
-          if( GoodLaser ) {
+          if( GoodHeight ) {
             // Use a PID object to compute velocity requirements for the AscentPID object
             DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight, DoIntegrate );
             DesiredAltitude = AltiEst;      // Cache the current altitude as a good altitude in case the laser stops reading
@@ -847,8 +865,8 @@ void UpdateFlightLoop(void)
             DesiredAscentRate = AltPID.Calculate( DesiredAltitude , AltiEst, DoIntegrate );
           }
 
-        #ifdef ENABLE_LASER_RANGE
-          UsedLaser = GoodLaser;
+        #ifdef ENABLE_GROUND_HEIGHT
+          UsedHeight = GoodHeight;
         #endif
         }
 
@@ -1599,13 +1617,13 @@ void LaserRangeThread( void *par )
 
             // Filter it to keep it from changing too fast
             GroundHeight += diff >> 3;
-            LaserValidCount = counter;    // Record the last loop iteration we had a good laser reading
+            GroundHeightValidCount = counter;    // Record the last loop iteration we had a good laser reading
           }
         }
         laserCount = 4; // Wait 4 cycles before pinging it again
       }
     } while( c >= 0 );
-  
+
     if( laserCount == 0 ) {
       S4_Put(2,'A');
       laserCount = 16;      // Ping the laser occasionally for a new reading
@@ -1636,9 +1654,9 @@ void ApplyPrefs(void)
   QuatIMU_SetAutoLevelRates( Prefs.AutoLevelRollPitch , Prefs.AutoLevelYawRate );
   QuatIMU_SetManualRates( Prefs.ManualRollPitchRate , Prefs.ManualYawRate );
 
-#ifdef FORCE_SBUS
-  Prefs.ReceiverType = 1;
-#endif
+//#ifdef FORCE_SBUS
+//  Prefs.ReceiverType = 1;
+//#endif
 
 #if defined( __V2_PINS_H__ )  // V2 hardware doesn't support the battery monitor
   Prefs.UseBattMon = 0;
