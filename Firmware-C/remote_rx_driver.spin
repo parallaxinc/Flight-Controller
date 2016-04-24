@@ -135,8 +135,11 @@ ConvertToChannels
 
                         mov     inWord, inputWords
                         and     inWord, #$ff
-                        cmp     inWord, #$12    wz                              '11ms 2048 DSM2
+                        cmp     inWord, #$12    wz                              '11ms 2048 DSM2 master
               if_e      jmp     #:DoConvert
+
+                        cmp     inWord, #0      wz                              '11ms 2048 DSM2 remote
+              if_z      jmp     #:DoConvert
 
                         call    #FindPacketEnd
                         jmp     #ConvertToChannels_ret              
