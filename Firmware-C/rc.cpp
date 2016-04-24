@@ -67,7 +67,7 @@ void RC::Stop(void)
     cogstop(Cog - 1);
     Cog = 0;
   }
-}  
+}
 
 //int RC::Get( int _pin ) {
 //	// Get receiver servo pulse width in uS
