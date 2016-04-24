@@ -26,6 +26,8 @@
 
 struct ServoData {
   long FastPins, SlowPins;
+  volatile long PingPin;
+  long PingPinMask;
   long MasterLoopDelay, SlowUpdateCounter;
   long Cycles;
   long ServoData[32];		//Servo Pulse Width information
@@ -44,13 +46,9 @@ void Servo32_Start(void)
 
 void Servo32_Init( int fastRate )
 {
+  memset(&Data, 0, sizeof(Data));
   Data.MasterLoopDelay = Const_ClockFreq / fastRate;
   Data.SlowUpdateCounter = (Const_ClockFreq / 50) / Data.MasterLoopDelay;
-
-  memset(&Data.ServoData[0], 0, sizeof(Data.ServoData) );
-
-  Data.FastPins = 0;
-  Data.SlowPins = 0;
 }
 
 
@@ -68,11 +66,23 @@ void Servo32_AddSlowPin( int Pin )
   Data.SlowPins |= (1<<Pin);	//Slow pins are ONLY updated during the "slow" cycle
 }
 
+void Servo32_SetPingPin( int Pin )
+{
+  Data.PingPin = Pin;
+  Data.PingPinMask = 1<<Pin;
+}  
+
 
 void Servo32_Set( int ServoPin, int Width )		// Set Servo value as a raw delay, in 10 clock increments
 {
   Data.ServoData[ServoPin] = Width * Scale;		// Servo widths are set in 10ths of a uS, so 8000 = min, 12000 = mid, 16000 = max
 }
+
+int Servo32_GetPing(void)
+{
+  return Data.PingPin;    // This value stores the return value from the driver too
+}  
+
 
 /*
 void Servo32_SetRC( int ServoPin, int Width )	// Set Servo value signed, assuming 12000 is your center

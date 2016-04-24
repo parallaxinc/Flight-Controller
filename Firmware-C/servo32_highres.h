@@ -92,11 +92,13 @@ void Servo32_Init( int FastRate );
 
 void Servo32_AddFastPin(int Pin);
 void Servo32_AddSlowPin(int Pin);
+void Servo32_SetPingPin(int Pin);
 
 void Servo32_Start(void);
 
 void Servo32_Set(int ServoPin, int Width);
 void Servo32_SetRC(int ServoPin, int Width);
+int  Servo32_GetPing(void);
 
 
 int Servo32_GetCycles(void);

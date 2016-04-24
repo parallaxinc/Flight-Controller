@@ -88,10 +88,11 @@
 
 VAR
         long          FastPins, SlowPins
+        long          PingPin                                                    'pin INDEX for Ping sensor, used to return the ping sensor time
+        long          PingPinMask                                                'Non zero if active - pin MASK for Ping sensor
         long          _MasterLoopDelay, _SlowUpdateCounter
         long          Cycles
         long          ServoData[32]                                              'Servo Pulse Width information
-        long          PingCounter                                                'Distance reported by Ping))) sensor, if used
 
         'long          SortedPins[32]                   'Only enable these if sending results back from the COG
         'long          SortedDelays[32]
@@ -116,6 +117,8 @@ PUB Init( fastRate )
 
   FastPins := 0
   SlowPins := 0
+  PingPin  := 0
+  PingPinMask := 0
 
 
 ''Set a PIN index as a high-speed output (250Hz)  
@@ -128,6 +131,9 @@ PUB AddFastPin(Pin)
 PUB AddSlowPin(Pin)
   SlowPins |= (1<<Pin)          'Slow pins are ONLY updated during the "slow" cycle
 
+PUB SetPingPin(Pin)
+  PingPin := Pin
+  PingPinMask := (1<<Pin)
 
 PUB Set(ServoPin, Width)                                'Set Servo value as a raw delay, in 10 clock increments
   ServoData[ServoPin] := Width * Scale                  'Servo widths are set in 10ths of a uS, so 8000 = min, 12000 = mid, 16000 = max
@@ -135,6 +141,8 @@ PUB Set(ServoPin, Width)                                'Set Servo value as a ra
 PUB SetRC(ServoPin, Width)                              'Set Servo value signed, assuming 12000 is your center
   ServoData[ServoPin] := (12000 + Width) * Scale        'Servo widths are set in 10ths of a uS, so -4000 min, 0 = mid, +4000 = max
 
+PUB GetPing
+  return PingPin    'Pin value is also used as the return location when the driver is running
 
 PUB GetCycles
   return Cycles
@@ -161,6 +169,12 @@ ServoStart
                         add     Index,                  #4                      'Increment Index to next Pointer
                         rdlong  _SlowPinMask,           Index                   'Get slow I/O pin directions
 
+                        add     Index,                  #4                      'Increment Index to next Pointer
+                        rdlong  _PingPin,               Index                   'Get Ping pin INDEX value, if used
+
+                        add     Index,                  #4                      'Increment Index to next Pointer
+                        rdlong  _PingPinMask,           Index                   'Get Ping pin MASK value, if used, zero otherwise
+
                         add     Index,                  #4
                         rdlong  MasterLoopDelay,        Index 
 
@@ -176,13 +190,13 @@ ServoStart
                         mov     MasterLoopTimer, cnt                            'Start time for servo cyles
                         add     MasterLoopTimer, MasterLoopDelay
 
+                        mov     PingFlag, #0
                         mov     OUTA, #0                                        'Initialize outputs to zero                
                         mov     dira, _SlowPinMask                              'Enable all relevant pins (fast and slow) as outputs
 
 SlowPinLoop
-                        'TODO:
-                        'See if we have a previous Ping reading, and if so, write it to the ping HUB value
-                        'See if the ping sensor is active, if so, fire the ping sensor  (5 uSec typical pulse duration)
+                        mov     temp, _PingPinMask    nr, wz                    'is there a pin set for the Ping sensor?
+          if_nz         call    #UpdatePing                                     'if yes, go do the update for it
 
                         mov     PinMask, _SlowPinMask                           'For the first pass, include slow pins and fast pins
                         mov     OuterLoopCount, SlowUpdateCounter
@@ -232,6 +246,40 @@ ServoCore
 
 ServoCore_RET           ret
 
+'------------------------------------------------------------------------------------------------------------------------------------------------
+
+UpdatePing
+                        xor   PingFlag, #1  wz    'Fire the ping 25 times / sec, not 50
+           if_z         jmp   #UpdatePing_Ret
+
+                        'See if we have a previous Ping reading, and if so, write it to the ping HUB value
+                        mov   PingTime, PHSA                                    'Get the ping sensor time
+                        mov   HubAddress, par
+                        add   HubAddress, #8
+                        wrlong  PingTime, HubAddress
+
+                        'Fire!
+                        or    DIRA, _PingPinMask
+                        or    OUTA, _PingPinMask
+
+                        mov   temp, #160      'wait 320 clocks = 4uS
+                        shl   temp, #1
+                        add   temp, CNT
+                        waitcnt temp, #0
+
+                        andn  OUTA, _PingPinMask
+                        andn  DIRA, _PingPinMask
+
+
+                        mov   PHSA, #0                                          'Reset the counter info
+                        mov   FRQA, #1
+                        mov   temp, CtrSetting                                  'Grab the correct ctrmode and plldiv values
+                        or    temp, _PingPin                                    'set the pin index bits
+                        mov   CTRA, temp                                        'move the resulting value into the CTRA register
+
+UpdatePing_Ret          ret
+
+CtrSetting              long    (%01000 << 26) | (%111 << 23)
 
 '------------------------------------------------------------------------------------------------------------------------------------------------
 CreateServoArray
@@ -523,7 +571,7 @@ CopyToHub
                         
                         mov     HubAddress, _ServoHubArrayPtr                   'Address of the source data in HUB ram
                         add     HubAddress, #(128+4)                            'Hub address of the sorted array
-                                                
+
                         mov     LoopCounter, #64                                'Number of array entries to transfer (pins + delays)
 
 :Loop
@@ -555,12 +603,16 @@ DidSwap                 res     1
 temp                    res     1
 Index                   res     1
 HubAddress              res     1
+PingTime                res     1
 
 PassCounter             res     1
 LoopCounter             res     1
 
 _FastPinMask            res     1
 _SlowPinMask            res     1
+_PingPin                res     1
+_PingPinMask            res     1
+PingFlag                res     1
 OuterLoopCount          res     1
 
 InputIndex              res     1
