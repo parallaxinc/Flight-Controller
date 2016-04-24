@@ -48,7 +48,7 @@ void IntPID::Init( int PGain, int IGain, int DGain, short _SampleRate )
   IError = 0;
   MaxIntegral = 0x010000;
   MaxOutput = 1000;
-  Precision = 16;
+  Precision = 8;
   RoundOffset = 1 << (Precision-1);
 }
 
