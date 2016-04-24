@@ -1,0 +1,39 @@
+
+Possible gains from moving driver PASM into EEPROM, or using code overlays for seldom used functions:
+
+See this forum thread:  http://forums.parallax.com/discussion/163970/overlay-code-with-gcc
+
+
+f32_driver.spin
+Program size is 2012 bytes
+
+sensors_driver.spin
+Program size is 1468 bytes
+
+serial_4x_driver.spin
+Program size is 1156 bytes
+
+servo32_highres_driver.spin
+Program size is 908 bytes
+
+sbus_driver.spin
+Program size is 340 bytes
+
+remote_rx_driver.spin
+Program size is 332 bytes
+
+rc_driver_v3.spin
+rc_driver_v2.spin
+Program size is 292 bytes
+
+rc_driver_ppm.spin
+Program size is 104 bytes
+
+
+FindGyroZero - 352 bytes
+CompassCalibrate - 880 bytes
+Initialize - 960 bytes
+
+
+Ping - 23140 - 22980
+Laser  - 23520 - 22980
