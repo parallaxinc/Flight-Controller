@@ -467,12 +467,13 @@ void MainWindow::ProcessPackets(void)
 
                 case 3:	// Quaternion
                     {
-					//q.setX(      p->GetFloat() );
-					//q.setY(      p->GetFloat() );
-					//q.setZ(      p->GetFloat() );
-					//q.setScalar( p->GetFloat() );
+					q.setX(      p->GetFloat() );
+					q.setY(      p->GetFloat() );
+					q.setZ(      p->GetFloat() );
+					q.setScalar( p->GetFloat() );
 
-					q = ahrs.quat;
+					// TEST CODE
+					//q = ahrs.quat;
 
 					QMatrix3x3 m;
 					m = QuatToMatrix( q );
