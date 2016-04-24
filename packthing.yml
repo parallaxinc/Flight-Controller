@@ -31,7 +31,7 @@ repos:
         files:
             groundstation:
                 name: GroundStation
-                icon: icons/PropIcon.png
+                icon: ../icons/PropIcon.png
         branch: master
 
     firmware-sources:
