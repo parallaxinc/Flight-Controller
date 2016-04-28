@@ -3566,7 +3566,7 @@ throttle calibration.</string>
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Ground Height</string>
+                  <string>Ground Height (mm)</string>
                  </property>
                  <property name="checked">
                   <bool>true</bool>
