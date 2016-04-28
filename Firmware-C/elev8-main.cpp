@@ -387,7 +387,7 @@ void Initialize(void)
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
-  Stats.Version = 0x0100;
+  Stats.Version = 0x0101;
 
   InitSerial();
 
