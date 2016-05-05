@@ -46,6 +46,16 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->lblRadioCalibrateDocs->setVisible(false);	// Hide this until calibration mode
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
+	// These have to match the modes and order defined in Elev8-Main.h in the firmware
+	const char * flightModes[] = {"Assisted", "Stable", "Manual", "Auto-Manual" };
+
+	for( int i=0; i<4; i++ )
+	{
+		ui->cb_FlightMode_Up->addItem( QString(flightModes[i]) );
+		ui->cb_FlightMode_Middle->addItem( QString(flightModes[i]) );
+		ui->cb_FlightMode_Down->addItem( QString(flightModes[i]) );
+	}
+
 	for( int i=0; i<4; i++ ) {
 		accXCal[i] = accYCal[i] = accZCal[i] = 0.f;
 	}
@@ -526,26 +536,26 @@ void MainWindow::ProcessPackets(void)
                     break;
 
                 case 0x18:	// Settings
-                    {
-                        PREFS tempPrefs;
-                        memset( &tempPrefs, 0, sizeof(tempPrefs) );
+					{
+						PREFS tempPrefs;
+						memset( &tempPrefs, 0, sizeof(tempPrefs) );
 
-                        quint32 toCopy = p->len;
-                        if( sizeof(tempPrefs) < toCopy )
-                            toCopy = sizeof(tempPrefs);
+						quint32 toCopy = p->len;
+						if( sizeof(tempPrefs) < toCopy )
+							toCopy = sizeof(tempPrefs);
 
-                        memcpy( &tempPrefs, p->data, toCopy );
+						memcpy( &tempPrefs, p->data, toCopy );
 
-                        if( Prefs_CalculateChecksum( tempPrefs ) == tempPrefs.Checksum ) {
-                            //PrefsReceived = true;	// Global indicator of valid prefs
-                            bPrefsChanged = true;	// local indicator, just to set up the UI
-                            prefs = tempPrefs;
-                        }
-                        else {
-                            SendCommand( "QPRF" );	// reqeust them again because the checksum failed
-                        }
-                    }
-                    break;
+						if( Prefs_CalculateChecksum( tempPrefs ) == tempPrefs.Checksum ) {
+							//PrefsReceived = true;	// Global indicator of valid prefs
+							bPrefsChanged = true;	// local indicator, just to set up the UI
+							prefs = tempPrefs;
+						}
+						else {
+							SendCommand( "QPRF" );	// reqeust them again because the checksum failed
+						}
+					}
+					break;
             }
             delete p;
         }
@@ -561,6 +571,15 @@ void MainWindow::ProcessPackets(void)
 		ui->vbVoltage2->setValue( radio.BatteryVolts );
 		ui->vbVoltage2->setRightLabel( volts );
 		ui->lblVoltage->setText( volts );
+
+
+		if( radio.Gear > 512 )
+			ui->vsFlightMode->setValue(0);	// down
+		else if( radio.Gear < -512 )
+			ui->vsFlightMode->setValue(2);	// up
+		else
+			ui->vsFlightMode->setValue(1);	// middle
+
 
 		if( RadioMode == 2 )
 		{
@@ -1012,15 +1031,16 @@ void MainWindow::ConfigureUIFromPreferences(void)
 
 	Source = prefs.ManualRollPitchRate;
 	Source = (Source * 2.0f) / (PI / 180.0f) * 1024.0f * 250.0f;
-	AttemptSetValue( ui->hsManualRollPitchSpeed, (int)(Source * 20.0f + 0.5f) );
+	AttemptSetValue( ui->hsManualRollPitchSpeed, (int)(Source + 0.5f) / 10 );
 
 	Source = prefs.ManualYawRate;
 	Source = (Source * 2.0f) / (PI / 180.0f) * 1024.0f * 250.0f;
-	AttemptSetValue( ui->hsManualYawSpeed, (int)(Source * 20.0f + 0.5f) );
+	AttemptSetValue( ui->hsManualYawSpeed, (int)(Source + 0.5f) / 10 );
 
+	ui->cb_FlightMode_Up->setCurrentIndex( prefs.FlightMode[2] );
+	ui->cb_FlightMode_Middle->setCurrentIndex( prefs.FlightMode[1] );
+	ui->cb_FlightMode_Down->setCurrentIndex( prefs.FlightMode[0] );
 
-	ui->hsAccelCorrectionFilter->setValue( prefs.AccelCorrectionFilter );
-	ui->hsThrustCorrection->setValue( prefs.ThrustCorrectionScale );
 
 
 	// Flight Control Setup
@@ -1034,6 +1054,9 @@ void MainWindow::ConfigureUIFromPreferences(void)
 	AttemptSetValue( ui->hsAltiGain, prefs.AltiGain + 1 );
 	//cbEnableAdvanced.Checked = (prefs.UseAdvancedPID != 0);
 
+	ui->hsAccelCorrectionFilter->setValue( 256 - prefs.AccelCorrectionFilter );	// Higher number is actually less filtering
+	ui->hsAccelCorrection->setValue( prefs.AccelCorrectionStrength );
+	ui->hsThrustCorrection->setValue( prefs.ThrustCorrectionScale );
 
 
 	// System Setup
@@ -1232,8 +1255,9 @@ void MainWindow::on_btnUploadRadioChanges_clicked()
 	Rate = (((float)Value / 250.0f) / 1024.0f) * (PI / 180.0f) * 0.5f;
 	prefs.ManualYawRate = Rate;
 
-	prefs.AccelCorrectionFilter = (short)ui->hsAccelCorrectionFilter->value();
-	prefs.ThrustCorrectionScale = (short)ui->hsThrustCorrection->value();
+	prefs.FlightMode[0] = ui->cb_FlightMode_Down->currentIndex();
+	prefs.FlightMode[1] = ui->cb_FlightMode_Middle->currentIndex();
+	prefs.FlightMode[2] = ui->cb_FlightMode_Up->currentIndex();
 
 	UpdateElev8Preferences();
 }
@@ -1463,9 +1487,16 @@ void MainWindow::on_hsManualYawSpeed_valueChanged(int value)
 
 void MainWindow::on_hsAccelCorrectionFilter_valueChanged(int value)
 {
-	QString str = QString::number((float) value / 256.f, 'f', 3);
+	QString str = QString::number((float)value / 256.f, 'f', 3);
 	ui->lblAccelCorrectionFilter->setText( str );
 }
+
+void MainWindow::on_hsAccelCorrection_valueChanged(int value)
+{
+	QString str = QString::number((float)value / 256.f, 'f', 3);
+	ui->lblAccelCorrection->setText( str );
+}
+
 
 void MainWindow::on_hsThrustCorrection_valueChanged(int value)
 {
@@ -1542,6 +1573,10 @@ void MainWindow::on_btnUploadFlightChanges_clicked()
 	prefs.YawGain =    (quint8)(ui->hsYawGain->value() - 1);
 	prefs.AscentGain = (quint8)(ui->hsAscentGain->value() - 1);
 	prefs.AltiGain =   (quint8)(ui->hsAltiGain->value() - 1);
+
+	prefs.AccelCorrectionFilter = (short)(256 - ui->hsAccelCorrectionFilter->value());
+	prefs.AccelCorrectionStrength = (unsigned char)ui->hsAccelCorrection->value();
+	prefs.ThrustCorrectionScale = (short)ui->hsThrustCorrection->value();
 
 	// Apply the prefs to the elev-8
 	UpdateElev8Preferences();
@@ -1921,13 +1956,13 @@ static bool ReadInt( QXmlStreamReader & reader , short & val )
 	return ok;
 }
 
-static bool ReadInt( QXmlStreamReader & reader , char & val )
+static bool ReadInt( QXmlStreamReader & reader , byte & val )
 {
 	bool ok = false;
 	QXmlStreamAttribute attr = reader.attributes()[0];
 	if( attr.name() == "Value" ) {
 		int temp = attr.value().toInt( &ok );
-		if( ok ) val = (char)temp;
+		if( ok ) val = (byte)temp;
 	}
 	return ok;
 }

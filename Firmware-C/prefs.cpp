@@ -25,6 +25,7 @@
 
 #include "eeprom.h"
 #include "prefs.h"
+#include "elev8-main.h" // for flight mode enum
 
 
 PREFS Prefs;
@@ -99,6 +100,11 @@ void Prefs_SetDefaults(void)
 
   Prefs.ThrustCorrectionScale = 256;  // 0 to 256  =  0 to 1
   Prefs.AccelCorrectionFilter = 16;   // 0 to 256  =  0 to 1
+
+  Prefs.FlightMode[0] = FlightMode_Assist;
+  Prefs.FlightMode[1] = FlightMode_Stable;
+  Prefs.FlightMode[2] = FlightMode_Manual;
+  Prefs.AccelCorrectionStrength = 96;
 
   Prefs.ThroChannel = 0;      //Standard radio channel mappings
   Prefs.AileChannel = 1;

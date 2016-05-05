@@ -72,6 +72,9 @@ typedef struct {
   short VoltageOffset;    // Used to correct the difference between measured and actual voltage
   short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
 
+  char  FlightMode[3];    // Flight mode to use when gear switch is down, middle, up
+  char  AccelCorrectionStrength;
+
   char  ThroChannel;      // Radio inputs to use for each value
   char  AileChannel;
   char  ElevChannel;

@@ -746,7 +746,7 @@ throttle calibration.</string>
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>731</width>
+          <width>741</width>
           <height>211</height>
          </rect>
         </property>
@@ -777,7 +777,7 @@ throttle calibration.</string>
         <widget class="QPushButton" name="btnReceiverCalibrate">
          <property name="geometry">
           <rect>
-           <x>320</x>
+           <x>325</x>
            <y>20</y>
            <width>91</width>
            <height>23</height>
@@ -798,7 +798,7 @@ throttle calibration.</string>
         <widget class="QComboBox" name="cbReceiverType">
          <property name="geometry">
           <rect>
-           <x>450</x>
+           <x>460</x>
            <y>20</y>
            <width>91</width>
            <height>22</height>
@@ -811,7 +811,7 @@ throttle calibration.</string>
         <widget class="QLabel" name="label_2">
          <property name="geometry">
           <rect>
-           <x>460</x>
+           <x>470</x>
            <y>0</y>
            <width>81</width>
            <height>16</height>
@@ -829,7 +829,7 @@ throttle calibration.</string>
         <widget class="RadioStick_Widget" name="radioLeft_R" native="true">
          <property name="geometry">
           <rect>
-           <x>210</x>
+           <x>215</x>
            <y>50</y>
            <width>151</width>
            <height>151</height>
@@ -845,7 +845,7 @@ throttle calibration.</string>
         <widget class="RadioStick_Widget" name="radioRight_R" native="true">
          <property name="geometry">
           <rect>
-           <x>370</x>
+           <x>375</x>
            <y>50</y>
            <width>151</width>
            <height>151</height>
@@ -1080,7 +1080,7 @@ throttle calibration.</string>
         <widget class="QWidget" name="gridLayoutWidget_2">
          <property name="geometry">
           <rect>
-           <x>525</x>
+           <x>535</x>
            <y>50</y>
            <width>201</width>
            <height>151</height>
@@ -1302,7 +1302,7 @@ throttle calibration.</string>
          <rect>
           <x>0</x>
           <y>215</y>
-          <width>731</width>
+          <width>741</width>
           <height>126</height>
          </rect>
         </property>
@@ -1622,169 +1622,162 @@ throttle calibration.</string>
           <enum>Qt::PlainText</enum>
          </property>
         </widget>
-        <widget class="QLabel" name="lblThrustCorrection">
+        <widget class="QGroupBox" name="groupBox_9">
          <property name="geometry">
           <rect>
-           <x>660</x>
-           <y>60</y>
-           <width>56</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>1.000</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_10">
-         <property name="geometry">
-          <rect>
-           <x>480</x>
-           <y>55</y>
-           <width>81</width>
-           <height>41</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Thrust&lt;br/&gt;Angle&lt;br/&gt;Correction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-        <widget class="QSlider" name="hsAccelCorrectionFilter">
-         <property name="geometry">
-          <rect>
-           <x>565</x>
-           <y>10</y>
-           <width>91</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Smaller numbers mean vertical disturbance correction is softer.  (0 is disabled)</string>
-         </property>
-         <property name="minimum">
-          <number>0</number>
-         </property>
-         <property name="maximum">
-          <number>256</number>
-         </property>
-         <property name="pageStep">
-          <number>16</number>
-         </property>
-         <property name="value">
-          <number>16</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="invertedAppearance">
-          <bool>false</bool>
-         </property>
-         <property name="invertedControls">
-          <bool>false</bool>
-         </property>
-         <property name="tickPosition">
-          <enum>QSlider::TicksBelow</enum>
-         </property>
-         <property name="tickInterval">
-          <number>0</number>
-         </property>
-        </widget>
-        <widget class="QLabel" name="lblAccelCorrectionFilter">
-         <property name="geometry">
-          <rect>
-           <x>660</x>
-           <y>10</y>
-           <width>56</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>0.062</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_11">
-         <property name="geometry">
-          <rect>
-           <x>480</x>
+           <x>485</x>
            <y>5</y>
-           <width>81</width>
-           <height>41</height>
+           <width>251</width>
+           <height>116</height>
           </rect>
          </property>
-         <property name="font">
-          <font>
-           <pointsize>8</pointsize>
-          </font>
+         <property name="title">
+          <string>Flight Mode Switch</string>
          </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vertical&lt;br/&gt;Disturbance&lt;br/&gt;Correction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-        <widget class="QSlider" name="hsThrustCorrection">
-         <property name="geometry">
-          <rect>
-           <x>565</x>
-           <y>60</y>
-           <width>91</width>
-           <height>31</height>
-          </rect>
-         </property>
-         <property name="toolTip">
-          <string>Compensates for loss of thrust when the craft is tilted.  (0 is disabled)</string>
-         </property>
-         <property name="minimum">
-          <number>0</number>
-         </property>
-         <property name="maximum">
-          <number>512</number>
-         </property>
-         <property name="pageStep">
-          <number>32</number>
-         </property>
-         <property name="value">
-          <number>256</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="tickPosition">
-          <enum>QSlider::TicksBelow</enum>
-         </property>
-         <property name="tickInterval">
-          <number>0</number>
-         </property>
+         <widget class="QWidget" name="layoutWidget_4">
+          <property name="geometry">
+           <rect>
+            <x>5</x>
+            <y>15</y>
+            <width>241</width>
+            <height>101</height>
+           </rect>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,3,1">
+           <item>
+            <widget class="QSlider" name="vsFlightMode">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="maximum">
+              <number>2</number>
+             </property>
+             <property name="pageStep">
+              <number>1</number>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="tickPosition">
+              <enum>QSlider::TicksBothSides</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <item>
+              <widget class="QComboBox" name="cb_FlightMode_Up">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>3</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="cb_FlightMode_Middle">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>3</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="cb_FlightMode_Down">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                 <horstretch>3</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <layout class="QVBoxLayout" name="verticalLayout_12" stretch="0,0,0">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_34">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>1</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Up</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_35">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>1</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Middle</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_36">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>1</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>50</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Down</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </widget>
        <widget class="QPushButton" name="btnUploadRadioChanges">
         <property name="geometry">
          <rect>
-          <x>320</x>
+          <x>325</x>
           <y>347</y>
           <width>121</width>
           <height>26</height>
@@ -1830,8 +1823,15 @@ throttle calibration.</string>
          <bool>true</bool>
         </property>
        </widget>
+       <zorder>lblRadioCalibrateDocs</zorder>
+       <zorder>gbReceiverSetup</zorder>
+       <zorder>gbControlSetup</zorder>
+       <zorder>btnUploadRadioChanges</zorder>
       </widget>
-      <widget class="QWidget" name="tab">
+      <widget class="QWidget" name="Flight_Tab">
+       <property name="autoFillBackground">
+        <bool>true</bool>
+       </property>
        <attribute name="title">
         <string>Flight Control Setup</string>
        </attribute>
@@ -1839,7 +1839,7 @@ throttle calibration.</string>
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>5</y>
+          <y>10</y>
           <width>426</width>
           <height>191</height>
          </rect>
@@ -2203,8 +2203,8 @@ throttle calibration.</string>
        <widget class="QPushButton" name="btnUploadFlightChanges">
         <property name="geometry">
          <rect>
-          <x>510</x>
-          <y>165</y>
+          <x>320</x>
+          <y>245</y>
           <width>156</width>
           <height>23</height>
          </rect>
@@ -2215,6 +2215,271 @@ throttle calibration.</string>
         <property name="text">
          <string>Upload Changes</string>
         </property>
+       </widget>
+       <widget class="QGroupBox" name="groupBox_10">
+        <property name="geometry">
+         <rect>
+          <x>435</x>
+          <y>10</y>
+          <width>341</width>
+          <height>191</height>
+         </rect>
+        </property>
+        <property name="title">
+         <string>Auto-level thrust assist</string>
+        </property>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>5</x>
+           <y>25</y>
+           <width>331</width>
+           <height>161</height>
+          </rect>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_8" columnstretch="2,3,1">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>Smaller numbers mean vertical disturbance filtering is lower.  (0 is no filtering)</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vertical&lt;br/&gt;Disturbance&lt;br/&gt;Filtering&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSlider" name="hsAccelCorrectionFilter">
+            <property name="toolTip">
+             <string>Smaller numbers mean vertical disturbance filtering is lower.  (0 is no filtering)</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>256</number>
+            </property>
+            <property name="pageStep">
+             <number>16</number>
+            </property>
+            <property name="value">
+             <number>16</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="invertedAppearance">
+             <bool>false</bool>
+            </property>
+            <property name="invertedControls">
+             <bool>false</bool>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBelow</enum>
+            </property>
+            <property name="tickInterval">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="lblAccelCorrectionFilter">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>Smaller numbers mean vertical disturbance filtering is lower.  (0 is no filtering)</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="text">
+             <string>0.062</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_37">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>How much turbulence compensation to apply - helps with throttle management</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vertical&lt;br/&gt;Disturbance&lt;br/&gt;Compensation&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QSlider" name="hsAccelCorrection">
+            <property name="toolTip">
+             <string>How much turbulence compensation to apply - helps with throttle management</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>256</number>
+            </property>
+            <property name="pageStep">
+             <number>16</number>
+            </property>
+            <property name="value">
+             <number>16</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="invertedAppearance">
+             <bool>false</bool>
+            </property>
+            <property name="invertedControls">
+             <bool>false</bool>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBelow</enum>
+            </property>
+            <property name="tickInterval">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="lblAccelCorrection">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>How much turbulence compensation to apply - helps with throttle management</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="text">
+             <string>0.062</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>Compensates for loss of thrust when the craft is tilted.  (0 is disabled)</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="text">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Thrust&lt;br/&gt;Angle&lt;br/&gt;Correction&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSlider" name="hsThrustCorrection">
+            <property name="toolTip">
+             <string>Compensates for loss of thrust when the craft is tilted.  (0 is disabled)</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>512</number>
+            </property>
+            <property name="pageStep">
+             <number>32</number>
+            </property>
+            <property name="value">
+             <number>256</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBelow</enum>
+            </property>
+            <property name="tickInterval">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="2">
+           <widget class="QLabel" name="lblThrustCorrection">
+            <property name="font">
+             <font>
+              <pointsize>8</pointsize>
+             </font>
+            </property>
+            <property name="toolTip">
+             <string>Compensates for loss of thrust when the craft is tilted.  (0 is disabled)</string>
+            </property>
+            <property name="statusTip">
+             <string/>
+            </property>
+            <property name="text">
+             <string>1.000</string>
+            </property>
+            <property name="textFormat">
+             <enum>Qt::PlainText</enum>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
       <widget class="QWidget" name="tpSystemSetup">

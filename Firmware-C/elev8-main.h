@@ -81,8 +81,14 @@ enum FLIGHTMODE {
   FlightMode_Assist = 0,          // Auto level, heading hold, altitude hold
   FlightMode_Stable = 1,          // Auto level, heading hold
   FlightMode_Manual = 2,          // Gyro stabilized, not auto level
-  FlightMode_CalibrateCompass = 3,
+  FlightMode_AutoManual = 3,      // Auto-level when close to center, manual at extremes
+  FlightMode_CalibrateCompass = 4,
 };
+
+enum CONTROLMODE {
+  ControlMode_AutoLevel = 0,
+  ControlMode_Manual = 1,
+};  
 
 // Structure to hold radio values to make sure they stay in order
 struct RADIO {

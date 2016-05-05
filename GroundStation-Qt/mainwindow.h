@@ -85,6 +85,7 @@ private slots:
 	void on_cbR_Channel8_currentIndexChanged(int index);
 
 	void on_hsAccelCorrectionFilter_valueChanged(int value);
+	void on_hsAccelCorrection_valueChanged(int value);
 	void on_hsThrustCorrection_valueChanged(int value);
 	void on_btnUploadSystemSetup_clicked();
 

@@ -1231,10 +1231,19 @@ static int Deadband( int v , int db )
   return 0;
 }
 
-void QuatIMU_UpdateControls( RADIO * Radio , int ManualMode )
+void QuatIMU_UpdateControls( RADIO * Radio , bool ManualMode , bool AutoManual )
 {
-  ((int*)IMU_VARS)[In_Elev] = Deadband( Radio->Elev, 24 );
-  ((int*)IMU_VARS)[In_Aile] = Deadband( Radio->Aile, 24 );
+  if( ManualMode & AutoManual ) {
+    // Auto-manual mode behaves differently - manual control takes over at half throw, so compress
+    // the range of manual into the other half of the range so the manual part feels less twitchy
+    
+    ((int*)IMU_VARS)[In_Elev] = Deadband( Radio->Elev, 485 ) << 1;
+    ((int*)IMU_VARS)[In_Aile] = Deadband( Radio->Aile, 485 ) << 1;
+  }
+  else {
+    ((int*)IMU_VARS)[In_Elev] = Deadband( Radio->Elev, 24 );
+    ((int*)IMU_VARS)[In_Aile] = Deadband( Radio->Aile, 24 );
+  }
   ((int*)IMU_VARS)[In_Rudd] = Deadband( Radio->Rudd, 24 );
 
   if( ManualMode ) {

@@ -26,6 +26,9 @@
 //
 */
 
+typedef unsigned char byte;
+
+
 typedef struct {
 	int DriftScaleX,  DriftScaleY,  DriftScaleZ;
 	int DriftOffsetX, DriftOffsetY, DriftOffsetZ;
@@ -40,23 +43,23 @@ typedef struct {
 	float ManualRollPitchRate;
 	float ManualYawRate;
 
-	char  PitchGain;
-	char  RollGain;
-	char  YawGain;
-	char  AscentGain;
+	byte  PitchGain;
+	byte  RollGain;
+	byte  YawGain;
+	byte  AscentGain;
 
-	char  AltiGain;
-	char  PitchRollLocked;
-	char  UseAdvancedPID;
-	char  unused;
+	byte  AltiGain;
+	byte  PitchRollLocked;
+	byte  UseAdvancedPID;
+	byte  unused;
 
-	char  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
-	char  unused2;
-	char  UseBattMon;
-	char  DisableMotors;
+	byte  ReceiverType;     // 0 = PWM, 1 = SBUS, 2 = PPM
+	byte  unused2;
+	byte  UseBattMon;
+	byte  DisableMotors;
 
-	char  LowVoltageAlarm;
-	char  LowVoltageAscentLimit;
+	byte  LowVoltageAlarm;
+	byte  LowVoltageAscentLimit;
 	short ThrottleTest;     // Typically the same as MinThrottleArmed, unless MinThrottleArmed is too low for movement
 
 	short MinThrottle;      // Minimum motor output value
@@ -72,14 +75,17 @@ typedef struct {
 	short VoltageOffset;    // Used to correct the difference between measured and actual voltage
 	short LowVoltageAlarmThreshold;  // default is 1050 (10.50v)
 
-	char  ThroChannel;      // Radio inputs to use for each value
-	char  AileChannel;
-	char  ElevChannel;
-	char  RuddChannel;
-	char  GearChannel;
-	char  Aux1Channel;
-	char  Aux2Channel;
-	char  Aux3Channel;
+	byte  FlightMode[3];    // Flight mode to use when gear switch is down, middle, up
+	byte  AccelCorrectionStrength;
+
+	byte  ThroChannel;      // Radio inputs to use for each value
+	byte  AileChannel;
+	byte  ElevChannel;
+	byte  RuddChannel;
+	byte  GearChannel;
+	byte  Aux1Channel;
+	byte  Aux2Channel;
+	byte  Aux3Channel;
 
 	short ThroScale;
 	short AileScale;
@@ -102,7 +108,7 @@ typedef struct {
 	int   Checksum;
 
 	// Accessors for looping over channel assignments, scales, centers
-	char & ChannelIndex( int index )   { return (&ThroChannel)[index];}
+	byte & ChannelIndex( int index )   { return (&ThroChannel)[index];}
 	short & ChannelScale( int index )  { return (&ThroScale)[index];  }
 	short & ChannelCenter( int index ) { return (&ThroCenter)[index]; }
 

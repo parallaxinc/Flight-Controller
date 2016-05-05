@@ -27,13 +27,19 @@
 PREFS Prefs;
 
 
-int Prefs_CalculateChecksum(PREFS & PrefsStruct )
+int Prefs_CalculateChecksum( unsigned int * PrefsStruct , int size )
 {
   unsigned int r = 0x55555555;            //Start with a strange, known value
-  for( int i=0; i < (int)(sizeof(PrefsStruct)/4)-1; i++ )
+  for( int i=0; i < (size/4)-1; i++ )
   {
     r = (r << 7) | (r >> (32-7));
-    r = r ^ ((unsigned int*)&PrefsStruct)[i];     //Jumble the bits, XOR in the prefs value
+	r = r ^ PrefsStruct[i];     //Jumble the bits, XOR in the prefs value
   }    
   return (int)r;
+}
+
+
+int Prefs_CalculateChecksum( PREFS & PrefsStruct )
+{
+	return Prefs_CalculateChecksum( (unsigned int *)&PrefsStruct , sizeof(PrefsStruct) );
 }

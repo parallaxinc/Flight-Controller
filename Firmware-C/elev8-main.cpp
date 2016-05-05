@@ -104,8 +104,6 @@ static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1
 static char NudgeCount[4];            // How long to spin the motor for (0 == stopped)
 static int HostCommandUSB, HostCommandXBee;
 
-static char AccelAssistZFactor  = 32; // 0 to 64 == 0 to 1.0
-
 static long  AltiEst, AscentEst;                              // altitude estimate and ascent rate estimate
 static long  DesiredAltitude, DesiredAscentRate;              // desired values for altitude and ascent rate
 
@@ -126,6 +124,7 @@ static short ReArmTimer = 0;          // ONLY used in throttle cut - set this va
 
 static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
+static char ControlMode;
 static char IsHolding = 0;            // Are we currently in altitude hold? (hover mode)
 static char AllowThrottleCut = 1;     // < -1100 throttle is considered a system kill
 static char AllowRearm = 1;           // Will get moved into Prefs once tested
@@ -197,6 +196,12 @@ static char LogInt( int x , char * dest )
 #endif
 
 
+static int abs(int v) {
+  v = (v<0) ? -v : v;
+  return v;
+}
+
+
 int main()                                    // Main function
 {
   Initialize(); // Set up all the objects
@@ -256,22 +261,25 @@ int main()                                    // Main function
     {
       char NewFlightMode;
 
-      if( Radio.Gear > 512 )
-        NewFlightMode = FlightMode_Assist;    // Forward is "Assist" - IE altitude hold
-      else if( Radio.Gear < -512 )
-        NewFlightMode = FlightMode_Manual;    // Back is "Manual"
-      else
-        NewFlightMode = FlightMode_Stable;    // Centered is "Stable"
 
+      if( Radio.Gear > 512 )
+        NewFlightMode = Prefs.FlightMode[0];    // Forward default is "Assist" - IE altitude hold
+      else if( Radio.Gear < -512 )
+        NewFlightMode = Prefs.FlightMode[2];    // Back default is "Manual"
+      else
+        NewFlightMode = Prefs.FlightMode[1];    // Centered default is "Stable"
+
+
+      char NewControlMode = ControlMode;
 
       if( NewFlightMode != FlightMode )
       {
         if( NewFlightMode == FlightMode_Manual ) {
-          QuatIMU_ResetDesiredOrientation();
+          NewControlMode = ControlMode_Manual;
         }
-        else {
-          QuatIMU_ResetDesiredYaw();          // Sync the heading when switching from manual to auto-level
-        }
+        else if( NewFlightMode != FlightMode_AutoManual ) {
+          NewControlMode = ControlMode_AutoLevel;
+        }                    
 
         if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
@@ -282,6 +290,26 @@ int main()                                    // Main function
         IsHolding = 0;
 
         FlightMode = NewFlightMode;
+      }
+
+      if( FlightMode == FlightMode_AutoManual ) {
+        if( abs(Radio.Aile) > 500 || abs(Radio.Elev) > 500 ) {
+          NewControlMode = ControlMode_Manual;
+        }
+        else {
+          NewControlMode = ControlMode_AutoLevel;
+        }
+      }
+
+      if( NewControlMode != ControlMode )
+      {
+        if( NewControlMode == ControlMode_Manual ) {
+          QuatIMU_ResetDesiredOrientation();
+        }
+        else {
+          QuatIMU_ResetDesiredYaw();          // Sync the heading when switching from manual to auto-level
+        }
+        ControlMode = NewControlMode;
       }
 
       UpdateFlightLoop();            //~72000 cycles when in flight mode
@@ -336,7 +364,7 @@ int main()                                    // Main function
     QuatIMU_WaitForCompletion();    // Wait for the IMU to finish updating
 
 
-    QuatIMU_UpdateControls( &Radio , FlightMode == FlightMode_Manual );   // Now update the control quaternion
+    QuatIMU_UpdateControls( &Radio , ControlMode == ControlMode_Manual , FlightMode == FlightMode_AutoManual );   // Now update the control quaternion
     QuatIMU_WaitForCompletion();
 
     PitchDifference = QuatIMU_GetPitchDifference();
@@ -387,6 +415,7 @@ void Initialize(void)
   FlightEnableStep = 0;                                 //Counter to know which section of enable/disable sequence we're in
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
+  ControlMode = ControlMode_AutoLevel;
   Stats.Version = 0x0101;
 
   InitSerial();
@@ -555,11 +584,6 @@ void InitSerial(void)
 static int clamp( int v, int min, int max ) {
   v = (v < min) ? min : v;
   v = (v > max) ? max : v;
-  return v;
-}
-
-static int abs(int v) {
-  v = (v<0) ? -v : v;
   return v;
 }
 
@@ -778,9 +802,9 @@ void UpdateFlightLoop(void)
       }
       else
       {
-        // When throttle is essentially zero, disable all control authority
+        // When throttle is essentially zero, disable control authority
   
-        if( FlightMode == FlightMode_Manual ) {
+        if( ControlMode == ControlMode_Manual ) {
           QuatIMU_ResetDesiredOrientation();
         }
         else {
@@ -880,11 +904,11 @@ void UpdateFlightLoop(void)
         ThroOut = NewThroOut;   // Direct to motors - no filtering in Stable mode
       }
 
-      if( AccelAssistZFactor > 0 )
+      if( Prefs.AccelCorrectionStrength > 0 )
       {
         // Accelerometer assist - add a little AccelZ into the mix if the user is trying to hover
         if( abs(Radio.Aile) < 300 && abs(Radio.Elev) < 300 && abs(Radio.Thro) < AltiThrottleDeadband ) {
-          ThroOut -= ((AccelZSmooth - Const_OneG) * (int)AccelAssistZFactor) / 64;
+          ThroOut -= ((AccelZSmooth - Const_OneG) * Prefs.AccelCorrectionStrength) / 256;
         }
       }
 
@@ -961,6 +985,7 @@ static int LEDColorTable[] = {
         /* LED_Assisted */     LED_White,
         /* LED_Stable  */      LED_Cyan,
         /* LED_Manual    */    LED_Yellow,
+        /* LED_AutoManual */   LED_Red | (LED_Yellow & LED_Half),
         /* LED_CompCalib */    LED_Violet,
 };
 
