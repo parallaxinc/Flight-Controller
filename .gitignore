@@ -1,4 +1,5 @@
 build/
+GroundStation-Release/
 
 *.o
 moc_*.cpp
