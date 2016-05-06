@@ -32,11 +32,11 @@ artifacts:
   - path: build\staging\parallax-groundstation-*.exe
     name: parallax-groundstation
 
-deploy:
-  provider: GitHub
-  auth_token:
-    secure: duvHxdsDopzoCkSpNom1CuCBwwDcQMeojtByV8/c8Be+y+M+FoQevMzxy3a52dys
-  draft: false
-  prerelease: false
-  on:
-    appveyor_repo_tag: true
+#deploy:
+#  provider: GitHub
+#  auth_token:
+#    secure: duvHxdsDopzoCkSpNom1CuCBwwDcQMeojtByV8/c8Be+y+M+FoQevMzxy3a52dys
+#  draft: false
+#  prerelease: false
+#  on:
+#    appveyor_repo_tag: true
