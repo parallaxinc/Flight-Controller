@@ -1,5 +1,6 @@
 build/
 GroundStation-Release/
+build-GroundStation-Desktop_Qt*
 
 *.o
 moc_*.cpp
@@ -8,4 +9,6 @@ Makefile
 qrc_*.cpp
 
 *.swp
-groundstation
+
+GroundStation-Qt/GroundStation.pro.user
+GroundStation-Qt/GroundStation.pro.user.5291e27
