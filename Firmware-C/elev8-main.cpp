@@ -283,7 +283,7 @@ int main()                                    // Main function
 
         if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
-          DesiredGroundHeight = GroundHeight;
+          DesiredGroundHeight = GroundHeight >> 4;  // GroundHeight is now scaled up by 4 bits to allow for stronger smoothing
         }
 
         // ANY flight mode change means you're not currently holding altitude
@@ -322,13 +322,13 @@ int main()                                    // Main function
       // So I use >> 9 to approximate / 512 (or / 256*2)
 
       #ifdef ENABLE_PING_SENSOR
-      int TempHeight = Servo32_GetPing() >> 9;
-      if( TempHeight < 3000 )   // 10ft == 3048mm, so check to see if we're just under that
+      int TempHeight = Servo32_GetPing() >> (9-4);  // GroundHeight is now scaled up by 4 bits (x 16) to allow for better smoothing
+      if( TempHeight < (3000<<4) )   // 10ft == 3048mm, so check to see if we're just under that
       {
         long diff = TempHeight - GroundHeight;
 
         // Filter it to keep it from changing too fast
-        GroundHeight += diff >> 3;
+        GroundHeight += diff >> 5;
         GroundHeightValidCount = counter;    // Record the last loop iteration we had a good reading
       }
       #endif
@@ -416,7 +416,7 @@ void Initialize(void)
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
   ControlMode = ControlMode_AutoLevel;
-  Stats.Version = 0x0101;
+  Stats.Version = 0x0102;
 
   InitSerial();
 
@@ -712,7 +712,7 @@ void UpdateFlightLoop(void)
         CompassConfigStep = 0;
 
         DesiredAltitude = AltiEst;
-        DesiredGroundHeight = GroundHeight;
+        DesiredGroundHeight = GroundHeight >> 4;
         loopTimer = CNT;
       }
     }      
@@ -866,20 +866,20 @@ void UpdateFlightLoop(void)
           if( IsHolding == 0 ) {
             IsHolding = 1;
             DesiredAltitude = AltiEst;          // Start with our current altitude as the hold height
-            DesiredGroundHeight = GroundHeight;  // Also record the height above ground, if available
+            DesiredGroundHeight = GroundHeight >> 4;  // Also record the height above ground, if available
 
             AltPID.Reset();
           }
         #ifdef ENABLE_GROUND_HEIGHT
           else {
             if( !UsedHeight && GoodHeight) {   // If we're going back to using the laser in hold, make sure we have a good reading
-              DesiredGroundHeight = GroundHeight;
+              DesiredGroundHeight = GroundHeight >> 4;
             }              
           }
 
           if( GoodHeight ) {
             // Use a PID object to compute velocity requirements for the AscentPID object
-            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight, DoIntegrate );
+            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight >> 4, DoIntegrate );
             DesiredAltitude = AltiEst;      // Cache the current altitude as a good altitude in case the laser stops reading
           }
           else
@@ -1473,7 +1473,10 @@ void DoDebugModeOutput(void)
         COMMLINK::AddPacketData( &YawDifference, 4 );
 
         COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for Alt
-        COMMLINK::AddPacketData( &GroundHeight, 4 );   //Send 4 bytes of data for height above ground
+        {
+          int temp = GroundHeight >> 4;
+          COMMLINK::AddPacketData( &temp, 4 );         //Send 4 bytes of data for height above ground
+        }          
         COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
@@ -1636,12 +1639,12 @@ void LaserRangeThread( void *par )
           // Laser reading needs to be tilt corrected
           short tiltScale = QuatIMU_GetThrustFactor();
           if( tiltScale <= 384 ) {  // Don't use the laser if the readings are too skewed (this should allow slightly over 45 deg)
-            long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
+            long tiltCorrected = (LaserRange.Height * 256*16) / tiltScale;
   
             long diff = tiltCorrected - GroundHeight;
 
             // Filter it to keep it from changing too fast
-            GroundHeight += diff >> 3;
+            GroundHeight += diff >> 5;
             GroundHeightValidCount = counter;    // Record the last loop iteration we had a good laser reading
           }
         }
