@@ -14,7 +14,7 @@ UninstallDisplayIcon={app}\GroundStation.exe
 Compression=lzma2
 SolidCompression=yes
 OutputDir=.
-OutputBaseFilename=Install-Parallax-GroundStation-V110
+OutputBaseFilename=80204-Parallax-GroundStation-v1.1.0
 
 WizardImageFile=InstallerLogo.bmp
 WizardImageStretch=yes
