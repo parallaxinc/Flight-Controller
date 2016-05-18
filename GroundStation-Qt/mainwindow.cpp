@@ -207,7 +207,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // set text for the label
 	labelStatus->setText("Connecting...");
 	labelStatus->setContentsMargins( 5, 1, 5, 1 );
-	labelGSVersion->setText("GroundStation Version 1.0.5");
+	labelGSVersion->setText("GroundStation Version 1.2.0");
 	labelFWVersion->setText( "Firmware Version -.--");
 
 	// add the controls to the status bar
