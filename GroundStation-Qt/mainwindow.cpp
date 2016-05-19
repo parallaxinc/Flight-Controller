@@ -782,7 +782,11 @@ void MainWindow::ProcessPackets(void)
 
     if( bDebugChanged )
     {
-		labelFWVersion->setText( QString( "Firmware Version %1.%2" ).arg(debugData.Version >> 8).arg( debugData.Version & 255, 2, 10, QChar('0')) );
+		int verHigh = debugData.Version >> 8;
+		int verMid  = (debugData.Version >> 4) & 15;
+		int verLow  = (debugData.Version >> 0) & 15;
+
+		labelFWVersion->setText( QString( "Firmware Version %1.%2.%3" ).arg(verHigh).arg(verMid).arg(verLow) );
 
 		ui->lblCycles->setText( QString(
 			"CPU time (uS): %1 (min), %2 (max), %3 (avg)" ).arg( debugData.MinCycles * 64/80 ).arg( debugData.MaxCycles * 64/80 ).arg( debugData.AvgCycles * 64/80 ) );
