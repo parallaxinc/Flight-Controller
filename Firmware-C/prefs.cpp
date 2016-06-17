@@ -51,7 +51,7 @@ void Prefs_Save(void)
   EEPROM::FromRam( &Prefs, (char *)&Prefs + sizeof(Prefs)-1, 32768 );  //Copy from DAT to EEPROM, address 32768
 }
 
-#define PI  3.151592654
+#define PI  3.141592654
 
 
 void Prefs_SetDefaults(void)
