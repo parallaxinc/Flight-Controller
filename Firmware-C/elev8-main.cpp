@@ -122,6 +122,7 @@ static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
 static short ReArmTimer = 0;          // ONLY used in throttle cut - set this value to non-zero to allow instant re-arm if throttle present until it expires
 
+static long idleTimeout = IDLE_TIMEOUT * 250;   // Timeout and disarm if armed but idle (throttle below -900) for longer than 10 seconds
 static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
 static char ControlMode;
@@ -783,7 +784,9 @@ void UpdateFlightLoop(void)
 
     if( Radio.Thro < -900 )
     {
-      if( Radio.Thro < -1100 && AllowThrottleCut )
+      idleTimeout--;
+      
+      if( ( Radio.Thro < -1100 && AllowThrottleCut ) || ( idleTimeout <= 0 && IDLE_TIMEOUT != 0))
       {
         // We're in throttle cut - disarm immediately, set a timer to allow rearm
         for( int i=0; i<4; i++ ) {
@@ -794,7 +797,7 @@ void UpdateFlightLoop(void)
         FlightEnabled = 0;
         FlightEnableStep = 0;
         CompassConfigStep = 0;
-        ReArmTimer = 250;
+        if( idleTimeout <= 0  && IDLE_TIMEOUT != 0 ) ReArmTimer = 250;
 
         All_LED( LED_Green & LED_Half );
         loopTimer = CNT;
@@ -816,6 +819,8 @@ void UpdateFlightLoop(void)
     }      
     else {
       DoIntegrate = 1;
+      
+      idleTimeout = IDLE_TIMEOUT * 250;
     }
 
 
