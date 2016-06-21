@@ -283,7 +283,7 @@ int main()                                    // Main function
 
         if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
-          DesiredGroundHeight = GroundHeight >> 4;  // GroundHeight is now scaled up by 4 bits to allow for stronger smoothing
+          DesiredGroundHeight = GroundHeight;  // GroundHeight is now scaled up by 4 bits to allow for stronger smoothing
         }
 
         // ANY flight mode change means you're not currently holding altitude
@@ -322,13 +322,13 @@ int main()                                    // Main function
       // So I use >> 9 to approximate / 512 (or / 256*2)
 
       #ifdef ENABLE_PING_SENSOR
-      int TempHeight = Servo32_GetPing() >> (9-4);  // GroundHeight is now scaled up by 4 bits (x 16) to allow for better smoothing
-      if( TempHeight < (3000<<4) )   // 10ft == 3048mm, so check to see if we're just under that
+      int TempHeight = Servo32_GetPing() >> 9;
+      if( TempHeight < 3000 )                   // 10ft == 3048mm, so check to see if we're just under that
       {
         long diff = TempHeight - GroundHeight;
 
         // Filter it to keep it from changing too fast
-        GroundHeight += diff >> 5;
+        GroundHeight += diff >> 3;
         GroundHeightValidCount = counter;    // Record the last loop iteration we had a good reading
       }
       #endif
@@ -486,16 +486,16 @@ void Initialize(void)
 
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
-  AltPID.Init( AltP, AltI, 0, Const_UpdateRate );
+  AltPID.Init( AltP, AltI, 600*250, Const_UpdateRate );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
 
-  int AscentP = (250 * (Prefs.AscentGain+1)) >> 7;
+  int AscentP = (300 * (Prefs.AscentGain+1)) >> 7;
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
-  AscentPID.Init( AscentP, 0, 0 , Const_UpdateRate );
+  AscentPID.Init( AscentP, 0, 400 * 250, Const_UpdateRate );
   AscentPID.SetMaxOutput( 3000 );   // Limit of the control rate applied to the throttle
   AscentPID.SetPIMax( 500 );
   AscentPID.SetMaxIntegral( 2000 );
@@ -712,7 +712,7 @@ void UpdateFlightLoop(void)
         CompassConfigStep = 0;
 
         DesiredAltitude = AltiEst;
-        DesiredGroundHeight = GroundHeight >> 4;
+        DesiredGroundHeight = GroundHeight;
         loopTimer = CNT;
       }
     }      
@@ -866,20 +866,20 @@ void UpdateFlightLoop(void)
           if( IsHolding == 0 ) {
             IsHolding = 1;
             DesiredAltitude = AltiEst;          // Start with our current altitude as the hold height
-            DesiredGroundHeight = GroundHeight >> 4;  // Also record the height above ground, if available
+            DesiredGroundHeight = GroundHeight;  // Also record the height above ground, if available
 
             AltPID.Reset();
           }
         #ifdef ENABLE_GROUND_HEIGHT
           else {
             if( !UsedHeight && GoodHeight) {   // If we're going back to using the laser in hold, make sure we have a good reading
-              DesiredGroundHeight = GroundHeight >> 4;
+              DesiredGroundHeight = GroundHeight;
             }              
           }
 
           if( GoodHeight ) {
             // Use a PID object to compute velocity requirements for the AscentPID object
-            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight >> 4, DoIntegrate );
+            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight, DoIntegrate );
             DesiredAltitude = AltiEst;      // Cache the current altitude as a good altitude in case the laser stops reading
           }
           else
@@ -1473,10 +1473,7 @@ void DoDebugModeOutput(void)
         COMMLINK::AddPacketData( &YawDifference, 4 );
 
         COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for Alt
-        {
-          int temp = GroundHeight >> 4;
-          COMMLINK::AddPacketData( &temp, 4 );         //Send 4 bytes of data for height above ground
-        }          
+        COMMLINK::AddPacketData( &GroundHeight, 4 );   //Send 4 bytes of data for height above ground
         COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
@@ -1639,12 +1636,12 @@ void LaserRangeThread( void *par )
           // Laser reading needs to be tilt corrected
           short tiltScale = QuatIMU_GetThrustFactor();
           if( tiltScale <= 384 ) {  // Don't use the laser if the readings are too skewed (this should allow slightly over 45 deg)
-            long tiltCorrected = (LaserRange.Height * 256*16) / tiltScale;
+            long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
   
             long diff = tiltCorrected - GroundHeight;
 
             // Filter it to keep it from changing too fast
-            GroundHeight += diff >> 5;
+            GroundHeight += diff >> 3;
             GroundHeightValidCount = counter;    // Record the last loop iteration we had a good laser reading
           }
         }
