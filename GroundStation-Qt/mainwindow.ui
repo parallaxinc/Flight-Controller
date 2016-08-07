@@ -50,7 +50,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>6</number>
       </property>
       <widget class="QWidget" name="Status_tab">
        <property name="sizePolicy">
@@ -3257,9 +3257,9 @@ throttle calibration.</string>
        <attribute name="title">
         <string>Accel Calibration</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_36">
+       <layout class="QHBoxLayout" name="horizontalLayout_36" stretch="1,1">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_28" stretch="2,3">
+         <layout class="QVBoxLayout" name="verticalLayout_28" stretch="3,5">
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_34">
             <item>
@@ -3335,6 +3335,12 @@ throttle calibration.</string>
           </item>
           <item>
            <widget class="QGroupBox" name="groupBox_6">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="title">
              <string>Fixed Offset Compensation</string>
             </property>
@@ -4302,7 +4308,7 @@ throttle calibration.</string>
      <x>0</x>
      <y>0</y>
      <width>873</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSettings">
