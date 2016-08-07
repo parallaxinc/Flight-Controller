@@ -37,6 +37,7 @@ void InitializePrefs(void);
 void ApplyPrefs(void);
 void All_LED( int Color );
 
+#define IDLE_TIMEOUT  10   // defines a 10 second idel timeout if armed but idle (below -900 throttle)
 
 // defines to enable the ping sensor or laser sensor - only one can be active
 // #define ENABLE_PING_SENSOR
