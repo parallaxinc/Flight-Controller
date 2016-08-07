@@ -344,8 +344,10 @@ void Connection::AttemptConnect(void)
 
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
-        if( info.portName() == QString("COM3") ) continue;
-        if( info.portName() == QString("COM4") ) continue;
+		if( info.manufacturer() != "FTDI" ) {
+			if( info.portName() == QString("COM3") ||
+				info.portName() == QString("COM4") ) continue;
+		}
 
 		if( quit ) return;
 
