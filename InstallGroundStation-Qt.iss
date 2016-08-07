@@ -4,7 +4,7 @@
 
 [Setup]
 AppName=Parallax GroundStation
-AppVersion=1.1.1
+AppVersion=1.1.0
 AppSupportURL=https://www.parallax.com/support
 AppSupportPhone=1-916-624-8333
 
@@ -14,7 +14,7 @@ UninstallDisplayIcon={app}\GroundStation.exe
 Compression=lzma2
 SolidCompression=yes
 OutputDir=.
-OutputBaseFilename=80204-Parallax-GroundStation-v1.1.1
+OutputBaseFilename=80204-Parallax-GroundStation-v1.1.0
 
 WizardImageFile=InstallerLogo.bmp
 WizardImageStretch=yes
