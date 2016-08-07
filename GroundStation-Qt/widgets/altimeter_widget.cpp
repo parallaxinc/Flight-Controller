@@ -81,19 +81,29 @@ void Altimeter_Widget::paintEvent(QPaintEvent * event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-    float xScale = (float)this->width() / (float)foreImage.width();
-    float yScale = (float)this->height() / (float)foreImage.height();
+	int controlWidth = this->width();
+	int controlHeight = this->height();
+	int CenterX = controlWidth / 2;
+	int CenterY = controlHeight / 2;
 
-    painter.setClipRect( 10, 10, this->width()-20, this->height()-20 );
+	int drawSize = controlWidth < controlHeight ? controlWidth : controlHeight;
+	int xOffset = CenterX - (drawSize/2);
+	int yOffset = CenterY - (drawSize/2);
+
+	float xScale = (float)drawSize / (float)foreImage.width();
+	float yScale = (float)drawSize / (float)foreImage.height();
+
+	painter.setClipRect( CenterX - drawSize/2 + 10, CenterY - drawSize/2 + 10, drawSize - 20, drawSize - 20 );
     painter.setClipping(true);
 
-    ScrollCounter( painter, altitude, xScale, yScale );
+	ScrollCounter( painter, altitude, xOffset, yOffset, xScale, yScale );
 
     painter.resetTransform();
     painter.setClipRect( 0, 0, this->width(), this->height() );
 
-    painter.scale(xScale, yScale);
-    painter.drawPixmap(0, 0, foreImage);
+	painter.translate(xOffset, yOffset);
+	painter.scale(xScale, yScale);
+	painter.drawPixmap(0, 0, foreImage);
 
 
     float alphaSmallNeedle;
@@ -107,7 +117,7 @@ void Altimeter_Widget::paintEvent(QPaintEvent * event)
     float alphaLongNeedle = InterpolPhyToAngle( altiFraction, 0.f, 1000.f, 0.f, 359.f );
 
     QTransform trans;
-    trans.translate( width()/2, height()/2 );
+	trans.translate( CenterX, CenterY );
     trans.scale(xScale, yScale);
     trans.rotate( alphaSmallNeedle );
     trans.translate( -14,  -111 );
@@ -128,7 +138,7 @@ void Altimeter_Widget::paintEvent(QPaintEvent * event)
 }
 
 
-void Altimeter_Widget::ScrollCounter(QPainter & painter, float counterValue, float xScale, float yScale)
+void Altimeter_Widget::ScrollCounter(QPainter & painter, float counterValue, float xOfs, float yOfs, float xScale, float yScale)
 {
     int indexDigit = 0;
     int digitBoxHeight = (int)(numbersImage.height()/12);
@@ -185,6 +195,7 @@ void Altimeter_Widget::ScrollCounter(QPainter & painter, float counterValue, flo
 
         // Display Image
         painter.resetTransform();
+		painter.translate(xOfs, yOfs);
         painter.scale(xScale, yScale);
         painter.drawPixmap( 35 + xOffset, 135 + yOffset, numbersImage );
     }

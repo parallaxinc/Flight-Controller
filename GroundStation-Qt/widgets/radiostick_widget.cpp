@@ -56,9 +56,19 @@ void RadioStick_Widget::paintEvent(QPaintEvent * event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-    float xScale = (float)this->width() / (float)backImage.width();
-    float yScale = (float)this->height() / (float)backImage.height();
+	int controlWidth = this->width();
+	int controlHeight = this->height();
+	int CenterX = controlWidth / 2;
+	int CenterY = controlHeight / 2;
 
+	int drawSize = controlWidth < controlHeight ? controlWidth : controlHeight;
+	int xOffset = CenterX - (drawSize/2);
+	int yOffset = CenterY - (drawSize/2);
+
+	float xScale = (float)drawSize / (float)backImage.width();
+	float yScale = (float)drawSize / (float)backImage.height();
+
+	painter.translate(xOffset, yOffset);
     painter.scale(xScale, yScale);
     painter.drawPixmap(0, 0, backImage);
 

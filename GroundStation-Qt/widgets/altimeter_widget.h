@@ -24,7 +24,7 @@ public slots:
 
 protected:
     void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
-    void ScrollCounter(QPainter & painter, float counterValue, float xScale, float yScale);
+	void ScrollCounter(QPainter & painter, float counterValue, float xOfs, float yOfs, float xScale, float yScale);
 
 private:
     float altitude;

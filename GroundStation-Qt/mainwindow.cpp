@@ -137,18 +137,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->batteryVal->setLeftLabel( "Battery Voltage" );
     ui->batteryVal->setMinMax( 900, 1260 );
 
-    ui->channel1Val->setLeftLabel("Throtle");
-    ui->channel2Val->setLeftLabel("Aileron");
-    ui->channel3Val->setLeftLabel("Elevator");
-    ui->channel4Val->setLeftLabel("Rudder");
+	ui->channel1Val->setLeftLabel("Thro");
+	ui->channel2Val->setLeftLabel("Aile");
+	ui->channel3Val->setLeftLabel("Elev");
+	ui->channel4Val->setLeftLabel("Rudd");
     ui->channel5Val->setLeftLabel("Gear");
     ui->channel6Val->setLeftLabel("Aux1");
     ui->channel7Val->setLeftLabel("Aux2");
     ui->channel8Val->setLeftLabel("Aux3");
-    ui->vbR_Channel1->setLeftLabel("Throtle");
-    ui->vbR_Channel2->setLeftLabel("Aileron");
-    ui->vbR_Channel3->setLeftLabel("Elevator");
-    ui->vbR_Channel4->setLeftLabel("Rudder");
+	ui->vbR_Channel1->setLeftLabel("Thro");
+	ui->vbR_Channel2->setLeftLabel("Aile");
+	ui->vbR_Channel3->setLeftLabel("Elev");
+	ui->vbR_Channel4->setLeftLabel("Rudd");
     ui->vbR_Channel5->setLeftLabel("Gear");
     ui->vbR_Channel6->setLeftLabel("Aux1");
     ui->vbR_Channel7->setLeftLabel("Aux2");
@@ -394,20 +394,20 @@ void MainWindow::SetRadioMode(int mode)
 
 	if(RadioMode == 1)
 	{
-		ui->channel1Val->setLeftLabel("Elevator");
-		ui->channel3Val->setLeftLabel("Throttle");
-		ui->vbR_Channel1->setLeftLabel("Elevator");
-		ui->vbR_Channel3->setLeftLabel("Throttle");
+		ui->channel1Val->setLeftLabel("Elev");
+		ui->channel3Val->setLeftLabel("Thro");
+		ui->vbR_Channel1->setLeftLabel("Elev");
+		ui->vbR_Channel3->setLeftLabel("Thro");
 
 		ui->cbR_Channel1->setCurrentIndex( prefs.ElevChannel );
 		ui->cbR_Channel3->setCurrentIndex( prefs.ThroChannel );
 	}
 	else if(RadioMode == 2)
 	{
-		ui->channel1Val->setLeftLabel("Throttle");
-		ui->channel3Val->setLeftLabel("Elevator");
-		ui->vbR_Channel1->setLeftLabel("Throttle");
-		ui->vbR_Channel3->setLeftLabel("Elevator");
+		ui->channel1Val->setLeftLabel("Thro");
+		ui->channel3Val->setLeftLabel("Elev");
+		ui->vbR_Channel1->setLeftLabel("Thro");
+		ui->vbR_Channel3->setLeftLabel("Elev");
 
 		ui->cbR_Channel1->setCurrentIndex( prefs.ThroChannel );
 		ui->cbR_Channel3->setCurrentIndex( prefs.ElevChannel );
@@ -836,8 +836,9 @@ void MainWindow::CancelThrottleCalibration(void)
 	comm.Send( txBuffer, 1 );
 	QString str;
 	ui->lblCalibrateDocs->setText(str);
-	ui->lblCalibrateDocs->setVisible(false);
-	ui->gbControlSetup->setVisible(true);
+	//ui->lblCalibrateDocs->setVisible(false);
+	//ui->gbControlSetup->setVisible(true);
+	ui->calibrateStack->setCurrentIndex(0);
 	ThrottleCalibrationCycle = 0;
 }
 
@@ -906,7 +907,8 @@ quint8 txBuffer[1];
 		}
 		TestMotor( 6 );
 		str = "Throttle calibration has started.  Be sure your flight battery is UNPLUGGED, then press the Throttle Calibration button again.  (Click any other button to cancel)";
-		ui->lblCalibrateDocs->setVisible(true);
+		ui->calibrateStack->setCurrentIndex(1);
+		//ui->lblCalibrateDocs->setVisible(true);
 		ui->lblCalibrateDocs->setText(str);
 		ThrottleCalibrationCycle = 1;
 
@@ -954,7 +956,8 @@ quint8 txBuffer[1];
 	comm.Send( txBuffer, 1 );
 
 	QString backup = ui->lblCalibrateDocs->styleSheet();
-	ui->lblCalibrateDocs->setVisible(true);
+	ui->calibrateStack->setCurrentIndex(1);
+	//ui->lblCalibrateDocs->setVisible(true);
 	ui->lblCalibrateDocs->setText(msg);
 	ui->lblCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
@@ -1300,8 +1303,9 @@ void MainWindow::CheckCalibrateControls(void)
 
 		case 2:
 		{
-			ui->gbControlSetup->setVisible(false);
-			ui->lblRadioCalibrateDocs->setVisible(true);
+			ui->calibrateStack->setCurrentIndex(1);
+			//ui->gbControlSetup->setVisible(false);
+			//ui->lblRadioCalibrateDocs->setVisible(true);
 
 			QString str = QString( \
                     "Move both STICKS all the way to the RIGHT and UP, and all\n" \
@@ -1366,9 +1370,10 @@ void MainWindow::CheckCalibrateControls(void)
 		{
 			CalibrateControlsStep = 0;
 			QString str;
+			ui->calibrateStack->setCurrentIndex(0);
 			ui->lblRadioCalibrateDocs->setText(str);
-			ui->lblRadioCalibrateDocs->setVisible(false);
-			ui->gbControlSetup->setVisible(true);
+			//ui->lblRadioCalibrateDocs->setVisible(false);
+			//ui->gbControlSetup->setVisible(true);
 
 			// figure out reverses
 			for(int i = 0; i < 8; i++)
