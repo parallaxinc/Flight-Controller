@@ -22,7 +22,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-	ui->lblRadioCalibrateDocs->setVisible(false);	// Hide this until calibration mode
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
 	// These have to match the modes and order defined in Elev8-Main.h in the firmware
@@ -193,7 +192,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelStatus->setText("Connecting...");
 	labelStatus->setContentsMargins( 5, 1, 5, 1 );
 	labelGSVersion->setText("GroundStation Version 1.1.1");
-	labelFWVersion->setText( "Firmware Version -.--");
+	labelFWVersion->setText( "Firmware Version -.-.-");
 
 	// add the controls to the status bar
 	ui->statusBar->addPermanentWidget(labelStatus, 1);
@@ -320,6 +319,7 @@ void MainWindow::AdjustFonts(void)
 	ui->btnUploadRadioChanges->setFont(smallFont);
 	ui->btnDisableMotors->setFont(smallFont);
 	ui->btnUploadSystemSetup->setFont(smallFont);
+	ui->lblRadioCalibrateDocs->setFont(smallFont);
 
 	labelStatus->setFont(smallFont);
 	labelGSVersion->setFont(smallFont);
@@ -1366,8 +1366,6 @@ void MainWindow::CheckCalibrateControls(void)
 		case 2:
 		{
 			ui->calibrateStack->setCurrentIndex(1);
-			//ui->gbControlSetup->setVisible(false);
-			//ui->lblRadioCalibrateDocs->setVisible(true);
 
 			QString str = QString( \
                     "Move both STICKS all the way to the RIGHT and UP, and all\n" \
@@ -1434,8 +1432,6 @@ void MainWindow::CheckCalibrateControls(void)
 			QString str;
 			ui->calibrateStack->setCurrentIndex(0);
 			ui->lblRadioCalibrateDocs->setText(str);
-			//ui->lblRadioCalibrateDocs->setVisible(false);
-			//ui->gbControlSetup->setVisible(true);
 
 			// figure out reverses
 			for(int i = 0; i < 8; i++)

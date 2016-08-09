@@ -1940,7 +1940,7 @@ throttle calibration.</string>
             <item>
              <widget class="QLabel" name="lblRadioCalibrateDocs">
               <property name="sizePolicy">
-               <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+               <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                 <horstretch>0</horstretch>
                 <verstretch>0</verstretch>
                </sizepolicy>
