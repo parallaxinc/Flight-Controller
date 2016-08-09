@@ -22,27 +22,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-	QFont smallFont = ui->btnReceiverReset->font();
-	smallFont.setPointSize(10);
-
-	// Do this here because Mac font defaults are not the same point size as PC
-	ui->btnReceiverReset->setFont(smallFont);
-	ui->btnReceiverCalibrate->setFont(smallFont);
-	ui->label_2->setFont(smallFont);
-	ui->cbReceiverType->setFont(smallFont);
-	ui->cbR_Channel1->setFont(smallFont);
-	ui->cbR_Channel2->setFont(smallFont);
-	ui->cbR_Channel3->setFont(smallFont);
-	ui->cbR_Channel4->setFont(smallFont);
-	ui->cbR_Channel5->setFont(smallFont);
-	ui->cbR_Channel6->setFont(smallFont);
-	ui->cbR_Channel7->setFont(smallFont);
-	ui->cbR_Channel8->setFont(smallFont);
-	ui->btnUploadRadioChanges->setFont(smallFont);
-	ui->btnDisableMotors->setFont(smallFont);
-	ui->btnUploadSystemSetup->setFont(smallFont);
-
-
 	ui->lblRadioCalibrateDocs->setVisible(false);	// Hide this until calibration mode
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
@@ -221,6 +200,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelGSVersion->setFrameStyle(QFrame::NoFrame);
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
 
+	AdjustFonts();
+
 	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
 							   "AltiRaw", "AltiEst", "LaserHeight",
 							   "Pitch", "Roll", "Yaw", "Voltage"};
@@ -264,6 +245,76 @@ MainWindow::~MainWindow()
     comm.StopConnection();
     delete ui;
 }
+
+
+void MainWindow::resizeEvent(QResizeEvent *evt)
+{
+	QMainWindow::resizeEvent(evt);
+	AdjustFonts();
+}
+
+
+void MainWindow::AdjustFonts(void)
+{
+	int minSize = (float) qMin(this->width(), this->height()*3/2);
+	int pixSize = 2 + (minSize / 75);
+
+	QFont smallFont = ui->btnReceiverReset->font();
+
+	int oldPixSize = smallFont.pixelSize();
+	if( oldPixSize == pixSize ) return;
+
+	smallFont.setPixelSize(pixSize);
+
+	// Do this here because Mac font defaults are not the same point size as PC
+	ui->tabWidget->setFont(smallFont);
+	ui->menuBar->setFont(smallFont);
+
+	ui->btnBeeper->setFont(smallFont);
+	ui->btnLED->setFont(smallFont);
+	ui->btnThrottleCalibrate->setFont(smallFont);
+	ui->btnMotorTest_FL->setFont(smallFont);
+	ui->btnMotorTest_FR->setFont(smallFont);
+	ui->btnMotorTest_BL->setFont(smallFont);
+	ui->btnMotorTest_BR->setFont(smallFont);
+
+	ui->label_3->setFont(smallFont);
+	ui->label_4->setFont(smallFont);
+	ui->label_8->setFont(smallFont);
+	ui->label_9->setFont(smallFont);
+	ui->lblAutoRollPitchSpeed->setFont(smallFont);
+	ui->lblAutoYawSpeed->setFont(smallFont);
+	ui->lblManualRollPitchSpeed->setFont(smallFont);
+	ui->lblManualYawSpeed->setFont(smallFont);
+
+	ui->label_11->setFont(smallFont);
+	ui->label_37->setFont(smallFont);
+	ui->label_10->setFont(smallFont);
+	ui->lblAccelCorrection->setFont(smallFont);
+	ui->lblAccelCorrectionFilter->setFont(smallFont);
+	ui->lblThrustCorrection->setFont(smallFont);
+
+	ui->btnReceiverReset->setFont(smallFont);
+	ui->btnReceiverCalibrate->setFont(smallFont);
+	ui->label_2->setFont(smallFont);
+	ui->cbReceiverType->setFont(smallFont);
+	ui->cbR_Channel1->setFont(smallFont);
+	ui->cbR_Channel2->setFont(smallFont);
+	ui->cbR_Channel3->setFont(smallFont);
+	ui->cbR_Channel4->setFont(smallFont);
+	ui->cbR_Channel5->setFont(smallFont);
+	ui->cbR_Channel6->setFont(smallFont);
+	ui->cbR_Channel7->setFont(smallFont);
+	ui->cbR_Channel8->setFont(smallFont);
+	ui->btnUploadRadioChanges->setFont(smallFont);
+	ui->btnDisableMotors->setFont(smallFont);
+	ui->btnUploadSystemSetup->setFont(smallFont);
+
+	labelStatus->setFont(smallFont);
+	labelGSVersion->setFont(smallFont);
+	labelFWVersion->setFont(smallFont);
+}
+
 
 void MainWindow::loadSettings(void)
 {

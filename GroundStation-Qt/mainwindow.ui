@@ -1477,9 +1477,15 @@ throttle calibration.</string>
               <item>
                <layout class="QGridLayout" name="gridLayout_10">
                 <item row="0" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_17">
+                 <layout class="QHBoxLayout" name="horizontalLayout_17" stretch="2,3,2">
                   <item>
                    <widget class="QLabel" name="label_3">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1523,6 +1529,12 @@ throttle calibration.</string>
                   </item>
                   <item>
                    <widget class="QLabel" name="lblAutoRollPitchSpeed">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1539,9 +1551,15 @@ throttle calibration.</string>
                  </layout>
                 </item>
                 <item row="0" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_18">
+                 <layout class="QHBoxLayout" name="horizontalLayout_18" stretch="2,3,2">
                   <item>
                    <widget class="QLabel" name="label_8">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1591,6 +1609,12 @@ throttle calibration.</string>
                   </item>
                   <item>
                    <widget class="QLabel" name="lblManualRollPitchSpeed">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1607,9 +1631,15 @@ throttle calibration.</string>
                  </layout>
                 </item>
                 <item row="1" column="0">
-                 <layout class="QHBoxLayout" name="horizontalLayout_16">
+                 <layout class="QHBoxLayout" name="horizontalLayout_16" stretch="2,3,2">
                   <item>
                    <widget class="QLabel" name="label_4">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1653,6 +1683,12 @@ throttle calibration.</string>
                   </item>
                   <item>
                    <widget class="QLabel" name="lblAutoYawSpeed">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1669,9 +1705,15 @@ throttle calibration.</string>
                  </layout>
                 </item>
                 <item row="1" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_13">
+                 <layout class="QHBoxLayout" name="horizontalLayout_13" stretch="2,3,2">
                   <item>
                    <widget class="QLabel" name="label_9">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -1715,6 +1757,12 @@ throttle calibration.</string>
                   </item>
                   <item>
                    <widget class="QLabel" name="lblManualYawSpeed">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
                     <property name="font">
                      <font>
                       <pointsize>8</pointsize>
@@ -4308,7 +4356,7 @@ throttle calibration.</string>
      <x>0</x>
      <y>0</y>
      <width>873</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSettings">

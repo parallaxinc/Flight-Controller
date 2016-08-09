@@ -43,6 +43,10 @@ public:
 	void UpdateElev8Preferences(void);
 
 
+protected:
+	void resizeEvent(QResizeEvent *evt);
+
+
 private slots:
 	void on_btnBeeper_pressed();
 	void on_btnLED_pressed();
@@ -140,6 +144,8 @@ private slots:
 
 
 private:
+	void AdjustFonts(void);
+
 	void FillChannelComboBox( QComboBox *cb , int defaultIndex );
 	void SetChannelMapping( int DestChannel, int SourceChannel );
 
