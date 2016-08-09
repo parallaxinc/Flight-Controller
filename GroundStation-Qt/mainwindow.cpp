@@ -44,6 +44,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect( &comm, SIGNAL(connectionMade()), this, SLOT(on_connectionMade()));
 
+    QPixmap iconImage;
+    iconImage.load(":/images/groundstation_icon64.png");
+    QIcon winIcon;
+    winIcon.addPixmap(iconImage);
+    this->setWindowIcon(winIcon);
+
 
     QString style = QString("QPushButton{\
                             background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 white, stop: 1 lightgrey);\
@@ -257,7 +263,12 @@ void MainWindow::resizeEvent(QResizeEvent *evt)
 void MainWindow::AdjustFonts(void)
 {
 	int minSize = (float) qMin(this->width(), this->height()*3/2);
-	int pixSize = 2 + (minSize / 75);
+
+#ifdef __APPLE__
+    int pixSize = 1 + (minSize / 75);
+#else
+    int pixSize = 2 + (minSize / 75);
+#endif
 
 	QFont smallFont = ui->btnReceiverReset->font();
 

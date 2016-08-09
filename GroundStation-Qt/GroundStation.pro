@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = groundstation
 TEMPLATE = app
 RC_FILE = groundstation.rc
-
+ICON = images/groundstation.icns
 
 SOURCES += main.cpp\
         mainwindow.cpp \

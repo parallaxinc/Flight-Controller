@@ -15,5 +15,6 @@
         <file>images/PropIcon.png</file>
         <file>images/parallaxlogo-s200.png</file>
         <file>images/ParallaxLogo-S200-vertical.png</file>
+        <file>images/groundstation_icon64.png</file>
     </qresource>
 </RCC>
