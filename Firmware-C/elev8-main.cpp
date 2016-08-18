@@ -788,7 +788,7 @@ void UpdateFlightLoop(void)
       
       if( ( Radio.Thro < -1100 && AllowThrottleCut ) || ( idleTimeout <= 0 && IDLE_TIMEOUT != 0))
       {
-        // We're in throttle cut - disarm immediately, set a timer to allow rearm
+        // We're in throttle cut - disarm immediately, set a timer to allow rearm OR disarm if idle too long
         for( int i=0; i<4; i++ ) {
           Motor[i] = Prefs.MinThrottle;
           Servo32_Set( MotorPin[i], Prefs.MinThrottle );
@@ -797,8 +797,16 @@ void UpdateFlightLoop(void)
         FlightEnabled = 0;
         FlightEnableStep = 0;
         CompassConfigStep = 0;
-        if( idleTimeout <= 0  && IDLE_TIMEOUT != 0 ) ReArmTimer = 250;
-
+        
+        // Start a 1 second countdown
+        if( Radio.Thro < -1100 ) ReArmTimer = 250;   
+        
+        // If the motors have been at idle too long, disarm
+        if( idleTimeout <= 0 ) {                     
+          idleTimeout = IDLE_TIMEOUT * 250;
+          DisarmFlightMode();
+        }
+        
         All_LED( LED_Green & LED_Half );
         loopTimer = CNT;
         return;   // Exit the loop so the motors stay killed, no additional flight code runs
@@ -863,7 +871,11 @@ void UpdateFlightLoop(void)
         else
         {
         #ifdef ENABLE_GROUND_HEIGHT
-          bool GoodHeight = (Radio.Aux1 > 0) && ((counter - GroundHeightValidCount) < 30);
+          #ifdef GROUND_HEIGHT_REQUIRE_AUX1
+            bool GoodHeight = (Radio.Aux1 > 0) && ((counter - GroundHeightValidCount) < 30);
+          #else
+            bool GoodHeight = (counter - GroundHeightValidCount) < 30;
+          #endif
           static bool UsedHeight = false;
         #endif
 
