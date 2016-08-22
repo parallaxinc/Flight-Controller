@@ -995,7 +995,15 @@ quint8 txBuffer[1];
 	case 2:
 		txBuffer[0] = 0;		// Finish
 		comm.Send( txBuffer, 1 );
-		str = "Once the ESCs stop beeping (about 5 seconds), calibration is complete and your may remove the flight battery";
+        	str = "After the ESCs stop beeping (about 5 seconds), press the Throttle Calibration button again.";
+		ui->lblCalibrateDocs->setText(str);
+        	ThrottleCalibrationCycle = 3;
+		break;
+
+	case 3:
+		txBuffer[0] = 0;		// Finish
+		comm.Send( txBuffer, 1 );
+		str = "To complete the Throttle Calibration, unplug both the flight battery and the USB cable.";
 		ui->lblCalibrateDocs->setText(str);
 
 		qApp->processEvents();	// force the label we just updated to repaint
@@ -1004,9 +1012,10 @@ quint8 txBuffer[1];
 		str = "";
 		ui->lblCalibrateDocs->setText(str);
 		ThrottleCalibrationCycle = 0;
-
-		// TODO: Re-enable all other buttons, hide the abort button
-		break;
+		
+	        // TODO: Test for battery/usb, don't clear message until it is
+	        // TODO: Re-enable all other buttons, hide the abort button
+	        break;
 	}
 }
 
