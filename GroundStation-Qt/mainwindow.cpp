@@ -208,7 +208,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	AdjustFonts();
 
 	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
-							   "AltiRaw", "AltiEst", "LaserHeight",
+							   "AltiRaw", "AltiEst", "GroundHeight",
 							   "Pitch", "Roll", "Yaw", "Voltage"};
 	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
 									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
