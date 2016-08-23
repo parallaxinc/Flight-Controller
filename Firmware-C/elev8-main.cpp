@@ -1,7 +1,7 @@
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
   for Parallax part #80204, Revision A
-  Version 1.1.0
+  Version 2.0.0
   
   Copyright 2015 Parallax Incorporated
 
@@ -417,7 +417,7 @@ void Initialize(void)
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
   ControlMode = ControlMode_AutoLevel;
-  Stats.Version = 0x0110;   // Version 1.10
+  Stats.Version = 0x0200;   // Version 2.0.0
 
   InitSerial();
 
