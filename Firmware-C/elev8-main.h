@@ -3,7 +3,7 @@
 
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
-  for Parallax part #80204, Revision A
+  for Parallax part #80204, Revisions A & B
   
   Copyright 2015 Parallax Incorporated
 
