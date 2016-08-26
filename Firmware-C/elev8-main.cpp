@@ -1,7 +1,7 @@
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
-  for Parallax part #80204, Revision A
-  Version 1.1.0
+  for Parallax part #80204, Revisions A & B
+  Version 2.0.0
   
   Copyright 2015 Parallax Incorporated
 
@@ -324,7 +324,10 @@ int main()                                    // Main function
 
       #ifdef ENABLE_PING_SENSOR
       int TempHeight = Servo32_GetPing() >> 9;
-      if( TempHeight < 3000 )                   // 10ft == 3048mm, so check to see if we're just under that
+      if( TempHeight < 1150 )                   // This value is altered from the original 10ft == 3048mm
+                                                // Replaced with 1150, which appears to be the highest value where
+                                                // the PING sensor works reliably (noise floor/prop wash).
+                                                // TO DO: different sensor (such as VL53L0X and/or better filtering/mixing)
       {
         long diff = TempHeight - GroundHeight;
 
@@ -417,7 +420,7 @@ void Initialize(void)
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
   ControlMode = ControlMode_AutoLevel;
-  Stats.Version = 0x0110;   // Version 1.10
+  Stats.Version = 0x0200;   // Version 2.0.0
 
   InitSerial();
 
