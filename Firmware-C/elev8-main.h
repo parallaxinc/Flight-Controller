@@ -43,6 +43,9 @@ void All_LED( int Color );
 // #define ENABLE_PING_SENSOR
 // #define ENABLE_LASER_RANGE
 
+// define for PING/LASER, when enabled, requires Aux1 to be toggled to use sensor-based altitude hold
+// #define GROUND_HEIGHT_REQUIRE_AUX1
+
 
 #define EXTRA_LIGHTS
 
