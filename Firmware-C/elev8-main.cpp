@@ -843,8 +843,11 @@ void UpdateFlightLoop(void)
     int ThroMix = (Radio.Thro + 1024) >> 1;           // Approx 0 - 1024
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
-    //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
+    // add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
     int NewThroOut = (Radio.Thro << 2) + 12000;
+    
+    // apply throttle cap to provide enough headroom for the control system at full throttle
+    if(NewThroOut > (16000 - THROTTLE_HEADROOM)) NewThroOut = (16000 - THROTTLE_HEADROOM);
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
