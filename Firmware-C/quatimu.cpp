@@ -188,7 +188,7 @@ static union {
 };
 
 
-#define PI  3.151592654
+#define PI  3.141592654
 
 
 void QuatIMU_Start(void)
