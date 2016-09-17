@@ -141,11 +141,15 @@ void Connection::Update(void)
 	}
 
 	QSerialPort::SerialPortError err = serial->error();
-	if( err != QSerialPort::NoError && err != QSerialPort::TimeoutError )
+	if( (err != QSerialPort::NoError && err != QSerialPort::TimeoutError) || serial->isOpen() == false )
 	{
 		serial->close();
 		connected = false;
 		commStat = CS_NoDevice;
+	}
+
+	if( err == QSerialPort::TimeoutError ) {
+		serial->clearError();
 	}
 }
 
@@ -344,8 +348,10 @@ void Connection::AttemptConnect(void)
 
     foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
     {
-        if( info.portName() == QString("COM3") ) continue;
-        if( info.portName() == QString("COM4") ) continue;
+		if( info.manufacturer() != "FTDI" ) {
+			if( info.portName() == QString("COM3") ||
+				info.portName() == QString("COM4") ) continue;
+		}
 
 		if( quit ) return;
 
@@ -384,14 +390,14 @@ void Connection::AttemptConnect(void)
 			else if( rateType == 1 )
 				serial->setBaudRate( QSerialPort::Baud57600 );	// XBee connection at 57600
 
-			for( int i=0; i<10 && !quit; i++ )
+			for( int i=0; i<5 && !quit; i++ )
 			{
 				// Send the ELV8 signature
 				serial->write(txBuf, 4);
 				serial->waitForBytesWritten(5);
 
-				QThread::usleep(20);
-				if( serial->waitForReadyRead(50) )
+				QThread::usleep(50);
+				if( serial->waitForReadyRead(200) )
 				{
 					int bytesAvail = (int)serial->bytesAvailable();
 					while( bytesAvail > 0 )

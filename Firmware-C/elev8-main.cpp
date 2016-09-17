@@ -1,7 +1,7 @@
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
-  for Parallax part #80204, Revision A
-  Version 1.0.2
+  for Parallax part #80204, Revisions A & B
+  Version 2.0.0
   
   Copyright 2015 Parallax Incorporated
 
@@ -122,6 +122,7 @@ static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
 static short ReArmTimer = 0;          // ONLY used in throttle cut - set this value to non-zero to allow instant re-arm if throttle present until it expires
 
+static long idleTimeout = IDLE_TIMEOUT * 250;   // Timeout and disarm if armed but idle (throttle below -900) for longer than 10 seconds
 static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
 static char ControlMode;
@@ -283,7 +284,7 @@ int main()                                    // Main function
 
         if( NewFlightMode == FlightMode_Assist ) {
           DesiredAltitude = AltiEst;
-          DesiredGroundHeight = GroundHeight >> 4;  // GroundHeight is now scaled up by 4 bits to allow for stronger smoothing
+          DesiredGroundHeight = GroundHeight;  // GroundHeight is now scaled up by 4 bits to allow for stronger smoothing
         }
 
         // ANY flight mode change means you're not currently holding altitude
@@ -322,13 +323,16 @@ int main()                                    // Main function
       // So I use >> 9 to approximate / 512 (or / 256*2)
 
       #ifdef ENABLE_PING_SENSOR
-      int TempHeight = Servo32_GetPing() >> (9-4);  // GroundHeight is now scaled up by 4 bits (x 16) to allow for better smoothing
-      if( TempHeight < (3000<<4) )   // 10ft == 3048mm, so check to see if we're just under that
+      int TempHeight = Servo32_GetPing() >> 9;
+      if( TempHeight < 1150 )                   // This value is altered from the original 10ft == 3048mm
+                                                // Replaced with 1150, which appears to be the highest value where
+                                                // the PING sensor works reliably (noise floor/prop wash).
+                                                // TO DO: different sensor (such as VL53L0X and/or better filtering/mixing)
       {
         long diff = TempHeight - GroundHeight;
 
         // Filter it to keep it from changing too fast
-        GroundHeight += diff >> 5;
+        GroundHeight += diff >> 3;
         GroundHeightValidCount = counter;    // Record the last loop iteration we had a good reading
       }
       #endif
@@ -416,7 +420,7 @@ void Initialize(void)
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
   ControlMode = ControlMode_AutoLevel;
-  Stats.Version = 0x0110;   // Version 1.10
+  Stats.Version = 0x0200;   // Version 2.0.0
 
   InitSerial();
 
@@ -486,16 +490,16 @@ void Initialize(void)
 
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
-  AltPID.Init( AltP, AltI, 0, Const_UpdateRate );
+  AltPID.Init( AltP, AltI, 600*250, Const_UpdateRate );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
   AltPID.SetPIMax( 1000 );
   AltPID.SetMaxIntegral( 4000 );
 
-  int AscentP = (250 * (Prefs.AscentGain+1)) >> 7;
+  int AscentP = (300 * (Prefs.AscentGain+1)) >> 7;
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
-  AscentPID.Init( AscentP, 0, 0 , Const_UpdateRate );
+  AscentPID.Init( AscentP, 0, 400 * 250, Const_UpdateRate );
   AscentPID.SetMaxOutput( 3000 );   // Limit of the control rate applied to the throttle
   AscentPID.SetPIMax( 500 );
   AscentPID.SetMaxIntegral( 2000 );
@@ -712,7 +716,7 @@ void UpdateFlightLoop(void)
         CompassConfigStep = 0;
 
         DesiredAltitude = AltiEst;
-        DesiredGroundHeight = GroundHeight >> 4;
+        DesiredGroundHeight = GroundHeight;
         loopTimer = CNT;
       }
     }      
@@ -783,9 +787,11 @@ void UpdateFlightLoop(void)
 
     if( Radio.Thro < -900 )
     {
-      if( Radio.Thro < -1100 && AllowThrottleCut )
+      idleTimeout--;
+      
+      if( ( Radio.Thro < -1100 && AllowThrottleCut ) || ( idleTimeout <= 0 && IDLE_TIMEOUT != 0))
       {
-        // We're in throttle cut - disarm immediately, set a timer to allow rearm
+        // We're in throttle cut - disarm immediately, set a timer to allow rearm OR disarm if idle too long
         for( int i=0; i<4; i++ ) {
           Motor[i] = Prefs.MinThrottle;
           Servo32_Set( MotorPin[i], Prefs.MinThrottle );
@@ -794,8 +800,16 @@ void UpdateFlightLoop(void)
         FlightEnabled = 0;
         FlightEnableStep = 0;
         CompassConfigStep = 0;
-        ReArmTimer = 250;
-
+        
+        // Start a 1 second countdown
+        if( Radio.Thro < -1100 ) ReArmTimer = 250;   
+        
+        // If the motors have been at idle too long, disarm
+        if( idleTimeout <= 0 ) {                     
+          idleTimeout = IDLE_TIMEOUT * 250;
+          DisarmFlightMode();
+        }
+        
         All_LED( LED_Green & LED_Half );
         loopTimer = CNT;
         return;   // Exit the loop so the motors stay killed, no additional flight code runs
@@ -816,6 +830,8 @@ void UpdateFlightLoop(void)
     }      
     else {
       DoIntegrate = 1;
+      
+      idleTimeout = IDLE_TIMEOUT * 250;
     }
 
 
@@ -827,8 +843,11 @@ void UpdateFlightLoop(void)
     int ThroMix = (Radio.Thro + 1024) >> 1;           // Approx 0 - 1024
     ThroMix = clamp( ThroMix, 0, 64 );                // Above 1/16 throttle, clamp it to 64
      
-    //add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
+    // add 12000 to all Output values to make them 'servo friendly' again   (12000 is our output center)
     int NewThroOut = (Radio.Thro << 2) + 12000;
+    
+    // apply throttle cap to provide enough headroom for the control system at full throttle
+    if(NewThroOut > (16000 - THROTTLE_HEADROOM)) NewThroOut = (16000 - THROTTLE_HEADROOM);
 
     //-------------------------------------------
     if( FlightMode != FlightMode_Manual )
@@ -858,7 +877,11 @@ void UpdateFlightLoop(void)
         else
         {
         #ifdef ENABLE_GROUND_HEIGHT
-          bool GoodHeight = (Radio.Aux1 > 0) && ((counter - GroundHeightValidCount) < 30);
+          #ifdef GROUND_HEIGHT_REQUIRE_AUX1
+            bool GoodHeight = (Radio.Aux1 > 0) && ((counter - GroundHeightValidCount) < 30);
+          #else
+            bool GoodHeight = (counter - GroundHeightValidCount) < 30;
+          #endif
           static bool UsedHeight = false;
         #endif
 
@@ -866,20 +889,20 @@ void UpdateFlightLoop(void)
           if( IsHolding == 0 ) {
             IsHolding = 1;
             DesiredAltitude = AltiEst;          // Start with our current altitude as the hold height
-            DesiredGroundHeight = GroundHeight >> 4;  // Also record the height above ground, if available
+            DesiredGroundHeight = GroundHeight;  // Also record the height above ground, if available
 
             AltPID.Reset();
           }
         #ifdef ENABLE_GROUND_HEIGHT
           else {
             if( !UsedHeight && GoodHeight) {   // If we're going back to using the laser in hold, make sure we have a good reading
-              DesiredGroundHeight = GroundHeight >> 4;
+              DesiredGroundHeight = GroundHeight;
             }              
           }
 
           if( GoodHeight ) {
             // Use a PID object to compute velocity requirements for the AscentPID object
-            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight >> 4, DoIntegrate );
+            DesiredAscentRate = AltPID.Calculate( DesiredGroundHeight, GroundHeight, DoIntegrate );
             DesiredAltitude = AltiEst;      // Cache the current altitude as a good altitude in case the laser stops reading
           }
           else
@@ -1473,10 +1496,7 @@ void DoDebugModeOutput(void)
         COMMLINK::AddPacketData( &YawDifference, 4 );
 
         COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for Alt
-        {
-          int temp = GroundHeight >> 4;
-          COMMLINK::AddPacketData( &temp, 4 );         //Send 4 bytes of data for height above ground
-        }          
+        COMMLINK::AddPacketData( &GroundHeight, 4 );   //Send 4 bytes of data for height above ground
         COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
@@ -1639,12 +1659,12 @@ void LaserRangeThread( void *par )
           // Laser reading needs to be tilt corrected
           short tiltScale = QuatIMU_GetThrustFactor();
           if( tiltScale <= 384 ) {  // Don't use the laser if the readings are too skewed (this should allow slightly over 45 deg)
-            long tiltCorrected = (LaserRange.Height * 256*16) / tiltScale;
+            long tiltCorrected = (LaserRange.Height * 256) / tiltScale;
   
             long diff = tiltCorrected - GroundHeight;
 
             // Filter it to keep it from changing too fast
-            GroundHeight += diff >> 5;
+            GroundHeight += diff >> 3;
             GroundHeightValidCount = counter;    // Record the last loop iteration we had a good laser reading
           }
         }

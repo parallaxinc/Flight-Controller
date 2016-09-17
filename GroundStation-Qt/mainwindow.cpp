@@ -22,28 +22,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
-	QFont smallFont = ui->btnReceiverReset->font();
-	smallFont.setPointSize(10);
-
-	// Do this here because Mac font defaults are not the same point size as PC
-	ui->btnReceiverReset->setFont(smallFont);
-	ui->btnReceiverCalibrate->setFont(smallFont);
-	ui->label_2->setFont(smallFont);
-	ui->cbReceiverType->setFont(smallFont);
-	ui->cbR_Channel1->setFont(smallFont);
-	ui->cbR_Channel2->setFont(smallFont);
-	ui->cbR_Channel3->setFont(smallFont);
-	ui->cbR_Channel4->setFont(smallFont);
-	ui->cbR_Channel5->setFont(smallFont);
-	ui->cbR_Channel6->setFont(smallFont);
-	ui->cbR_Channel7->setFont(smallFont);
-	ui->cbR_Channel8->setFont(smallFont);
-	ui->btnUploadRadioChanges->setFont(smallFont);
-	ui->btnDisableMotors->setFont(smallFont);
-	ui->btnUploadSystemSetup->setFont(smallFont);
-
-
-	ui->lblRadioCalibrateDocs->setVisible(false);	// Hide this until calibration mode
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
 	// These have to match the modes and order defined in Elev8-Main.h in the firmware
@@ -64,6 +42,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	loadSettings();
 
     connect( &comm, SIGNAL(connectionMade()), this, SLOT(on_connectionMade()));
+
+    QPixmap iconImage;
+    iconImage.load(":/images/groundstation_icon64.png");
+    QIcon winIcon;
+    winIcon.addPixmap(iconImage);
+    this->setWindowIcon(winIcon);
 
 
     QString style = QString("QPushButton{\
@@ -137,18 +121,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->batteryVal->setLeftLabel( "Battery Voltage" );
     ui->batteryVal->setMinMax( 900, 1260 );
 
-    ui->channel1Val->setLeftLabel("Throtle");
-    ui->channel2Val->setLeftLabel("Aileron");
-    ui->channel3Val->setLeftLabel("Elevator");
-    ui->channel4Val->setLeftLabel("Rudder");
+	ui->channel1Val->setLeftLabel("Thro");
+	ui->channel2Val->setLeftLabel("Aile");
+	ui->channel3Val->setLeftLabel("Elev");
+	ui->channel4Val->setLeftLabel("Rudd");
     ui->channel5Val->setLeftLabel("Gear");
     ui->channel6Val->setLeftLabel("Aux1");
     ui->channel7Val->setLeftLabel("Aux2");
     ui->channel8Val->setLeftLabel("Aux3");
-    ui->vbR_Channel1->setLeftLabel("Throtle");
-    ui->vbR_Channel2->setLeftLabel("Aileron");
-    ui->vbR_Channel3->setLeftLabel("Elevator");
-    ui->vbR_Channel4->setLeftLabel("Rudder");
+	ui->vbR_Channel1->setLeftLabel("Thro");
+	ui->vbR_Channel2->setLeftLabel("Aile");
+	ui->vbR_Channel3->setLeftLabel("Elev");
+	ui->vbR_Channel4->setLeftLabel("Rudd");
     ui->vbR_Channel5->setLeftLabel("Gear");
     ui->vbR_Channel6->setLeftLabel("Aux1");
     ui->vbR_Channel7->setLeftLabel("Aux2");
@@ -207,8 +191,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // set text for the label
 	labelStatus->setText("Connecting...");
 	labelStatus->setContentsMargins( 5, 1, 5, 1 );
-	labelGSVersion->setText("GroundStation Version 1.1.0");
-	labelFWVersion->setText( "Firmware Version -.--");
+	labelGSVersion->setText("GroundStation Version 2.0.0");
+	labelFWVersion->setText( "Firmware Version -.-.-");
 
 	// add the controls to the status bar
 	ui->statusBar->addPermanentWidget(labelStatus, 1);
@@ -221,8 +205,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelGSVersion->setFrameStyle(QFrame::NoFrame);
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
 
+	AdjustFonts();
+
 	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
-							   "AltiRaw", "AltiEst", "LaserHeight",
+							   "AltiRaw", "AltiEst", "GroundHeight",
 							   "Pitch", "Roll", "Yaw", "Voltage"};
 	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
 									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
@@ -264,6 +250,82 @@ MainWindow::~MainWindow()
     comm.StopConnection();
     delete ui;
 }
+
+
+void MainWindow::resizeEvent(QResizeEvent *evt)
+{
+	QMainWindow::resizeEvent(evt);
+	AdjustFonts();
+}
+
+
+void MainWindow::AdjustFonts(void)
+{
+	int minSize = (float) qMin(this->width(), this->height()*3/2);
+
+#ifdef __APPLE__
+    int pixSize = 1 + (minSize / 75);
+#else
+    int pixSize = 2 + (minSize / 75);
+#endif
+
+	QFont smallFont = ui->btnReceiverReset->font();
+
+	int oldPixSize = smallFont.pixelSize();
+	if( oldPixSize == pixSize ) return;
+
+	smallFont.setPixelSize(pixSize);
+
+	// Do this here because Mac font defaults are not the same point size as PC
+	ui->tabWidget->setFont(smallFont);
+	ui->menuBar->setFont(smallFont);
+
+	ui->btnBeeper->setFont(smallFont);
+	ui->btnLED->setFont(smallFont);
+	ui->btnThrottleCalibrate->setFont(smallFont);
+	ui->btnMotorTest_FL->setFont(smallFont);
+	ui->btnMotorTest_FR->setFont(smallFont);
+	ui->btnMotorTest_BL->setFont(smallFont);
+	ui->btnMotorTest_BR->setFont(smallFont);
+
+	ui->label_3->setFont(smallFont);
+	ui->label_4->setFont(smallFont);
+	ui->label_8->setFont(smallFont);
+	ui->label_9->setFont(smallFont);
+	ui->lblAutoRollPitchSpeed->setFont(smallFont);
+	ui->lblAutoYawSpeed->setFont(smallFont);
+	ui->lblManualRollPitchSpeed->setFont(smallFont);
+	ui->lblManualYawSpeed->setFont(smallFont);
+
+	ui->label_11->setFont(smallFont);
+	ui->label_37->setFont(smallFont);
+	ui->label_10->setFont(smallFont);
+	ui->lblAccelCorrection->setFont(smallFont);
+	ui->lblAccelCorrectionFilter->setFont(smallFont);
+	ui->lblThrustCorrection->setFont(smallFont);
+
+	ui->btnReceiverReset->setFont(smallFont);
+	ui->btnReceiverCalibrate->setFont(smallFont);
+	ui->label_2->setFont(smallFont);
+	ui->cbReceiverType->setFont(smallFont);
+	ui->cbR_Channel1->setFont(smallFont);
+	ui->cbR_Channel2->setFont(smallFont);
+	ui->cbR_Channel3->setFont(smallFont);
+	ui->cbR_Channel4->setFont(smallFont);
+	ui->cbR_Channel5->setFont(smallFont);
+	ui->cbR_Channel6->setFont(smallFont);
+	ui->cbR_Channel7->setFont(smallFont);
+	ui->cbR_Channel8->setFont(smallFont);
+	ui->btnUploadRadioChanges->setFont(smallFont);
+	ui->btnDisableMotors->setFont(smallFont);
+	ui->btnUploadSystemSetup->setFont(smallFont);
+	ui->lblRadioCalibrateDocs->setFont(smallFont);
+
+	labelStatus->setFont(smallFont);
+	labelGSVersion->setFont(smallFont);
+	labelFWVersion->setFont(smallFont);
+}
+
 
 void MainWindow::loadSettings(void)
 {
@@ -394,20 +456,20 @@ void MainWindow::SetRadioMode(int mode)
 
 	if(RadioMode == 1)
 	{
-		ui->channel1Val->setLeftLabel("Elevator");
-		ui->channel3Val->setLeftLabel("Throttle");
-		ui->vbR_Channel1->setLeftLabel("Elevator");
-		ui->vbR_Channel3->setLeftLabel("Throttle");
+		ui->channel1Val->setLeftLabel("Elev");
+		ui->channel3Val->setLeftLabel("Thro");
+		ui->vbR_Channel1->setLeftLabel("Elev");
+		ui->vbR_Channel3->setLeftLabel("Thro");
 
 		ui->cbR_Channel1->setCurrentIndex( prefs.ElevChannel );
 		ui->cbR_Channel3->setCurrentIndex( prefs.ThroChannel );
 	}
 	else if(RadioMode == 2)
 	{
-		ui->channel1Val->setLeftLabel("Throttle");
-		ui->channel3Val->setLeftLabel("Elevator");
-		ui->vbR_Channel1->setLeftLabel("Throttle");
-		ui->vbR_Channel3->setLeftLabel("Elevator");
+		ui->channel1Val->setLeftLabel("Thro");
+		ui->channel3Val->setLeftLabel("Elev");
+		ui->vbR_Channel1->setLeftLabel("Thro");
+		ui->vbR_Channel3->setLeftLabel("Elev");
 
 		ui->cbR_Channel1->setCurrentIndex( prefs.ThroChannel );
 		ui->cbR_Channel3->setCurrentIndex( prefs.ElevChannel );
@@ -836,8 +898,9 @@ void MainWindow::CancelThrottleCalibration(void)
 	comm.Send( txBuffer, 1 );
 	QString str;
 	ui->lblCalibrateDocs->setText(str);
-	ui->lblCalibrateDocs->setVisible(false);
-	ui->gbControlSetup->setVisible(true);
+	//ui->lblCalibrateDocs->setVisible(false);
+	//ui->gbControlSetup->setVisible(true);
+	ui->calibrateStack->setCurrentIndex(0);
 	ThrottleCalibrationCycle = 0;
 }
 
@@ -906,7 +969,8 @@ quint8 txBuffer[1];
 		}
 		TestMotor( 6 );
 		str = "Throttle calibration has started.  Be sure your flight battery is UNPLUGGED, then press the Throttle Calibration button again.  (Click any other button to cancel)";
-		ui->lblCalibrateDocs->setVisible(true);
+		ui->calibrateStack->setCurrentIndex(1);
+		//ui->lblCalibrateDocs->setVisible(true);
 		ui->lblCalibrateDocs->setText(str);
 		ThrottleCalibrationCycle = 1;
 
@@ -931,7 +995,15 @@ quint8 txBuffer[1];
 	case 2:
 		txBuffer[0] = 0;		// Finish
 		comm.Send( txBuffer, 1 );
-		str = "Once the ESCs stop beeping (about 5 seconds), calibration is complete and your may remove the flight battery";
+        	str = "After the ESCs stop beeping (about 5 seconds), press the Throttle Calibration button again.";
+		ui->lblCalibrateDocs->setText(str);
+        	ThrottleCalibrationCycle = 3;
+		break;
+
+	case 3:
+		txBuffer[0] = 0;		// Finish
+		comm.Send( txBuffer, 1 );
+		str = "To complete the Throttle Calibration, unplug both the flight battery and the USB cable.";
 		ui->lblCalibrateDocs->setText(str);
 
 		qApp->processEvents();	// force the label we just updated to repaint
@@ -940,9 +1012,10 @@ quint8 txBuffer[1];
 		str = "";
 		ui->lblCalibrateDocs->setText(str);
 		ThrottleCalibrationCycle = 0;
-
-		// TODO: Re-enable all other buttons, hide the abort button
-		break;
+		
+	        // TODO: Test for battery/usb, don't clear message until it is
+	        // TODO: Re-enable all other buttons, hide the abort button
+	        break;
 	}
 }
 
@@ -954,7 +1027,8 @@ quint8 txBuffer[1];
 	comm.Send( txBuffer, 1 );
 
 	QString backup = ui->lblCalibrateDocs->styleSheet();
-	ui->lblCalibrateDocs->setVisible(true);
+	ui->calibrateStack->setCurrentIndex(1);
+	//ui->lblCalibrateDocs->setVisible(true);
 	ui->lblCalibrateDocs->setText(msg);
 	ui->lblCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
@@ -1300,8 +1374,7 @@ void MainWindow::CheckCalibrateControls(void)
 
 		case 2:
 		{
-			ui->gbControlSetup->setVisible(false);
-			ui->lblRadioCalibrateDocs->setVisible(true);
+			ui->calibrateStack->setCurrentIndex(1);
 
 			QString str = QString( \
                     "Move both STICKS all the way to the RIGHT and UP, and all\n" \
@@ -1366,9 +1439,8 @@ void MainWindow::CheckCalibrateControls(void)
 		{
 			CalibrateControlsStep = 0;
 			QString str;
+			ui->calibrateStack->setCurrentIndex(0);
 			ui->lblRadioCalibrateDocs->setText(str);
-			ui->lblRadioCalibrateDocs->setVisible(false);
-			ui->gbControlSetup->setVisible(true);
 
 			// figure out reverses
 			for(int i = 0; i < 8; i++)

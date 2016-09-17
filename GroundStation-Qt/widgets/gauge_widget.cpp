@@ -56,6 +56,10 @@ void Gauge_Widget::paintEvent(QPaintEvent * event)
 	float centerY = (float)height() * 0.5f;
 	float radius = qMin( centerX, centerY );
 
+	int outerDiam = qMin( width(), height() ) - 2;
+	int offsX = 1 + (width() - outerDiam) / 2;
+	int offsY = 1 + (height() - outerDiam) / 2;
+
 	QPainter p(this);
 
 	p.setRenderHint(QPainter::Antialiasing, false);
@@ -69,7 +73,7 @@ void Gauge_Widget::paintEvent(QPaintEvent * event)
 
 	p.setBrush( QBrush(foreCol) );
 	p.setPen( QPen(QColor::fromRgb(255,255,255)) );
-	p.drawEllipse( 1, 1, width()-2, height()-2 );
+	p.drawEllipse( offsX, offsY, outerDiam, outerDiam );
 
 	p.setRenderHint(QPainter::Antialiasing, true);
 

@@ -4,7 +4,7 @@
 
 [Setup]
 AppName=Parallax GroundStation
-AppVersion=1.1.0
+AppVersion=2.0.0
 AppSupportURL=https://www.parallax.com/support
 AppSupportPhone=1-916-624-8333
 
@@ -14,7 +14,7 @@ UninstallDisplayIcon={app}\GroundStation.exe
 Compression=lzma2
 SolidCompression=yes
 OutputDir=.
-OutputBaseFilename=80204-Parallax-GroundStation-v1.1.0
+OutputBaseFilename=80204-Parallax-GroundStation-v2.0.0
 
 WizardImageFile=InstallerLogo.bmp
 WizardImageStretch=yes
@@ -24,8 +24,8 @@ Name: desktopicon; Description: "Create a desktop icon"; GroupDescription: "Addi
 
 [Files]
 Source: "Groundstation-Release\*.*"; DestDir: "{app}"; Flags: recursesubdirs
-Source: "GroundStation-Qt\*.*"; DestDir: "{app}\Sources\GroundStation-Qt"; Flags: recursesubdirs; Excludes: "GroundStation.pro.user,.gitignore"
-Source: "Firmware-C\*.*"; DestDir: "{app}\Sources\Firmware-C"; Excludes: ".gitignore"
+Source: "GroundStation-Qt\*.*"; DestDir: "{userdocs}\ParallaxInc\Elev8-Sources\V2.0.0\GroundStation-Qt"; Flags: recursesubdirs; Excludes: "GroundStation.pro.user,.gitignore"
+Source: "Firmware-C\*.*"; DestDir: "{userdocs}\ParallaxInc\Elev8-Sources\V2.0.0\Firmware-C"; Excludes: ".gitignore"
 
 [Icons]
 Name: "{group}\Parallax GroundStation"; Filename: "{app}\GroundStation.exe"
