@@ -279,6 +279,7 @@ void MainWindow::AdjustFonts(void)
 	// Do this here because Mac font defaults are not the same point size as PC
 	ui->tabWidget->setFont(smallFont);
 	ui->menuBar->setFont(smallFont);
+	ui->lblCycles->setFont(smallFont);
 
 	ui->btnBeeper->setFont(smallFont);
 	ui->btnLED->setFont(smallFont);
