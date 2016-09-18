@@ -41,6 +41,7 @@ rc_driver_ppm.spin
 laserrange.cpp
 laserrange.h
 remote_rx_driver.spin
+elev8types.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

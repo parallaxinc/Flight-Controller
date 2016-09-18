@@ -54,6 +54,8 @@ private slots:
 	void on_btnMotorTest_FR_pressed();
 	void on_btnMotorTest_BR_pressed();
 	void on_btnMotorTest_BL_pressed();
+	void on_btnMotorTest_CR_clicked();
+	void on_btnMotorTest_CL_clicked();
 
 	void on_btnThrottleCalibrate_clicked();
 	void on_btnSafetyCheck_clicked();
@@ -121,6 +123,9 @@ private slots:
 
 	void on_actionAbout_triggered();
 
+	void on_btnClearData_clicked();
+	void on_btnToggleAll_clicked();
+
 	void on_cbGyroX_clicked(bool checked);
 	void on_cbGyroY_clicked(bool checked);
 	void on_cbGyroZ_clicked(bool checked);
@@ -157,7 +162,11 @@ private:
 	void AttemptSetValue( QScrollBar * slider , int value );
 	void SetReverseChannel(int channel, bool bReverse);
 
-	void TestMotor(int);
+	void SendTestMotor(int);
+	void SendTestBeeper(void);
+	void SendTestLED(void);
+	void SendThrottleCalibrate(void);
+
 	void CancelThrottleCalibration(void);
 	void AbortThrottleCalibrationWithMessage( QString & msg , int delay );
 	void CheckCalibrateControls(void);
@@ -193,10 +202,12 @@ private:
 
 	int Heartbeat;
 	int RadioMode;	// Mode == 1 or 2
+	bool showHexMode;
 
 	Connection comm;
 	CommStatus stat;
 
+	RadioPacked packedRadio;
 	RadioData radio;
 	SensorData sensors;
 	QQuaternion q;
@@ -218,7 +229,7 @@ private:
 
 	ChannelData channelData[8];
 
-	int SampleIndex, SamplesWrapped;
+	int SampleIndex;
 	QCPGraph * graphs[17];
 	QCustomPlot * sg;
 

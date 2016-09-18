@@ -240,7 +240,7 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_3">
                <property name="spacing">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="leftMargin">
                 <number>3</number>
@@ -280,6 +280,16 @@
                   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                    <horstretch>0</horstretch>
                    <verstretch>3</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="ValueBar_Widget" name="motor_CL_val" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>2</verstretch>
                   </sizepolicy>
                  </property>
                 </widget>
@@ -353,7 +363,7 @@
               </property>
               <layout class="QVBoxLayout" name="verticalLayout_2">
                <property name="spacing">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="leftMargin">
                 <number>3</number>
@@ -393,6 +403,16 @@
                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
                    <verstretch>3</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="ValueBar_Widget" name="motor_CR_val" native="true">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>2</verstretch>
                   </sizepolicy>
                  </property>
                 </widget>
@@ -536,12 +556,15 @@
             </property>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_4">
+              <property name="spacing">
+               <number>20</number>
+              </property>
               <item>
                <widget class="QPushButton" name="btnMotorTest_FL">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
-                  <verstretch>2</verstretch>
+                  <verstretch>6</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="layoutDirection">
@@ -563,15 +586,31 @@
                </widget>
               </item>
               <item>
-               <widget class="QFrame" name="frame_4">
+               <widget class="QPushButton" name="btnMotorTest_CL">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
-                  <verstretch>1</verstretch>
+                  <verstretch>6</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
+                <property name="layoutDirection">
+                 <enum>Qt::LeftToRight</enum>
+                </property>
+                <property name="text">
+                 <string>6</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/images/Icon_Clockwise.png</normaloff>:/images/Icon_Clockwise.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -580,7 +619,7 @@
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
-                  <verstretch>2</verstretch>
+                  <verstretch>6</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="layoutDirection">
@@ -678,12 +717,15 @@ Calibration</string>
             </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_6">
+              <property name="spacing">
+               <number>20</number>
+              </property>
               <item>
                <widget class="QPushButton" name="btnMotorTest_FR">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
-                  <verstretch>2</verstretch>
+                  <verstretch>6</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="text">
@@ -702,15 +744,31 @@ Calibration</string>
                </widget>
               </item>
               <item>
-               <widget class="QFrame" name="frame_5">
+               <widget class="QPushButton" name="btnMotorTest_CR">
+                <property name="enabled">
+                 <bool>true</bool>
+                </property>
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
-                  <verstretch>1</verstretch>
+                  <verstretch>6</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
+                <property name="layoutDirection">
+                 <enum>Qt::LeftToRight</enum>
+                </property>
+                <property name="text">
+                 <string>5</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="resources.qrc">
+                  <normaloff>:/images/Icon_Clockwise.png</normaloff>:/images/Icon_Clockwise.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>48</width>
+                  <height>48</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -719,7 +777,7 @@ Calibration</string>
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
-                  <verstretch>2</verstretch>
+                  <verstretch>6</verstretch>
                  </sizepolicy>
                 </property>
                 <property name="text">
@@ -3727,13 +3785,42 @@ throttle calibration.</string>
               <number>2</number>
              </property>
              <item>
-              <layout class="QVBoxLayout" name="verticalLayout_8">
+              <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+               <property name="spacing">
+                <number>1</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="btnClearData">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>5</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Clear Data</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="btnToggleAll">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>5</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>All / None</string>
+                 </property>
+                </widget>
+               </item>
                <item>
                 <widget class="QCheckBox" name="cbGyroX">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3749,7 +3836,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3765,7 +3852,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3781,7 +3868,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3797,7 +3884,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3813,7 +3900,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3829,7 +3916,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3845,7 +3932,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3861,7 +3948,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3877,7 +3964,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3893,7 +3980,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3909,7 +3996,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3925,7 +4012,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3941,7 +4028,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3957,7 +4044,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3973,7 +4060,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">
@@ -3989,7 +4076,7 @@ throttle calibration.</string>
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
                    <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
+                   <verstretch>4</verstretch>
                   </sizepolicy>
                  </property>
                  <property name="text">

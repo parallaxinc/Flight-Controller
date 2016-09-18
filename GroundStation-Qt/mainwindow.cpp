@@ -22,6 +22,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+	// Hex configuration is not enabled by default - will get a signal from FC if set
+	showHexMode = false;
+	ui->btnMotorTest_CR->setVisible(false);
+	ui->btnMotorTest_CL->setVisible(false);
+	ui->motor_CR_val->setVisible(false);
+	ui->motor_CL_val->setVisible(false);
+
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
 	// These have to match the modes and order defined in Elev8-Main.h in the firmware
@@ -96,6 +103,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->motor_FR_val->setRightLabel( "FR" );
     ui->motor_FR_val->setBarColor( QColor::fromRgb(255,160,128) );
 
+	ui->motor_CL_val->setMinMax( 8000, 16000 );
+	ui->motor_CL_val->setLeftLabel( "CL" );
+	ui->motor_CL_val->setBarColor( QColor::fromRgb(255,160,128) );
+
+	ui->motor_CR_val->setMinMax( 8000, 16000 );
+	ui->motor_CR_val->setRightLabel( "CR" );
+	ui->motor_CR_val->setBarColor( QColor::fromRgb(255,160,128) );
+
     ui->motor_BR_val->setMinMax( 8000, 16000 );
     ui->motor_BR_val->setRightLabel( "BR" );
     ui->motor_BR_val->setBarColor( QColor::fromRgb(255,160,128) );
@@ -106,7 +121,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->btnMotorTest_FL->setStyleSheet( style );
     ui->btnMotorTest_FR->setStyleSheet( style );
-    ui->btnMotorTest_BL->setStyleSheet( style );
+	ui->btnMotorTest_CL->setStyleSheet( style );
+	ui->btnMotorTest_CR->setStyleSheet( style );
+	ui->btnMotorTest_BL->setStyleSheet( style );
     ui->btnMotorTest_BR->setStyleSheet( style );
     ui->btnBeeper->setStyleSheet( style );
     ui->btnLED->setStyleSheet( style );
@@ -191,7 +208,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // set text for the label
 	labelStatus->setText("Connecting...");
 	labelStatus->setContentsMargins( 5, 1, 5, 1 );
-	labelGSVersion->setText("GroundStation Version 2.0.0");
+	labelGSVersion->setText("GroundStation Version 3.0.0");
 	labelFWVersion->setText( "Firmware Version -.-.-");
 
 	// add the controls to the status bar
@@ -219,7 +236,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 	SampleIndex = 0;
-	SamplesWrapped = 0;
 
 	sg = ui->sensorGraph;
 	sg->legend->setVisible(true);
@@ -288,6 +304,8 @@ void MainWindow::AdjustFonts(void)
 	ui->btnMotorTest_FR->setFont(smallFont);
 	ui->btnMotorTest_BL->setFont(smallFont);
 	ui->btnMotorTest_BR->setFont(smallFont);
+	ui->btnMotorTest_CL->setFont(smallFont);
+	ui->btnMotorTest_CR->setFont(smallFont);
 
 	ui->label_3->setFont(smallFont);
 	ui->label_4->setFont(smallFont);
@@ -487,7 +505,7 @@ void MainWindow::SetRadioMode(int mode)
 void MainWindow::AddGraphSample(int GraphIndex, float SampleValue)
 {
 	//graphs[GraphIndex]->removeDataBefore( SampleIndex );
-	graphs[GraphIndex]->removeData( SampleIndex );
+	//graphs[GraphIndex]->removeData( SampleIndex );
 	graphs[GraphIndex]->addData( SampleIndex, SampleValue );
 }
 
@@ -513,7 +531,8 @@ void MainWindow::ProcessPackets(void)
             switch( p->mode )
             {
                 case 1:	// Radio data
-                    radio.ReadFrom( p );
+					packedRadio.ReadFrom( p );
+					radio = packedRadio;
 
 					AddGraphSample( 16, (float)radio.BatteryVolts );
 					bRadioChanged = true;
@@ -586,10 +605,6 @@ void MainWindow::ProcessPackets(void)
 
 					// this is actually the last packet sent by the quad, so use this to advance the sample index
 					SampleIndex++;
-					if( SampleIndex > 6000 ) {
-						SampleIndex = 0;
-						SamplesWrapped = 1;
-					}
 					break;
 
 
@@ -713,11 +728,49 @@ void MainWindow::ProcessPackets(void)
 
     if( bMotorsChanged )
     {
+		if( motors.isHex != showHexMode )
+		{
+			QIcon icon_CW = ui->btnMotorTest_FL->icon();
+			QIcon icon_CCW = ui->btnMotorTest_FR->icon();
+
+			if( motors.isHex ) {
+				ui->btnMotorTest_CR->setIcon( icon_CW );
+				ui->btnMotorTest_BR->setIcon( icon_CCW );
+				ui->btnMotorTest_BL->setIcon( icon_CW );
+				ui->btnMotorTest_CL->setIcon( icon_CCW );
+
+				ui->btnMotorTest_CR->setVisible(true);
+				ui->btnMotorTest_CL->setVisible(true);
+
+				ui->motor_CR_val->setVisible(true);
+				ui->motor_CL_val->setVisible(true);
+			}
+			else {
+				ui->btnMotorTest_BR->setIcon( icon_CCW );
+				ui->btnMotorTest_BL->setIcon( icon_CW );
+
+				ui->btnMotorTest_CR->setVisible(false);
+				ui->btnMotorTest_CL->setVisible(false);
+
+				ui->motor_CR_val->setVisible(false);
+				ui->motor_CL_val->setVisible(false);
+			}
+			showHexMode = motors.isHex;
+		}
+
         ui->motor_FL_val->setValue( motors.FL );
 		ui->motor_FL_val->setRightLabel( motors.FL/8 );
 
         ui->motor_FR_val->setValue( motors.FR );
 		ui->motor_FR_val->setLeftLabel( motors.FR/8 );
+
+		if( motors.isHex ) {
+			ui->motor_CR_val->setValue( motors.CR );
+			ui->motor_CR_val->setLeftLabel( motors.CR/8 );
+
+			ui->motor_CL_val->setValue( motors.CL );
+			ui->motor_CL_val->setRightLabel( motors.CL/8 );
+		}
 
         ui->motor_BR_val->setValue( motors.BR );
 		ui->motor_BR_val->setLeftLabel( motors.BR/8 );
@@ -880,16 +933,40 @@ void MainWindow::ProcessPackets(void)
     }
 }
 
-void MainWindow::TestMotor(int index)
+void MainWindow::SendTestMotor(int index)
 {
-    if(comm.Connected())
-    {
+	if(comm.Connected()) {
 		CancelThrottleCalibration();	// just in case
-
         index++;
-        SendCommand( QString( "M%1t%2").arg( index ).arg( index ) );	// Becomes M1t1, M2t2, etc..
+		SendCommand( QString("M%1t%2").arg( index ).arg( index ) );	// Becomes M1t1, M2t2, etc..
     }
 }
+
+void MainWindow::SendTestBeeper(void)
+{
+	if(comm.Connected()) {
+		CancelThrottleCalibration();	// just in case
+		SendCommand( QString("MBZZ") );
+	}
+}
+
+void MainWindow::SendTestLED(void)
+{
+	if(comm.Connected()) {
+		CancelThrottleCalibration();	// just in case
+		SendCommand( QString("MLED") );
+	}
+}
+
+void MainWindow::SendThrottleCalibrate(void)
+{
+	if(comm.Connected()) {
+		CancelThrottleCalibration();	// just in case
+		SendCommand( QString("TCAL") );
+	}
+}
+
+
 
 void MainWindow::CancelThrottleCalibration(void)
 {
@@ -968,7 +1045,7 @@ quint8 txBuffer[1];
 			AbortThrottleCalibrationWithMessage( str , 3 );
 			return;
 		}
-		TestMotor( 6 );
+		SendThrottleCalibrate();
 		str = "Throttle calibration has started.  Be sure your flight battery is UNPLUGGED, then press the Throttle Calibration button again.  (Click any other button to cancel)";
 		ui->calibrateStack->setCurrentIndex(1);
 		//ui->lblCalibrateDocs->setVisible(true);
@@ -1216,27 +1293,35 @@ void MainWindow::ConfigureUIFromPreferences(void)
 // -----------------------------------------------
 
 void MainWindow::on_btnMotorTest_FL_pressed() {
-    TestMotor(0);
+	SendTestMotor(0);
 }
 
 void MainWindow::on_btnMotorTest_FR_pressed() {
-    TestMotor(1);
+	SendTestMotor(1);
 }
 
 void MainWindow::on_btnMotorTest_BR_pressed() {
-    TestMotor(2);
+	SendTestMotor(2);
 }
 
 void MainWindow::on_btnMotorTest_BL_pressed() {
-    TestMotor(3);
+	SendTestMotor(3);
+}
+
+void MainWindow::on_btnMotorTest_CR_clicked() {
+	SendTestMotor(5);
+}
+
+void MainWindow::on_btnMotorTest_CL_clicked() {
+	SendTestMotor(6);
 }
 
 void MainWindow::on_btnBeeper_pressed() {
-    TestMotor(4);
+	SendTestBeeper();
 }
 
 void MainWindow::on_btnLED_pressed() {
-    TestMotor(5);
+	SendTestLED();
 }
 
 void MainWindow::UpdateElev8Preferences(void)
@@ -1791,6 +1876,68 @@ void MainWindow::on_actionAbout_triggered()
 	QDialog * dlg = new AboutBox(this);
 	dlg->show();
 }
+
+
+void MainWindow::on_btnClearData_clicked()
+{
+	for( unsigned int i=0; i<sizeof(graphs) / sizeof(graphs[0]); i++ ) {
+		graphs[i]->removeDataAfter(-1.0);
+	}
+	SampleIndex = 0;
+}
+
+
+void MainWindow::on_btnToggleAll_clicked()
+{
+	// Get the state of the buttons
+	int checkCount = 0;
+
+	checkCount += ui->cbGyroTemp->checkState() == Qt::Checked;
+	checkCount += ui->cbGyroX->checkState() == Qt::Checked;
+	checkCount += ui->cbGyroY->checkState() == Qt::Checked;
+	checkCount += ui->cbGyroZ->checkState() == Qt::Checked;
+	checkCount += ui->cbAccelX->checkState() == Qt::Checked;
+	checkCount += ui->cbAccelY->checkState() == Qt::Checked;
+	checkCount += ui->cbAccelZ->checkState() == Qt::Checked;
+	checkCount += ui->cbMagX->checkState() == Qt::Checked;
+	checkCount += ui->cbMagY->checkState() == Qt::Checked;
+	checkCount += ui->cbMagZ->checkState() == Qt::Checked;
+	checkCount += ui->cbAlti->checkState() == Qt::Checked;
+	checkCount += ui->cbAltiEst->checkState() == Qt::Checked;
+	checkCount += ui->cbLaserHeight->checkState() == Qt::Checked;
+	checkCount += ui->cbPitch->checkState() == Qt::Checked;
+	checkCount += ui->cbRoll->checkState() == Qt::Checked;
+	checkCount += ui->cbYaw->checkState() == Qt::Checked;
+	checkCount += ui->cbVoltage->checkState() == Qt::Checked;
+
+	// figure out which is the more prevalent state
+	bool MostlyChecked = ( checkCount > (signed)(sizeof(graphs)/sizeof(graphs[0])) / 2 );
+	bool newState = !MostlyChecked;
+
+	// set all buttons to the inverse
+	ui->cbGyroTemp->setChecked(newState);
+	ui->cbGyroX->setChecked(newState);
+	ui->cbGyroY->setChecked(newState);
+	ui->cbGyroZ->setChecked(newState);
+	ui->cbAccelX->setChecked(newState);
+	ui->cbAccelY->setChecked(newState);
+	ui->cbAccelZ->setChecked(newState);
+	ui->cbMagX->setChecked(newState);
+	ui->cbMagY->setChecked(newState);
+	ui->cbMagZ->setChecked(newState);
+	ui->cbAlti->setChecked(newState);
+	ui->cbAltiEst->setChecked(newState);
+	ui->cbLaserHeight->setChecked(newState);
+	ui->cbPitch->setChecked(newState);
+	ui->cbRoll->setChecked(newState);
+	ui->cbYaw->setChecked(newState);
+	ui->cbVoltage->setChecked(newState);
+
+	for( unsigned int i=0; i<sizeof(graphs)/sizeof(graphs[0]); i++) {
+		graphs[i]->setVisible(newState);
+	}
+}
+
 
 void MainWindow::on_cbGyroX_clicked(bool checked)		{graphs[ 0]->setVisible( checked ); }
 void MainWindow::on_cbGyroY_clicked(bool checked)		{graphs[ 1]->setVisible( checked ); }

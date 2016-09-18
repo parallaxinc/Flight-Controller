@@ -237,11 +237,11 @@ void QuatIMU_Start(void)
   IMU_VARS[const_velAccTrust]       =    0.9993f;      // was 0.9990    - used to generate the absolute altitude estimate
   IMU_VARS[const_velAltiTrust]      =    0.0007f;      // was 0.0010
 
-  IMU_VARS[const_YawRateScale]      =    ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
+  IMU_VARS[const_YawRateScale]      =    ((120.0f / 200.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   IMU_VARS[const_AutoBankScale]     =    (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
 
-  IMU_VARS[const_ManualYawScale]    =   ((180.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
-  IMU_VARS[const_ManualBankScale]   =   ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
+  IMU_VARS[const_ManualYawScale]    =   ((180.0f / 200.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
+  IMU_VARS[const_ManualBankScale]   =   ((120.0f / 200.0f) / 1024.0f) * (PI/180.f) * 0.5f; // 120 deg/sec / UpdateRate * Deg2Rad * HalfAngle
   
   IMU_VARS[const_TwoPI]             =    2.0f * PI;
 
@@ -325,7 +325,7 @@ int QuatIMU_GetYawDifference(void) {
 void QuatIMU_SetAutoLevelRates( float MaxRollPitch , float YawRate )
 {
   IMU_VARS[const_AutoBankScale] = MaxRollPitch; // (45.0f / 1024.0f) * (PI/180.0f) * 0.5f;
-  IMU_VARS[const_YawRateScale]  = YawRate;      // ((120.0f / 250.0f) / 1024.0f) * (PI/180.f) * 0.5f;
+  IMU_VARS[const_YawRateScale]  = YawRate;      // ((120.0f / 200.0f) / 1024.0f) * (PI/180.f) * 0.5f;
 }
 
 void QuatIMU_SetManualRates( float RollPitchRate, float YawRate )

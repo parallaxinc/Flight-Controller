@@ -101,7 +101,7 @@ static char   Quat[16];       //Current quaternion from the IMU functions
 
 static char Mode = MODE_None;         //Debug communication mode
 static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1 == no motor)
-static char NudgeCount[4];            // How long to spin the motor for (0 == stopped)
+static char NudgeCount[6];            // How long to spin the motor for (0 == stopped)
 static int HostCommandUSB, HostCommandXBee;
 
 static long  AltiEst, AscentEst;                              // altitude estimate and ascent rate estimate
@@ -113,7 +113,7 @@ static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values 
 static long  GyroRPFilter, GyroYawFilter;   // Tunable damping values for gyro noise
 
 
-static short Motor[4];                     //Motor output values
+static short Motor[MOTOR_COUNT];            //Motor output values
 static long  LEDValue[LED_COUNT];           //LED outputs (copied to the LEDs by the Sensors cog)
 
 static long loopTimer;                      //Master flight loop counter - used to keep a steady update rate
@@ -131,7 +131,7 @@ static char AllowThrottleCut = 1;     // < -1100 throttle is considered a system
 static char AllowRearm = 1;           // Will get moved into Prefs once tested
 static short StartupDelay;            //Used to change convergence rates for IMU, enable battery monitor
 
-static char MotorPin[4] = {PIN_MOTOR_FL, PIN_MOTOR_FR, PIN_MOTOR_BR, PIN_MOTOR_BL };            //Motor index to pin index table
+static char MotorPin[6] = {PIN_MOTOR_FL, PIN_MOTOR_FR, PIN_MOTOR_BR, PIN_MOTOR_BL, PIN_MOTOR_AUX1, PIN_MOTOR_AUX2};            //Motor index to pin index table
 
 static long LEDModeColor;
 
@@ -218,7 +218,7 @@ int main()                                    // Main function
   loopTimer = CNT;
 
   // Set all the motors to their low-throttle point
-  for( int i=0; i<4; i++ ) {
+  for( int i=0; i<MOTOR_COUNT; i++ ) {
     Motor[i] = Prefs.MinThrottle;
     Servo32_Set( MotorPin[i], Prefs.MinThrottle );
   }
@@ -420,7 +420,7 @@ void Initialize(void)
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
   ControlMode = ControlMode_AutoLevel;
-  Stats.Version = 0x0200;   // Version 2.0.0
+  Stats.Version = 0x0300;   // Version 3.0.0
 
   InitSerial();
 
@@ -449,7 +449,7 @@ void Initialize(void)
 
 
   Servo32_Init( 400 );
-  for( int i=0; i<4; i++ ) {
+  for( int i=0; i<MOTOR_COUNT; i++ ) {
     Servo32_AddFastPin( MotorPin[i] );
     Servo32_Set( MotorPin[i], Prefs.MinThrottle );
   }
@@ -579,7 +579,12 @@ void InitSerial(void)
 
   // Unused ports get a pin value of 32
   S4_Define_Port(2, 19200,       19, TXBuf3, sizeof(TXBuf3),      20, RXBuf3, sizeof(RXBuf3));
+
+#if defined(ENABLE_LASER_RANGE)
   S4_Define_Port(3, 115200, PIN_MOTOR_AUX2, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
+#else
+  S4_Define_Port(3, 115200, 32, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
+#endif
 
   S4_Start();
 }
@@ -792,7 +797,7 @@ void UpdateFlightLoop(void)
       if( ( Radio.Thro < -1100 && AllowThrottleCut ) || ( idleTimeout <= 0 && IDLE_TIMEOUT != 0))
       {
         // We're in throttle cut - disarm immediately, set a timer to allow rearm OR disarm if idle too long
-        for( int i=0; i<4; i++ ) {
+        for( int i=0; i<MOTOR_COUNT; i++ ) {
           Motor[i] = Prefs.MinThrottle;
           Servo32_Set( MotorPin[i], Prefs.MinThrottle );
         }
@@ -949,11 +954,25 @@ void UpdateFlightLoop(void)
     }
     //-------------------------------------------
 
+  #ifdef FLIGHT_MODE_QUAD
     //X configuration
     Motor[OUT_FL] = ThroOut + (((+PitchOut + RollOut - YawOut) * ThroMix) >> 7);
     Motor[OUT_FR] = ThroOut + (((+PitchOut - RollOut + YawOut) * ThroMix) >> 7);
     Motor[OUT_BL] = ThroOut + (((-PitchOut + RollOut + YawOut) * ThroMix) >> 7);
     Motor[OUT_BR] = ThroOut + (((-PitchOut - RollOut - YawOut) * ThroMix) >> 7);
+  #endif
+
+  #ifdef FLIGHT_MODE_HEX
+    //Hex configuration
+    int PartRoll = RollOut*3 / 4;
+    Motor[OUT_FL] = ThroOut + (((+PitchOut + PartRoll - YawOut) * ThroMix) >> 7);
+    Motor[OUT_CL] = ThroOut + (((          + RollOut  + YawOut) * ThroMix) >> 7);
+    Motor[OUT_BL] = ThroOut + (((-PitchOut + PartRoll - YawOut) * ThroMix) >> 7);
+
+    Motor[OUT_FR] = ThroOut + (((+PitchOut - PartRoll + YawOut) * ThroMix) >> 7);
+    Motor[OUT_CR] = ThroOut + (((          - RollOut  - YawOut) * ThroMix) >> 7);
+    Motor[OUT_BR] = ThroOut + (((-PitchOut - PartRoll + YawOut) * ThroMix) >> 7);
+  #endif
 
 
     // The low-throttle clamp prevents combined PID output from sending the ESCs below a minimum value
@@ -965,12 +984,22 @@ void UpdateFlightLoop(void)
       Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
       Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
       Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+
+      #ifdef FLIGHT_MODE_HEX
+      Motor[4] = clamp( Motor[4], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      Motor[5] = clamp( Motor[5], Prefs.MinThrottleArmed , Prefs.ThrottleTest);
+      #endif
     }
     else {
       Motor[0] = clamp( Motor[0], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
       Motor[1] = clamp( Motor[1], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
       Motor[2] = clamp( Motor[2], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
       Motor[3] = clamp( Motor[3], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+
+      #ifdef FLIGHT_MODE_HEX
+      Motor[4] = clamp( Motor[4], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      Motor[5] = clamp( Motor[5], Prefs.MinThrottleArmed , Prefs.MaxThrottle);
+      #endif
     }
 
     if( Prefs.DisableMotors == 0 ) {
@@ -979,6 +1008,11 @@ void UpdateFlightLoop(void)
       Servo32_Set( PIN_MOTOR_FR, Motor[1] );
       Servo32_Set( PIN_MOTOR_BR, Motor[2] );
       Servo32_Set( PIN_MOTOR_BL, Motor[3] );
+
+      #ifdef FLIGHT_MODE_HEX
+      Servo32_Set( PIN_MOTOR_AUX1, Motor[4] );
+      Servo32_Set( PIN_MOTOR_AUX2, Motor[5] );
+      #endif
     }
   }
 
@@ -1087,7 +1121,7 @@ void DisarmFlightMode(void)
 void StartCompassCalibrate(void)
 {
   // Make sure the motors are totally off
-  for( int i=0; i<4; i++ ) {
+  for( int i=0; i<MOTOR_COUNT; i++ ) {
     Motor[i] = Prefs.MinThrottle;
     Servo32_Set( MotorPin[i], Prefs.MinThrottle );
   }
@@ -1325,12 +1359,23 @@ void CheckDebugInput(void)
     case Comm_Motor4:
     case Comm_Motor5:
     case Comm_Motor6:
-    case Comm_Motor7:
-      NudgeMotor = (HostCommand&255) - '1';    // Becomes an index from 0 to 5, 0 to 3 are motors, 4 is LED, 5 is beeper
-      if( NudgeMotor < 4 ) {
-        NudgeCount[NudgeMotor] = 50;  // 1/5th of a second at 250 updates per sec
+      NudgeMotor = (HostCommand&255) - '1';    // Becomes an index from 0 to 7, 0 to 5 are motors, 6 is LED, 7 is beeper
+      if( NudgeMotor < 6 ) {
+        NudgeCount[NudgeMotor] = 50;  // 1/4th of a second at 200 updates per sec
         NudgeMotor = -1;
       }
+      break;
+
+    case Comm_BeepTest:
+      NudgeMotor = 6;
+      break;
+    
+    case Comm_LEDTest:
+      NudgeMotor = 7;
+      break;
+
+    case Comm_ThroCalib:
+      NudgeMotor = 8;
       break;
 
     case Comm_ResetRadio:
@@ -1445,20 +1490,51 @@ void DoDebugModeOutput(void)
       switch( phase )
       {
       case 0:
-        COMMLINK::StartPacket( 1, 18 );               // Radio values, 18 byte payload
-        COMMLINK::AddPacketData( &Radio , 16 );       // First 8 channels of Radio struct is 16 bytes total
+        {
+        struct RADIO_PACKED Pack;
+        Pack.ThroLow = Radio.Thro & 255;
+        Pack.ThroHigh = (Radio.Thro >> 8) & 15;
+
+        Pack.AileLow = Radio.Aile & 255;
+        Pack.AileHigh = (Radio.Aile >> 8) & 15;
+
+        Pack.ElevLow = Radio.Elev & 255;
+        Pack.ElevHigh = (Radio.Elev >> 8) & 15;
+
+        Pack.RuddLow = Radio.Rudd & 255;
+        Pack.RuddHigh = (Radio.Rudd >> 8) & 15;
+
+        Pack.GearLow = Radio.Gear & 255;
+        Pack.GearHigh = (Radio.Gear >> 8) & 15;
+
+        Pack.Aux1Low = Radio.Aux1 & 255;
+        Pack.Aux1High = (Radio.Aux1 >> 8) & 15;
+
+        Pack.Aux2Low = Radio.Aux2 & 255;
+        Pack.Aux2High = (Radio.Aux2 >> 8) & 15;
+
+        Pack.Aux3Low = Radio.Aux3 & 255;
+        Pack.Aux3High = (Radio.Aux3 >> 8) & 15;
+
+      
+        COMMLINK::StartPacket( 1, 14 );               // Radio values, 14 byte payload
+        COMMLINK::AddPacketData( &Pack , 12 );        // Radio_Packed struct is 12 bytes total
         COMMLINK::AddPacketData( &BatteryVolts, 2 );  // Send 2 additional bytes for battery voltage
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
+        }
         break;
 
       case 1:
+        {
         UpdateCycleStats();
-        COMMLINK::StartPacket( 7, 12 );                // Debug values, 16 byte payload
+        COMMLINK::StartPacket( 7, 10 );                // Debug values, 10 byte payload
         COMMLINK::AddPacketData( &Stats, 8 );          // Version number, + Stats on update cycle counts (sending debug data takes a long time)
-        COMMLINK::AddPacketData( &counter, 4 );        // Send the counter (sequence timestamp)
+        u16 ShortCounter = counter & 65535;
+        COMMLINK::AddPacketData( &ShortCounter, 2 );   // Send the counter low word (sequence timestamp)
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
+        }        
         break;
 
       case 2:
@@ -1483,23 +1559,27 @@ void DoDebugModeOutput(void)
         break;
 
       case 5: // Motor data
-        COMMLINK::BuildPacket( 5, &Motor[0], 8 );   // 8 byte payload
+        COMMLINK::BuildPacket( 5, &Motor[0], MOTOR_COUNT * 2 );   // 8 to 12 byte payload (quad or hex)
         COMMLINK::SendPacket(port);
         break;
 
 
       case 6:
-        COMMLINK::StartPacket( 4, 24 );   // Computed data, 24 byte payload
+        {
+        COMMLINK::StartPacket( 4, 16 );   // Computed data, 16 byte payload
 
-        COMMLINK::AddPacketData( &PitchDifference, 4 );
-        COMMLINK::AddPacketData( &RollDifference, 4 );
-        COMMLINK::AddPacketData( &YawDifference, 4 );
+        COMMLINK::AddPacketData( &PitchDifference, 2 );
+        COMMLINK::AddPacketData( &RollDifference, 2 );
+        COMMLINK::AddPacketData( &YawDifference, 2 );
+
+        u16 heightPacked = GroundHeight >> 1;          //height in 2mm units, max height of 65535*2 mm, or about 130m
 
         COMMLINK::AddPacketData( &sens.Alt, 4 );       //Send 4 bytes of data for Alt
-        COMMLINK::AddPacketData( &GroundHeight, 4 );   //Send 4 bytes of data for height above ground
+        COMMLINK::AddPacketData( &heightPacked, 2 );   //Send 2 bytes of data for height above ground
         COMMLINK::AddPacketData( &AltiEst, 4 );        //Send 4 bytes for altitude estimate 
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
+        }        
         break;
 
       case 7:
@@ -1517,7 +1597,7 @@ void DoDebugModeOutput(void)
   if( FlightEnabled ) return;   // Don't run this code in flight - dangerous
 
   // Check to see if any motors are supposed to test-spin
-  for( char m=0; m<4; m++ )
+  for( char m=0; m<MOTOR_COUNT; m++ )
   {
     if( NudgeCount[m] ) {
       if( --NudgeCount[m] > 0 ) {
@@ -1532,13 +1612,13 @@ void DoDebugModeOutput(void)
 
   if( NudgeMotor > -1 )
   {
-    if( NudgeMotor == 4 )                                             //Buzzer test
+    if( NudgeMotor == 6 )                                             //Buzzer test
     {
       BeepHz(4500, 50);
       waitcnt( CNT + 5000000 );
       BeepHz(3500, 50);
     }
-    else if( NudgeMotor == 5 )                                        //LED test
+    else if( NudgeMotor == 7 )                                        //LED test
     {
       //RGB led will run a rainbow
       for( i=0; i<256; i++ ) {
@@ -1556,7 +1636,7 @@ void DoDebugModeOutput(void)
         waitcnt( CNT + 160000 );
       }          
     }
-    else if( NudgeMotor == 6 )                                        //ESC Throttle calibration
+    else if( NudgeMotor == 8 )                                        //ESC Throttle calibration
     {
       BeepHz(4500, 100);
       waitcnt( CNT + 5000000 );
@@ -1568,13 +1648,13 @@ void DoDebugModeOutput(void)
 
       if( S4_Get(0) == 0xFF )     // Safety check - Allow the user to break out by sending anything else                  
       {
-        for( int i=0; i<4; i++ ) {
+        for( int i=0; i<MOTOR_COUNT; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MaxThrottle);
         }
 
         S4_Get(0);  // Get the next character to finish
 
-        for( int i=0; i<4; i++ ) {
+        for( int i=0; i<MOTOR_COUNT; i++ ) {
           Servo32_Set(MotorPin[i], Prefs.MinThrottle);  // Must add 64 to min throttle value (in this calibration code only) if using ESCs with BLHeli version 14.0 or 14.1
         }
 

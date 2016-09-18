@@ -4,11 +4,67 @@
 
 #include "packet.h"
 
+struct RadioPacked
+{
+	quint8	ThroLow;
+	quint8	AileLow;
+	quint8	ElevLow;
+	quint8	RuddLow;
+	quint8	GearLow;
+	quint8	Aux1Low;
+	quint8	Aux2Low;
+	quint8	Aux3Low;
+
+	quint8	ThroHigh:4;
+	quint8	AileHigh:4;
+	quint8	ElevHigh:4;
+	quint8	RuddHigh:4;
+	quint8	GearHigh:4;
+	quint8	Aux1High:4;
+	quint8	Aux2High:4;
+	quint8	Aux3High:4;
+
+	short	Battery;
+
+
+	void ReadFrom( packet * p )
+	{
+		ThroLow = p->GetByte();
+		AileLow = p->GetByte();
+		ElevLow = p->GetByte();
+		RuddLow = p->GetByte();
+		GearLow = p->GetByte();
+		Aux1Low = p->GetByte();
+		Aux2Low = p->GetByte();
+		Aux3Low = p->GetByte();
+
+		quint8 temp;
+
+		temp = p->GetByte();
+		ThroHigh = temp & 15;
+		AileHigh = temp >> 4;
+
+		temp = p->GetByte();
+		ElevHigh = temp & 15;
+		RuddHigh = temp >> 4;
+
+		temp = p->GetByte();
+		GearHigh = temp & 15;
+		Aux1High = temp >> 4;
+
+		temp = p->GetByte();
+		Aux2High = temp & 15;
+		Aux3High = temp >> 4;
+
+		Battery = p->GetShort();
+	}
+};
+
 
 class RadioData
 {
 public:
-    short Thro, Aile, Elev, Rudd;
+	short Thro, Aile, Elev, Rudd;
     short Gear, Aux1, Aux2, Aux3;						// Radio values = 16 bytes
     short BatteryVolts;                                  // Battery Monitor = 2 bytes
 
@@ -32,25 +88,44 @@ public:
         }
     }
 
+	RadioData &operator =(RadioPacked &rhs)
+	{
+		Thro = rhs.ThroLow | (rhs.ThroHigh << 8);
+		if( rhs.ThroHigh & 8) Thro |= 0xF000;
 
-    void ReadFrom( packet * p )
-    {
-        Thro = p->GetShort();
-        Aile = p->GetShort();
-        Elev = p->GetShort();
-        Rudd = p->GetShort();
-        Gear = p->GetShort();
-        Aux1 = p->GetShort();
-        Aux2 = p->GetShort();
-        Aux3 = p->GetShort();
-        BatteryVolts = p->GetShort();
-    }
+		Aile = rhs.AileLow | (rhs.AileHigh << 8);
+		if( rhs.AileHigh & 8) Aile |= 0xF000;
+
+		Elev = rhs.ElevLow | (rhs.ElevHigh << 8);
+		if( rhs.ElevHigh & 8) Elev |= 0xF000;
+
+		Rudd = rhs.RuddLow | (rhs.RuddHigh << 8);
+		if( rhs.RuddHigh & 8) Rudd |= 0xF000;
+
+		Gear = rhs.GearLow | (rhs.GearHigh << 8);
+		if( rhs.GearHigh & 8) Gear |= 0xF000;
+
+		Aux1 = rhs.Aux1Low | (rhs.Aux1High << 8);
+		if( rhs.Aux1High & 8) Aux1 |= 0xF000;
+
+		Aux2 = rhs.Aux2Low | (rhs.Aux2High << 8);
+		if( rhs.Aux2High & 8) Aux2 |= 0xF000;
+
+		Aux3 = rhs.Aux3Low | (rhs.Aux3High << 8);
+		if( rhs.Aux3High & 8) Aux3 |= 0xF000;
+
+		BatteryVolts = rhs.Battery;
+
+		return *this;
+	}
+
 };
 
 class MotorData
 {
 public:
-    short FL, FR, BR, BL;	// front-left, front-right, back-right, back-left motor outputs
+	short FL, FR, BR, BL, CR, CL;	// front-left, front-right, back-right, back-left, center-right, center-left motor outputs
+	bool isHex;
 
     void ReadFrom( packet * p )
     {
@@ -58,7 +133,14 @@ public:
         FR = p->GetShort();
         BR = p->GetShort();
         BL = p->GetShort();
-    }
+
+		isHex = p->len == 12+2;	// Checksum is 2 extra bytes
+
+		if( isHex ) {
+			CR = p->GetShort();
+			CL = p->GetShort();
+		}
+	}
 };
 
 
@@ -89,7 +171,7 @@ class DebugValues
 public:
     short Version;
     short MinCycles, MaxCycles, AvgCycles;
-    int Counter;
+	quint16 Counter;
 
     void ReadFrom( packet * p )
     {
@@ -97,7 +179,7 @@ public:
         MinCycles = p->GetShort();
         MaxCycles = p->GetShort();
         AvgCycles = p->GetShort();
-        Counter =   p->GetInt();		// basically a sequence value
+		Counter =   p->GetShort();		// basically a sequence value
     }
 };
 
@@ -105,17 +187,18 @@ public:
 class ComputedData
 {
 public:
-    int Pitch, Roll, Yaw;								// IMU = 12 bytes
-	int Alt, GroundHeight, AltiEst;						// Altimeter = 12 bytes
+	short Pitch, Roll, Yaw;								// IMU = 6 bytes
+	int Alt, AltiEst;
+	int GroundHeight;									// Altimeter = 10 bytes
 
     void ReadFrom( packet * p )
     {
-        Pitch = p->GetInt();
-        Roll =  p->GetInt();
-        Yaw =   p->GetInt();
+		Pitch = p->GetShort();
+		Roll =  p->GetShort();
+		Yaw =   p->GetShort();
 
         Alt =     p->GetInt();
-		GroundHeight = p->GetInt();
+		GroundHeight = (quint16)(p->GetShort()) * 2;	// unpack GroundHeight back to mm
         AltiEst = p->GetInt();
     }
 };

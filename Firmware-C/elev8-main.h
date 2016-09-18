@@ -59,11 +59,40 @@ void All_LED( int Color );
 #define   OUT_FR  1
 #define   OUT_BR  2
 #define   OUT_BL  3
+#define   OUT_CR  4 // center-right (hex only)
+#define   OUT_CL  5 // center-left  (hex only)
+
+
+// one of these two flight modes must be enabled
+//#define FLIGHT_MODE_QUAD
+#define FLIGHT_MODE_HEX
+
+
+#if !defined(FLIGHT_MODE_QUAD) && !defined(FLIGHT_MODE_HEX)
+#error - Must have a flight mode (Quad or Hex) enabled!
+#endif
+
+#if defined(FLIGHT_MODE_QUAD) && defined(FLIGHT_MODE_HEX)
+#error - Only one flight mode (Quad or Hex) may be enabled!
+#endif
+
+#ifdef FLIGHT_MODE_QUAD
+#define MOTOR_COUNT 4
+#endif
+
+#ifdef FLIGHT_MODE_HEX
+#define MOTOR_COUNT 6
+#endif
 
 
 #if defined(ENABLE_PING_SENSOR) && defined(ENABLE_LASER_RANGE)
 #error - Only one ground height sensor may be enabled!
 #endif
+
+#if defined(FLIGHT_MODE_HEX) && (defined(ENABLE_PING_SENSOR) || defined(ENABLE_LASER_RANGE))
+#error - Hex mode cannot be used with a ground-height sensor - not enough pins
+#endif
+
 
 
 #ifdef ENABLE_PING_SENSOR
@@ -103,6 +132,26 @@ struct RADIO {
   short Thro, Aile, Elev, Rudd, Gear, Aux1, Aux2, Aux3, Aux4;   // Aux4 is an additional raw channel for SBUS users only
 
   short & Channel(int i) { return (&Thro)[i]; }
+};
+
+struct RADIO_PACKED { // 12 bytes instead of 16, values are -2048 to 2047
+    char  ThroLow;
+    char  AileLow;
+    char  ElevLow;
+    char  RuddLow;
+    char  GearLow;
+    char  Aux1Low;
+    char  Aux2Low;
+    char  Aux3Low;
+
+    char  ThroHigh:4;
+    char  AileHigh:4;
+    char  ElevHigh:4;
+    char  RuddHigh:4;
+    char  GearHigh:4;
+    char  Aux1High:4;
+    char  Aux2High:4;
+    char  Aux3High:4;
 };
 
 
@@ -146,6 +195,9 @@ const int LED_DimWhite = LED_White & LED_Half;
 #define Comm_Motor4     COMMAND('M','4','t','4')
 #define Comm_Motor5     COMMAND('M','5','t','5')
 #define Comm_Motor6     COMMAND('M','6','t','6')
-#define Comm_Motor7     COMMAND('M','7','t','7')
+
+#define Comm_BeepTest   COMMAND('M','B','Z','Z')
+#define Comm_LEDTest    COMMAND('M','L','E','D')
+#define Comm_ThroCalib  COMMAND('T','C','A','L')
 
 #endif
