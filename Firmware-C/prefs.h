@@ -75,6 +75,11 @@ typedef struct {
   char  FlightMode[3];    // Flight mode to use when gear switch is down, middle, up
   char  AccelCorrectionStrength;
 
+  char  AileExpo;
+  char  ElevExpo;
+  char  RuddExpo;
+  char  unused3;
+
   char  ThroChannel;      // Radio inputs to use for each value
   char  AileChannel;
   char  ElevChannel;

@@ -80,6 +80,8 @@ private slots:
 	void on_hsAutoYawSpeed_valueChanged(int value);
 	void on_hsManualRollPitchSpeed_valueChanged(int value);
 	void on_hsManualYawSpeed_valueChanged(int value);
+	void on_hsPitchRollExpo_valueChanged(int value);
+	void on_hsYawExpo_valueChanged(int value);
 
 	void on_cbR_Channel1_currentIndexChanged(int index);
 	void on_cbR_Channel2_currentIndexChanged(int index);

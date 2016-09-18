@@ -106,6 +106,10 @@ void Prefs_SetDefaults(void)
   Prefs.FlightMode[2] = FlightMode_Manual;
   Prefs.AccelCorrectionStrength = 96;
 
+  Prefs.AileExpo = 0;
+  Prefs.ElevExpo = 0;
+  Prefs.RuddExpo = 0;
+
   Prefs.ThroChannel = 0;      //Standard radio channel mappings
   Prefs.AileChannel = 1;
   Prefs.ElevChannel = 2;

@@ -316,6 +316,11 @@ void MainWindow::AdjustFonts(void)
 	ui->lblManualRollPitchSpeed->setFont(smallFont);
 	ui->lblManualYawSpeed->setFont(smallFont);
 
+	ui->label_46->setFont(smallFont);
+	ui->label_47->setFont(smallFont);
+	ui->lblPitchRollExpo->setFont(smallFont);
+	ui->lblYawExpo->setFont(smallFont);
+
 	ui->label_11->setFont(smallFont);
 	ui->label_37->setFont(smallFont);
 	ui->label_10->setFont(smallFont);
@@ -1198,6 +1203,9 @@ void MainWindow::ConfigureUIFromPreferences(void)
 	ui->cb_FlightMode_Down->setCurrentIndex( prefs.FlightMode[0] );
 
 
+	AttemptSetValue( ui->hsPitchRollExpo, prefs.AileExpo );
+	AttemptSetValue( ui->hsYawExpo, prefs.RuddExpo );
+
 
 	// Flight Control Setup
 	//----------------------------------------------------------------------------
@@ -1423,6 +1431,10 @@ void MainWindow::on_btnUploadRadioChanges_clicked()
 	prefs.FlightMode[1] = ui->cb_FlightMode_Middle->currentIndex();
 	prefs.FlightMode[2] = ui->cb_FlightMode_Up->currentIndex();
 
+	prefs.AileExpo = ui->hsPitchRollExpo->value();
+	prefs.ElevExpo = ui->hsPitchRollExpo->value();
+	prefs.RuddExpo = ui->hsYawExpo->value();
+
 	UpdateElev8Preferences();
 }
 
@@ -1645,6 +1657,18 @@ void MainWindow::on_hsManualYawSpeed_valueChanged(int value)
 {
 	QString str = QString("%1 deg/s").arg( value*10 );
 	ui->lblManualYawSpeed->setText( str );
+}
+
+void MainWindow::on_hsPitchRollExpo_valueChanged(int value)
+{
+	QString str = QString("%1 %").arg( value );
+	ui->lblPitchRollExpo->setText( str );
+}
+
+void MainWindow::on_hsYawExpo_valueChanged(int value)
+{
+	QString str = QString("%1 %").arg( value );
+	ui->lblYawExpo->setText( str );
 }
 
 void MainWindow::on_hsAccelCorrectionFilter_valueChanged(int value)
@@ -2078,6 +2102,15 @@ void MainWindow::WriteSettings( QIODevice *file )
 	WritePref( writer, "VoltageOffset", prefs.VoltageOffset );
 	WritePref( writer, "LowVoltageAlarmThreshold", prefs.LowVoltageAlarmThreshold );
 
+	WritePref( writer, "FlightMode_0", prefs.FlightMode[0] );
+	WritePref( writer, "FlightMode_1", prefs.FlightMode[1] );
+	WritePref( writer, "FlightMode_2", prefs.FlightMode[2] );
+	WritePref( writer, "AccelCorrectionStrength", prefs.AccelCorrectionStrength );
+
+	WritePref( writer, "AileExpo", prefs.AileExpo );
+	WritePref( writer, "ElevExpo", prefs.ElevExpo );
+	WritePref( writer, "RuddExpo", prefs.RuddExpo );
+
 	WritePref( writer, "ThroChannel", prefs.ThroChannel );
 	WritePref( writer, "AileChannel", prefs.AileChannel );
 	WritePref( writer, "ElevChannel", prefs.ElevChannel );
@@ -2267,6 +2300,15 @@ void MainWindow::ReadSettingsContents( QXmlStreamReader & reader )
 			else if( reader.name() == "AccelCorrectionFilter")	ReadInt(reader, prefs.AccelCorrectionFilter);
 			else if( reader.name() == "VoltageOffset")			ReadInt(reader, prefs.VoltageOffset);
 			else if( reader.name() == "LowVoltageAlarmThreshold")	ReadInt(reader, prefs.LowVoltageAlarmThreshold);
+
+			else if( reader.name() == "FlightMode_0")			ReadInt(reader, prefs.FlightMode[0]);
+			else if( reader.name() == "FlightMode_1")			ReadInt(reader, prefs.FlightMode[1]);
+			else if( reader.name() == "FlightMode_2")			ReadInt(reader, prefs.FlightMode[2]);
+			else if( reader.name() == "AccelCorrectionStrength")ReadInt(reader, prefs.AccelCorrectionStrength);
+
+			else if( reader.name() == "AileExpo")				ReadInt(reader, prefs.AileExpo);
+			else if( reader.name() == "ElevExpo")				ReadInt(reader, prefs.ElevExpo);
+			else if( reader.name() == "RuddExpo")				ReadInt(reader, prefs.RuddExpo);
 
 			else if( reader.name() == "ThroChannel")			ReadInt(reader, prefs.ThroChannel);
 			else if( reader.name() == "AileChannel")			ReadInt(reader, prefs.AileChannel);

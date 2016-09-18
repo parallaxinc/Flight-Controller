@@ -64,8 +64,8 @@ void All_LED( int Color );
 
 
 // one of these two flight modes must be enabled
-//#define FLIGHT_MODE_QUAD
-#define FLIGHT_MODE_HEX
+#define FLIGHT_MODE_QUAD
+//#define FLIGHT_MODE_HEX
 
 
 #if !defined(FLIGHT_MODE_QUAD) && !defined(FLIGHT_MODE_HEX)

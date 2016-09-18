@@ -203,6 +203,35 @@ static int abs(int v) {
 }
 
 
+static short EvalQuadratic( short t, short v )
+{
+  int diff0, diff1;
+ 
+  if( t >= 0 ) {
+    diff0 = v - 0;
+    diff1 = 1024 - v;
+  }
+  else {
+    t = -t;
+    v = -v;
+    diff0 = v - 0;
+    diff1 = -1024 - v;
+  }
+
+  int p01 = 0 + (diff0 * t) / 1024;
+  int p12 = v + (diff1 * t) / 1024;
+
+  int diff2 = p12 - p01;
+  return (short)(p01 + (diff2 * t) / 1024);
+}  
+
+
+static int AileExpo = 1024 * 50 / 100;
+static int ElevExpo = 1024 * 50 / 100;
+static int RuddExpo = 1024 * 50 / 100;
+
+
+
 int main()                                    // Main function
 {
   Initialize(); // Set up all the objects
@@ -250,6 +279,10 @@ int main()                                    // Main function
         Radio.Channel(i) =  (RC::GetRC( Prefs.ChannelIndex(i)) - Prefs.ChannelCenter(i)) * Prefs.ChannelScale(i) / 1024;
       }        
     }
+
+    Radio.Aile = EvalQuadratic( Radio.Aile , AileExpo );
+    Radio.Elev = EvalQuadratic( Radio.Elev , ElevExpo );
+    Radio.Rudd = EvalQuadratic( Radio.Rudd , RuddExpo );
 
       //-------------------------------------------------
     if( FlightMode == FlightMode_CalibrateCompass )
@@ -1781,6 +1814,11 @@ void ApplyPrefs(void)
 
   QuatIMU_SetAutoLevelRates( Prefs.AutoLevelRollPitch , Prefs.AutoLevelYawRate );
   QuatIMU_SetManualRates( Prefs.ManualRollPitchRate , Prefs.ManualYawRate );
+
+  // Expo values are from 0 (no exponential curve) to 100 (full exponential curve)
+  AileExpo = 512 * (100-Prefs.AileExpo) / 100;
+  ElevExpo = 512 * (100-Prefs.ElevExpo) / 100;
+  RuddExpo = 512 * (100-Prefs.RuddExpo) / 100;
 
 //#ifdef FORCE_SBUS
 //  Prefs.ReceiverType = 1;
