@@ -86,7 +86,7 @@ void Prefs_SetDefaults(void)
 
   Prefs.LowVoltageAlarmThreshold = 1050;
 
-  Prefs.LowVoltageAlarm = 1;
+  Prefs.LowVoltageAlarm = 0;
   Prefs.LowVoltageAscentLimit = 0;
   Prefs.ThrottleTest = 1180 * 8;
 
