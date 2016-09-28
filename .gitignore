@@ -1,7 +1,7 @@
 build/
 GroundStation-Release/
 build-GroundStation-Desktop_Qt*
-
+build-FloatStreamCreator*
 *.o
 moc_*.cpp
 ui_*.h
