@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/heading_background.png</file>
+        <file>images/heading_aircraft.png</file>
+        <file>images/heading_wheel.png</file>
+        <file>images/horizon_background.png</file>
+        <file>images/horizon_groundsky.png</file>
+        <file>images/altimeter_longneedle.png</file>
+        <file>images/altimeter_numbers.png</file>
+        <file>images/altimeter_smallneedle.png</file>
+        <file>images/altimeter_background.png</file>
+        <file>images/radiostick_background.png</file>
+        <file>images/Icon_Clockwise.png</file>
+        <file>images/Icon_Counter-clockwise.png</file>
+        <file>images/PropIcon.png</file>
+        <file>images/parallaxlogo-s200.png</file>
+        <file>images/ParallaxLogo-S200-vertical.png</file>
+        <file>images/groundstation_icon64.png</file>
+    </qresource>
+</RCC>

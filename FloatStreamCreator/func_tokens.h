@@ -1,0 +1,17 @@
+
+enum TokenType {
+  INTEGER,
+  FLOAT,
+
+  PLUS,
+  MINUS,
+  TIMES,
+  DIVIDE,
+
+  LEFT_BRACE,
+  RIGHT_BRACE,
+  END,
+  ADDRESS,
+
+  IDENTIFIER,
+};

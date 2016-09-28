@@ -42,7 +42,22 @@ static int  zx, zy, zz;                          // Gyro zero readings
 // or remove some of them due to overly aggressive (IE wrong) optimization.
 
 enum IMU_VarLabels {
+    ConstNull,                                   // Basically a placeholder for real zero / null
 
+    const_0,
+    const_1,
+    const_neg1,
+    const_neg12,
+
+    const_F1,
+    const_F2,
+    const_NegF1,
+    const_neghalf,
+
+
+  #include "QuatIMU__Vars.inc"
+
+#if 0
 	// INTEGER data -------------------
 
     ConstNull,                                   // Basically a placeholder for real zero / null
@@ -137,6 +152,8 @@ enum IMU_VarLabels {
     PitchDiff, RollDiff, YawDiff,       // Difference between current orientation and desired, scaled outputs
     Heading,                            // Computed heading for control updates
 
+    Temp_lhs, Temp_rhs,
+
     // Float constants used in computation
     const_GyroScale,
     const_NegGyroScale,
@@ -171,6 +188,7 @@ enum IMU_VarLabels {
     const_outAngleScale,
     const_outNegAngleScale,
     const_OutControlShift,
+#endif
 
     IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
 };
@@ -210,6 +228,14 @@ void QuatIMU_Start(void)
 
   IMU_VARS[const_GyroScale]         =    1.0f / (float)GyroScale;    
   IMU_VARS[const_NegGyroScale]      =   -1.0f / (float)GyroScale;
+
+  INT_VARS[const_I0] = 0;
+  IMU_VARS[const_F0_5] = 0.5f;
+  IMU_VARS[const_F1_0] = 1.0f;
+  IMU_VARS[const_F2_0] = 2.0f;
+  IMU_VARS[const_F256_0] = 256.0f;
+  IMU_VARS[const_F4096_0] = 4096.0f;
+
 
   INT_VARS[const_0]                 =    0;
   INT_VARS[const_1]                 =    1;
@@ -293,7 +319,7 @@ float * QuatIMU_GetMatrix(void) {
 }  
 
 float * QuatIMU_GetQuaternion(void) {
-  return &IMU_VARS[qx];
+  return &IMU_VARS[qw];
 }
 
 int QuatIMU_GetVerticalVelocityEstimate(void) {
@@ -446,6 +472,9 @@ void QuatIMU_AdjustStreamPointers( unsigned char * p )
               
 unsigned char QuatUpdateCommands[] = {
 
+#include "QuatIMU__QuatUpdate.inc"
+
+#if 0
   //--------------------------------------------------------------
   // Convert the gyro rates to radians, add in the previous cycle error corrections
   //--------------------------------------------------------------
@@ -905,7 +934,7 @@ unsigned char QuatUpdateCommands[] = {
 
         F32_opTruncRound, altitudeEstimate,  const_0, AltitudeEstMM,  // output integer values for PIDs
         F32_opTruncRound, velocityEstimate,  const_0, VelocityEstMM,
-
+#endif
         0, 0, 0, 0
         };
 //}
@@ -1207,13 +1236,19 @@ void QuatIMU_InitFunctions(void)
 
 void QuatIMU_Update( int * packetAddr )
 {
-  memcpy( &IMU_VARS[gx], packetAddr, 11 * sizeof(int) );
+  //memcpy( &IMU_VARS[gx], packetAddr, 11 * sizeof(int) );
+  INT_VARS[gx] = packetAddr[0] - zx;
+  INT_VARS[gy] = packetAddr[1] - zy;
+  INT_VARS[gz] = packetAddr[2] - zz;
+  INT_VARS[ax] = packetAddr[3];
+  INT_VARS[ay] = packetAddr[4];
+  INT_VARS[az] = packetAddr[5];
+  INT_VARS[mx] = packetAddr[6];
+  INT_VARS[my] = packetAddr[7];
+  INT_VARS[mz] = packetAddr[8];
+  INT_VARS[alt] = packetAddr[9];
+  INT_VARS[altRate] = packetAddr[10];
 
-  //Subtract gyro bias.  Probably better to do this in the sensor code, and ditto for accelerometer offset
-
-  ((int*)IMU_VARS)[gx] -= zx;
-  ((int*)IMU_VARS)[gy] -= zy;
-  ((int*)IMU_VARS)[gz] -= zz;
 
   F32::RunStream( QuatUpdateCommands , IMU_VARS );
 }
