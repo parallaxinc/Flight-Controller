@@ -25,7 +25,7 @@
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opAdd,     Temp_lhs, const_epsilon, Temp_lhs,
 	F32_opSqrt,    Temp_lhs, 0, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F0_5, rmag,
+	F32_opShift,   Temp_lhs, const_INeg_1, rmag,
 	// 
 	// float sinr, cosr;
 	// cosr = SinCos(rmag, sinr);
@@ -40,28 +40,28 @@
 	F32_opMul,     rz, qz, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opNeg,     Temp_lhs, 0, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F0_5, qdw,
-	// float qdx =  (rx*qw + rz*qy + ry*qz) * 0.5f;
+	F32_opShift,   Temp_lhs, const_INeg_1, qdw,
+	// float qdx =  (rx*qw + rz*qy - ry*qz) * 0.5f;
 	F32_opMul,     rx, qw, Temp_lhs,
 	F32_opMul,     rz, qy, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     ry, qz, Temp_rhs,
-	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F0_5, qdx,
+	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
+	F32_opShift,   Temp_lhs, const_INeg_1, qdx,
 	// float qdy =  (ry*qw - rz*qx + rx*qz) * 0.5f;
 	F32_opMul,     ry, qw, Temp_lhs,
 	F32_opMul,     rz, qx, Temp_rhs,
 	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     rx, qz, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F0_5, qdy,
+	F32_opShift,   Temp_lhs, const_INeg_1, qdy,
 	// float qdz =  (rz*qw + ry*qx - rx*qy) * 0.5f;
 	F32_opMul,     rz, qw, Temp_lhs,
 	F32_opMul,     ry, qx, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     rx, qy, Temp_rhs,
 	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F0_5, qdz,
+	F32_opShift,   Temp_lhs, const_INeg_1, qdz,
 	// 
 	// qw = cosr * qw + sinr * qdw;
 	F32_opMul,     cosr, qw, Temp_lhs,
@@ -125,35 +125,35 @@
 	// 
 	// m00 = 1.0f - (fy2 + fz2) * 2.0f;
 	F32_opAdd,     fy2, fz2, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, Temp_rhs,
+	F32_opShift,   Temp_lhs, const_I1, Temp_rhs,
 	F32_opSub,     const_F1_0, Temp_rhs, m00,
 	// m01 =        (fxy - fwz) * 2.0f;
 	F32_opSub,     fxy, fwz, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, m01,
+	F32_opShift,   Temp_lhs, const_I1, m01,
 	// m02 =        (fxz + fwy) * 2.0f;
 	F32_opAdd,     fxz, fwy, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, m02,
+	F32_opShift,   Temp_lhs, const_I1, m02,
 	// 
 	// m10 =        (fxy + fwz) * 2.0f;
 	F32_opAdd,     fxy, fwz, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, m10,
+	F32_opShift,   Temp_lhs, const_I1, m10,
 	// m11 = 1.0f - (fx2 + fz2) * 2.0f;
 	F32_opAdd,     fx2, fz2, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, Temp_rhs,
+	F32_opShift,   Temp_lhs, const_I1, Temp_rhs,
 	F32_opSub,     const_F1_0, Temp_rhs, m11,
 	// m12 =        (fyz - fwx) * 2.0f;
 	F32_opSub,     fyz, fwx, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, m12,
+	F32_opShift,   Temp_lhs, const_I1, m12,
 	// 
 	// m20 =        (fxz - fwy) * 2.0f;
 	F32_opSub,     fxz, fwy, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, m20,
+	F32_opShift,   Temp_lhs, const_I1, m20,
 	// m21 =        (fyz + fwx) * 2.0f;
 	F32_opAdd,     fyz, fwx, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, m21,
+	F32_opShift,   Temp_lhs, const_I1, m21,
 	// m22 = 1.0f - (fx2 + fy2) * 2.0f;
 	F32_opAdd,     fx2, fy2, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, Temp_rhs,
+	F32_opShift,   Temp_lhs, const_I1, Temp_rhs,
 	F32_opSub,     const_F1_0, Temp_rhs, m22,
 	// 
 	// 
@@ -221,7 +221,7 @@
 	// 
 	// float accWeight = 1.0f - FMin( FAbs( 2.0f - const_AccScale * rmag * 2.0f), 1.0f );
 	F32_opMul,     const_AccScale, rmag, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, Temp_rhs,
+	F32_opShift,   Temp_lhs, const_I1, Temp_rhs,
 	F32_opSub,     const_F2_0, Temp_rhs, Temp_lhs,
 	F32_opFAbs,    Temp_lhs, 0, Temp_lhs,
 	F32_opFMin,    Temp_lhs, const_F1_0, Temp_rhs,
@@ -276,7 +276,7 @@
 	// to be fed into the quaternion construction code.  This HalfYaw value serves that purpose
 	// 
 	// HalfYaw = FloatYaw * 0.5f;
-	F32_opMul,     FloatYaw, const_F0_5, HalfYaw,
+	F32_opShift,   FloatYaw, const_INeg_1, HalfYaw,
 	// 
 	// 
 	// Compute pitch and roll in integer form, used by compass calibration, possible user code
@@ -293,7 +293,7 @@
 	// 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground
 	// ThrustFactor = Trunc( (1.0f / m11) * 256.0f );
 	F32_opDiv,     const_F1_0, m11, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F256_0, Temp_lhs,
+	F32_opShift,   Temp_lhs, const_I8, Temp_lhs,
 	F32_opTruncRound,Temp_lhs, 0, ThrustFactor,
 	// 
 	// 
@@ -310,15 +310,13 @@
 	//forceZ = faz / 4096.0f;
 	// 
 	//Orient force vector into world frame & subtract gravity (1G)
-	// forceWY = m01*fax/4096.0f + m11*fay/4096.0f + m21*faz/4096.0f - 1.0f;
+	// forceWY = (m01*fax + m11*fay + m21*faz)/4096.0f - 1.0f;
 	F32_opMul,     m01, fax, Temp_lhs,
-	F32_opDiv,     Temp_lhs, const_F4096_0, Temp_lhs,
-	F32_opMul,     m11, fay, Temp_lhs,
-	F32_opDiv,     Temp_lhs, const_F4096_0, Temp_rhs,
+	F32_opMul,     m11, fay, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
-	F32_opMul,     m21, faz, Temp_lhs,
-	F32_opDiv,     Temp_lhs, const_F4096_0, Temp_rhs,
+	F32_opMul,     m21, faz, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
+	F32_opShift,   Temp_lhs, const_INeg_12, Temp_lhs,
 	F32_opSub,     Temp_lhs, const_F1_0, forceWY,
 	// 
 	//Convert G to mm/sec^2

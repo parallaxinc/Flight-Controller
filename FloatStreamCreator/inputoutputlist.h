@@ -15,7 +15,6 @@ INPUT float const_NegGyroScale;
 INPUT float const_epsilon;
 
 INPUT int   const_OutControlShift;
-INPUT int   const_ThrustShift;
 
 INPUT float const_AccErrScale;
 INPUT float const_MagErrScale;

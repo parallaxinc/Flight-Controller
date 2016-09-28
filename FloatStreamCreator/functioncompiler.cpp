@@ -122,30 +122,45 @@ bool FunctionCompiler::GenerateOutputCode( ExpressionParser & parser )
 
 bool FunctionCompiler::GenerateVariables( ExpressionParser & parser )
 {
-	QString filename = outPath + "_vars.inc";
+	QString fileVars = outPath + "_vars.inc";
+	QString fileInits = outPath + "_var_init.inc";
 
-	QByteArray out;
-	QTextStream stream( &out );
+	QByteArray outVars, outInits;
+	QTextStream streamVars( &outVars );
+	QTextStream streamInits( &outInits );
 
 	for( QMap<QString,EVar*>::iterator iter = parser.varList.begin(); iter != parser.varList.end(); iter++ )
 	{
 		EVar * var = iter.value();
-		stream << var->constName << ",";
+		if( var->isConst && var->refCount == 0 ) continue;	// don't output these - they're unused
+
+		streamVars << var->constName << ",";
 
 		if( var->isConst ) {
-			stream << "\t\t // == " << var->valString;
+			streamVars << "\t\t // = " << var->valString;
+
+			if( var->type == T_Int ) {
+				streamInits << "	INT_VARS[";
+			}
+			else if( var->type == T_Float ) {
+				streamInits << "	IMU_VARS[";
+			}
+			streamInits << var->constName << "] = " << var->valString << ";\n";
 		}
-
-		stream << "\t\t // refcount = " << var->refCount;
-
-		stream << "\n";
+		streamVars << "\t\t // refcount = " << var->refCount << "\n";
 	}
-	stream.flush();
+	streamVars.flush();
+	streamInits.flush();
 
-	QFile f(filename);
+	QFile f(fileVars);
 	f.open( QFile::WriteOnly );
-	f.write(out);
+	f.write(outVars);
 	f.close();
+
+	QFile f2(fileInits);
+	f2.open( QFile::WriteOnly );
+	f2.write(outInits);
+	f2.close();
 
 	return true;
 }
@@ -168,6 +183,7 @@ bool FunctionCompiler::GenerateTokens( ExpressionParser & parser )
 				stream << "\t" << expr->FuncName << "\n";	// line comments just get output as is
 			}
 			else {
+				parser.Optimize(expr);
 				if( OutputExpressionTokens( parser, stream, expr ) == false ) {
 					//return false;
 				}

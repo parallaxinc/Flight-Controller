@@ -35,7 +35,6 @@ struct Expression		// This can be a function call, with one or two arguments
 	~Expression();
 
 	void Dump(void);
-	void Optimize(void);
 };
 
 

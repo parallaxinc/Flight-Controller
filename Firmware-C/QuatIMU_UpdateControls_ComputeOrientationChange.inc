@@ -87,7 +87,7 @@
 	// diffAngle = ACos(qrw) * 2.0
 	// float diffAngle = ACos(qrw) * 2.0f;
 	F32_opASinCos, qrw, 0, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_F2_0, diffAngle,
+	F32_opShift,   Temp_lhs, const_I1, diffAngle,
 	// 
 	// DebugFloat = diffAngle;
 	F32_opMov,     diffAngle, 0, DebugFloat,

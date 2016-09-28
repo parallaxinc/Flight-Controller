@@ -54,141 +54,7 @@ enum IMU_VarLabels {
     const_NegF1,
     const_neghalf,
 
-
-  #include "QuatIMU__Vars.inc"
-
-#if 0
-	// INTEGER data -------------------
-
-    ConstNull,                                   // Basically a placeholder for real zero / null
-
-    Yaw,                                         // Current yaw, scaled units (0 to 65535)
-    Pitch,                                       // Current pitch, scaled units (0 to 65535)
-    Roll,                                        // Current roll, scaled units (0 to 65535)
-
-    ThrustFactor,
-    
-    // Inputs
-    gx, gy, gz,
-    ax, ay, az,                                  // Sensor inputs
-    mx, my, mz,
-    alt, altRate,
-
-    // Integer constants used in computation
-    const_0,
-    const_1,
-    const_neg1,
-    const_neg12,
-
-	// FLOAT data ---------------------
-
-	// Internal orientation storage
-    qx, qy, qz, qw,                              // Body orientation quaternion
-      
-    m00, m01, m02,
-    m10, m11, m12,                               // Body orientation as a 3x3 matrix
-    m20, m21, m22,
-
-    //Internal working variables - It isn't strictly necessary to break all of these out like this,
-    //but it makes the code much more readable than having a bunch of temp variables
-      
-    qdx, qdy, qdz, qdw,                          // Incremental rotation quaternion
-
-    fx2, fy2, fz2,
-    fwx, fwy, fwz,                               // Quaternion to matrix temp coefficients
-    fxy, fxz, fyz,
-
-    rx, ry, rz,                                  // Float versions of rotation components
-    fax, fay, faz,                               // Float version of accelerometer vector
-    fmx, fmy, fmz,                               // Float version of magnetometer vector
-    omx, omy, omz,                               // Oriented version of magnetometer vector
-
-    faxn, fayn, fazn,                            // Float version of accelerometer vector (normalized)
-    rmag, cosr, sinr,                            // magnitude, cos, sin values
-    
-    errDiffX, errDiffY, errDiffZ,                // holds difference vector between target and measured orientation
-    errCorrX, errCorrY, errCorrZ,                // computed rotation correction factor
-    
-    temp,                                        // temp value for use in equations
-
-    FloatYaw,                                    // Current heading (yaw) in floating point
-    HalfYaw,                                     // Heading / 2, used for quaternion construction
-
-    DebugFloat,                                  // value used for debugging - sent to groundstation
-
-    axRot, ayRot, azRot,                         // rotated accelerometer vector, used for computing altitude affects from acceleration
-    accWeight,
-
-    accRollCorrSin,                              // used to correct the accelerometer vector angle offset
-    accRollCorrCos,
-    accPitchCorrSin,
-    accPitchCorrCos,
-
-    //Terms used in complementary filter to compute altitude from accelerometer and pressure sensor altitude
-    velocityEstimate,
-    altitudeVelocity,
-    altitudeEstimate,
-    AltitudeEstMM,
-    VelocityEstMM,
-
-    forceX, forceY, forceZ,              // Current forces acting on craft, excluding gravity
-    forceWX, forceWY, forceWZ,           // Current forces acting on craft, excluding gravity, in world frame
-
-
-    In_Elev, In_Aile, In_Rudd,          // Input values for user controls
-
-    csx, csy, csz,                      // cosines of user control values
-    snx, sny, snz,                      // sines of user control values
-
-    snycsx, snysnx,                     // working variables for control to quaternion code (re-used products)
-    csycsz, csysnz,
-
-    cqw, cqx, cqy, cqz,                 // Control Quaternion result
-    qrw, qrx, qry, qrz,                 // Rotation quaternion between CQ and current orientation (Q)
-
-    diffAxisX, diffAxisY, diffAxisZ,    // Axis around which QR rotates to get from Q to CQ
-    diffAngle,                          // Amount of rotation required to get from Q to CQ
-
-    PitchDiff, RollDiff, YawDiff,       // Difference between current orientation and desired, scaled outputs
-    Heading,                            // Computed heading for control updates
-
-    Temp_lhs, Temp_rhs,
-
-    // Float constants used in computation
-    const_GyroScale,
-    const_NegGyroScale,
-
-    const_F1,
-    const_F2,
-    const_NegF1,
-
-    const_epsilon,
-    
-    const_neghalf,
-
-    const_AccErrScale,
-    const_MagErrScale,
-    const_AccScale,
-    const_ThrustShift,
-    const_G_mm_PerSec,
-    const_UpdateScale,
-
-    const_velAccScale,
-    const_velAltiScale,
-
-    const_velAccTrust,
-    const_velAltiTrust,
-
-    const_YawRateScale,
-    const_ManualYawScale,
-    const_AutoBankScale,
-    const_ManualBankScale,
-    const_TwoPI,
-    
-    const_outAngleScale,
-    const_outNegAngleScale,
-    const_OutControlShift,
-#endif
+    #include "QuatIMU_Vars.inc"
 
     IMU_VARS_SIZE                    // This entry MUST be last so we can compute the array size required
 };
@@ -229,13 +95,7 @@ void QuatIMU_Start(void)
   IMU_VARS[const_GyroScale]         =    1.0f / (float)GyroScale;    
   IMU_VARS[const_NegGyroScale]      =   -1.0f / (float)GyroScale;
 
-  INT_VARS[const_I0] = 0;
-  IMU_VARS[const_F0_5] = 0.5f;
-  IMU_VARS[const_F1_0] = 1.0f;
-  IMU_VARS[const_F2_0] = 2.0f;
-  IMU_VARS[const_F256_0] = 256.0f;
-  IMU_VARS[const_F4096_0] = 4096.0f;
-
+  #include "QuatIMU_Var_init.inc"
 
   INT_VARS[const_0]                 =    0;
   INT_VARS[const_1]                 =    1;
@@ -253,7 +113,6 @@ void QuatIMU_Start(void)
   IMU_VARS[const_AccErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_MagErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
-  INT_VARS[const_ThrustShift]       =    8;
   IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
 
@@ -472,7 +331,7 @@ void QuatIMU_AdjustStreamPointers( unsigned char * p )
               
 unsigned char QuatUpdateCommands[] = {
 
-#include "QuatIMU__QuatUpdate.inc"
+#include "QuatIMU_QuatUpdate.inc"
 
 #if 0
   //--------------------------------------------------------------
@@ -792,17 +651,17 @@ unsigned char QuatUpdateCommands[] = {
 
         // Compute pitch and roll in integer form, used by compass calibration, possible user code
 
-        F32_opASinCos, m12,  const_1, temp,      // 2nd arg is const_0 == acos, const_1 == asin
+        F32_opASinCos, m12,  const_I1, temp,      // 2nd arg is const_0 == acos, const_1 == asin
         F32_opMul, temp,  const_outAngleScale, temp,
-        F32_opTruncRound, temp,  const_0, Pitch,
+        F32_opTruncRound, temp,  const_I0, Pitch,
 
-        F32_opASinCos, m10,  const_1, temp,
+        F32_opASinCos, m10,  const_I1, temp,
         F32_opMul, temp,  const_outNegAngleScale, temp,
-        F32_opTruncRound, temp,  const_0, Roll,
+        F32_opTruncRound, temp,  const_I0, Roll,
 
         F32_opDiv, const_F1,  m11, temp,                          // 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground   
         F32_opShift, temp,  const_ThrustShift, temp,              // *= 256.0  
-        F32_opTruncRound, temp,  const_0, ThrustFactor,  
+        F32_opTruncRound, temp,  const_I0, ThrustFactor,  
 
 
 /*
@@ -932,8 +791,8 @@ unsigned char QuatUpdateCommands[] = {
         F32_opAdd, altitudeEstimate,  temp, altitudeEstimate,   //altEstimate += temp 
 
 
-        F32_opTruncRound, altitudeEstimate,  const_0, AltitudeEstMM,  // output integer values for PIDs
-        F32_opTruncRound, velocityEstimate,  const_0, VelocityEstMM,
+        F32_opTruncRound, altitudeEstimate,  const_I0, AltitudeEstMM,  // output integer values for PIDs
+        F32_opTruncRound, velocityEstimate,  const_I0, VelocityEstMM,
 #endif
         0, 0, 0, 0
         };
@@ -1047,7 +906,7 @@ unsigned char UpdateControlQuaternion_AutoLevel[] = {
 
   // Keep Heading in the range of -PI to PI
   F32_opDiv,    Heading, const_TwoPI, temp,           // temp = Heading/PI
-  F32_opTruncRound, temp, const_0, temp,              // temp = (int)(Heading/PI)
+  F32_opTruncRound, temp, const_I0, temp,             // temp = (int)(Heading/PI)
   F32_opFloat,  temp, 0, temp,                        // temp = (float)((int)(Heading/PI))
   F32_opMul,    temp, const_TwoPI, temp,              // temp is now the integer multiple of PI in heading
   F32_opSub,    Heading, temp, Heading,               // Remove the part that's out of range
@@ -1153,7 +1012,7 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
   F32_opAdd,    qrw, temp, qrw,         // qrw += cqw*qw
 
 
-  F32_opCmp,    qrw, const_0, temp,     // qrw < 0?
+  F32_opCmp,    qrw, const_I0, temp,    // qrw < 0?
 
   // Conditionally negate QR if QR.w < 0
   F32_opCNeg,   qrw, temp, qrw,
@@ -1178,20 +1037,20 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
 
 
   // float diffAngle = 2.0f * Acos(qrw);
-  F32_opFMin,   qrw, const_F1, qrw,        // clamp qrw to -1.0 to +1.0 range
+  F32_opFMin,   qrw, const_F1_0, qrw,        // clamp qrw to -1.0 to +1.0 range
   F32_opNeg,    qrw, 0, qrw,
-  F32_opFMin,   qrw, const_F1, qrw,        // clamp qrw to -1.0 to +1.0 range
+  F32_opFMin,   qrw, const_F1_0, qrw,        // clamp qrw to -1.0 to +1.0 range
   F32_opNeg,    qrw, 0, qrw,
 
-  F32_opASinCos, qrw, const_0, diffAngle,
-  F32_opShift,  diffAngle, const_1, diffAngle,         // diffAngle *= 2.0
+  F32_opASinCos, qrw, const_I0, diffAngle,
+  F32_opShift,  diffAngle, const_I1, diffAngle,         // diffAngle *= 2.0
 
   F32_opMov,    diffAngle, 0, DebugFloat,
 
   
   // float rmag = Sqrt( 1.0f - qrw*qrw );	  // assuming quaternion normalised then w is less than 1, so term always positive.
   F32_opMul,    qrw, qrw, temp,
-  F32_opSub,    const_F1, temp, temp,
+  F32_opSub,    const_F1_0, temp, temp,
 
   F32_opNeg,    temp, 0, temp,
   F32_opFMin,   temp, 0, temp,              // make sure temp is >= 0.0 (don't have FMax, so negate, use FMin, negate again)
@@ -1215,9 +1074,9 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
   F32_opMul,    qry, rmag, YawDiff,
 
 
-  F32_opTruncRound, PitchDiff, const_0, PitchDiff,
-  F32_opTruncRound, RollDiff, const_0, RollDiff,
-  F32_opTruncRound, YawDiff, const_0, YawDiff,  
+  F32_opTruncRound, PitchDiff, const_I0, PitchDiff,
+  F32_opTruncRound, RollDiff, const_I0, RollDiff,
+  F32_opTruncRound, YawDiff, const_I0, YawDiff,  
 
   0, 0, 0, 0
 };

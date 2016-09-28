@@ -336,7 +336,7 @@ void MainWindow::on_btnCompile_clicked()
 	{
 		// Compile it
 		FunctionCompiler comp;
-		QString outputPrefix = "F:/GitHub/Flight-Controller/Firmware-C/QuatIMU_";
+		QString outputPrefix = "F:/GitHub/Flight-Controller/Firmware-C/QuatIMU";
 		comp.Compile( contents , inputs, outputPrefix );
 	}
 }

@@ -133,19 +133,10 @@ void print_t(Expression *tree)
 	qDebug() << "";
 }
 
+static bool DoDump = false;
 void Expression::Dump(void)
 {
+	if( DoDump == false ) return;
 	print_t( this );
 }
 
-void Expression::Optimize(void)
-{
-	if( op == T_Mul ) {
-		// if one of the terms is const, and a power of two, change this to a shift
-
-
-	}
-	else if( op == T_Div ) {
-
-	}
-}

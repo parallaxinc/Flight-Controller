@@ -1,9 +1,10 @@
-const_I0,		 // == 0		 // refcount = 1
-const_F0_5,		 // == 0.5		 // refcount = 6
-const_F1_0,		 // == 1.0		 // refcount = 11
-const_F2_0,		 // == 2.0		 // refcount = 12
-const_F256_0,		 // == 256.0		 // refcount = 1
-const_F4096_0,		 // == 4096.0		 // refcount = 3
+const_INeg_1,		 // = -1		 // refcount = 6
+const_INeg_12,		 // = -12		 // refcount = 1
+const_I0,		 // = 0		 // refcount = 1
+const_I1,		 // = 1		 // refcount = 11
+const_F1_0,		 // = 1.0		 // refcount = 11
+const_F2_0,		 // = 2.0		 // refcount = 1
+const_I8,		 // = 8		 // refcount = 1
 AltitudeEstMM,		 // refcount = 1
 DebugFloat,		 // refcount = 1
 FloatYaw,		 // refcount = 2
@@ -16,7 +17,7 @@ Pitch,		 // refcount = 1
 PitchDiff,		 // refcount = 1
 Roll,		 // refcount = 1
 RollDiff,		 // refcount = 1
-Temp_lhs,		 // refcount = 250
+Temp_lhs,		 // refcount = 246
 Temp_rhs,		 // refcount = 136
 ThrustFactor,		 // refcount = 1
 VelocityEstMM,		 // refcount = 1
@@ -45,7 +46,6 @@ const_ManualBankScale,		 // refcount = 2
 const_ManualYawScale,		 // refcount = 1
 const_NegGyroScale,		 // refcount = 2
 const_OutControlShift,		 // refcount = 1
-const_ThrustShift,		 // refcount = 0
 const_TwoPI,		 // refcount = 2
 const_UpdateScale,		 // refcount = 2
 const_YawRateScale,		 // refcount = 1

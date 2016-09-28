@@ -40,6 +40,8 @@ public:
 	Expression * GetExpression( void );
 	Expression * SubExpression( Expression * lhs, int MinPrec );
 	bool ParseArguments( Expression * funcCall );
+	void Optimize( Expression * expr );
+
 
 	QMap<QString, EVar*> varList;
 	QStack<Expression *> exprStack;		// expressions being built go here

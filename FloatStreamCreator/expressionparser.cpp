@@ -2,7 +2,9 @@
 #include "expressiontokenizer.h"
 
 #include <QDebug>
+#include <math.h>
 
+static bool DumpOutput = false;
 
 ExpressionParser::ExpressionParser( )
 {
@@ -33,7 +35,9 @@ bool ExpressionParser::Parse( const char * pSrc )
 {
 	varType = T_None;
 
-	qDebug() << "Ln:" << SourceLine << " " << pSrc;
+	if( DumpOutput ) {
+		qDebug() << "Ln:" << SourceLine << " " << pSrc;
+	}
 
 	if( exprList != NULL )
 	{
@@ -135,7 +139,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 						exprList->append( expr );
 					}
 					else {
-						qDebug() << "No expression list to store expressions to!  Call StartFunction() first";
+						qDebug() << "Err: No expression list to store expressions to!  Call StartFunction() first";
 					}
 					expr->Dump();
 				}
@@ -150,7 +154,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 			break;
 
 		default:
-			qDebug() << "Hit default case in parse";
+			qDebug() << "Warn: Hit default case in parse";
 			break;
 		}
 	}
@@ -201,7 +205,7 @@ Expression * ExpressionParser::Atom( void )
 				return expr;
 			}
 			else {
-				qDebug() << "Function argument parsing failed";
+				qDebug() << "Err: Function argument parsing failed";
 				delete expr;
 				return NULL;
 			}
@@ -255,10 +259,10 @@ EVar * ExpressionParser::MakeVariable( TOKEN type, QString & s )
 		if( ok ) {
 			if( type == T_Digit ) {
 				if( s.contains('.') ) {
-					type = T_Float;
+					var->type = type = T_Float;
 				}
 				else {
-					type = T_Int;
+					var->type = type = T_Int;
 				}
 			}
 
@@ -282,7 +286,9 @@ EVar * ExpressionParser::MakeVariable( TOKEN type, QString & s )
 
 		varList.insert( var->valString, var );
 
-		qDebug() << "Declared " << (isConst ? "const " : "") << TokenNames[type] << " : " << s;
+		if( DumpOutput ) {
+			qDebug() << "Declared " << (isConst ? "const " : "") << TokenNames[type] << " : " << s;
+		}
 	}
 	return var;
 }
@@ -431,4 +437,47 @@ bool ExpressionParser::ParseArguments( Expression * funcCall )
 	}
 
 	return true;
+}
+
+void ExpressionParser::Optimize( Expression * expr )
+{
+	if( expr->op == T_Mul || expr->op == T_Div ) {
+		// if one of the terms is const, and a power of two, change this to a shift
+
+		if( expr->op == T_Mul && expr->Left->Value != NULL && expr->Left->Value->type == T_Float && expr->Left->Value->Val.i != 0 )
+		{
+			// Note that we can ONLY optimize Val x Val on both sides - Mul is commutative, Div isn't
+			// IE, 2 / Val isn't the same as Val / 2, but 2 x Val *IS* the same as Val x 2
+
+			float lg = log2(expr->Left->Value->Val.f);
+			//qDebug() << expr->Left->Value->Val.f << " = " << lg;
+			if( ((float)(int)lg) == lg ) {
+				QString s = QString::asprintf( "%d", (int)lg );
+				EVar * shiftVar = MakeVariable(T_Int, s);
+				expr->op = T_Function;
+				expr->FuncName = "Shift";
+				expr->Left = expr->Right;	// Swap the left/right terms
+				expr->Right->Value = shiftVar;
+				return;
+			}
+		}
+		else if( expr->Right->Value != NULL && expr->Right->Value->type == T_Float && expr->Right->Value->Val.i != 0)
+		{
+			// Convert multiply or divide by powers of two to Shift operations instead
+			float lg = log2(expr->Right->Value->Val.f);
+			//qDebug() << expr->Right->Value->Val.f << " = " << lg;
+			if( ((float)(int)lg) == lg ) {
+				if( expr->op == T_Div ) lg = -lg;
+				QString s = QString::asprintf( "%d", (int)lg );
+				EVar * shiftVar = MakeVariable(T_Int, s);
+				expr->op = T_Function;
+				expr->FuncName = "Shift";
+				expr->Right->Value = shiftVar;
+				return;
+			}
+		}
+	}
+
+	if(expr->Left != NULL)  Optimize( expr->Left );
+	if(expr->Right != NULL) Optimize( expr->Right );
 }
