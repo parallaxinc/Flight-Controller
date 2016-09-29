@@ -63,7 +63,6 @@ void QuatIMU_SetPitchCorrection( float * addr );
 void QuatIMU_SetAutoLevelRates( float MaxRollPitch , float YawRate );
 void QuatIMU_SetManualRates( float RollPitchRate, float YawRate );
 
-void QuatIMU_InitFunctions(void);
 void QuatIMU_SetGyroZero( int x, int y, int z );
  
 

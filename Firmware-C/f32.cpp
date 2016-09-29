@@ -78,7 +78,7 @@ void F32::Stop(void)
 void F32::RunStream( unsigned char * a , float * b )
 {
   //Can't use the stack for these, because they might be different by the time the COG gets to them
-  v.TempCommand = v.cmdCallTableAddr[ F32_opRunStream ];
+  v.TempCommand = v.cmdCallTableAddr[ F32_RunStream ];
   v.StreamAddr = (int)a;
   v.VarAddr = (int)b;
   v.f32_cmd = (int)&v.TempCommand;
@@ -104,7 +104,7 @@ float F32::FDiv(float _a, float _b)
   v.fa = _a;
   v.fb = _b;
 
-  v.result = cmdCallTableAddr[ F32_opDiv ];
+  v.result = cmdCallTableAddr[ F32_Div ];
   v.f32_cmd = (int)&v.result;
 
   while(v.f32_cmd)
@@ -124,7 +124,7 @@ float F32::FFloat( int n )
 
   v.a = n;
 
-  v.result = v.cmdCallTableAddr[ F32_opFloat ];
+  v.result = v.cmdCallTableAddr[ F32_Float ];
   v.f32_cmd = (int)&v.result;
 
   while(v.f32_cmd)

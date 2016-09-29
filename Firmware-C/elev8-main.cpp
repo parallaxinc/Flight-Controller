@@ -97,7 +97,6 @@ static long  AccelZSmooth;            // Smoothed (filtered) accelerometer Z val
 //Debug output mode, working variables  
 static long   counter = 0;    //Main loop iteration counter
 static short  TxData[12];     //Word-sized copies of Temp, Gyro, Accel, Mag, for debug transfer speed
-static float  Quat[4];        //Current quaternion from the IMU functions
 
 static char Mode = MODE_None;         //Debug communication mode
 static signed char NudgeMotor = -1;   // Which motor to nudge during testing (-1 == no motor)
@@ -1588,13 +1587,8 @@ void DoDebugModeOutput(void)
 
       case 4:
         {
-          float * pQ = QuatIMU_GetQuaternion();
-          Quat[0] = pQ[1];  // Copy qx
-          Quat[1] = pQ[2];  // Copy qy  - Groundstation order is different than Elev8 order
-          Quat[2] = pQ[3];  // Copy qz
-          Quat[3] = pQ[0];  // Copy qw
-          
-          COMMLINK::BuildPacket( 3, Quat, 16 );  // Quaternion data, 16 byte payload
+          float * pQ = QuatIMU_GetQuaternion();        
+          COMMLINK::BuildPacket( 3, pQ, 16 );  // Quaternion data, 16 byte payload
           COMMLINK::SendPacket(port);
         }          
         break;

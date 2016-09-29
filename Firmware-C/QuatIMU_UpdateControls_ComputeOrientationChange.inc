@@ -8,16 +8,16 @@
 	// 
 	// With all the appropriate sign flips, the formula becomes:
 	// 
-	// float qrx = -cqx * qw - cqy * qz + cqz * qy + cqw * qx;
-	F32_opNeg,     cqx, 0, Temp_lhs,
-	F32_opMul,     Temp_lhs, qw, Temp_lhs,
+	// float qrx = -(cqx * qw) - (cqy * qz) + (cqz * qy) + (cqw * qx);
+	F32_opMul,     cqx, qw, Temp_lhs,
+	F32_opNeg,     Temp_lhs, 0, Temp_lhs,
 	F32_opMul,     cqy, qz, Temp_rhs,
 	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     cqz, qy, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     cqw, qx, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, qrx,
-	// float qry =  cqx * qz - cqy * qw - cqz * qx + cqw * qy;
+	// float qry =  (cqx * qz) - (cqy * qw) - (cqz * qx) + (cqw * qy);
 	F32_opMul,     cqx, qz, Temp_lhs,
 	F32_opMul,     cqy, qw, Temp_rhs,
 	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
@@ -25,16 +25,15 @@
 	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     cqw, qy, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, qry,
-	// float qrz = -cqx * qy + cqy * qx - cqz * qw + cqw * qz;
-	F32_opNeg,     cqx, 0, Temp_lhs,
-	F32_opMul,     Temp_lhs, qy, Temp_lhs,
-	F32_opMul,     cqy, qx, Temp_rhs,
-	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
+	// float qrz = -(cqx * qy) + (cqy * qx) - (cqz * qw) + (cqw * qz);
+	F32_opMul,     cqy, qx, Temp_lhs,
+	F32_opMul,     cqx, qy, Temp_rhs,
+	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     cqz, qw, Temp_rhs,
 	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
 	F32_opMul,     cqw, qz, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, qrz,
-	// float qrw =  cqx * qx + cqy * qy + cqz * qz + cqw * qw;
+	// float qrw =  (cqx * qx) + (cqy * qy) + (cqz * qz) + (cqw * qw);
 	F32_opMul,     cqx, qx, Temp_lhs,
 	F32_opMul,     cqy, qy, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
@@ -45,7 +44,7 @@
 	// 
 	// qrw < 0?
 	// float temp = Cmp(qrw, 0);
-	F32_opFCmp,    qrw, const_I0, temp,
+	F32_opCmp,     qrw, const_I0, temp,
 	// 
 	// Conditionally negate QR if QR.w < 0
 	// qrw = CNeg(qrw, temp);
@@ -100,7 +99,8 @@
 	// 
 	// make sure temp is >= 0.0 (don't have FMax, so negate, use FMin, negate again)
 	// temp = -FMin( 1.0f, -temp );
-	F32_opFMin,    const_F1_0, temp, Temp_lhs,
+	F32_opNeg,     temp, 0, Temp_rhs,
+	F32_opFMin,    const_F1_0, Temp_rhs, Temp_lhs,
 	F32_opNeg,     Temp_lhs, 0, temp,
 	// float rmag = Sqrt(temp) + const_epsilon;
 	F32_opSqrt,    temp, 0, Temp_lhs,
@@ -127,3 +127,4 @@
 	F32_opMul,     qry, rmag, Temp_lhs,
 	F32_opTruncRound,Temp_lhs, 0, YawDiff,
 	// 
+	0,0,0,0

@@ -305,12 +305,8 @@
 	// The two different values are used to correct each other.
 	//--------------------------------------------------------------
 	// 
-	//forceX = fax / 4096.0f;
-	//forceY = fay / 4096.0f;
-	//forceZ = faz / 4096.0f;
-	// 
 	//Orient force vector into world frame & subtract gravity (1G)
-	// forceWY = (m01*fax + m11*fay + m21*faz)/4096.0f - 1.0f;
+	// forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
 	F32_opMul,     m01, fax, Temp_lhs,
 	F32_opMul,     m11, fay, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
@@ -348,3 +344,4 @@
 	// VelocityEstMM = Trunc(velocityEstimate);
 	F32_opTruncRound,velocityEstimate, 0, VelocityEstMM,
 	// 
+	0,0,0,0

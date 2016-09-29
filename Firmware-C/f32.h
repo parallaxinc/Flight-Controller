@@ -70,34 +70,60 @@ PUB Ceil(a)
 PUB FShift(a, b)
 */
 
+#define F32_Add                  1    // result = a + b
+#define F32_Sub                  2    // result = a - b
+#define F32_Mul                  3    // result = a * b
+#define F32_Div                  4    // result = a / b
+#define F32_Float                5    // result = (float)a
+#define F32_TruncRound           6    // if(b==0) result = (int)a, else result = (int)round(a)
+#define F32_Sqrt                 7    // result = Sqrt(a)
+#define F32_Cmp                  8    // if(a>b) result = 1;  if(a<b) result = -1; else result = 0;
+#define F32_Sin                  9    // result = Sin(a)
+#define F32_Cos                  10   // result = Cos(a)
+#define F32_Tan                  11   // result = Tan(a)
+#define F32_Log2                 12   // result = Log2(a)
+#define F32_Exp2                 13   // result = Exp2(a)
+#define F32_Pow                  14   // result = Pow(a,b)  (ie a to the power of b)
+#define F32_ASinCos              15   // if(b==0) result = ACos(a) else result = ASin(a)
+#define F32_ATan2                16   // result = ATan2(a,b)
+#define F32_Shift                17   // result = a  x  pow(2, (float)b)  (works like a binary shift, but on floats)
+#define F32_Neg                  18   // result = -a
+#define F32_SinCos               19   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
+#define F32_FAbs                 20   // result = FAbs(a)
+#define F32_FMin                 21   // if(a<b) result = a  else result = b
+#define F32_Frac                 22   // result = fractional portion of a  (portion after the decimal point)
+#define F32_CNeg                 23   // if(b<0)  a = -a  else  a = a
+#define F32_Mov                  24   // result = a
+#define F32_RunStream            25
 
 
-//Instruction stream operand indices
-#define F32_opAdd                  1    // result = a + b
-#define F32_opSub                  2    // result = a - b
-#define F32_opMul                  3    // result = a * b
-#define F32_opDiv                  4    // result = a / b
-#define F32_opFloat                5    // result = (float)a
-#define F32_opTruncRound           6    // if(b==0) result = (int)a, else result = (int)round(a)
-#define F32_opSqrt                 7    // result = Sqrt(a)
-#define F32_opCmp                  8    // if(a>b) result = 1;  if(a<b) result = -1; else result = 0;
-#define F32_opSin                  9    // result = Sin(a)
-#define F32_opCos                  10   // result = Cos(a)
-#define F32_opTan                  11   // result = Tan(a)
-#define F32_opLog2                 12   // result = Log2(a)
-#define F32_opExp2                 13   // result = Exp2(a)
-#define F32_opPow                  14   // result = Pow(a,b)  (ie a to the power of b)
-#define F32_opASinCos              15   // if(b==0) result = ACos(a) else result = ASin(a)
-#define F32_opATan2                16   // result = ATan2(a,b)
-#define F32_opShift                17   // result = a  x  pow(2, (float)b)  (works like a binary shift, but on floats)
-#define F32_opNeg                  18   // result = -a
-#define F32_opSinCos               19   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
-#define F32_opFAbs                 20   // result = FAbs(a)
-#define F32_opFMin                 21   // if(a<b) result = a  else result = b
-#define F32_opFrac                 22   // result = fractional portion of a  (portion after the decimal point)
-#define F32_opCNeg                 23   // if(b<0)  a = -a  else  a = a
-#define F32_opMov                  24   // result = a
-#define F32_opRunStream            25
+//Instruction stream operands are the instruction indices shifted up 2 bits
+#define F32_opAdd                  (F32_Add       << 2)  // result = a + b
+#define F32_opSub                  (F32_Sub       << 2)  // result = a - b
+#define F32_opMul                  (F32_Mul       << 2)  // result = a * b
+#define F32_opDiv                  (F32_Div       << 2)  // result = a / b
+#define F32_opFloat                (F32_Float     << 2)  // result = (float)a
+#define F32_opTruncRound           (F32_TruncRound<< 2)  // if(b==0) result = (int)a, else result = (int)round(a)
+#define F32_opSqrt                 (F32_Sqrt      << 2)  // result = Sqrt(a)
+#define F32_opCmp                  (F32_Cmp       << 2)  // if(a>b) result = 1;  if(a<b) result = -1; else result = 0;
+#define F32_opSin                  (F32_Sin       << 2)  // result = Sin(a)
+#define F32_opCos                  (F32_Cos       << 2)  // result = Cos(a)
+#define F32_opTan                  (F32_Tan       << 2)  // result = Tan(a)
+#define F32_opLog2                 (F32_Log2      << 2)  // result = Log2(a)
+#define F32_opExp2                 (F32_Exp2      << 2)  // result = Exp2(a)
+#define F32_opPow                  (F32_Pow       << 2)  // result = Pow(a,b)  (ie a to the power of b)
+#define F32_opASinCos              (F32_ASinCos   << 2)  // if(b==0) result = ACos(a) else result = ASin(a)
+#define F32_opATan2                (F32_ATan2     << 2)  // result = ATan2(a,b)
+#define F32_opShift                (F32_Shift     << 2)  // result = a  x  pow(2, (float)b)  (works like a binary shift, but on floats)
+#define F32_opNeg                  (F32_Neg       << 2)  // result = -a
+#define F32_opSinCos               (F32_SinCos    << 2)  // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
+#define F32_opFAbs                 (F32_FAbs      << 2)  // result = FAbs(a)
+#define F32_opFMin                 (F32_FMin      << 2)  // if(a<b) result = a  else result = b
+#define F32_opFrac                 (F32_Frac      << 2)  // result = fractional portion of a  (portion after the decimal point)
+#define F32_opCNeg                 (F32_CNeg      << 2)  // if(b<0)  a = -a  else  a = a
+#define F32_opMov                  (F32_Mov       << 2)  // result = a
+#define F32_opRunStream            (F32_RunStream << 2)
+
 
 
 /*
