@@ -187,12 +187,8 @@ void QuatUpdate( SensorData & sens )
 	// The two different values are used to correct each other.
 	//--------------------------------------------------------------
 
-	//forceX = fax / 4096.0f;
-	//forceY = fay / 4096.0f;
-	//forceZ = faz / 4096.0f;
-
 	//Orient force vector into world frame & subtract gravity (1G)
-	forceWY = (m01*fax + m11*fay + m21*faz)/4096.0f - 1.0f;
+	forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
 
 	//Convert G to mm/sec^2
 	forceWY *= const_G_mm_PerSec;
@@ -222,10 +218,10 @@ void UpdateControls_Manual(void)
 	// QR = CQ * Quaternion(0,rx,ry,rz)
 
 	// Expands to ( * qw zero terms removed):
-	float qrx =             cqy * rz - cqz * ry + cqw * rx;
-	float qry = -cqx * rz            + cqz * rx + cqw * ry;
-	float qrz =  cqx * ry - cqy * rx            + cqw * rz;
-	float qrw = -cqx * rx - cqy * ry - cqz * rz;
+	float qrx =               (cqy * rz) - (cqz * ry) + (cqw * rx);
+	float qry = -(cqx * rz)              + (cqz * rx) + (cqw * ry);
+	float qrz =  (cqx * ry) - (cqy * rx)              + (cqw * rz);
+	float qrw = -(cqx * rx) - (cqy * ry) - (cqz * rz);
 
 
 	// CQ = CQ + QR;
@@ -249,7 +245,7 @@ void UpdateControls_Manual(void)
 
 void UpdateControls_AutoLevel(void)
 {
-	//FUNCTION: UpdateControls_Manual
+	//FUNCTION: UpdateControls_AutoLevel
 
 	// Convert radio inputs to float, scale them to get them into the range we want
 	float rx = Float(In_Elev) * const_AutoBankScale;
@@ -266,7 +262,7 @@ void UpdateControls_AutoLevel(void)
 
 	float csx, csy, csz, snx, sny, snz;
 	csx = SinCos(rx, snx);
-	csy = SinCos(ry, sny);
+	csy = SinCos(Heading, sny);
 	csz = SinCos(rz, snz);
 
 	// Pre-compute some re-used terms to save computation time
@@ -276,8 +272,8 @@ void UpdateControls_AutoLevel(void)
 	float csysnz = csy * snz;
 
 	// Compute the quaternion that represents our new desired orientation  ((CQ = Control Quaternion))
-	cqx =  snycsx * snz + csycsz * snx;
-	cqy =  snycsx * csz + csysnz * snx;
+	cqx = snycsx * snz + csycsz * snx;
+	cqy = snycsx * csz + csysnz * snx;
 	cqz = csysnz * csx - snysnx * csz;
 	cqw = csycsz * csx - snysnx * snz;
 
@@ -299,10 +295,10 @@ void UpdateControls_ComputeOrientationChange(void)
 
 	// With all the appropriate sign flips, the formula becomes:
 
-	float qrx = -cqx * qw - cqy * qz + cqz * qy + cqw * qx;
-	float qry =  cqx * qz - cqy * qw - cqz * qx + cqw * qy;
-	float qrz = -cqx * qy + cqy * qx - cqz * qw + cqw * qz;
-	float qrw =  cqx * qx + cqy * qy + cqz * qz + cqw * qw;
+	float qrx = -(cqx * qw) - (cqy * qz) + (cqz * qy) + (cqw * qx);
+	float qry =  (cqx * qz) - (cqy * qw) - (cqz * qx) + (cqw * qy);
+	float qrz = -(cqx * qy) + (cqy * qx) - (cqz * qw) + (cqw * qz);
+	float qrw =  (cqx * qx) + (cqy * qy) + (cqz * qz) + (cqw * qw);
 
 	// qrw < 0?
 	float temp = Cmp(qrw, 0);

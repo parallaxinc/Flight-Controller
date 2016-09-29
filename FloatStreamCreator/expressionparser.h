@@ -35,6 +35,9 @@ public:
 	bool Parse( const char * pSrc );
 
 	Expression * Atom( void );
+
+	void		 AssignValueToVariable( EVar * var , TOKEN & type, QString & s );
+
 	EVar *       MakeVariable( TOKEN t, QString & s );
 	Expression * MakeVariableExpression( TOKEN t, QString & s );
 	Expression * GetExpression( void );
@@ -44,6 +47,8 @@ public:
 
 
 	QMap<QString, EVar*> varList;
+	QList<EVar*> orderedVarList;
+
 	QStack<Expression *> exprStack;		// expressions being built go here
 	QVector<Expression *> * exprList;	// completed expressions go here
 

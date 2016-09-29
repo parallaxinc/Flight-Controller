@@ -18,6 +18,7 @@ struct EVar
 	} Val;
 
 	int		refCount;
+	int     varIndex;	// Index into the orderedVarList array
 };
 
 
@@ -33,6 +34,8 @@ struct Expression		// This can be a function call, with one or two arguments
 
 	Expression() : line(-1), Right(NULL), Left(NULL), Value(NULL) {;}
 	~Expression();
+
+	void SwapArguments(void);
 
 	void Dump(void);
 };

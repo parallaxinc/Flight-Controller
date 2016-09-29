@@ -12,6 +12,10 @@ ExpressionParser::ExpressionParser( )
 	isConst = false;
 	exprList = NULL;
 	SourceLine = 0;
+
+	//The interpreter needs zero to be the first entry in the const table
+	QString const_zero("0");
+	MakeVariable( T_Int, const_zero );
 }
 
 ExpressionParser::~ExpressionParser()
@@ -105,7 +109,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 				// should be a T_Label expression on the stack (the val being assigned)
 				// it should not be const
 				Expression * lhs = exprStack.pop();
-				if( lhs->op != T_Label || lhs->Value->isConst ) {
+				if( lhs->op != T_Label || (lhs->Value->isConst && !isConst) ) {
 					exprStack.push(lhs);
 					qDebug() << "Err: parsing assignment, but stack-top is not a variable we can assign to";
 					return false;
@@ -117,12 +121,44 @@ bool ExpressionParser::Parse( const char * pSrc )
 					return false;	// parse error?
 				}
 
-				Expression * expr = new Expression();
-				expr->line = SourceLine-1;
-				expr->op = t;
-				expr->Left = lhs;
-				expr->Right = rhs;
-				exprStack.push(expr);
+				if( isConst && lhs->Value->isConst ) // actually assigning a const initializer here
+				{
+					if( rhs->Value == NULL || rhs->Value->isConst != true )
+					{
+						qDebug() << "Err: Cannot assign a non-numeric value to a const";
+						return false;
+					}
+
+					TOKEN type = varType;
+					if( lhs->Value->valString.length() == 0 ) {
+						AssignValueToVariable( lhs->Value, type, rhs->Value->valString );
+					}
+					else {
+						if( lhs->Value->valString != rhs->Value->valString ) {
+							qDebug() << "Err: Attempting to re-assign a const to a different value";
+						}
+					}
+
+					// don't need these any more
+					delete rhs;
+					delete lhs;
+
+					if( tok.next == T_Break || tok.next == T_End ) {
+						tok.Advance();
+						if( tok.token == T_End ) {
+							varType = T_None;	// clear this when encountering a semicolon
+							isConst = false;
+						}
+					}
+				}
+				else {
+					Expression * expr = new Expression();
+					expr->line = SourceLine-1;
+					expr->op = t;
+					expr->Left = lhs;
+					expr->Right = rhs;
+					exprStack.push(expr);
+				}
 			}
 			break;
 
@@ -146,6 +182,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 
 				if( t == T_End ) {
 					varType = T_None;	// clear this when encountering a semicolon
+					isConst = false;
 				}
 			}
 			break;
@@ -231,6 +268,46 @@ Expression * ExpressionParser::Atom( void )
 	return expr;
 }
 
+void ExpressionParser::AssignValueToVariable( EVar * var , TOKEN & type, QString & s )
+{
+	var->valString = s;	// just using the actual digits of the const as the name
+	var->type = type;
+	var->isConst = isConst;
+
+	bool ok;
+	float asFloat = s.toFloat(&ok);
+	if( ok ) {
+		if( type == T_Digit ) {
+			if( s.contains('.') ) {
+				var->type = type = T_Float;
+			}
+			else {
+				var->type = type = T_Int;
+			}
+		}
+
+		QString prefix = "F";
+		if( type == T_Float ) {
+			var->Val.f = asFloat;
+			prefix = "F";
+		}
+		else {
+			var->Val.i = (int)asFloat;
+			prefix = "I";
+		}
+		QString pretty = s.replace("-", "Neg_").replace(".","_");
+
+		var->isConst = true;
+		// Only assign a name if it doesn't have one already
+		if( var->constName.length() == 0 ) {
+			var->constName = "const_" + prefix + pretty;
+		}
+	}
+	else {
+		var->constName = var->valString;
+	}
+}
+
 EVar * ExpressionParser::MakeVariable( TOKEN type, QString & s )
 {
 	EVar * var;
@@ -248,43 +325,14 @@ EVar * ExpressionParser::MakeVariable( TOKEN type, QString & s )
 		}
 
 		var = new EVar();
-		var->valString = s;	// just using the actual digits of the const as the name
-		var->type = type;
-		var->isConst = isConst;
 		var->isPersistent = VarsPersist;
 		var->refCount = 0;
+		var->varIndex = orderedVarList.length();
 
-		bool ok;
-		float asFloat = s.toFloat(&ok);
-		if( ok ) {
-			if( type == T_Digit ) {
-				if( s.contains('.') ) {
-					var->type = type = T_Float;
-				}
-				else {
-					var->type = type = T_Int;
-				}
-			}
-
-			QString prefix = "F";
-			if( type == T_Float ) {
-				var->Val.f = asFloat;
-				prefix = "F";
-			}
-			else {
-				var->Val.i = (int)asFloat;
-				prefix = "I";
-			}
-			QString pretty = s.replace("-", "Neg_").replace(".","_");
-
-			var->isConst = true;
-			var->constName = "const_" + prefix + pretty;
-		}
-		else {
-			var->constName = var->valString;
-		}
+		AssignValueToVariable( var, type, s );
 
 		varList.insert( var->valString, var );
+		orderedVarList.append( var );	// Track original order so we can output them in a guaranteed order
 
 		if( DumpOutput ) {
 			qDebug() << "Declared " << (isConst ? "const " : "") << TokenNames[type] << " : " << s;
@@ -456,7 +504,7 @@ void ExpressionParser::Optimize( Expression * expr )
 				EVar * shiftVar = MakeVariable(T_Int, s);
 				expr->op = T_Function;
 				expr->FuncName = "Shift";
-				expr->Left = expr->Right;	// Swap the left/right terms
+				expr->SwapArguments();
 				expr->Right->Value = shiftVar;
 				return;
 			}
@@ -476,6 +524,31 @@ void ExpressionParser::Optimize( Expression * expr )
 				return;
 			}
 		}
+	}
+
+	if( expr->op == T_Add && expr->Left->op == T_Negative )
+	{
+		// Convert "-A + B" into "B - A"
+
+		qDebug() << "Flip this op, remove the negation";
+		Expression * pTemp = expr->Left;
+		expr->Left = pTemp->Left;	// Negation only has one argument, we're making it OUR left argument
+		pTemp->Left = NULL;			// unhook this so we don't delete the sub-tree
+		delete pTemp;
+		expr->SwapArguments();
+		expr->op = expr->op == T_Add ? T_Sub : T_Add;	// Flip the operation we were doing
+	}
+	else if( (expr->op == T_Sub || expr->op == T_Add) && expr->Right->op == T_Negative )
+	{
+		// Convert "A + -B" into "A - B"
+		//    or   "A - -B" into "A + B"
+
+		qDebug() << "Flip this op, remove the negation";
+		Expression * pTemp = expr->Right;
+		expr->Right = pTemp->Left;	// Negation only has one argument, we're making it OUR right argument
+		pTemp->Left = NULL;			// unhook this so we don't delete the sub-tree
+		delete pTemp;
+		expr->op = expr->op == T_Add ? T_Sub : T_Add;	// Flip the operation we were doing
 	}
 
 	if(expr->Left != NULL)  Optimize( expr->Left );

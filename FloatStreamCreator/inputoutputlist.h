@@ -1,4 +1,3 @@
-
 INPUT int gx, gy, gz;
 INPUT int ax, ay, az;
 INPUT int mx, my, mz;

@@ -129,9 +129,9 @@ bool FunctionCompiler::GenerateVariables( ExpressionParser & parser )
 	QTextStream streamVars( &outVars );
 	QTextStream streamInits( &outInits );
 
-	for( QMap<QString,EVar*>::iterator iter = parser.varList.begin(); iter != parser.varList.end(); iter++ )
+	for( QList<EVar*>::iterator iter = parser.orderedVarList.begin(); iter != parser.orderedVarList.end(); iter++ )
 	{
-		EVar * var = iter.value();
+		EVar * var = *iter;
 		if( var->isConst && var->refCount == 0 ) continue;	// don't output these - they're unused
 
 		streamVars << var->constName << ",";
@@ -189,6 +189,8 @@ bool FunctionCompiler::GenerateTokens( ExpressionParser & parser )
 				}
 			}
 		}
+
+		stream << "\t0,0,0,0\n";	// Function stream terminator
 
 		stream.flush();
 		QFile f(filename);
@@ -306,7 +308,7 @@ static bool OpToFunction( Expression * op, QString & out, QString & outArg )
 		else if( op->FuncName == "Sqrt")	out = "opSqrt";
 		else if( op->FuncName == "FMin")	out = "opFMin";
 		else if( op->FuncName == "FAbs")	out = "opFAbs";
-		else if( op->FuncName == "Cmp")		out = "opFCmp";
+		else if( op->FuncName == "Cmp")		out = "opCmp";
 		else if( op->FuncName == "CNeg")	out = "opCNeg";
 		else if( op->FuncName == "Shift")	out = "opShift";
 		else if( op->FuncName == "ASin") {

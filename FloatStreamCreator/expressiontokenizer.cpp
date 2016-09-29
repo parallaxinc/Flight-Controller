@@ -139,7 +139,7 @@ bool ExpressionTokenizer::Advance(void)
 				pSrc++;
 				return true;
 			}
-			else if( IsOperator(token) || IsAssign(token) )
+			else if( IsOperator(token) || IsAssign(token) || token == T_Break || token == T_None )
 			{
 				// This is a unary positive/negative
 

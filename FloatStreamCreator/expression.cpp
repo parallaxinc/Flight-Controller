@@ -140,3 +140,10 @@ void Expression::Dump(void)
 	print_t( this );
 }
 
+void Expression::SwapArguments(void)
+{
+	// Exchange the left / right arguments - used in some optimizations
+	Expression * pTemp = Left;
+	Left = Right;
+	Right = pTemp;
+}
