@@ -16,6 +16,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 {
 	ui->setupUi(this);
 
+	pointsUsed = 0;
+	pointIndex = 0;
+
 	labelStatus = new QLabel(this);
 	labelGSVersion = new QLabel(this);
 	labelFWVersion = new QLabel(this);
@@ -150,6 +153,8 @@ void MainWindow::ProcessPackets(void)
 						pt.setX(sensors.MagY);
 						ui->yz_mag->AddSample(pt, true);
 					}
+
+					UpdateMagSphere();
 
 					//AddGraphSample( 0, sensors.GyroX );
 					//AddGraphSample( 1, sensors.GyroY );
@@ -358,4 +363,162 @@ void MainWindow::on_btnCompile_clicked()
 		QString outputPrefix = "F:/GitHub/Flight-Controller/Firmware-C/QuatIMU";
 		comp.Compile( contents , inputs, outputPrefix );
 	}
+}
+
+void MainWindow::UpdateMagSphere(void)
+{
+	pts[pointsUsed] = QVector3D( sensors.MagX, sensors.MagY, sensors.MagZ );
+	if( pointsUsed < 4096 ) pointsUsed++;
+	pointIndex = (pointIndex+1) & 4095;
+
+	if( (pointIndex & 15) != 15) return;
+
+	//
+	// Least Squares Fit a sphere A,B,C with radius squared Rsq to 3D data
+	//
+	//    P is a structure that has been computed with the data earlier.
+	//    P.npoints is the number of elements; the length of X,Y,Z are identical.
+	//    P's members are logically named.
+	//
+	//    X[n] is the x component of point n
+	//    Y[n] is the y component of point n
+	//    Z[n] is the z component of point n
+	//
+	//    A is the x coordiante of the sphere
+	//    B is the y coordiante of the sphere
+	//    C is the z coordiante of the sphere
+	//    Rsq is the radius squared of the sphere.
+	//
+	// This method should converge; maybe 5-100 iterations or more.
+	//
+	// Credit where due, this code was taken from:
+	// http://imaginaryz.blogspot.com/2011/04/least-squares-fit-sphere-to-3d-data.html
+
+	float npoints = (float)pointsUsed;
+
+	float Xsum =     0.0f, Ysum =     0.0, Zsum =     0.0;
+	float Xsumsq =   0.0f, Ysumsq =   0.0, Zsumsq =   0.0;
+	float Xsumcube = 0.0f, Ysumcube = 0.0, Zsumcube = 0.0;
+	float XYsum =    0.0f, XZsum =    0.0, YZsum =    0.0;
+	float X2Ysum =   0.0f, X2Zsum =   0.0, Y2Xsum =   0.0;
+	float Y2Zsum =   0.0f, Z2Xsum =   0.0, Z2Ysum =   0.0;
+
+	for( int i=0; i<pointsUsed; i++ )
+	{
+		Xsum     += pts[i].x();
+		Ysum     += pts[i].y();
+		Zsum     += pts[i].z();
+		Xsumsq   += pts[i].x() * pts[i].x();
+		Ysumsq   += pts[i].y() * pts[i].y();
+		Zsumsq   += pts[i].z() * pts[i].z();
+		Xsumcube += pts[i].x() * pts[i].x() * pts[i].x();
+		Ysumcube += pts[i].y() * pts[i].y() * pts[i].y();
+		Zsumcube += pts[i].z() * pts[i].z() * pts[i].z();
+		XYsum    += pts[i].x() * pts[i].y();
+		XZsum    += pts[i].x() * pts[i].z();
+		YZsum    += pts[i].y() * pts[i].z();
+		X2Ysum   += pts[i].x() * pts[i].x() * pts[i].y();
+		X2Zsum   += pts[i].x() * pts[i].x() * pts[i].z();
+		Y2Xsum   += pts[i].y() * pts[i].y() * pts[i].x();
+		Y2Zsum   += pts[i].y() * pts[i].y() * pts[i].z();
+		Z2Xsum   += pts[i].z() * pts[i].z() * pts[i].x();
+		Z2Ysum   += pts[i].z() * pts[i].z() * pts[i].y();
+	}
+
+
+	float Xn = Xsum/npoints;        //sum( X[n] )
+	float Xn2 = Xsumsq/npoints;    //sum( X[n]^2 )
+	float Xn3 = Xsumcube/npoints;    //sum( X[n]^3 )
+	float Yn = Ysum/npoints;        //sum( Y[n] )
+	float Yn2 = Ysumsq/npoints;    //sum( Y[n]^2 )
+	float Yn3 = Ysumcube/npoints;    //sum( Y[n]^3 )
+	float Zn = Zsum/npoints;        //sum( Z[n] )
+	float Zn2 = Zsumsq/npoints;    //sum( Z[n]^2 )
+	float Zn3 = Zsumcube/npoints;    //sum( Z[n]^3 )
+
+	float XY = XYsum/npoints;        //sum( X[n] * Y[n] )
+	float XZ = XZsum/npoints;        //sum( X[n] * Z[n] )
+	float YZ = YZsum/npoints;        //sum( Y[n] * Z[n] )
+	float X2Y = X2Ysum/npoints;    //sum( X[n]^2 * Y[n] )
+	float X2Z = X2Zsum/npoints;    //sum( X[n]^2 * Z[n] )
+	float Y2X = Y2Xsum/npoints;    //sum( Y[n]^2 * X[n] )
+	float Y2Z = Y2Zsum/npoints;    //sum( Y[n]^2 * Z[n] )
+	float Z2X = Z2Xsum/npoints;    //sum( Z[n]^2 * X[n] )
+	float Z2Y = Z2Ysum/npoints;    //sum( Z[n]^2 * Y[n] )
+
+	//Reduction of multiplications
+	float F0 = Xn2 + Yn2 + Zn2;
+	float F1 = 0.5f*F0;
+	float F2 = -8.0f*(Xn3 + Y2X + Z2X);
+	float F3 = -8.0f*(X2Y + Yn3 + Z2Y);
+	float F4 = -8.0f*(X2Z + Y2Z + Zn3);
+
+	//Set initial conditions:
+	float A = Xn;
+	float B = Yn;
+	float C = Zn;
+
+	//First iteration computation:
+	float A2 = A*A;
+	float B2 = B*B;
+	float C2 = C*C;
+	float QS = A2 + B2 + C2;
+	float QB = - 2.0f*(A*Xn + B*Yn + C*Zn);
+
+	//Set initial conditions:
+	float Rsq = F0 + QB + QS;
+
+	//First iteration computation:
+	float Q0 = 0.5*(QS - Rsq);
+	float Q1 = F1 + Q0;
+	float Q2 = 8.0f*( QS - Rsq + QB + F0 );
+	float aA,aB,aC,nA,nB,nC,dA,dB,dC;
+
+	//Iterate N times, ignore stop condition.
+	int n = 0;
+	int N = 100;
+	float Nstop = 0.5f;
+
+	while( n != N )
+	{
+		n++;
+
+		//Compute denominator:
+		aA = Q2 + 16.0f*(A2 - 2.0f*A*Xn + Xn2);
+		aB = Q2 + 16.0f*(B2 - 2.0f*B*Yn + Yn2);
+		aC = Q2 + 16.0f*(C2 - 2.0f*C*Zn + Zn2);
+		aA = (aA == 0) ? 1.0f : aA;
+		aB = (aB == 0) ? 1.0f : aB;
+		aC = (aC == 0) ? 1.0f : aC;
+
+		//Compute next iteration
+		nA = A - ((F2 + 16.0f*( B*XY + C*XZ + Xn*(-A2 - Q0) + A*(Xn2 + Q1 - C*Zn - B*Yn) ) )/aA);
+		nB = B - ((F3 + 16.0f*( A*XY + C*YZ + Yn*(-B2 - Q0) + B*(Yn2 + Q1 - A*Xn - C*Zn) ) )/aB);
+		nC = C - ((F4 + 16.0f*( A*XZ + B*YZ + Zn*(-C2 - Q0) + C*(Zn2 + Q1 - A*Xn - B*Yn) ) )/aC);
+
+		//Check for stop condition
+		dA = (nA - A);
+		dB = (nB - B);
+		dC = (nC - C);
+		if( (dA*dA + dB*dB + dC*dC) <= Nstop ){ break; }
+
+		//Compute next iteration's values
+		A = nA;
+		B = nB;
+		C = nC;
+		A2 = A*A;
+		B2 = B*B;
+		C2 = C*C;
+		QS = A2 + B2 + C2;
+		QB = - 2.0f*(A*Xn + B*Yn + C*Zn);
+		Rsq = F0 + QB + QS;
+		Q0 = 0.5f*(QS - Rsq);
+		Q1 = F1 + Q0;
+		Q2 = 8.0f*( QS - Rsq + QB + F0 );
+	}
+
+	double R = sqrt(Rsq);
+	ui->xy_mag->SetCircle( A, B, R );
+	ui->yz_mag->SetCircle( B, C, R );
+	ui->xz_mag->SetCircle( A, C, R );
 }

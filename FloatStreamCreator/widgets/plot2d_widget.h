@@ -19,6 +19,12 @@ public:
 	void Reset(void);
 	void AddSample( QPointF &newSample , bool bRedraw );
 
+	bool		drawCircle;
+	QPointF		center;
+	float		radius;
+
+	void SetCircle( float x, float y, float r ) {center.setX(x); center.setY(y); radius = r; drawCircle = true;}
+
 public slots:
 
 protected:
@@ -32,7 +38,8 @@ private:
 	float		ymin, ymax;
 
 	QPen		sPen;	// samples
-	QPen		cPen;	// center
+	QPen		tPen;	// text
+	QPen		cPen;	// circle
 };
 
 #endif // LINEFITWIDGET_H

@@ -16,7 +16,8 @@ Plot2d_Widget::Plot2d_Widget(QWidget * parent) : QWidget(parent)
 	sPen = QPen(QColor::fromRgb(64, 64, 64, 192));
 	sPen.setWidthF(2.0f);
 
-	cPen = QPen(QColor::fromRgb(0, 0, 0, 255));
+	tPen = QPen(QColor::fromRgb(0, 0, 0, 255));
+	cPen = QPen(QColor::fromRgb(64,64,255,128));
 }
 //! [0]
 
@@ -89,9 +90,18 @@ void Plot2d_Widget::paintEvent(QPaintEvent * event)
 	float xc = (x1+x2)/2;
 	float yc = (y1+y2)/2;
 
+	if( drawCircle ) {
+		p.setPen(cPen);
+		QPointF c;
+		c.setX( (center.x() - xmin) * xs );
+		c.setY( (center.y() - xmin) * ys );
+
+		p.drawEllipse(c, radius*xs, radius*ys);
+	}
+
 	QString s = QString::asprintf( "%0.1f, %0.1f", xc, yc );
 	p.setRenderHint(QPainter::Antialiasing, false);
-	p.setPen( sPen );
+	p.setPen( tPen );
 	p.setFont( font() );
 	p.drawText( 10, 1, width()-10, height()-8, Qt::AlignLeft | Qt::AlignTop, s );
 }

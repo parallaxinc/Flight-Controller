@@ -5,9 +5,11 @@
 #include <QLabel>
 #include <QQuaternion>
 #include <QVector>
+#include <QVector3D>
 
 #include "connection.h"
 #include "elev8data.h"
+
 
 
 namespace Ui {
@@ -60,6 +62,11 @@ private:
 	float accZCal[4];
 
 	bool InternalChange;
+
+	int pointsUsed, pointIndex;
+	QVector3D pts[4096];
+
+	void UpdateMagSphere(void);
 
 	Ui::MainWindow *ui;
 };
