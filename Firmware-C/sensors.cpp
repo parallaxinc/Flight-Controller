@@ -162,7 +162,8 @@ void Sensors_SetAccelOffsetValues( int * OffsetsAddr )
 
 void Sensors_ZeroMagnetometerScaleOffsets(void)
 {
-  memset( &data.MagOffsetX, 0, 6*sizeof(int) );
+	data.MagOffsetX = data.MagOffsetY = data.MagOffsetZ = 0;
+	data.MagScaleX = data.MagScaleY = data.MagScaleZ = 1024;
 }
 
 void Sensors_SetMagnetometerScaleOffsets( int * MagOffsetsAndScalesAddr )

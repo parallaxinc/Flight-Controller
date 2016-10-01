@@ -493,9 +493,9 @@ Config_Sensors
                         'Ctrl_Reg2_M (21h)
                         '0__FS[1..0]__0__REBOOT__SoftRST__00
 
-                        'FS[1..0] := %10        '+/-12 gauss
+                        'FS[1..0] := %01        '+/-8 gauss
                         mov     spi_reg, #$21
-                        mov     spi_data, #%0_10_0_0_0_00                        
+                        mov     spi_data, #%0_01_0_0_0_00                        
                         call    #SPI_Write
                         
 

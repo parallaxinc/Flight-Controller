@@ -1802,8 +1802,16 @@ void LaserRangeThread( void *par )
 void InitializePrefs(void)
 {
   Prefs_Load();
+
+  Prefs.MagScaleOfs[0] = 0;
+  Prefs.MagScaleOfs[1] = 1024;
+  Prefs.MagScaleOfs[2] = 0;
+  Prefs.MagScaleOfs[3] = 1024;
+  Prefs.MagScaleOfs[4] = 0;
+  Prefs.MagScaleOfs[5] = 1024;
+
   ApplyPrefs();
-}  
+}
 
 void ApplyPrefs(void)
 {

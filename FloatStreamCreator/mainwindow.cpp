@@ -138,6 +138,18 @@ void MainWindow::ProcessPackets(void)
 
 					ui->Orientation_display->setQuat2(cq);
 
+					{
+						QPointF pt;
+						pt.setX(sensors.MagX);
+						pt.setY(sensors.MagY);
+						ui->xy_mag->AddSample(pt, true);
+
+						pt.setY(sensors.MagZ);
+						ui->xz_mag->AddSample(pt, true);
+
+						pt.setX(sensors.MagY);
+						ui->yz_mag->AddSample(pt, true);
+					}
 
 					//AddGraphSample( 0, sensors.GyroX );
 					//AddGraphSample( 1, sensors.GyroY );
@@ -165,12 +177,19 @@ void MainWindow::ProcessPackets(void)
 					// TEST CODE
 					//q = ahrs.quat;
 
-					//QMatrix3x3 m;
-					//m = QuatToMatrix( q );
+					QMatrix3x3 m;
+					m = QuatToMatrix( q );
 
-					//double roll = asin(  m(1, 0) ) * (180.0 / PI) * 100.0;
-					//double pitch = asin( m(1, 2) ) * (180.0 / PI) * 100.0;
-					//double yaw = -atan2( m(2, 0), m(2, 2) ) * (180.0 / PI) * 100.0;
+					float roll = asinf(  m(1, 0) );
+					float pitch = asinf( m(1, 2) );
+					//float yaw = -atan2f( m(2, 0), m(2, 2) );
+
+					float xh = sensors.MagX * cosf(pitch) + sensors.MagZ * sinf(pitch);
+					float yh = sensors.MagX * sinf(roll) * sinf(pitch) + sensors.MagY * cosf(roll) - sensors.MagZ * sinf(roll)*cosf(pitch);
+
+					float heading = atan2(yh, xh);
+
+					ui->Heading_display->setHeading( heading * (180.0/PI) );
 
 					//AddGraphSample( 13, (float)pitch );
 					//AddGraphSample( 14, (float)roll );
