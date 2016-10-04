@@ -3196,7 +3196,7 @@ throttle calibration.</string>
                <item>
                 <widget class="QDoubleSpinBox" name="sbLowVoltageAlarmThreshold">
                  <property name="toolTip">
-                  <string>Throttle value sent to ESCs when using Motor Test feature</string>
+                  <string>Sets the threshold where the low voltage alarm begins to sound</string>
                  </property>
                  <property name="minimum">
                   <double>6.000000000000000</double>
@@ -3226,7 +3226,7 @@ throttle calibration.</string>
                <item>
                 <widget class="QDoubleSpinBox" name="sbVoltageOffset">
                  <property name="toolTip">
-                  <string>Throttle value sent to ESCs when using Motor Test feature</string>
+                  <string>The measured voltage can be corrected by setting the Voltage Offset</string>
                  </property>
                  <property name="minimum">
                   <double>-2.000000000000000</double>
