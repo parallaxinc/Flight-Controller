@@ -16,6 +16,12 @@ public:
     QSize minimumSizeHint() const Q_DECL_OVERRIDE;
     QSize sizeHint() const Q_DECL_OVERRIDE;
 
+	enum Origin {
+		Left,
+		Right,
+		Center,
+	};
+
 public slots:
 
     void setValue(float v);
@@ -28,7 +34,7 @@ public slots:
     void setRightLabel(int labelVal);
     void setRightLabel(const char * charStr);
 
-    void setFromLeft(bool bVal);
+	void setOrigin(Origin org);
 
     void setBarColor( const QColor & col );
 
@@ -38,7 +44,7 @@ protected:
 private:
     float valMin, valMax;
     float value;
-    bool fromLeft;
+	Origin drawFrom;
     int buffer;
 
     QColor barColor;
