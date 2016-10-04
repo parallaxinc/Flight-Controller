@@ -42,6 +42,12 @@ laserrange.cpp
 laserrange.h
 remote_rx_driver.spin
 elev8types.h
+QuatIMU_vars.inc
+QuatIMU_var_init.inc
+QuatIMU_UpdateControls_Manual.inc
+QuatIMU_UpdateControls_ComputeOrientationChange.inc
+QuatIMU_UpdateControls_AutoLevel.inc
+QuatIMU_QuatUpdate.inc
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

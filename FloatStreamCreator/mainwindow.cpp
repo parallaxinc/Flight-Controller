@@ -44,6 +44,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	comm.StartConnection();
 	Heartbeat = 0;
 
+	ui->vb_mx->setOrigin(ValueBar_Widget::Center);
+	ui->vb_mx->setMinMax( -2000, 2000 );
+	ui->vb_mx->setRightLabel( "MX" );
+	ui->vb_mx->setBarColor( QColor::fromRgb(255,128,128) );
+
+	ui->vb_my->setOrigin(ValueBar_Widget::Center);
+	ui->vb_my->setMinMax( -2000, 2000 );
+	ui->vb_my->setRightLabel( "MY" );
+	ui->vb_my->setBarColor( QColor::fromRgb(128,255,128) );
+
+	ui->vb_mz->setOrigin(ValueBar_Widget::Center);
+	ui->vb_mz->setMinMax( -2000, 2000 );
+	ui->vb_mz->setRightLabel( "MZ" );
+	ui->vb_mz->setBarColor( QColor::fromRgb(128,128,255) );
+
 	//on_btnCompile_clicked();
 }
 
@@ -141,6 +156,10 @@ void MainWindow::ProcessPackets(void)
 
 					ui->Orientation_display->setQuat2(cq);
 
+					ui->vb_mx->setValue( sensors.MagX );
+					ui->vb_my->setValue( sensors.MagY );
+					ui->vb_mz->setValue( sensors.MagZ );
+
 					{
 						QPointF pt;
 						pt.setX(sensors.MagX);
@@ -185,14 +204,30 @@ void MainWindow::ProcessPackets(void)
 					QMatrix3x3 m;
 					m = QuatToMatrix( q );
 
-					float roll = asinf(  m(1, 0) );
-					float pitch = asinf( m(1, 2) );
+					//float roll =  asinf( m(1, 0) );
+					//float pitch = asinf( m(1, 2) );
 					//float yaw = -atan2f( m(2, 0), m(2, 2) );
 
-					float xh = sensors.MagX * cosf(pitch) + sensors.MagZ * sinf(pitch);
-					float yh = sensors.MagX * sinf(roll) * sinf(pitch) + sensors.MagY * cosf(roll) - sensors.MagZ * sinf(roll)*cosf(pitch);
+					float mx = sensors.MagX;
+					float my = sensors.MagY;
+					float mz = sensors.MagZ;
 
-					float heading = atan2(yh, xh);
+					float pitch = asinf( -m(1, 0) );
+					float roll  = asinf( m(1, 2) / cosf(pitch) );
+
+					float cosRoll = cosf(roll);
+					float sinRoll = sinf(roll);
+					float cosPitch = cosf(pitch);
+					float sinPitch = sinf(pitch);
+
+					float mxSinPitch = mx * sinPitch;
+					float mzCosPitch = mz * cosPitch;
+
+					float xh =  mx * cosPitch + mz * sinPitch;
+					float yh =  mxSinPitch * sinRoll + my * cosRoll - mzCosPitch * sinRoll;
+					float zh = -mxSinPitch * cosRoll + my * sinRoll + mzCosPitch * cosRoll;
+
+					float heading = atan2(-xh, yh);
 
 					ui->Heading_display->setHeading( heading * (180.0/PI) );
 
@@ -367,6 +402,8 @@ void MainWindow::on_btnCompile_clicked()
 
 void MainWindow::UpdateMagSphere(void)
 {
+	// mag offset 279, 373, -103
+
 	pts[pointsUsed] = QVector3D( sensors.MagX, sensors.MagY, sensors.MagZ );
 	if( pointsUsed < 4096 ) pointsUsed++;
 	pointIndex = (pointIndex+1) & 4095;
@@ -396,55 +433,55 @@ void MainWindow::UpdateMagSphere(void)
 
 	float npoints = (float)pointsUsed;
 
-	float Xsum =     0.0f, Ysum =     0.0, Zsum =     0.0;
-	float Xsumsq =   0.0f, Ysumsq =   0.0, Zsumsq =   0.0;
-	float Xsumcube = 0.0f, Ysumcube = 0.0, Zsumcube = 0.0;
-	float XYsum =    0.0f, XZsum =    0.0, YZsum =    0.0;
-	float X2Ysum =   0.0f, X2Zsum =   0.0, Y2Xsum =   0.0;
-	float Y2Zsum =   0.0f, Z2Xsum =   0.0, Z2Ysum =   0.0;
+	float Xn  =   0.0f, Yn  =   0.0, Zn  =   0.0;
+	float Xn2 =   0.0f, Yn2 =   0.0, Zn2 =   0.0;
+	float Xn3 =   0.0f, Yn3 =   0.0, Zn3 =   0.0;
+	float XY  =   0.0f, XZ  =   0.0, YZ  =   0.0;
+	float X2Y =   0.0f, X2Z =   0.0, Y2X =   0.0;
+	float Y2Z =   0.0f, Z2X =   0.0, Z2Y =   0.0;
 
 	for( int i=0; i<pointsUsed; i++ )
 	{
-		Xsum     += pts[i].x();
-		Ysum     += pts[i].y();
-		Zsum     += pts[i].z();
-		Xsumsq   += pts[i].x() * pts[i].x();
-		Ysumsq   += pts[i].y() * pts[i].y();
-		Zsumsq   += pts[i].z() * pts[i].z();
-		Xsumcube += pts[i].x() * pts[i].x() * pts[i].x();
-		Ysumcube += pts[i].y() * pts[i].y() * pts[i].y();
-		Zsumcube += pts[i].z() * pts[i].z() * pts[i].z();
-		XYsum    += pts[i].x() * pts[i].y();
-		XZsum    += pts[i].x() * pts[i].z();
-		YZsum    += pts[i].y() * pts[i].z();
-		X2Ysum   += pts[i].x() * pts[i].x() * pts[i].y();
-		X2Zsum   += pts[i].x() * pts[i].x() * pts[i].z();
-		Y2Xsum   += pts[i].y() * pts[i].y() * pts[i].x();
-		Y2Zsum   += pts[i].y() * pts[i].y() * pts[i].z();
-		Z2Xsum   += pts[i].z() * pts[i].z() * pts[i].x();
-		Z2Ysum   += pts[i].z() * pts[i].z() * pts[i].y();
+		Xn    += pts[i].x();
+		Yn    += pts[i].y();
+		Zn    += pts[i].z();
+		Xn2   += pts[i].x() * pts[i].x();
+		Yn2   += pts[i].y() * pts[i].y();
+		Zn2   += pts[i].z() * pts[i].z();
+		Xn3   += pts[i].x() * pts[i].x() * pts[i].x();
+		Yn3   += pts[i].y() * pts[i].y() * pts[i].y();
+		Zn3   += pts[i].z() * pts[i].z() * pts[i].z();
+		XY    += pts[i].x() * pts[i].y();
+		XZ    += pts[i].x() * pts[i].z();
+		YZ    += pts[i].y() * pts[i].z();
+		X2Y   += pts[i].x() * pts[i].x() * pts[i].y();
+		X2Z   += pts[i].x() * pts[i].x() * pts[i].z();
+		Y2X   += pts[i].y() * pts[i].y() * pts[i].x();
+		Y2Z   += pts[i].y() * pts[i].y() * pts[i].z();
+		Z2X   += pts[i].z() * pts[i].z() * pts[i].x();
+		Z2Y   += pts[i].z() * pts[i].z() * pts[i].y();
 	}
 
 
-	float Xn = Xsum/npoints;        //sum( X[n] )
-	float Xn2 = Xsumsq/npoints;    //sum( X[n]^2 )
-	float Xn3 = Xsumcube/npoints;    //sum( X[n]^3 )
-	float Yn = Ysum/npoints;        //sum( Y[n] )
-	float Yn2 = Ysumsq/npoints;    //sum( Y[n]^2 )
-	float Yn3 = Ysumcube/npoints;    //sum( Y[n]^3 )
-	float Zn = Zsum/npoints;        //sum( Z[n] )
-	float Zn2 = Zsumsq/npoints;    //sum( Z[n]^2 )
-	float Zn3 = Zsumcube/npoints;    //sum( Z[n]^3 )
+	Xn  /= npoints;		//sum( X[n] )
+	Xn2 /= npoints;		//sum( X[n]^2 )
+	Xn3 /= npoints;		//sum( X[n]^3 )
+	Yn  /= npoints;		//sum( Y[n] )
+	Yn2 /= npoints;		//sum( Y[n]^2 )
+	Yn3 /= npoints;		//sum( Y[n]^3 )
+	Zn  /= npoints;		//sum( Z[n] )
+	Zn2 /= npoints;		//sum( Z[n]^2 )
+	Zn3 /= npoints;		//sum( Z[n]^3 )
 
-	float XY = XYsum/npoints;        //sum( X[n] * Y[n] )
-	float XZ = XZsum/npoints;        //sum( X[n] * Z[n] )
-	float YZ = YZsum/npoints;        //sum( Y[n] * Z[n] )
-	float X2Y = X2Ysum/npoints;    //sum( X[n]^2 * Y[n] )
-	float X2Z = X2Zsum/npoints;    //sum( X[n]^2 * Z[n] )
-	float Y2X = Y2Xsum/npoints;    //sum( Y[n]^2 * X[n] )
-	float Y2Z = Y2Zsum/npoints;    //sum( Y[n]^2 * Z[n] )
-	float Z2X = Z2Xsum/npoints;    //sum( Z[n]^2 * X[n] )
-	float Z2Y = Z2Ysum/npoints;    //sum( Z[n]^2 * Y[n] )
+	XY  /= npoints;		//sum( X[n] * Y[n] )
+	XZ  /= npoints;		//sum( X[n] * Z[n] )
+	YZ  /= npoints;		//sum( Y[n] * Z[n] )
+	X2Y /= npoints;		//sum( X[n]^2 * Y[n] )
+	X2Z /= npoints;		//sum( X[n]^2 * Z[n] )
+	Y2X /= npoints;		//sum( Y[n]^2 * X[n] )
+	Y2Z /= npoints;		//sum( Y[n]^2 * Z[n] )
+	Z2X /= npoints;		//sum( Z[n]^2 * X[n] )
+	Z2Y /= npoints;		//sum( Z[n]^2 * Y[n] )
 
 	//Reduction of multiplications
 	float F0 = Xn2 + Yn2 + Zn2;
@@ -477,7 +514,7 @@ void MainWindow::UpdateMagSphere(void)
 	//Iterate N times, ignore stop condition.
 	int n = 0;
 	int N = 100;
-	float Nstop = 0.5f;
+	float Nstop = 0.1f;
 
 	while( n != N )
 	{
@@ -500,7 +537,9 @@ void MainWindow::UpdateMagSphere(void)
 		dA = (nA - A);
 		dB = (nB - B);
 		dC = (nC - C);
-		if( (dA*dA + dB*dB + dC*dC) <= Nstop ){ break; }
+		if( (dA*dA + dB*dB + dC*dC) <= Nstop ){
+			break;
+		}
 
 		//Compute next iteration's values
 		A = nA;
@@ -521,4 +560,6 @@ void MainWindow::UpdateMagSphere(void)
 	ui->xy_mag->SetCircle( A, B, R );
 	ui->yz_mag->SetCircle( B, C, R );
 	ui->xz_mag->SetCircle( A, C, R );
+
+	ui->lblCenter->setText( QString( "Center %1 %2 %3" ).arg(A).arg(B).arg(C) );
 }
