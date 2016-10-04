@@ -232,6 +232,7 @@ private:
 	ChannelData channelData[8];
 
 	int SampleIndex;
+	int altiAxisOffset;
 	QCPGraph * graphs[17];
 	QCustomPlot * sg;
 

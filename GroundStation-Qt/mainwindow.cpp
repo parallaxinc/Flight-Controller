@@ -92,8 +92,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	InternalChange = true;
 
-    ui->motor_FL_val->setFromLeft(false);
-    ui->motor_BL_val->setFromLeft(false);
+	ui->motor_FR_val->setOrigin(ValueBar_Widget::Left);
+	ui->motor_CR_val->setOrigin(ValueBar_Widget::Left);
+	ui->motor_BR_val->setOrigin(ValueBar_Widget::Left);
+
+	ui->motor_FL_val->setOrigin(ValueBar_Widget::Right);
+	ui->motor_CL_val->setOrigin(ValueBar_Widget::Right);
+	ui->motor_BL_val->setOrigin(ValueBar_Widget::Right);
 
     ui->motor_FL_val->setMinMax( 8000, 16000 );
     ui->motor_FL_val->setLeftLabel( "FL" );
@@ -145,7 +150,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->channel5Val->setLeftLabel("Gear");
     ui->channel6Val->setLeftLabel("Aux1");
     ui->channel7Val->setLeftLabel("Aux2");
-    ui->channel8Val->setLeftLabel("Aux3");
+	ui->channel8Val->setLeftLabel("Aux3");
 	ui->vbR_Channel1->setLeftLabel("Thro");
 	ui->vbR_Channel2->setLeftLabel("Aile");
 	ui->vbR_Channel3->setLeftLabel("Elev");
@@ -154,6 +159,23 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->vbR_Channel6->setLeftLabel("Aux1");
     ui->vbR_Channel7->setLeftLabel("Aux2");
     ui->vbR_Channel8->setLeftLabel("Aux3");
+
+	ui->channel1Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel2Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel3Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel4Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel5Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel6Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel7Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel8Val->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel1->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel2->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel3->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel4->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel5->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel6->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel7->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel8->setOrigin(ValueBar_Widget::Center);
 
 	FillChannelComboBox( ui->cbR_Channel1, RadioMode == 2 ? 1 : 3 );
     FillChannelComboBox( ui->cbR_Channel2, 2 );
@@ -236,15 +258,26 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
 	SampleIndex = 0;
+	altiAxisOffset = 0;
 
 	sg = ui->sensorGraph;
 	sg->legend->setVisible(true);
 	sg->setAutoAddPlottableToLegend(true);
 	sg->xAxis->setRange(0, 2000);
 	sg->yAxis->setRange(-2048, 2048);
+
+	sg->yAxis2->setVisible(true);
+	sg->yAxis2->setRange(-2048, 2048);
+
 	for( int i=0; i<17; i++ )
 	{
-		graphs[i] = sg->addGraph();
+		if( strcmp(graphNames[i], "AltiRaw") == 0 || strcmp(graphNames[i], "AltiEst") == 0 ) {
+			graphs[i] = sg->addGraph( sg->xAxis, sg->yAxis2 );
+		}
+		else {
+			graphs[i] = sg->addGraph();
+		}
+
 		graphs[i]->setName(graphNames[i]);
 		graphs[i]->setPen( QPen(graphColors[i]) );
 	}
@@ -594,6 +627,15 @@ void MainWindow::ProcessPackets(void)
 					AddGraphSample( 10, (float)computed.Alt );
 					AddGraphSample( 11, (float)computed.AltiEst );
 					AddGraphSample( 12, (float)computed.GroundHeight );
+
+					if( SampleIndex < 4 ) {
+						altiAxisOffset = computed.AltiEst;
+						ui->sensorGraph->yAxis2->setRange(-2048 + altiAxisOffset , 2048 + altiAxisOffset );
+					}
+					else {
+						QCPRange range = sg->yAxis->range();
+						ui->sensorGraph->yAxis2->setRange( range.lower + altiAxisOffset , range.upper + altiAxisOffset );
+					}
 					break;
 
                 case 5:	// Motor values
