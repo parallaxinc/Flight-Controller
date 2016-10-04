@@ -3534,6 +3534,21 @@ throttle calibration.</string>
         <string>Accel Calibration</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_36" stretch="1,1">
+        <property name="spacing">
+         <number>6</number>
+        </property>
+        <property name="leftMargin">
+         <number>3</number>
+        </property>
+        <property name="topMargin">
+         <number>3</number>
+        </property>
+        <property name="rightMargin">
+         <number>3</number>
+        </property>
+        <property name="bottomMargin">
+         <number>3</number>
+        </property>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_28" stretch="3,5">
           <item>
@@ -3925,6 +3940,18 @@ throttle calibration.</string>
         <string>Sensors</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <property name="leftMargin">
+         <number>3</number>
+        </property>
+        <property name="topMargin">
+         <number>3</number>
+        </property>
+        <property name="rightMargin">
+         <number>3</number>
+        </property>
+        <property name="bottomMargin">
+         <number>3</number>
+        </property>
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
@@ -3943,16 +3970,16 @@ throttle calibration.</string>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout">
              <property name="leftMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <property name="topMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <property name="rightMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <property name="bottomMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_8" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
@@ -4277,16 +4304,16 @@ throttle calibration.</string>
               <number>6</number>
              </property>
              <property name="leftMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <property name="topMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <property name="rightMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <property name="bottomMargin">
-              <number>2</number>
+              <number>1</number>
              </property>
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -4603,7 +4630,6 @@ throttle calibration.</string>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <zorder>frame_9</zorder>
            </widget>
           </item>
          </layout>
@@ -4645,7 +4671,14 @@ throttle calibration.</string>
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuSensor_Graph">
+    <property name="title">
+     <string>Sensor Graph</string>
+    </property>
+    <addaction name="actionExport_readings"/>
+   </widget>
    <addaction name="menuSettings"/>
+   <addaction name="menuSensor_Graph"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -4707,6 +4740,17 @@ throttle calibration.</string>
   <action name="actionImport_Settings_from_File">
    <property name="text">
     <string>Import Settings from File</string>
+   </property>
+  </action>
+  <action name="actionExport_readings">
+   <property name="text">
+    <string>Export to file</string>
+   </property>
+   <property name="toolTip">
+    <string>Export sensor readings to file</string>
+   </property>
+   <property name="statusTip">
+    <string>Export sensor readings to file</string>
    </property>
   </action>
  </widget>

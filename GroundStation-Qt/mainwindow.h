@@ -150,6 +150,8 @@ private slots:
 	void on_actionImport_Settings_from_File_triggered();
 
 
+	void on_actionExport_readings_triggered();
+
 private:
 	void AdjustFonts(void);
 

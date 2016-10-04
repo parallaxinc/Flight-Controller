@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "ahrs.h"
 #include <QCoreApplication>
+#include <QTextStream>
 #include "aboutbox.h"
 #include "quatutil.h"
 #include <math.h>
@@ -9,6 +10,19 @@
 static char beatString[] = "BEAT";
 
 AHRS ahrs;
+
+
+const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
+						   "AltiRaw", "AltiEst", "GroundHeight",
+						   "Pitch", "Roll", "Yaw", "Voltage"};
+const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
+								QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
+								QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
+							   Qt::gray, Qt::black, QColor(255,128,0),
+							   QColor(255,0,255), QColor(0,255,255), QColor(160,160,32), QColor(255,0,255)
+							 };
+
+
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -245,17 +259,6 @@ MainWindow::MainWindow(QWidget *parent) :
 	labelFWVersion->setFrameStyle(QFrame::NoFrame);
 
 	AdjustFonts();
-
-	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
-							   "AltiRaw", "AltiEst", "GroundHeight",
-							   "Pitch", "Roll", "Yaw", "Voltage"};
-	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
-									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
-									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
-								   Qt::gray, Qt::black, QColor(255,128,0),
-								   QColor(255,0,255), QColor(0,255,255), QColor(160,160,32), QColor(255,0,255)
-								 };
-
 
 	SampleIndex = 0;
 	altiAxisOffset = 0;
@@ -2382,4 +2385,38 @@ void MainWindow::ReadSettingsContents( QXmlStreamReader & reader )
 
 		reader.readNext();
 	}
+}
+
+void MainWindow::on_actionExport_readings_triggered()
+{
+	// Get the filename from the user
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Export sensor readings"), QDir::currentPath(), tr("CSV Files (*.csv)"));
+	if (fileName.isEmpty())
+		return;
+
+	QFile file(fileName);
+	if(!file.open(QFile::WriteOnly | QFile::Text)) {
+		return;
+	}
+
+	QByteArray bytes;
+	QTextStream txt( &bytes );
+
+	int numGraphs = sizeof(graphNames) / sizeof(graphNames[0]);
+	for( int i=0; i<numGraphs; i++ ) {
+		if( i > 0 ) {
+			txt << ",";
+		}
+		txt << graphNames[i];
+	}
+	txt << '\n';
+
+	// Iterate through all the samples - this should be fun, as there may be holes
+	// sample data is also going to be arranged "per graph" not "per sample", so I have
+	// to split it out into tables that are cleanly formatted, or handle "holding" the last
+	// known good sample for each column
+	txt.flush();
+
+	file.write( bytes );
+	file.close();
 }
