@@ -420,7 +420,7 @@ void Initialize(void)
   CompassConfigStep = 0;
   FlightMode = FlightMode_Stable;
   ControlMode = ControlMode_AutoLevel;
-  Stats.Version = 0x0200;   // Version 2.0.0
+  Stats.Version = 0x0201;   // Version 2.0.1
 
   InitSerial();
 
