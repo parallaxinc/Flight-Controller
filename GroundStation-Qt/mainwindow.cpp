@@ -2401,20 +2401,42 @@ void MainWindow::on_actionExport_readings_triggered()
 
 	QByteArray bytes;
 	QTextStream txt( &bytes );
+	QVector<double> heldSamples;
 
+	// Output the column labels first
 	int numGraphs = sizeof(graphNames) / sizeof(graphNames[0]);
 	for( int i=0; i<numGraphs; i++ ) {
 		if( i > 0 ) {
 			txt << ",";
 		}
 		txt << graphNames[i];
+		heldSamples.append(0.0);	// "prime" the samples buffer with zero data
 	}
 	txt << '\n';
 
-	// Iterate through all the samples - this should be fun, as there may be holes
-	// sample data is also going to be arranged "per graph" not "per sample", so I have
-	// to split it out into tables that are cleanly formatted, or handle "holding" the last
-	// known good sample for each column
+
+	// Iterate through all the samples - this is fun, as there may be holes, IE samples that
+	// don't exist.  I have to iterate through the graphs, figure out if there IS a sample for
+	// a given index or not, and put it in a table if there is.  Otherwise, the last known good
+	// sample is just carried forward until it's replaced.  I could conceivably output NaN for
+	// bad samples (or anything non-numeric, really) but this is probably going to be easiest
+	// for people to work with.
+
+	for( int i=0; i<SampleIndex; i++ )
+	{
+		for( int g=0; g<numGraphs; g++)
+		{
+			if( graphs[g]->data()->contains(i) ){
+				heldSamples[g] = (*graphs[g]->data())[i].value;
+			}
+
+			if( g > 0 ) txt << ',';
+			txt << heldSamples[g];
+		}
+
+		txt << '\n';
+	}
+
 	txt.flush();
 
 	file.write( bytes );
