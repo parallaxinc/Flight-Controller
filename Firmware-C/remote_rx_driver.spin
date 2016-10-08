@@ -34,7 +34,7 @@ VAR
 PUB Start( InputPin , Center )
   CenterOffset := Center
   InputMask := 1 << InputPin
-  BaudDelay := ClkFreq / 115_200                        'RemoteRX is 125_000 bps 
+  BaudDelay := ClkFreq / 120_000                        'RemoteRX is 125_000 bps, but 115200 is allowed, so split the difference
   Cog := cognew(@RMRXStart, @InputMask) + 1                                             
 
 
@@ -77,6 +77,7 @@ ReceiveLoop
                         call    #ReadInputBytes
                         call    #ConvertToChannels
                         call    #OutputToHub
+                        call    #DelayHalfMillisecond   'some receivers send a checksum (like SRXL) wait past it
 
                         jmp     #ReceiveLoop
 
@@ -84,7 +85,7 @@ ReceiveLoop
 '------------------------------------------------------------------------------------------------------------------------------------------------
 
 ReadInputBytes
-                        mov     LoopCounter, #16                                'Number of bytes to receive
+                        mov     LoopCounter, #16                                'Number of bytes to receive  (SRXL is 18 bytes, header = 0xA5)
                         movd    :writeWord, #inputWords                         'Write the destination address into the output instruction                        
                         mov     inWord, #0
 :byteLoop
@@ -136,6 +137,12 @@ ConvertToChannels
                         mov     inWord, inputWords
                         and     inWord, #$ff
                         cmp     inWord, #$12    wz                              '11ms 2048 DSM2 master
+              if_e      jmp     #:DoConvert
+
+                        cmp     inWord, #$02    wz                              '11ms 2048 SRXL master packet 1
+              if_e      jmp     #:DoConvert
+
+                        cmp     inWord, #$03    wz                              '11ms 2048 SRXL master packet 2
               if_e      jmp     #:DoConvert
 
                         cmp     inWord, #0      wz                              '11ms 2048 DSM2 remote
@@ -219,6 +226,19 @@ FindPacketEnd
               if_c      jmp     #:WaitLoop     
 
 FindPacketEnd_ret       ret
+
+
+
+'------------------------------------------------------------------------------------------------------------------------------------------------
+DelayHalfMillisecond
+                        mov     timer, millisecond
+                        shr     timer, #1
+                        add     timer, cnt
+
+                        waitcnt timer, #0
+DelayHalfMillisecond_ret
+                        ret
+
 
 '------------------------------------------------------------------------------------------------------------------------------------------------
 d_field                 long    $0000_0200
