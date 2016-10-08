@@ -2186,8 +2186,9 @@ void MainWindow::ReadSettings( QIODevice *file )
 			reader.readNext();
 	}
 
-	// Finally, set the UI from the prefs
+	// Finally, set the UI from the prefs, and upload to the controller
 	ConfigureUIFromPreferences();
+	UpdateElev8Preferences();
 }
 
 

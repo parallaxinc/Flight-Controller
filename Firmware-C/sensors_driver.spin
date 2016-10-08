@@ -863,7 +863,7 @@ ComputeDrift
                         
               if_z      jmp     #:skipMul
                         call    #multiply               'Multiply the two values together (if the scale is non-zero)
-                        sar     mul_x, #11              '/= 2048
+                        sar     mul_x, #10              '/= 1024
 
   :skipMul                        
   :writeMag             mov     OutMX, mul_x
