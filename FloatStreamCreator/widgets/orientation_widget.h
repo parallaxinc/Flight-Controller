@@ -21,6 +21,12 @@ public:
 	void setQuat( QQuaternion q );
 	void setQuat2( QQuaternion q );
 
+	void setHeading( float h )    { heading = h; update(); }
+	void setElevation( float e )  { elevation = e; update(); }
+
+	QVector<QVector3D> extraVects;
+	float heading, elevation;
+
 protected:
 	void paintEvent(QPaintEvent *event) Q_DECL_OVERRIDE;
 	void DrawShape( QPainter &painter, QMatrix4x4 &m, QColor col, QVector<QVector3D> &points, QVector<int> &lines );

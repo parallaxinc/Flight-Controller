@@ -17,8 +17,13 @@ Orientation_Widget::~Orientation_Widget()
 {
 }
 
+static QColor extraCols[4] = { QColor(255,0,0), QColor(0,255,0), QColor(0,0,255), QColor(255,64,255) };
+
+
 void Orientation_Widget::Init(void)
 {
+	heading = elevation = 0.0f;
+
 	Quad2d.clear();
 	Quad2d.append( QPointF( 0.9192f,  0.8485f) );
 	Quad2d.append( QPointF( 0.3000f,  0.2293f) );
@@ -126,10 +131,48 @@ void Orientation_Widget::paintEvent(QPaintEvent * event)
 	CenterY = (float)(height() / 2);
 	DrawScale = ViewScale * ((float)width()/ 560.0f);
 
+	QMatrix4x4 orient;
+	orient.setToIdentity();
+	orient.rotate( heading, 0.0f, 1.0f, 0.0f );
+	orient.rotate( elevation, 1.0f, 0.0f, 0.0f );
+
 	if(bQuat2Valid) {
-		DrawShape( painter, mat2, QColor::fromRgb(192,192,192), QuadPt, QuadLine );
+		QMatrix4x4 tempMat2 = mat2 * orient;
+		DrawShape( painter, tempMat2, QColor::fromRgb(192,192,192), QuadPt, QuadLine );
 	}
-	DrawShape( painter, mat, QColor::fromRgb(0,0,0), QuadPt, QuadLine );
+	QMatrix4x4 tempMat = mat * orient;
+	DrawShape( painter, tempMat, QColor::fromRgb(0,0,0), QuadPt, QuadLine );
+
+
+	for( int p=0; p<extraVects.length(); p++ )
+	{
+		pt[0] = QVector3D(0.0f, 0.0f, 0.0f);
+		pt[1] = tempMat * extraVects[p];
+
+		for(int i = 0; i < 2; i++)
+		{
+			pt[i].setZ( pt[i].z() + ViewDist );
+
+			if(pt[i].z() == 0.0f) {
+				pt[i].setZ( 0.0001f );
+			}
+
+			pt[i].setX( pt[i].x() / pt[i].z() );
+			pt[i].setY( pt[i].y() / pt[i].z() );
+		}
+
+		QPointF cb[2];
+
+		cb[0].setX( pt[0].x() *  DrawScale + CenterX );
+		cb[0].setY( pt[0].y() * -DrawScale + CenterY );
+		cb[1].setX( pt[1].x() *  DrawScale + CenterX );
+		cb[1].setY( pt[1].y() * -DrawScale + CenterY );
+
+		QPen penCol(extraCols[p&3]);
+		painter.setPen( penCol );
+
+		painter.drawLine( cb[0], cb[1] );
+	}
 }
 
 void Orientation_Widget::DrawShape( QPainter &painter, QMatrix4x4 &m, QColor col, QVector<QVector3D> &points, QVector<int> &lines )

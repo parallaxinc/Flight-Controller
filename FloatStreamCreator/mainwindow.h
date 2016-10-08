@@ -36,6 +36,10 @@ public:
 private slots:
 	void on_btnCompile_clicked();
 
+	void on_elevationRot_valueChanged(int value);
+
+	void on_headingRot_valueChanged(int value);
+
 private:
 
 	QLabel * labelStatus;

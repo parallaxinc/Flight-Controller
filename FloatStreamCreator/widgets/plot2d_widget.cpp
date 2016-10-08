@@ -6,10 +6,10 @@
 //! [0]
 Plot2d_Widget::Plot2d_Widget(QWidget * parent) : QWidget(parent)
 {
-	xmin = -1000.0f;
-	xmax =  1000.0f;
-	ymin = -1000.0f;
-	ymax =  1000.0f;
+	xmin = -2200.0f;
+	xmax =  2200.0f;
+	ymin = -2200.0f;
+	ymax =  2200.0f;
 
 	samplesUsed = sampleIndex = 0;
 

@@ -59,6 +59,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	ui->vb_mz->setRightLabel( "MZ" );
 	ui->vb_mz->setBarColor( QColor::fromRgb(128,128,255) );
 
+	QVector3D v(0.0f, 1.0f, 0.0f);
+	ui->Orientation_display->extraVects.append(v);
+	ui->Orientation_display->extraVects.append(v);
+
 	//on_btnCompile_clicked();
 }
 
@@ -171,6 +175,12 @@ void MainWindow::ProcessPackets(void)
 
 						pt.setX(sensors.MagY);
 						ui->yz_mag->AddSample(pt, true);
+
+						QVector3D av(sensors.AccelX / 4096.0f, sensors.AccelZ / 4096.0f, sensors.AccelY / 4096.0f);
+						QVector3D mv(sensors.MagX / 1024.0f, sensors.MagZ / 1024.0f, sensors.MagY / 1024.0f);
+
+						ui->Orientation_display->extraVects[0] = av;
+						ui->Orientation_display->extraVects[1] = mv;
 					}
 
 					UpdateMagSphere();
@@ -402,11 +412,12 @@ void MainWindow::on_btnCompile_clicked()
 
 void MainWindow::UpdateMagSphere(void)
 {
-	// mag offset 279, 373, -103
+	// mag offset 560, 746, -206 : Elev8
+	//            228  985  -47  : alt board
 
 	pts[pointsUsed] = QVector3D( sensors.MagX, sensors.MagY, sensors.MagZ );
-	if( pointsUsed < 4096 ) pointsUsed++;
-	pointIndex = (pointIndex+1) & 4095;
+	if( pointsUsed < 512 ) pointsUsed++;
+	pointIndex = (pointIndex+1) & 511;
 
 	if( (pointIndex & 15) != 15) return;
 
@@ -562,4 +573,14 @@ void MainWindow::UpdateMagSphere(void)
 	ui->xz_mag->SetCircle( A, C, R );
 
 	ui->lblCenter->setText( QString( "Center %1 %2 %3" ).arg(A).arg(B).arg(C) );
+}
+
+void MainWindow::on_elevationRot_valueChanged(int value)
+{
+	ui->Orientation_display->setElevation( (float)value );
+}
+
+void MainWindow::on_headingRot_valueChanged(int value)
+{
+	ui->Orientation_display->setHeading( (float)value );
 }
