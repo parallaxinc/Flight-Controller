@@ -62,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	QVector3D v(0.0f, 1.0f, 0.0f);
 	ui->Orientation_display->extraVects.append(v);
 	ui->Orientation_display->extraVects.append(v);
+	ui->Orientation_display->extraVects.append(v);
 
 	//on_btnCompile_clicked();
 }
@@ -185,16 +186,6 @@ void MainWindow::ProcessPackets(void)
 
 					UpdateMagSphere();
 
-					//AddGraphSample( 0, sensors.GyroX );
-					//AddGraphSample( 1, sensors.GyroY );
-					//AddGraphSample( 2, sensors.GyroZ );
-					//AddGraphSample( 3, sensors.AccelX );
-					//AddGraphSample( 4, sensors.AccelY );
-					//AddGraphSample( 5, sensors.AccelZ );
-					//AddGraphSample( 6, sensors.MagX );
-					//AddGraphSample( 7, sensors.MagY );
-					//AddGraphSample( 8, sensors.MagZ );
-					//AddGraphSample( 9, sensors.Temp );
 
 					//ahrs.Update( sensors , (1.0/250.f) * 8.0f , false );
 
@@ -214,36 +205,32 @@ void MainWindow::ProcessPackets(void)
 					QMatrix3x3 m;
 					m = QuatToMatrix( q );
 
-					//float roll =  asinf( m(1, 0) );
-					//float pitch = asinf( m(1, 2) );
-					//float yaw = -atan2f( m(2, 0), m(2, 2) );
-
 					float mx = sensors.MagX;
 					float my = sensors.MagY;
 					float mz = sensors.MagZ;
 
 					float pitch = asinf( -m(1, 0) );
-					float roll  = asinf( m(1, 2) / cosf(pitch) );
-
-					float cosRoll = cosf(roll);
-					float sinRoll = sinf(roll);
 					float cosPitch = cosf(pitch);
 					float sinPitch = sinf(pitch);
+
+					float roll  = asinf( m(1, 2) / cosPitch );
+					float cosRoll = cosf(roll);
+					float sinRoll = sinf(roll);
 
 					float mxSinPitch = mx * sinPitch;
 					float mzCosPitch = mz * cosPitch;
 
 					float xh =  mx * cosPitch + mz * sinPitch;
 					float yh =  mxSinPitch * sinRoll + my * cosRoll - mzCosPitch * sinRoll;
-					float zh = -mxSinPitch * cosRoll + my * sinRoll + mzCosPitch * cosRoll;
+					//float zh = -mxSinPitch * cosRoll + my * sinRoll + mzCosPitch * cosRoll;
 
-					float heading = atan2(-xh, yh);
+					float magNorth = atan2(-xh, yh);
 
-					ui->Heading_display->setHeading( heading * (180.0/PI) );
+					ui->Heading_display->setHeading( magNorth * (180.0/PI) );
 
-					//AddGraphSample( 13, (float)pitch );
-					//AddGraphSample( 14, (float)roll );
-					//AddGraphSample( 15, (float)yaw );
+					// This is the "north" vector, in the local space of the flight controller
+					ui->Orientation_display->extraVects[2] = QVector3D( xh, 0.0f, yh ).normalized();
+
 
 					bQuatChanged = true;
 					}
@@ -252,10 +239,6 @@ void MainWindow::ProcessPackets(void)
 				case 4:	// Compute values
 					computed.ReadFrom( p );
 					bComputedChanged = true;
-
-					//AddGraphSample( 10, (float)computed.Alt );
-					//AddGraphSample( 11, (float)computed.AltiEst );
-					//AddGraphSample( 12, (float)computed.GroundHeight );
 					break;
 
 				case 5:	// Motor values
