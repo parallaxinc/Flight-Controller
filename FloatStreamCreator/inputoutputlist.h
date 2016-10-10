@@ -56,6 +56,8 @@ OUTPUT float m00, m01, m02;
 OUTPUT float m10, m11, m12;
 OUTPUT float m20, m21, m22;
 
+OUTPUT float xh, yh, zh;
+
 OUTPUT float qx, qy, qz, qw;
 OUTPUT int	 VelocityEstMM;
 OUTPUT int	 AltitudeEstMM;

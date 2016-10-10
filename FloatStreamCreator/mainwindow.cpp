@@ -64,6 +64,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	ui->Orientation_display->extraVects.append(v);
 	ui->Orientation_display->extraVects.append(v);
 
+	ui->Orientation_display->extraVects.append(v);
+	ui->Orientation_display->extraVects.append(v);
+	ui->Orientation_display->extraVects.append(v);
+
 	//on_btnCompile_clicked();
 }
 
@@ -159,7 +163,7 @@ void MainWindow::ProcessPackets(void)
 					QuatUpdate( sensors );
 					Quat_GetQuaternion( cq );
 
-					ui->Orientation_display->setQuat2(cq);
+					ui->Orientation_display->setQuat(cq);
 
 					ui->vb_mx->setValue( sensors.MagX );
 					ui->vb_my->setValue( sensors.MagY );
@@ -177,11 +181,11 @@ void MainWindow::ProcessPackets(void)
 						pt.setX(sensors.MagY);
 						ui->yz_mag->AddSample(pt, true);
 
-						QVector3D av(sensors.AccelX / 4096.0f, sensors.AccelZ / 4096.0f, sensors.AccelY / 4096.0f);
-						QVector3D mv(sensors.MagX / 1024.0f, sensors.MagZ / 1024.0f, sensors.MagY / 1024.0f);
+						QVector3D av(sensors.AccelX / 8192.0f, sensors.AccelZ / 8192.0f, sensors.AccelY / 8192.0f);
+						QVector3D mv(sensors.MagX / 2048.0f, sensors.MagZ / 2048.0f, sensors.MagY / 2048.0f);
 
-						ui->Orientation_display->extraVects[0] = av;
-						ui->Orientation_display->extraVects[1] = mv;
+						//ui->Orientation_display->extraVects[3] = av;
+						//ui->Orientation_display->extraVects[4] = mv;
 					}
 
 					UpdateMagSphere();
@@ -205,6 +209,14 @@ void MainWindow::ProcessPackets(void)
 					QMatrix3x3 m;
 					m = QuatToMatrix( q );
 
+					// Row vects = world frame in local space
+					// Col vects = local orient in world space
+
+					ui->Orientation_display->extraVects[0] = QVector3D(m(0,0), m(1,0), m(2,0));
+					ui->Orientation_display->extraVects[1] = QVector3D(m(0,1), m(1,1), m(2,1));
+					ui->Orientation_display->extraVects[2] = QVector3D(m(0,2), m(1,2), m(2,2));
+
+
 					float mx = sensors.MagX;
 					float my = sensors.MagY;
 					float mz = sensors.MagZ;
@@ -225,11 +237,24 @@ void MainWindow::ProcessPackets(void)
 					//float zh = -mxSinPitch * cosRoll + my * sinRoll + mzCosPitch * cosRoll;
 
 					float magNorth = atan2(-xh, yh);
-
 					ui->Heading_display->setHeading( magNorth * (180.0/PI) );
 
 					// This is the "north" vector, in the local space of the flight controller
-					ui->Orientation_display->extraVects[2] = QVector3D( xh, 0.0f, yh ).normalized();
+					//ui->Orientation_display->extraVects[3] = QVector3D( xh, 0.0f, yh ).normalized() * 0.7f;
+
+					QVector3D hv;
+					Quat_GetHeadingVect( hv );
+					ui->Orientation_display->extraVects[3] = hv;
+
+
+					// According to madgwick, mag vector can be rotated into local frame and planarized by:
+					// EHxyz = Quat * magNorm * QuatConjugate (ie, S,-V)
+					// horzMag = EHxyz( sqrt(x*x+y*y), 0, z )
+					// However, Quat * vect is non-trivial, and is a lot of mults.  Might be faster with sins/etc.  Worth timing.
+
+
+					// Do I need to rotate this back into quad frame to compute a diff vector to it, or do I just need "heading"?
+					// I think I just need "heading"...
 
 
 					bQuatChanged = true;
@@ -298,7 +323,7 @@ void MainWindow::ProcessPackets(void)
 	}
 
 	if(bQuatChanged) {
-		ui->Orientation_display->setQuat(q);
+		//ui->Orientation_display->setQuat(q);
 
 		//QMatrix3x3 m;
 		//m = QuatToMatrix( q );

@@ -11,6 +11,7 @@ void UpdateControls_AutoLevel(void);
 void UpdateControls_ComputeOrientationChange(void);
 
 void Quat_GetQuaternion( QQuaternion & cq );
+void Quat_GetHeadingVect( QVector3D & hv );
 
 void QuatIMU_InitVars(void);
 

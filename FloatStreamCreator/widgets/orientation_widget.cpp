@@ -147,7 +147,7 @@ void Orientation_Widget::paintEvent(QPaintEvent * event)
 	for( int p=0; p<extraVects.length(); p++ )
 	{
 		pt[0] = QVector3D(0.0f, 0.0f, 0.0f);
-		pt[1] = tempMat * extraVects[p];
+		pt[1] = orient * extraVects[p];
 
 		for(int i = 0; i < 2; i++)
 		{

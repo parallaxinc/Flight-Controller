@@ -116,7 +116,7 @@ void QuatUpdate( SensorData & sens )
 	fay = ayRot;
 
 	axRot = (faz * accPitchCorrCos) - (fay * accPitchCorrSin);
-	ayRot = (fax * accPitchCorrSin) + (fay * accPitchCorrCos);
+	ayRot = (faz * accPitchCorrSin) + (fay * accPitchCorrCos);
 	faz = axRot;
 	fay = ayRot;
 
@@ -162,6 +162,52 @@ void QuatUpdate( SensorData & sens )
 
 	// compute heading using Atan2 and the Z vector of the orientation matrix
 	FloatYaw = -ATan2(m20, m22);
+
+
+
+	// TESTING compass hold
+
+	float fmx = Float(mx);
+	float fmy = Float(my);
+	float fmz = Float(mz);
+
+	float cosPitch, sinPitch;
+	float cosRoll, sinRoll;
+
+	//float fpitch = ASin( -m10 );
+	cosPitch = SinCos(ASin(-m10), sinPitch);
+
+	//float froll  = ASin( m12 / cosPitch );
+	cosRoll = SinCos(ASin(m12/cosPitch), sinRoll);
+
+	float fmxSinPitch = fmx * sinPitch;
+	float fmzCosPitch = fmz * cosPitch;
+
+	xh =  fmx * cosPitch + fmz * sinPitch;
+	zh =  fmxSinPitch * sinRoll + fmy * cosRoll - fmzCosPitch * sinRoll;
+
+	rmag = Sqrt( xh*xh + zh*zh + const_epsilon );
+
+	// This is the North vector in world space
+	xh /= rmag;
+	zh /= rmag;
+
+	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
+	errDiffX =          -(zh * m21);
+	errDiffY = zh * m20 - xh * m22;
+	errDiffZ = xh * m21;
+
+	float magErrScale = const_AccErrScale * 0.5f;		// Use the AccScale for now
+
+	// TODO: If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
+
+	errCorrX += errDiffX * magErrScale;
+	errCorrY += errDiffY * magErrScale;
+	errCorrZ += errDiffZ * magErrScale;
+
+	// TESTING
+
+
 
 	// When switching between manual and auto, or just lifting off, I need to
 	// know the half-angle of the craft so I can use it as my initial Heading value
@@ -433,4 +479,11 @@ void Quat_GetQuaternion(QQuaternion & cq)
 	cq.setY(qy);
 	cq.setZ(qz);
 	cq.setScalar(qw);
+}
+
+void Quat_GetHeadingVect( QVector3D & hv )
+{
+	hv.setX(xh);
+	hv.setY(yh);
+	hv.setZ(zh);
 }
