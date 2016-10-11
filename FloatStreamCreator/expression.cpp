@@ -2,6 +2,20 @@
 #include "expression.h"
 #include <QDebug>
 
+
+EVar::EVar()
+{
+	type = T_Float;
+	isConst = false;
+	Val.i = 0;
+	refCount = 0;
+	varIndex = 0;			// Index into the orderedVarList array
+	enumValue = 0;			// Index in the final enum list (may share space with other values if their usage doesn't overlap)
+
+	alwaysValid = false;
+}
+
+
 Expression::~Expression()
 {
 	if( Left != NULL ) delete Left;

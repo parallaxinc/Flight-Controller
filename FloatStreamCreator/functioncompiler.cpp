@@ -20,10 +20,29 @@ bool FunctionCompiler::Compile(QByteArray & Source, QByteArray & InputOutputList
 	QList<QByteArray> lines = InputOutputList.split('\n');
 	for( int i=0; i<lines.length(); i++)
 	{
+		// Mark variables with in/out/persist as "alwaysValid"
+		// Other variables should be ranged, per function
+			// First assign = start
+			// last non-assign = end
+			// Next assign = new start, etc.
+			// Assign is '=' ONLY.  *=, +=, etc are usage, not overwrite
+
+		// Then any variables with non-overlapping ranges can share space
+			// Last use / first assign (single line overlap) could be allowed
+
+
 		QByteArray & line = lines[i];
-		if( line.startsWith("INPUT ") ) line.remove(0,5);
-		else if( line.startsWith("OUTPUT ")) line.remove(0,6);
-		else if( line.startsWith("PERSIST ")) line.remove(0,7);
+		if( line.startsWith("INPUT ") ) {
+			line.remove(0,5);
+		}
+		else if( line.startsWith("OUTPUT ")) {
+			line.remove(0,6);
+		}
+		else if( line.startsWith("PERSIST ")) {
+			line.remove(0,7);
+		}
+		else {
+		}
 
 		parser.Parse(line.data());
 	}

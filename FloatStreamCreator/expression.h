@@ -2,10 +2,18 @@
 #define EXPRESSION_H
 
 #include "expressiontokenizer.h"
+#include <QVector>
 
+
+struct ERange {
+	short	Func;			// which function the range belongs to (index)
+	short	First, Last;	// instruction indices (inclusive) where a variable is valid
+};
 
 struct EVar
 {
+	EVar();
+
 	QString	valString;
 	QString constName;
 
@@ -18,7 +26,11 @@ struct EVar
 	} Val;
 
 	int		refCount;
-	int     varIndex;	// Index into the orderedVarList array
+	int     varIndex;			// Index into the orderedVarList array
+	int		enumValue;			// Index in the final enum list (may share space with other values if their usage doesn't overlap)
+
+	bool	alwaysValid;		// Keep this variable "in range" forever
+	QVector<ERange> ranges;		// ranges where a variable is valid
 };
 
 
