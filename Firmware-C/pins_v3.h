@@ -4,9 +4,9 @@
 
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
-  for Parallax part #80204, Revision A
+  for Parallax part #80204, Revision A3 & B
   
-  Copyright 2015 Parallax Incorporated
+  Copyright 2015-2016 Parallax Incorporated
 
   ELEV-8 Flight Controller Firmware is free software: you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by the Free Software Foundation, 
