@@ -1,9 +1,9 @@
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
   for Parallax part #80204, Revisions A & B
-  Version 2.0.0
+  Version 2.0.#
   
-  Copyright 2015 Parallax Incorporated
+  Copyright 2015-2016 Parallax Incorporated
 
   ELEV-8 Flight Controller Firmware is free software: you can redistribute it and/or modify it
   under the terms of the GNU General Public License as published by the Free Software Foundation, 
@@ -15,12 +15,6 @@
 
   You should have received a copy of the GNU General Public License
   along with the ELEV-8 Flight Controller Firmware.  If not, see <http://www.gnu.org/licenses/>.
-  
- 
-  Actively In Development / To Be Developed:
-  - Altitude Hold
-  - Heading Hold & Compass Calibration
-
 
   Written by Jason Dorie
 
