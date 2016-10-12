@@ -180,6 +180,8 @@ void QuatUpdate( SensorData & sens )
 	//float froll  = ASin( m12 / cosPitch );
 	cosRoll = SinCos(ASin(m12/cosPitch), sinRoll);
 
+	// TODO: Need to handle inversion correctly - probably just a sign flip of Pitch or Heading?
+
 	float fmxSinPitch = fmx * sinPitch;
 	float fmzCosPitch = fmz * cosPitch;
 
@@ -393,7 +395,7 @@ void UpdateControls_ComputeOrientationChange(void)
 
 
 	// rmag = (1.0/rmag * diffAngle) * 4096  equivalent to rmag = (diffAngle / rmag)
-	rmag = Shift(diffAngle / rmag, const_OutControlShift);
+	rmag = diffAngle / rmag * 4096.0f;
 
 	// Simplified this a little by changing  X / rmag * diffAngle into X * (1.0/rmag * diffAngle)
 	// PitchDiff = qrx / rmag * diffAngle
@@ -467,8 +469,6 @@ void QuatIMU_InitVars(void)
 
 	const_outAngleScale     =    65536.0f / PI;
 	const_outNegAngleScale  =   -65536.0f / PI;
-
-	const_OutControlShift   =    12;
 }
 
 

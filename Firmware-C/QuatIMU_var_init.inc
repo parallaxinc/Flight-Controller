@@ -5,3 +5,4 @@
 	INT_VARS[const_I1] = 1;
 	INT_VARS[const_I8] = 8;
 	INT_VARS[const_INeg_12] = -12;
+	INT_VARS[const_I12] = 12;

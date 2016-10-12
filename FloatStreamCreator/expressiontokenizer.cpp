@@ -119,7 +119,7 @@ bool ExpressionTokenizer::Advance(void)
 
 		if( *pSrc == '+' || *pSrc == '-' ) {
 			if( token == T_Label || token == T_Digit || token == T_None ||
-				token == T_OpenParen || token == T_CloseParen ) {
+				token == T_CloseParen ) {
 
 				// this is an operator, not a sign
 				if( pSrc[0] == '+' && pSrc[1] == '=' ) {
@@ -139,7 +139,7 @@ bool ExpressionTokenizer::Advance(void)
 				pSrc++;
 				return true;
 			}
-			else if( IsOperator(token) || IsAssign(token) || token == T_Break || token == T_None )
+			else if( IsOperator(token) || IsAssign(token) || token == T_OpenParen || token == T_Break || token == T_None )
 			{
 				// This is a unary positive/negative
 

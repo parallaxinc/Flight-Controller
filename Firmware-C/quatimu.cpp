@@ -88,7 +88,7 @@ void QuatIMU_Start(void)
   IMU_VARS[const_epsilon]           =    0.00000001f;     //Added to vector length value before inverting (1/X) to insure no divide-by-zero problems
 
   IMU_VARS[const_AccErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
-  IMU_VARS[const_MagErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
+//IMU_VARS[const_MagErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
   IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
@@ -109,8 +109,6 @@ void QuatIMU_Start(void)
 
   IMU_VARS[const_outAngleScale]     =    65536.0f / PI;
   IMU_VARS[const_outNegAngleScale]  =   -65536.0f / PI;
-
-  INT_VARS[const_OutControlShift]   =    12;
 }
 
 
@@ -118,18 +116,18 @@ void QuatIMU_SetErrScaleMode( int IsStartup )
 {
   if( IsStartup ) {
     IMU_VARS[const_AccErrScale] = Startup_ErrScale;
-    IMU_VARS[const_MagErrScale] = Startup_ErrScale;
+    //IMU_VARS[const_MagErrScale] = Startup_ErrScale;
   }
   else {
     IMU_VARS[const_AccErrScale] = Running_ErrScale;
-    IMU_VARS[const_MagErrScale] = Running_ErrScale;
+    //IMU_VARS[const_MagErrScale] = Running_ErrScale;
   }
 }
 
 
 
 int QuatIMU_GetYaw(void) {
-  return INT_VARS[ Yaw ];
+//  return INT_VARS[ Yaw ];
 }
 
 int QuatIMU_GetRoll(void) {

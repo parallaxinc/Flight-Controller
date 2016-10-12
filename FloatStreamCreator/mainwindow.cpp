@@ -323,7 +323,7 @@ void MainWindow::ProcessPackets(void)
 	}
 
 	if(bQuatChanged) {
-		//ui->Orientation_display->setQuat(q);
+		ui->Orientation_display->setQuat2(q);
 
 		//QMatrix3x3 m;
 		//m = QuatToMatrix( q );

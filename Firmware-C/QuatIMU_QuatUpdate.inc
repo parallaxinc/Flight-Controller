@@ -188,8 +188,8 @@
 	F32_opMul,     faz, accPitchCorrCos, Temp_lhs,
 	F32_opMul,     fay, accPitchCorrSin, Temp_rhs,
 	F32_opSub,     Temp_lhs, Temp_rhs, axRot,
-	// ayRot = (fax * accPitchCorrSin) + (fay * accPitchCorrCos);
-	F32_opMul,     fax, accPitchCorrSin, Temp_lhs,
+	// ayRot = (faz * accPitchCorrSin) + (fay * accPitchCorrCos);
+	F32_opMul,     faz, accPitchCorrSin, Temp_lhs,
 	F32_opMul,     fay, accPitchCorrCos, Temp_rhs,
 	F32_opAdd,     Temp_lhs, Temp_rhs, ayRot,
 	// faz = axRot;
@@ -270,6 +270,91 @@
 	// FloatYaw = -ATan2(m20, m22);
 	F32_opATan2,   m20, m22, Temp_lhs,
 	F32_opNeg,     Temp_lhs, 0, FloatYaw,
+	// 
+	// 
+	// 
+	// TESTING compass hold
+	// 
+	// float fmx = Float(mx);
+	F32_opFloat,   mx, 0, fmx,
+	// float fmy = Float(my);
+	F32_opFloat,   my, 0, fmy,
+	// float fmz = Float(mz);
+	F32_opFloat,   mz, 0, fmz,
+	// 
+	// float cosPitch, sinPitch;
+	// float cosRoll, sinRoll;
+	// 
+	//float fpitch = ASin( -m10 );
+	// cosPitch = SinCos(ASin(-m10), sinPitch);
+	F32_opNeg,     m10, 0, Temp_lhs,
+	F32_opASinCos, Temp_lhs, 1, Temp_lhs,
+	F32_opSinCos,  Temp_lhs, sinPitch, cosPitch,
+	// 
+	//float froll  = ASin( m12 / cosPitch );
+	// cosRoll = SinCos(ASin(m12/cosPitch), sinRoll);
+	F32_opDiv,     m12, cosPitch, Temp_lhs,
+	F32_opASinCos, Temp_lhs, 1, Temp_lhs,
+	F32_opSinCos,  Temp_lhs, sinRoll, cosRoll,
+	// 
+	// float fmxSinPitch = fmx * sinPitch;
+	F32_opMul,     fmx, sinPitch, fmxSinPitch,
+	// float fmzCosPitch = fmz * cosPitch;
+	F32_opMul,     fmz, cosPitch, fmzCosPitch,
+	// 
+	// xh =  fmx * cosPitch + fmz * sinPitch;
+	F32_opMul,     fmx, cosPitch, Temp_lhs,
+	F32_opMul,     fmz, sinPitch, Temp_rhs,
+	F32_opAdd,     Temp_lhs, Temp_rhs, xh,
+	// zh =  fmxSinPitch * sinRoll + fmy * cosRoll - fmzCosPitch * sinRoll;
+	F32_opMul,     fmxSinPitch, sinRoll, Temp_lhs,
+	F32_opMul,     fmy, cosRoll, Temp_rhs,
+	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
+	F32_opMul,     fmzCosPitch, sinRoll, Temp_rhs,
+	F32_opSub,     Temp_lhs, Temp_rhs, zh,
+	// 
+	// rmag = Sqrt( xh*xh + zh*zh + const_epsilon );
+	F32_opMul,     xh, xh, Temp_lhs,
+	F32_opMul,     zh, zh, Temp_rhs,
+	F32_opAdd,     Temp_lhs, Temp_rhs, Temp_lhs,
+	F32_opAdd,     Temp_lhs, const_epsilon, Temp_lhs,
+	F32_opSqrt,    Temp_lhs, 0, rmag,
+	// 
+	// This is the North vector in world space
+	// xh /= rmag;
+	F32_opDiv,     xh, rmag, xh,
+	// zh /= rmag;
+	F32_opDiv,     zh, rmag, zh,
+	// 
+	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
+	// errDiffX =          -(zh * m21);
+	F32_opMul,     zh, m21, Temp_lhs,
+	F32_opNeg,     Temp_lhs, 0, errDiffX,
+	// errDiffY = zh * m20 - xh * m22;
+	F32_opMul,     zh, m20, Temp_lhs,
+	F32_opMul,     xh, m22, Temp_rhs,
+	F32_opSub,     Temp_lhs, Temp_rhs, errDiffY,
+	// errDiffZ = xh * m21;
+	F32_opMul,     xh, m21, errDiffZ,
+	// 
+	// float magErrScale = const_AccErrScale * 0.5f;		// Use the AccScale for now
+	F32_opShift,   const_AccErrScale, const_INeg_1, magErrScale,
+	// 
+	// TODO: If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
+	// 
+	// errCorrX += errDiffX * magErrScale;
+	F32_opMul,     errDiffX, magErrScale, Temp_rhs,
+	F32_opAdd,     errCorrX, Temp_rhs, errCorrX,
+	// errCorrY += errDiffY * magErrScale;
+	F32_opMul,     errDiffY, magErrScale, Temp_rhs,
+	F32_opAdd,     errCorrY, Temp_rhs, errCorrY,
+	// errCorrZ += errDiffZ * magErrScale;
+	F32_opMul,     errDiffZ, magErrScale, Temp_rhs,
+	F32_opAdd,     errCorrZ, Temp_rhs, errCorrZ,
+	// 
+	// TESTING
+	// 
+	// 
 	// 
 	// When switching between manual and auto, or just lifting off, I need to
 	// know the half-angle of the craft so I can use it as my initial Heading value

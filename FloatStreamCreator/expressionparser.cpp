@@ -73,6 +73,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 			}
 			else {
 				qDebug() << "Err: got a type modifier mid-expression";
+				qDebug() << "Ln:" << SourceLine << " " << pSrc;
 				return false;	// parse error
 			}
 			break;
@@ -84,6 +85,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 			}
 			else {
 				qDebug() << "Err: got a type declaration mid-expression";
+				qDebug() << "Ln:" << SourceLine << " " << pSrc;
 				return false;	// parse error
 			}
 			break;
@@ -112,12 +114,14 @@ bool ExpressionParser::Parse( const char * pSrc )
 				if( lhs->op != T_Label || (lhs->Value->isConst && !isConst) ) {
 					exprStack.push(lhs);
 					qDebug() << "Err: parsing assignment, but stack-top is not a variable we can assign to";
+					qDebug() << "Ln:" << SourceLine << " " << pSrc;
 					return false;
 				}
 
 				Expression * rhs = GetExpression();
 				if( rhs == NULL ) {
 					qDebug() << "Err: Atom() function returned null extracting right-hand-side for assignment";
+					qDebug() << "Ln:" << SourceLine << " " << pSrc;
 					return false;	// parse error?
 				}
 
@@ -126,6 +130,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 					if( rhs->Value == NULL || rhs->Value->isConst != true )
 					{
 						qDebug() << "Err: Cannot assign a non-numeric value to a const";
+						qDebug() << "Ln:" << SourceLine << " " << pSrc;
 						return false;
 					}
 
@@ -136,6 +141,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 					else {
 						if( lhs->Value->valString != rhs->Value->valString ) {
 							qDebug() << "Err: Attempting to re-assign a const to a different value";
+							qDebug() << "Ln:" << SourceLine << " " << pSrc;
 						}
 					}
 
@@ -176,6 +182,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 					}
 					else {
 						qDebug() << "Err: No expression list to store expressions to!  Call StartFunction() first";
+						qDebug() << "Ln:" << SourceLine << " " << pSrc;
 					}
 					expr->Dump();
 				}
@@ -192,6 +199,7 @@ bool ExpressionParser::Parse( const char * pSrc )
 
 		default:
 			qDebug() << "Warn: Hit default case in parse";
+			qDebug() << "Ln:" << SourceLine << " " << pSrc;
 			break;
 		}
 	}

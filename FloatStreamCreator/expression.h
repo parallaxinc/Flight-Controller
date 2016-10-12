@@ -10,6 +10,9 @@ struct ERange {
 	short	First, Last;	// instruction indices (inclusive) where a variable is valid
 };
 
+typedef QVector<ERange> RangeList;
+
+
 struct EVar
 {
 	EVar();
@@ -30,7 +33,7 @@ struct EVar
 	int		enumValue;			// Index in the final enum list (may share space with other values if their usage doesn't overlap)
 
 	bool	alwaysValid;		// Keep this variable "in range" forever
-	QVector<ERange> ranges;		// ranges where a variable is valid
+	RangeList ranges;			// ranges where a variable is valid
 };
 
 

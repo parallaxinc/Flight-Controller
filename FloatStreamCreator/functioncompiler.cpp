@@ -16,21 +16,23 @@ bool FunctionCompiler::Compile(QByteArray & Source, QByteArray & InputOutputList
 	outPath = OutputPathPrefix;
 	ExpressionParser parser;
 
+	// Mark variables with in/out/persist as "alwaysValid"
+	// Other variables should be ranged, per function
+		// First assign = start
+		// last non-assign = end
+		// Next assign = new start, etc.
+		// Assign is '=' ONLY.  *=, +=, etc are usage, not overwrite
+
+	// Then any variables with non-overlapping ranges can share space
+		// Last use / first assign (single line overlap) could be allowed
+
+	// ALL IO variables are considered persistent
+	parser.VarsPersist = true;
+
 	// First, prime all the registers
 	QList<QByteArray> lines = InputOutputList.split('\n');
 	for( int i=0; i<lines.length(); i++)
 	{
-		// Mark variables with in/out/persist as "alwaysValid"
-		// Other variables should be ranged, per function
-			// First assign = start
-			// last non-assign = end
-			// Next assign = new start, etc.
-			// Assign is '=' ONLY.  *=, +=, etc are usage, not overwrite
-
-		// Then any variables with non-overlapping ranges can share space
-			// Last use / first assign (single line overlap) could be allowed
-
-
 		QByteArray & line = lines[i];
 		if( line.startsWith("INPUT ") ) {
 			line.remove(0,5);
@@ -41,11 +43,11 @@ bool FunctionCompiler::Compile(QByteArray & Source, QByteArray & InputOutputList
 		else if( line.startsWith("PERSIST ")) {
 			line.remove(0,7);
 		}
-		else {
-		}
 
 		parser.Parse(line.data());
 	}
+
+	parser.VarsPersist = false;
 
 
 	char * src = Source.data();
@@ -134,6 +136,8 @@ bool FunctionCompiler::GenerateOutputCode( ExpressionParser & parser )
 {
 	bool result = GenerateTokens( parser );
 
+	AssignVariableEnumIndices( parser );
+
 	// have to do this second because we generate some temps during function calls
 	if( result) result = GenerateVariables( parser );
 	return result;
@@ -148,12 +152,18 @@ bool FunctionCompiler::GenerateVariables( ExpressionParser & parser )
 	QTextStream streamVars( &outVars );
 	QTextStream streamInits( &outInits );
 
+	int maxEnum = 0;
+
 	for( QList<EVar*>::iterator iter = parser.orderedVarList.begin(); iter != parser.orderedVarList.end(); iter++ )
 	{
 		EVar * var = *iter;
 		if( var->isConst && var->refCount == 0 ) continue;	// don't output these - they're unused
+		if( var->enumValue == -2 ) {
+			continue;	// Unused persist variable?
+		}
 
-		streamVars << var->constName << ",";
+		streamVars << var->constName << " = " << var->enumValue << " ,";
+		if( var->enumValue > maxEnum ) maxEnum = var->enumValue;
 
 		if( var->isConst ) {
 			streamVars << "\t\t // = " << var->valString;
@@ -168,6 +178,10 @@ bool FunctionCompiler::GenerateVariables( ExpressionParser & parser )
 		}
 		streamVars << "\t\t // refcount = " << var->refCount << "\n";
 	}
+
+	// Output the final count
+	streamVars << "MAX_VAR_INDEX = " << maxEnum << " ,";
+
 	streamVars.flush();
 	streamInits.flush();
 
@@ -188,6 +202,9 @@ bool FunctionCompiler::GenerateTokens( ExpressionParser & parser )
 {
 	for( int i=0; i<parser.funcList.length(); i++ )
 	{
+		funcIndex = i;
+		instrIndex = 0;	// reset the generated output instruction index for each function
+
 		ExprFunc * func = parser.funcList[i];
 		QString filename = outPath + '_' + func->name + ".inc";
 
@@ -226,8 +243,11 @@ bool FunctionCompiler::OutputExpressionTokens( ExpressionParser & parser , QText
 	// Temp vars are used to hold intermediate results during sub-expression parsing
 	QString nameLeft = "Temp_lhs";
 	QString nameRight = "Temp_rhs";
+
+	parser.VarsPersist = true;	// temp vars are persistent
 	pLeftTemp = parser.MakeVariable( T_Float, nameLeft );
 	pRightTemp = parser.MakeVariable( T_Float, nameRight );
+	parser.VarsPersist = false;
 
 	EVar * outVar;
 	bool result = ComputeSubExpressions( stream, expr, pRightTemp, &outVar );
@@ -383,5 +403,139 @@ bool FunctionCompiler::GenerateInstruction( QTextStream & stream , Expression * 
 	stream << pOut->constName << ",\n";
 	pOut->refCount++;
 
+	UpdateVarScope( pLeft, false, funcIndex, instrIndex );
+
+	if( op->op == T_Function && op->FuncName == "SinCos" ) {
+		UpdateVarScope( pRight, true, funcIndex, instrIndex );	// second arg of SinCos is an output / assignment
+	}
+	else {
+		UpdateVarScope( pRight, false, funcIndex, instrIndex );
+	}
+	UpdateVarScope( pOut, true, funcIndex, instrIndex );
+	instrIndex++;
+
 	return true;
+}
+
+
+// This is recursive
+void FunctionCompiler::UpdateVarScope( EVar * var , bool isAssign, int iFunc, int iInstr )
+{
+	if( var == NULL || var->isPersistent || var->isConst ) return;
+
+	if( isAssign )
+	{
+		// If a variable is assigned here (and isn't persist / const), start a new range
+
+		if( var->ranges.count() > 0 && var->ranges.back().Func == iFunc &&
+				(var->ranges.back().Last == iInstr || var->ranges.back().Last == iInstr-1 ) )
+		{
+			qDebug() << "";
+			return;	// This is a re-assign, like qw=qw*x  - it's simply another usage, so just extend the range
+		}
+
+		ERange range;
+		range.Func = iFunc;
+		range.First = iInstr;
+		range.Last = 0x7fff;	// not terminated at present
+
+		var->ranges.append( range );
+	}
+	else // Not assigment
+	{
+		// If a variable is used here (and isn't persist / const), update the end of the last range
+		if( var->ranges.count() == 0 ) {
+			qDebug() << "Err: Variable used before assignment: " << var->constName;
+		}
+		else {
+			var->ranges.back().Last = iInstr;
+		}
+	}
+}
+
+
+void FunctionCompiler::AssignVariableEnumIndices(ExpressionParser & parser)
+{
+	// Assign all non-const / persist variables an EnumIndex of -1 (unassigned)
+	int NextVarIndex = 0;
+	int numVars = parser.orderedVarList.count();
+	for( int i=0; i<numVars; i++ )
+	{
+		EVar * var1 = parser.orderedVarList[i];
+		if( var1->isConst || var1->isPersistent ) {
+			if( var1->refCount != 0 ) {
+				var1->enumValue = NextVarIndex++;
+			}
+			else {
+				var1->enumValue = -2;	// Tag these as special - const / persist, but unused
+			}
+
+		}
+		else {
+			var1->enumValue = -1;	// unassigned
+		}
+	}
+
+
+	// For each variable
+	for( int i=0; i<numVars; i++ )
+	{
+		EVar * var1 = parser.orderedVarList[i];
+
+		// If the variable is unassigned, assign it the next available index
+		if( var1->enumValue == -1 ) {
+			var1->enumValue = NextVarIndex;
+
+			RangeList activeRange = var1->ranges;
+
+			// For all additional variables
+			for( int j=i+1; j<numVars; j++ )
+			{
+				EVar * var2 = parser.orderedVarList[j];
+
+				// If the 2nd is unassigned, and does not overlap the first
+				if( var2->enumValue == -1 && RangesOverlap(activeRange, var2->ranges) == false )
+				{
+					// assign it the same variable index
+					var2->enumValue = NextVarIndex;
+					MergeRanges( activeRange, var2->ranges );
+				}
+			}
+
+			NextVarIndex++;
+		}
+	}
+}
+
+bool FunctionCompiler::RangesOverlap( RangeList & set1, RangeList & set2 )
+{
+	// For each range in var1
+	for( QVector<ERange>::iterator r1 = set1.begin(); r1 != set1.end(); r1++ )
+	{
+		// For each range in var2
+		for( QVector<ERange>::iterator r2 = set2.begin(); r2 != set2.end(); r2++ )
+		{
+			// if range1 overlaps range2
+			if( r1->Func == r2->Func )
+			{
+				if( r1->First >= r2->First && r1->First <= r2->Last ) {
+					return true;
+				}
+				if( r2->First >= r1->First && r2->First <= r1->Last ) {
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+// THIS ASSUMES THAT THE RANGES DO NOT OVERLAP - they shouldn't, so no
+// optimization should be required
+void FunctionCompiler::MergeRanges(RangeList &set1, RangeList &set2)
+{
+	// For each range in set2
+	for( QVector<ERange>::iterator r2 = set2.begin(); r2 != set2.end(); r2++ ) {
+		set1.append( *r2 );  // add the range to set1 (unsorted)
+	}
 }

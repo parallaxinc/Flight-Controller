@@ -108,9 +108,9 @@
 	// 
 	// 
 	// rmag = (1.0/rmag * diffAngle) * 4096  equivalent to rmag = (diffAngle / rmag)
-	// rmag = Shift(diffAngle / rmag, const_OutControlShift);
+	// rmag = diffAngle / rmag * 4096.0f;
 	F32_opDiv,     diffAngle, rmag, Temp_lhs,
-	F32_opShift,   Temp_lhs, const_OutControlShift, rmag,
+	F32_opShift,   Temp_lhs, const_I12, rmag,
 	// 
 	// Simplified this a little by changing  X / rmag * diffAngle into X * (1.0/rmag * diffAngle)
 	// PitchDiff = qrx / rmag * diffAngle

@@ -25,6 +25,7 @@ public:
 
 private:
 	QString outPath;
+	int funcIndex, instrIndex;
 
 	EVar *pLeftTemp, *pRightTemp;
 
@@ -39,6 +40,12 @@ private:
 	bool ComputeSubExpressions( QTextStream & stream , Expression * expr , EVar *pUseTemp, EVar ** outVar );
 
 	bool GenerateInstruction( QTextStream & stream , Expression * op, EVar * pLeft, EVar * pRight, EVar * pOut );
+
+	void UpdateVarScope( EVar * var , bool isAssign, int iFunc, int iInstr );
+	void AssignVariableEnumIndices( ExpressionParser & parser );
+
+	bool RangesOverlap( RangeList & set1, RangeList & set2 );
+	void MergeRanges( RangeList & set1, RangeList & set2 );
 };
 
 

@@ -1,130 +1,141 @@
-const_I0,		 // = 0		 // refcount = 1
-gx,		 // refcount = 1
-gy,		 // refcount = 1
-gz,		 // refcount = 1
-ax,		 // refcount = 1
-ay,		 // refcount = 1
-az,		 // refcount = 1
-mx,		 // refcount = 0
-my,		 // refcount = 0
-mz,		 // refcount = 0
-alt,		 // refcount = 1
-altRate,		 // refcount = 1
-In_Elev,		 // refcount = 2
-In_Aile,		 // refcount = 2
-In_Rudd,		 // refcount = 2
-accRollCorrCos,		 // refcount = 2
-accRollCorrSin,		 // refcount = 2
-accPitchCorrCos,		 // refcount = 2
-accPitchCorrSin,		 // refcount = 2
-const_GyroScale,		 // refcount = 1
-const_NegGyroScale,		 // refcount = 2
-const_epsilon,		 // refcount = 5
-const_OutControlShift,		 // refcount = 1
-const_AccErrScale,		 // refcount = 1
-const_MagErrScale,		 // refcount = 0
-const_AccScale,		 // refcount = 1
-const_G_mm_PerSec,		 // refcount = 1
-const_UpdateScale,		 // refcount = 2
-const_velAccScale,		 // refcount = 1
-const_velAltiScale,		 // refcount = 1
-const_velAccTrust,		 // refcount = 1
-const_velAltiTrust,		 // refcount = 1
-const_YawRateScale,		 // refcount = 1
-const_ManualYawScale,		 // refcount = 1
-const_AutoBankScale,		 // refcount = 2
-const_ManualBankScale,		 // refcount = 2
-const_TwoPI,		 // refcount = 2
-const_outAngleScale,		 // refcount = 1
-const_outNegAngleScale,		 // refcount = 1
-altitudeEstimate,		 // refcount = 5
-velocityEstimate,		 // refcount = 6
-errCorrX,		 // refcount = 2
-errCorrY,		 // refcount = 2
-errCorrZ,		 // refcount = 2
-cqx,		 // refcount = 14
-cqy,		 // refcount = 14
-cqz,		 // refcount = 14
-cqw,		 // refcount = 14
-Heading,		 // refcount = 6
-forceWY,		 // refcount = 4
-Roll,		 // refcount = 1
-Pitch,		 // refcount = 1
-Yaw,		 // refcount = 0
-ThrustFactor,		 // refcount = 1
-m00,		 // refcount = 1
-m01,		 // refcount = 2
-m02,		 // refcount = 1
-m10,		 // refcount = 4
-m11,		 // refcount = 5
-m12,		 // refcount = 4
-m20,		 // refcount = 2
-m21,		 // refcount = 2
-m22,		 // refcount = 2
-qx,		 // refcount = 18
-qy,		 // refcount = 18
-qz,		 // refcount = 18
-qw,		 // refcount = 16
-VelocityEstMM,		 // refcount = 1
-AltitudeEstMM,		 // refcount = 1
-FloatYaw,		 // refcount = 2
-HalfYaw,		 // refcount = 1
-PitchDiff,		 // refcount = 1
-RollDiff,		 // refcount = 1
-YawDiff,		 // refcount = 1
-DebugFloat,		 // refcount = 1
-rx,		 // refcount = 14
-ry,		 // refcount = 14
-rz,		 // refcount = 14
-rmag,		 // refcount = 24
-sinr,		 // refcount = 7
-cosr,		 // refcount = 5
-qdw,		 // refcount = 2
-qdx,		 // refcount = 2
-qdy,		 // refcount = 2
-qdz,		 // refcount = 2
-fx2,		 // refcount = 3
-fy2,		 // refcount = 3
-fz2,		 // refcount = 3
-fwx,		 // refcount = 3
-fwy,		 // refcount = 3
-fwz,		 // refcount = 3
-fxy,		 // refcount = 3
-fxz,		 // refcount = 3
-fyz,		 // refcount = 3
-const_F1_0,		 // = 1.0		 // refcount = 11
-const_F2_0,		 // = 2.0		 // refcount = 1
-fax,		 // refcount = 9
-fay,		 // refcount = 11
-faz,		 // refcount = 7
-axRot,		 // refcount = 4
-ayRot,		 // refcount = 4
-faxn,		 // refcount = 3
-fayn,		 // refcount = 3
-fazn,		 // refcount = 3
-accWeight,		 // refcount = 6
-errDiffX,		 // refcount = 2
-errDiffY,		 // refcount = 2
-errDiffZ,		 // refcount = 2
-qrx,		 // refcount = 6
-qry,		 // refcount = 6
-qrz,		 // refcount = 6
-qrw,		 // refcount = 13
-csx,		 // refcount = 4
-csy,		 // refcount = 3
-csz,		 // refcount = 4
-snx,		 // refcount = 4
-sny,		 // refcount = 3
-snz,		 // refcount = 4
-snycsx,		 // refcount = 3
-snysnx,		 // refcount = 3
-csycsz,		 // refcount = 3
-csysnz,		 // refcount = 3
-temp,		 // refcount = 9
-diffAngle,		 // refcount = 3
-Temp_lhs,		 // refcount = 242
-Temp_rhs,		 // refcount = 138
-const_INeg_1,		 // = -1		 // refcount = 6
-const_I1,		 // = 1		 // refcount = 11
-const_I8,		 // = 8		 // refcount = 1
-const_INeg_12,		 // = -12		 // refcount = 1
+const_I0 = 0 ,		 // = 0		 // refcount = 1
+gx = 1 ,		 // refcount = 1
+gy = 2 ,		 // refcount = 1
+gz = 3 ,		 // refcount = 1
+ax = 4 ,		 // refcount = 1
+ay = 5 ,		 // refcount = 1
+az = 6 ,		 // refcount = 1
+mx = 7 ,		 // refcount = 1
+my = 8 ,		 // refcount = 1
+mz = 9 ,		 // refcount = 1
+alt = 10 ,		 // refcount = 1
+altRate = 11 ,		 // refcount = 1
+In_Elev = 12 ,		 // refcount = 2
+In_Aile = 13 ,		 // refcount = 2
+In_Rudd = 14 ,		 // refcount = 2
+accRollCorrCos = 15 ,		 // refcount = 2
+accRollCorrSin = 16 ,		 // refcount = 2
+accPitchCorrCos = 17 ,		 // refcount = 2
+accPitchCorrSin = 18 ,		 // refcount = 2
+const_GyroScale = 19 ,		 // refcount = 1
+const_NegGyroScale = 20 ,		 // refcount = 2
+const_epsilon = 21 ,		 // refcount = 6
+const_AccErrScale = 22 ,		 // refcount = 2
+const_AccScale = 23 ,		 // refcount = 1
+const_G_mm_PerSec = 24 ,		 // refcount = 1
+const_UpdateScale = 25 ,		 // refcount = 2
+const_velAccScale = 26 ,		 // refcount = 1
+const_velAltiScale = 27 ,		 // refcount = 1
+const_velAccTrust = 28 ,		 // refcount = 1
+const_velAltiTrust = 29 ,		 // refcount = 1
+const_YawRateScale = 30 ,		 // refcount = 1
+const_ManualYawScale = 31 ,		 // refcount = 1
+const_AutoBankScale = 32 ,		 // refcount = 2
+const_ManualBankScale = 33 ,		 // refcount = 2
+const_TwoPI = 34 ,		 // refcount = 2
+const_outAngleScale = 35 ,		 // refcount = 1
+const_outNegAngleScale = 36 ,		 // refcount = 1
+altitudeEstimate = 37 ,		 // refcount = 5
+velocityEstimate = 38 ,		 // refcount = 6
+errCorrX = 39 ,		 // refcount = 4
+errCorrY = 40 ,		 // refcount = 4
+errCorrZ = 41 ,		 // refcount = 4
+cqx = 42 ,		 // refcount = 14
+cqy = 43 ,		 // refcount = 14
+cqz = 44 ,		 // refcount = 14
+cqw = 45 ,		 // refcount = 14
+Heading = 46 ,		 // refcount = 6
+forceWY = 47 ,		 // refcount = 4
+Roll = 48 ,		 // refcount = 1
+Pitch = 49 ,		 // refcount = 1
+ThrustFactor = 50 ,		 // refcount = 1
+m00 = 51 ,		 // refcount = 1
+m01 = 52 ,		 // refcount = 2
+m02 = 53 ,		 // refcount = 1
+m10 = 54 ,		 // refcount = 5
+m11 = 55 ,		 // refcount = 5
+m12 = 56 ,		 // refcount = 5
+m20 = 57 ,		 // refcount = 3
+m21 = 58 ,		 // refcount = 4
+m22 = 59 ,		 // refcount = 3
+xh = 60 ,		 // refcount = 7
+zh = 61 ,		 // refcount = 7
+qx = 62 ,		 // refcount = 18
+qy = 63 ,		 // refcount = 18
+qz = 64 ,		 // refcount = 18
+qw = 65 ,		 // refcount = 16
+VelocityEstMM = 66 ,		 // refcount = 1
+AltitudeEstMM = 67 ,		 // refcount = 1
+FloatYaw = 68 ,		 // refcount = 2
+HalfYaw = 69 ,		 // refcount = 1
+PitchDiff = 70 ,		 // refcount = 1
+RollDiff = 71 ,		 // refcount = 1
+YawDiff = 72 ,		 // refcount = 1
+DebugFloat = 73 ,		 // refcount = 1
+rx = 83 ,		 // refcount = 14
+ry = 84 ,		 // refcount = 14
+rz = 85 ,		 // refcount = 14
+rmag = 86 ,		 // refcount = 27
+sinr = 87 ,		 // refcount = 7
+cosr = 88 ,		 // refcount = 5
+qdw = 86 ,		 // refcount = 2
+qdx = 89 ,		 // refcount = 2
+qdy = 90 ,		 // refcount = 2
+qdz = 83 ,		 // refcount = 2
+fx2 = 83 ,		 // refcount = 3
+fy2 = 84 ,		 // refcount = 3
+fz2 = 85 ,		 // refcount = 3
+fwx = 86 ,		 // refcount = 3
+fwy = 87 ,		 // refcount = 3
+fwz = 88 ,		 // refcount = 3
+fxy = 89 ,		 // refcount = 3
+fxz = 90 ,		 // refcount = 3
+fyz = 91 ,		 // refcount = 3
+const_F1_0 = 74 ,		 // = 1.0		 // refcount = 11
+const_F2_0 = 75 ,		 // = 2.0		 // refcount = 1
+fax = 83 ,		 // refcount = 8
+fay = 84 ,		 // refcount = 11
+faz = 85 ,		 // refcount = 8
+axRot = 86 ,		 // refcount = 4
+ayRot = 87 ,		 // refcount = 4
+faxn = 87 ,		 // refcount = 3
+fayn = 88 ,		 // refcount = 3
+fazn = 89 ,		 // refcount = 3
+accWeight = 86 ,		 // refcount = 6
+errDiffX = 90 ,		 // refcount = 4
+errDiffY = 89 ,		 // refcount = 4
+errDiffZ = 87 ,		 // refcount = 4
+fmx = 86 ,		 // refcount = 3
+fmy = 87 ,		 // refcount = 2
+fmz = 88 ,		 // refcount = 3
+cosPitch = 89 ,		 // refcount = 4
+sinPitch = 90 ,		 // refcount = 3
+cosRoll = 91 ,		 // refcount = 2
+sinRoll = 92 ,		 // refcount = 3
+fmxSinPitch = 93 ,		 // refcount = 2
+fmzCosPitch = 94 ,		 // refcount = 2
+magErrScale = 86 ,		 // refcount = 4
+qrx = 87 ,		 // refcount = 6
+qry = 88 ,		 // refcount = 6
+qrz = 89 ,		 // refcount = 6
+qrw = 83 ,		 // refcount = 13
+csx = 84 ,		 // refcount = 4
+csy = 83 ,		 // refcount = 3
+csz = 86 ,		 // refcount = 4
+snx = 87 ,		 // refcount = 4
+sny = 88 ,		 // refcount = 3
+snz = 89 ,		 // refcount = 4
+snycsx = 85 ,		 // refcount = 3
+snysnx = 90 ,		 // refcount = 3
+csycsz = 88 ,		 // refcount = 3
+csysnz = 91 ,		 // refcount = 3
+temp = 84 ,		 // refcount = 9
+diffAngle = 85 ,		 // refcount = 3
+Temp_lhs = 76 ,		 // refcount = 266
+Temp_rhs = 77 ,		 // refcount = 154
+const_INeg_1 = 78 ,		 // = -1		 // refcount = 7
+const_I1 = 79 ,		 // = 1		 // refcount = 11
+const_I8 = 80 ,		 // = 8		 // refcount = 1
+const_INeg_12 = 81 ,		 // = -12		 // refcount = 1
+const_I12 = 82 ,		 // = 12		 // refcount = 1
+ MAX_VAR_INDEX = 94 ,
