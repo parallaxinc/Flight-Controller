@@ -9,7 +9,7 @@ ValueBar_Widget::ValueBar_Widget(QWidget * parent) : QWidget(parent)
     valMin = -1024;
     valMax =  1024;
     value = 0;
-    fromLeft = true;
+	drawFrom = Left;
     buffer = 2;
 
     setBarColor( QColor::fromRgb(128, 255, 128) );
@@ -87,9 +87,9 @@ void ValueBar_Widget::setRightLabel(const char * charStr)
     setRightLabel( QString(charStr) );
 }
 
-void ValueBar_Widget::setFromLeft(bool bVal)
+void ValueBar_Widget::setOrigin(Origin org)
 {
-    fromLeft = bVal;
+	drawFrom = org;
     update();
 }
 
@@ -104,6 +104,11 @@ static int clamp(int v, int mn, int mx)
     if( v < mn ) return mn;
     if( v > mx ) return mx;
     return v;
+}
+
+static float FAbs( float f )
+{
+	return f < 0.0f ? -f : f;
 }
 
 
@@ -121,29 +126,40 @@ void ValueBar_Widget::paintEvent(QPaintEvent * event)
     float fHeight = height();
     float fWidth = (clampedVal - valMin) * scale / (valMax - valMin);
 
-    if(fromLeft) {
+	// Draw the border and fill the background
+	painter.setRenderHint(QPainter::Antialiasing, false);
+
+	painter.setBrush( painter.background() );
+	painter.setPen( lightPen );
+	painter.drawRect( 1, 1, width()-2, height()-2 );
+	painter.setBrush( Qt::NoBrush );
+	painter.setPen( grayPen );
+	painter.drawRect( 0, 0, width()-2, height()-2 );
+
+	painter.setRenderHint(QPainter::Antialiasing, true);
+	painter.setBrush( barBrush );
+	painter.setPen( Qt::NoPen );
+
+	// Draw the bar
+	if( drawFrom == Left ) {
         l = buffer;
-    }
-    else {
+		painter.drawRect( l, buffer, fWidth-1, fHeight-(buffer*2)-1 );
+	}
+	else if( drawFrom == Right ) {
         l = (width()-buffer) - fWidth;
-    }
+		painter.drawRect( l, buffer, fWidth-1, fHeight-(buffer*2)-1 );
+	}
+	else if( drawFrom == Center ) {
 
-    // Draw the border and fill the background
-    painter.setRenderHint(QPainter::Antialiasing, false);
-
-    painter.setBrush( painter.background() );
-    painter.setPen( lightPen );
-    painter.drawRect( 1, 1, width()-2, height()-2 );
-    painter.setBrush( Qt::NoBrush );
-    painter.setPen( grayPen );
-    painter.drawRect( 0, 0, width()-2, height()-2 );
-
-    painter.setRenderHint(QPainter::Antialiasing, true);
-
-    // Fill the bar
-    painter.setBrush( barBrush );
-    painter.setPen( Qt::NoPen );
-    painter.drawRect( l, buffer, fWidth-1, fHeight-(buffer*2)-1 );
+		fWidth = FAbs( clampedVal * scale / valMax ) * 0.5f;
+		if( value < 0.0f ) {
+			l = (int)((width()-buffer) * 0.5f) - fWidth;
+		}
+		else {
+			l = (width()-buffer) * 0.5f;
+		}
+		painter.drawRect( l, buffer, fWidth-1, fHeight-(buffer*2)-1 );
+	}
 
     painter.setPen( blackPen );
     painter.setFont( font() );

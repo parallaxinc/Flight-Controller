@@ -145,6 +145,12 @@ ConvertToChannels
                         cmp     inWord, #$03    wz                              '11ms 2048 SRXL master packet 2
               if_e      jmp     #:DoConvert
 
+                        cmp     inWord, #$a2    wz                              '22ms 2048 DSMX master
+              if_e      jmp     #:DoConvert
+
+                        cmp     inWord, #$b2    wz                              '11ms 2048 DSMX master
+              if_e      jmp     #:DoConvert
+
                         cmp     inWord, #0      wz                              '11ms 2048 DSM2 remote
               if_z      jmp     #:DoConvert
 

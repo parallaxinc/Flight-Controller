@@ -150,6 +150,8 @@ private slots:
 	void on_actionImport_Settings_from_File_triggered();
 
 
+	void on_actionExport_readings_triggered();
+
 private:
 	void AdjustFonts(void);
 
@@ -232,6 +234,7 @@ private:
 	ChannelData channelData[8];
 
 	int SampleIndex;
+	int altiAxisOffset;
 	QCPGraph * graphs[17];
 	QCustomPlot * sg;
 

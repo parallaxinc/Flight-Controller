@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "ahrs.h"
 #include <QCoreApplication>
+#include <QTextStream>
 #include "aboutbox.h"
 #include "quatutil.h"
 #include <math.h>
@@ -9,6 +10,19 @@
 static char beatString[] = "BEAT";
 
 AHRS ahrs;
+
+
+const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
+						   "AltiRaw", "AltiEst", "GroundHeight",
+						   "Pitch", "Roll", "Yaw", "Voltage"};
+const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
+								QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
+								QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
+							   Qt::gray, Qt::black, QColor(255,128,0),
+							   QColor(255,0,255), QColor(0,255,255), QColor(160,160,32), QColor(255,0,255)
+							 };
+
+
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
@@ -92,8 +106,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	InternalChange = true;
 
-    ui->motor_FL_val->setFromLeft(false);
-    ui->motor_BL_val->setFromLeft(false);
+	ui->motor_FR_val->setOrigin(ValueBar_Widget::Left);
+	ui->motor_CR_val->setOrigin(ValueBar_Widget::Left);
+	ui->motor_BR_val->setOrigin(ValueBar_Widget::Left);
+
+	ui->motor_FL_val->setOrigin(ValueBar_Widget::Right);
+	ui->motor_CL_val->setOrigin(ValueBar_Widget::Right);
+	ui->motor_BL_val->setOrigin(ValueBar_Widget::Right);
 
     ui->motor_FL_val->setMinMax( 8000, 16000 );
     ui->motor_FL_val->setLeftLabel( "FL" );
@@ -145,7 +164,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->channel5Val->setLeftLabel("Gear");
     ui->channel6Val->setLeftLabel("Aux1");
     ui->channel7Val->setLeftLabel("Aux2");
-    ui->channel8Val->setLeftLabel("Aux3");
+	ui->channel8Val->setLeftLabel("Aux3");
 	ui->vbR_Channel1->setLeftLabel("Thro");
 	ui->vbR_Channel2->setLeftLabel("Aile");
 	ui->vbR_Channel3->setLeftLabel("Elev");
@@ -154,6 +173,23 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->vbR_Channel6->setLeftLabel("Aux1");
     ui->vbR_Channel7->setLeftLabel("Aux2");
     ui->vbR_Channel8->setLeftLabel("Aux3");
+
+	ui->channel1Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel2Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel3Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel4Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel5Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel6Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel7Val->setOrigin(ValueBar_Widget::Center);
+	ui->channel8Val->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel1->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel2->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel3->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel4->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel5->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel6->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel7->setOrigin(ValueBar_Widget::Center);
+	ui->vbR_Channel8->setOrigin(ValueBar_Widget::Center);
 
 	FillChannelComboBox( ui->cbR_Channel1, RadioMode == 2 ? 1 : 3 );
     FillChannelComboBox( ui->cbR_Channel2, 2 );
@@ -175,7 +211,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->cbReceiverType->addItem(QString("PWM"));
     ui->cbReceiverType->addItem(QString("S-Bus"));
     ui->cbReceiverType->addItem(QString("PPM"));
-	ui->cbReceiverType->addItem(QString("RemoteRX"));
+	ui->cbReceiverType->addItem(QString("RemoteRX/SRLX"));
 
 	ui->cbArmingDelay->addItem(QString("1.00 sec"));
 	ui->cbArmingDelay->addItem(QString("0.50 sec"));
@@ -224,27 +260,27 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	AdjustFonts();
 
-	const char* graphNames[] = {"GyroX", "GyroY", "GyroZ", "AccelX", "AccelY", "AccelZ", "MagX", "MagY", "MagZ", "GyroTemp",
-							   "AltiRaw", "AltiEst", "GroundHeight",
-							   "Pitch", "Roll", "Yaw", "Voltage"};
-	const QColor graphColors[] = { Qt::red, Qt::green, Qt::blue,
-									QColor(255,160,160), QColor(160, 255, 160), QColor(160,160,255),
-									QColor(255, 96, 96), QColor( 96, 255,  96), QColor( 96, 96,255), QColor(192,64,64),
-								   Qt::gray, Qt::black, QColor(255,128,0),
-								   QColor(255,0,255), QColor(0,255,255), QColor(160,160,32), QColor(255,0,255)
-								 };
-
-
 	SampleIndex = 0;
+	altiAxisOffset = 0;
 
 	sg = ui->sensorGraph;
 	sg->legend->setVisible(true);
 	sg->setAutoAddPlottableToLegend(true);
 	sg->xAxis->setRange(0, 2000);
 	sg->yAxis->setRange(-2048, 2048);
+
+	sg->yAxis2->setVisible(true);
+	sg->yAxis2->setRange(-2048, 2048);
+
 	for( int i=0; i<17; i++ )
 	{
-		graphs[i] = sg->addGraph();
+		if( strcmp(graphNames[i], "AltiRaw") == 0 || strcmp(graphNames[i], "AltiEst") == 0 ) {
+			graphs[i] = sg->addGraph( sg->xAxis, sg->yAxis2 );
+		}
+		else {
+			graphs[i] = sg->addGraph();
+		}
+
 		graphs[i]->setName(graphNames[i]);
 		graphs[i]->setPen( QPen(graphColors[i]) );
 	}
@@ -594,6 +630,15 @@ void MainWindow::ProcessPackets(void)
 					AddGraphSample( 10, (float)computed.Alt );
 					AddGraphSample( 11, (float)computed.AltiEst );
 					AddGraphSample( 12, (float)computed.GroundHeight );
+
+					if( SampleIndex < 4 ) {
+						altiAxisOffset = computed.AltiEst;
+						ui->sensorGraph->yAxis2->setRange(-2048 + altiAxisOffset , 2048 + altiAxisOffset );
+					}
+					else {
+						QCPRange range = sg->yAxis->range();
+						ui->sensorGraph->yAxis2->setRange( range.lower + altiAxisOffset , range.upper + altiAxisOffset );
+					}
 					break;
 
                 case 5:	// Motor values
@@ -2341,4 +2386,60 @@ void MainWindow::ReadSettingsContents( QXmlStreamReader & reader )
 
 		reader.readNext();
 	}
+}
+
+void MainWindow::on_actionExport_readings_triggered()
+{
+	// Get the filename from the user
+	QString fileName = QFileDialog::getSaveFileName(this, tr("Export sensor readings"), QDir::currentPath(), tr("CSV Files (*.csv)"));
+	if (fileName.isEmpty())
+		return;
+
+	QFile file(fileName);
+	if(!file.open(QFile::WriteOnly | QFile::Text)) {
+		return;
+	}
+
+	QByteArray bytes;
+	QTextStream txt( &bytes );
+	QVector<double> heldSamples;
+
+	// Output the column labels first
+	int numGraphs = sizeof(graphNames) / sizeof(graphNames[0]);
+	for( int i=0; i<numGraphs; i++ ) {
+		if( i > 0 ) {
+			txt << ",";
+		}
+		txt << graphNames[i];
+		heldSamples.append(0.0);	// "prime" the samples buffer with zero data
+	}
+	txt << '\n';
+
+
+	// Iterate through all the samples - this is fun, as there may be holes, IE samples that
+	// don't exist.  I have to iterate through the graphs, figure out if there IS a sample for
+	// a given index or not, and put it in a table if there is.  Otherwise, the last known good
+	// sample is just carried forward until it's replaced.  I could conceivably output NaN for
+	// bad samples (or anything non-numeric, really) but this is probably going to be easiest
+	// for people to work with.
+
+	for( int i=0; i<SampleIndex; i++ )
+	{
+		for( int g=0; g<numGraphs; g++)
+		{
+			if( graphs[g]->data()->contains(i) ){
+				heldSamples[g] = (*graphs[g]->data())[i].value;
+			}
+
+			if( g > 0 ) txt << ',';
+			txt << heldSamples[g];
+		}
+
+		txt << '\n';
+	}
+
+	txt.flush();
+
+	file.write( bytes );
+	file.close();
 }
