@@ -211,7 +211,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->cbReceiverType->addItem(QString("PWM"));
     ui->cbReceiverType->addItem(QString("S-Bus"));
     ui->cbReceiverType->addItem(QString("PPM"));
-	ui->cbReceiverType->addItem(QString("RemoteRX"));
+	ui->cbReceiverType->addItem(QString("RemoteRX/SRLX"));
 
 	ui->cbArmingDelay->addItem(QString("1.00 sec"));
 	ui->cbArmingDelay->addItem(QString("0.50 sec"));
