@@ -186,57 +186,7 @@ PUB atof( strptr ) : f | int, sign, dmag, mag, get_exp, b
   repeat ||mag
     f := FMul( f, b )
 
-PUB FAdd(a, b)
-{{
-  Addition: result = a + b
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFAdd
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-          
-PUB FSub(a, b)
-{{
-  Subtraction: result = a - b
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFSub
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-  
-PUB FMul(a, b)
-{{
-  Multiplication: result = a * b
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFMul
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
 
-PUB FDiv(a, b)
-{{
-  Division: result = a / b
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFDiv
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
 
 PUB FFloat(n)
 {{
@@ -316,71 +266,6 @@ PUB FloatRound(a) | b
 }}
   b       := %011
   result  := cmdFTruncRound
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB FSqrt(a)
-{{
-  Square root.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFSqrt
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-
-PUB FCmp(a, b)
-{{
-  Floating point comparison.
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit integer value
-             -1 if a < b
-              0 if a == b
-              1 if a > b
-}}
-  result  := cmdFCmp
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Sin(a)
-{{
-  Sine of an angle (radians).
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFSin
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Cos(a)
-{{
-  Cosine of an angle (radians).
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFCos
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Tan(a)
-{{
-  Tangent of an angle (radians).
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFTan
   f32_Cmd := @result
   repeat
   while f32_Cmd
@@ -470,79 +355,6 @@ PUB Exp10(a) | b
   repeat
   while f32_Cmd
 
-PUB Pow(a, b)
-{{
-  Power (a to the power b).
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value  
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFPow
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-
-{
-PUB Frac(a)
-{{
-  Fraction (returns fractional part of a).
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFFrac
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-}
-
-PUB FNeg(a)
-{{
-  Negate: result = -a.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  return a ^ $8000_0000
-
-PUB FAbs(a)
-{{
-  Absolute Value: result = |a|.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  return a & $7FFF_FFFF
-  
-PUB Radians(a) | b
-{{
-  Convert degrees to radians
-  Parameters:
-    a        32-bit floating point value (angle in degrees)
-    b        the conversion factor
-  Returns:   32-bit floating point value (angle in radians)
-}}
-  b       := constant(pi / 180.0)
-  result  := cmdFMul
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Degrees(a) | b
-{{
-  Convert radians to degrees
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-    b        the conversion factor
-  Returns:   32-bit floating point value (angle in degrees)
-}}
-  b       := constant(180.0 / pi)
-  result  := cmdFMul
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
 
 PUB FMin(a, b)
 {{
@@ -576,20 +388,6 @@ PUB FMax(a, b)
     return b
   return a
 
-{
-PUB FMod(a, b)
-{{
-  Floating point remainder: result = the remainder of a / b.
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value  
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFMod
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-}
 
 PUB ASin(a) | b
 {{
@@ -634,44 +432,6 @@ PUB ATan(a) | b
   repeat
   while f32_Cmd
 
-PUB ATan2(a, b)
-{{
-  Arc Tangent of vector a, b (in radians, no division is performed, so b==0 is legal).
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit floating point value (angle in radians)
-}}
-  result  := cmdATan2
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-{
-PUB Floor(a)
-{{
-  Calculate the floating point value of the nearest integer <= a.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdFloor
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Ceil(a)
-{{
-  Calculate the floating point value of the nearest integer >= a.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-}}
-  result  := cmdCeil
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-}
 
 PUB FShift(a, b)
 {{
@@ -1262,6 +1022,7 @@ _Pow_ret                ret
 ' fraction
 ' fnumA = fractional part of fnumA
 '------------------------------------------------------------------------------
+{
 _Frac                   call    #_Unpack                ' get fraction
                         test    expA, Bit31 wz          ' check for exp < 0 or NaN
           if_c_or_nz    jmp     #:exit
@@ -1273,7 +1034,7 @@ _Frac                   call    #_Unpack                ' get fraction
 :exit                   call    #_Pack
                         andn    fnumA, Bit31
 _Frac_ret               ret
-
+}
 
 '------------------------------------------------------------------------------
 ' Conditional negate
@@ -1283,6 +1044,16 @@ _CNeg
                         test    fnumB, Bit31 wc          ' check for fnumB < 0
               if_c      xor     fnumA, Bit31
 _CNeg_ret               ret
+
+
+'------------------------------------------------------------------------------
+' Conditional move
+'fnumA = (fnumA != 0) ? fnumA : fnumB
+'------------------------------------------------------------------------------
+_CMov                   mov     t1, fnumA    nr,wz       ' check for fnumA == 0
+              if_z      mov     fnumA, fnumB
+_CMov_ret               ret
+
 
 
 '------------------------------------------------------------------------------
@@ -1401,22 +1172,22 @@ _Pack_ret               ret
 ' modulo
 ' fnumA = fnumA mod fnumB
 '------------------------------------------------------------------------------
-{_FMod                   mov     t4, fnumA               ' save fnumA
-                        mov     t5, fnumB               ' save fnumB
-                        call    #_FDiv                  ' a - float(fix(a/b)) * b
-                        mov     fnumB, #0
-                        call    #_FTruncRound
-                        call    #_FFloat
-                        mov     fnumB, t5
-                        call    #_FMul
-                        or      fnumA, Bit31
-                        mov     fnumB, t4
-                        andn    fnumB, Bit31
-                        call    #_FAdd
-                        test    t4, Bit31 wz            ' if a < 0, set sign
-          if_nz         or      fnumA, Bit31
-_FMod_ret               ret
-}
+'_FMod                   mov     t4, fnumA               ' save fnumA
+'                        mov     t5, fnumB               ' save fnumB
+'                        call    #_FDiv                  ' a - float(fix(a/b)) * b
+'                        mov     fnumB, #0
+'                        call    #_FTruncRound
+'                        call    #_FFloat
+'                        mov     fnumB, t5
+'                        call    #_FMul
+'                        or      fnumA, Bit31
+'                        mov     fnumB, t4
+'                        andn    fnumB, Bit31
+'                        call    #_FAdd
+'                        test    t4, Bit31 wz            ' if a < 0, set sign
+'          if_nz         or      fnumA, Bit31
+'_FMod_ret               ret
+
 
 '------------------------------------------------------------------------------
 ' arctan2
@@ -1668,9 +1439,8 @@ fit 496 ' A cog has 496 longs available, the last 16 (to make it up to 512) are 
 
 ' command dispatch table: must be compiled along with PASM code in
 ' Cog RAM to know the addresses, but does not need to fit in it.
-callTableID             long  $12345678
 cmdCallTable
-cmdNOP                  nop
+callTableID             long  $12345678
 cmdFAdd                 call    #_FAdd
 cmdFSub                 call    #_FSub
 cmdFMul                 call    #_FMul
@@ -1692,8 +1462,9 @@ cmdNeg                  call    #_FltNeg
 cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
-cmdFrac                 call    #_Frac
+'cmdFrac                 call    #_Frac
 cmdCNeg                 call    #_CNeg
+cmdCMov                 call    #_CMov
 cmdMov                  nop
 
 cmdRunCommandStream     call    #_RunCommandStream
@@ -1721,8 +1492,8 @@ CON     'Instruction stream operand indices
   opSinCos              = 19
   opFAbs                = 20
   opFMin                = 21   
-  opFrac                = 22
-  opCNeg                = 23
+  opCNeg                = 22    'conditional negate A = (B < 0) ? -C : C
+  opCMov                = 23    'conditional move   A = (B != 0)? B : C
   opMov                 = 24   
 
 {{

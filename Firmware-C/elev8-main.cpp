@@ -607,7 +607,7 @@ void InitSerial(void)
   S4_Initialize();
 
   S4_Define_Port(0, 115200,      30, TXBuf1, sizeof(TXBuf1),      31, RXBuf1, sizeof(RXBuf1));
-  S4_Define_Port(1,  57600, XBEE_TX, TXBuf2, sizeof(TXBuf2), XBEE_RX, RXBuf2, sizeof(RXBuf2));
+  S4_Define_Port(1, 115200, XBEE_TX, TXBuf2, sizeof(TXBuf2), XBEE_RX, RXBuf2, sizeof(RXBuf2));
 
   // Unused ports get a pin value of 32
   S4_Define_Port(2, 19200,       19, TXBuf3, sizeof(TXBuf3),      20, RXBuf3, sizeof(RXBuf3));

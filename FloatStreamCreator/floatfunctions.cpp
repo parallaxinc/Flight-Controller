@@ -13,6 +13,15 @@ int Round(float f) {
 	return (int)roundf(f);
 }
 
+float FloatTrunc(float f) {
+	return (float)(int)f;
+}
+
+float FloatRound(float f) {
+	return roundf(f);
+}
+
+
 float Sqrt(float f) {
 	return sqrtf(f);
 }
@@ -48,10 +57,14 @@ float Pow(float a, float b) {
 }
 
 float ASin(float a) {
+	if(a > 0.707106f) a = 0.707106f;
+	if(a < -0.707106f) a = -0.707106f;
 	return asinf(a);
 }
 
 float ACos(float a) {
+	if(a > 0.707106f) a = 0.707106f;
+	if(a < -0.707106f) a = -0.707106f;
 	return acosf(a);
 }
 
@@ -82,6 +95,11 @@ float FAbs(float a) {
 float FMin(float a, float b) {
 	if( a < b ) return a;
 	return b;
+}
+
+float CMov(float a, float b) {
+	if( a != 0.0f ) return a;
+	else return b;
 }
 
 float CNeg(float a, float b) {

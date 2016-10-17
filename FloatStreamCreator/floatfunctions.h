@@ -25,14 +25,16 @@ The f32 class in the Elev8 flight controller source supports the following list 
 #define F32_opSinCos               19   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
 #define F32_opFAbs                 20   // result = FAbs(a)
 #define F32_opFMin                 21   // if(a<b) result = a  else result = b
-#define F32_opFrac                 22   // result = fractional portion of a  (portion after the decimal point)
 #define F32_opCNeg                 23   // if(b<0)  a = -a  else  a = a
-#define F32_opMov                  24   // result = a
+#define F32_opCMov                 24   // if(b==0) a = c  else  a = b
+#define F32_opMov                  25   // result = a
 */
 
 float Float(int i);
 int   Trunc(float f);
 int   Round(float f);
+float FloatTrunc(float f);
+float FloatRound(float f);
 float Sqrt(float f);
 int   Cmp(float a, float b);	// Check to see if result is float or int
 float Sin(float a);
@@ -49,6 +51,7 @@ float Neg(float a);
 float SinCos(float a, float & outSin);	// out = sin(a), result = cos(a)
 float FAbs(float a);
 float FMin(float a, float b);
+float CMov(float a, float b);
 float CNeg(float a, float b);
 
 

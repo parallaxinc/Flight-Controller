@@ -36,10 +36,10 @@ public:
 
 	Expression * Atom( void );
 
-	void		 AssignValueToVariable( EVar * var , TOKEN & type, QString & s );
+	void		 AssignValueToVariable( EVar * var , TOKEN & type, const QString & s );
 
-	EVar *       MakeVariable( TOKEN t, QString & s );
-	Expression * MakeVariableExpression( TOKEN t, QString & s );
+	EVar *       MakeVariable( TOKEN t, const QString & s );
+	Expression * MakeVariableExpression( TOKEN t, const QString & s );
 	Expression * GetExpression( void );
 	Expression * SubExpression( Expression * lhs, int MinPrec );
 	bool ParseArguments( Expression * funcCall );

@@ -85,7 +85,7 @@
 	// 
 	// diffAngle = ACos(qrw) * 2.0
 	// float diffAngle = ACos(qrw) * 2.0f;
-	F32_opASinCos, qrw, 0, Temp_lhs,
+	F32_opASinCos, qrw, const_I0, Temp_lhs,
 	F32_opShift,   Temp_lhs, const_I1, diffAngle,
 	// 
 	// DebugFloat = diffAngle;
@@ -119,12 +119,12 @@
 	// 
 	// PitchDiff = Trunc(qrx * rmag);
 	F32_opMul,     qrx, rmag, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, PitchDiff,
+	F32_opTruncRound,Temp_lhs, const_I0, PitchDiff,
 	// RollDiff =  Trunc(qrz * rmag);
 	F32_opMul,     qrz, rmag, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, RollDiff,
+	F32_opTruncRound,Temp_lhs, const_I0, RollDiff,
 	// YawDiff =   Trunc(qry * rmag);
 	F32_opMul,     qry, rmag, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, YawDiff,
+	F32_opTruncRound,Temp_lhs, const_I0, YawDiff,
 	// 
 	0,0,0,0

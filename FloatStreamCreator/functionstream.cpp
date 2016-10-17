@@ -132,6 +132,7 @@ void QuatUpdate( SensorData & sens )
 	float fayn = fay / rmag;
 	float fazn = faz / rmag;
 
+	// TODO: investigate better weighting here, like (4.0 - vecLen * 4.0)
 	float accWeight = 1.0f - FMin( FAbs( 2.0f - const_AccScale * rmag * 2.0f), 1.0f );
 
 
@@ -174,13 +175,19 @@ void QuatUpdate( SensorData & sens )
 	float cosPitch, sinPitch;
 	float cosRoll, sinRoll;
 
-	//float fpitch = ASin( -m10 );
-	cosPitch = SinCos(ASin(-m10), sinPitch);
+	// Might be worth trying to formulate this as a rotation between two vectors: current up and (0,1,0)
+	// because it might not suffer the NaN issue
 
-	//float froll  = ASin( m12 / cosPitch );
-	cosRoll = SinCos(ASin(m12/cosPitch), sinRoll);
+	// See: http://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+	//      http://stackoverflow.com/questions/23166898/efficient-way-to-calculate-a-3x3-rotation-matrix-from-the-rotation-defined-by-tw
 
-	// TODO: Need to handle inversion correctly - probably just a sign flip of Pitch or Heading?
+
+	float fpitch = ASin(CNeg(m10,m11));		// negate M10 if M11 is negative (ie, if we're inverted)
+	cosPitch = SinCos(-fpitch, sinPitch);
+	cosPitch = CMov(cosPitch, const_epsilon);	// avoid divide by 0
+
+	float froll = ASin(CNeg(m10,m11)/cosPitch);	// negate M12 if M11 is negative (ie, if we're inverted)
+	cosRoll = SinCos(froll, sinRoll);
 
 	float fmxSinPitch = fmx * sinPitch;
 	float fmzCosPitch = fmz * cosPitch;
@@ -194,18 +201,24 @@ void QuatUpdate( SensorData & sens )
 	xh /= rmag;
 	zh /= rmag;
 
-	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
-	errDiffX =          -(zh * m21);
-	errDiffY = zh * m20 - xh * m22;
-	errDiffZ = xh * m21;
+	// If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
 
 	float magErrScale = const_AccErrScale * 0.5f;		// Use the AccScale for now
 
-	// TODO: If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
 
-	errCorrX += errDiffX * magErrScale;
-	errCorrY += errDiffY * magErrScale;
-	errCorrZ += errDiffZ * magErrScale;
+	float temp = -FAbs(m11);	// Grab the vertical component of the vertical axis - If it's < 45 deg of horizontal we don't want mag correction
+	temp = -FMin(temp, -0.6f);	// Clamp to 0.6 .. 1.0
+	temp -= 0.707f;				// Shift the range down
+	temp *= 10.0f;				// 0.707f to 0.807f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
+	temp = FMin(temp, 1.0f);	// Clamp to 0 to 1
+
+	magErrScale *= temp;		// Scale the magErr correction by this
+
+	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
+
+	errCorrX -=            (zh * m21) * magErrScale;
+	errCorrY += (zh * m20 - xh * m22) * magErrScale;
+	errCorrZ += (xh * m21)            * magErrScale;
 
 	// TESTING
 
@@ -221,7 +234,7 @@ void QuatUpdate( SensorData & sens )
 	// Compute pitch and roll in integer form, used by compass calibration, possible user code
 
 	Pitch = Trunc( ASin(m12) * const_outAngleScale );
-	Roll = Trunc( ASin(m10) * const_outNegAngleScale );
+	Roll = Trunc( fpitch * const_outNegAngleScale );
 
 	// 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground
 	ThrustFactor = Trunc( (1.0f / m11) * 256.0f );
@@ -304,7 +317,7 @@ void UpdateControls_AutoLevel(void)
 	Heading += ry;
 
 	// Keep Heading in the range of 0 to TwoPI
-	Heading -= Float(Trunc(Heading / const_TwoPI)) * const_TwoPI;
+	Heading -= FloatTrunc(Heading / const_TwoPI) * const_TwoPI;
 
 	// Compute sines and cosines of scaled control input values
 

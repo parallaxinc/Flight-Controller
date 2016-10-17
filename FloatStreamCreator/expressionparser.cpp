@@ -13,9 +13,16 @@ ExpressionParser::ExpressionParser( )
 	exprList = NULL;
 	SourceLine = 0;
 
-	//The interpreter needs zero to be the first entry in the const table
-	QString const_zero("0");
-	MakeVariable( T_Int, const_zero );
+
+	//The interpreter needs zero, one, two, three to be the first entries in the const table, used by TruncRound function
+	QString constName("0");
+	for( int i=0; i<4; i++ ) {
+		constName[0] = '0' + i;
+		EVar * var = MakeVariable( T_Int, constName );
+		if( i == 0 ) {	// only assign "0" a set / fixed index
+			var->enumValue = i;
+		}
+	}
 }
 
 ExpressionParser::~ExpressionParser()
@@ -276,7 +283,7 @@ Expression * ExpressionParser::Atom( void )
 	return expr;
 }
 
-void ExpressionParser::AssignValueToVariable( EVar * var , TOKEN & type, QString & s )
+void ExpressionParser::AssignValueToVariable( EVar * var , TOKEN & type, const QString & s )
 {
 	var->valString = s;	// just using the actual digits of the const as the name
 	var->type = type;
@@ -303,7 +310,8 @@ void ExpressionParser::AssignValueToVariable( EVar * var , TOKEN & type, QString
 			var->Val.i = (int)asFloat;
 			prefix = "I";
 		}
-		QString pretty = s.replace("-", "Neg_").replace(".","_");
+		QString pretty = s;
+		pretty.replace("-", "Neg_").replace(".","_");
 
 		var->isConst = true;
 		// Only assign a name if it doesn't have one already
@@ -316,7 +324,7 @@ void ExpressionParser::AssignValueToVariable( EVar * var , TOKEN & type, QString
 	}
 }
 
-EVar * ExpressionParser::MakeVariable( TOKEN type, QString & s )
+EVar * ExpressionParser::MakeVariable( TOKEN type, const QString & s )
 {
 	EVar * var;
 	if( varList.contains(s) ) {
@@ -350,7 +358,7 @@ EVar * ExpressionParser::MakeVariable( TOKEN type, QString & s )
 }
 
 
-Expression * ExpressionParser::MakeVariableExpression( TOKEN type, QString & s )
+Expression * ExpressionParser::MakeVariableExpression( TOKEN type, const QString & s )
 {
 	Expression * expr = new Expression();
 	expr->Value = MakeVariable( type, s );
@@ -441,8 +449,11 @@ struct FUNCINFO {
 	"FAbs",		1,
 	"Trunc",	1,
 	"Round",	1,
+	"FloatTrunc",1,
+	"FloatRound",1,
 	"Cmp",		2,
 	"CNeg",     2,
+	"CMov",     2,
 	"Shift",    2,
 };
 

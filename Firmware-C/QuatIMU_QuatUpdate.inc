@@ -219,6 +219,7 @@
 	// float fazn = faz / rmag;
 	F32_opDiv,     faz, rmag, fazn,
 	// 
+	// TODO: investigate better weighting here, like (4.0 - vecLen * 4.0)
 	// float accWeight = 1.0f - FMin( FAbs( 2.0f - const_AccScale * rmag * 2.0f), 1.0f );
 	F32_opMul,     const_AccScale, rmag, Temp_lhs,
 	F32_opShift,   Temp_lhs, const_I1, Temp_rhs,
@@ -285,17 +286,23 @@
 	// float cosPitch, sinPitch;
 	// float cosRoll, sinRoll;
 	// 
-	//float fpitch = ASin( -m10 );
-	// cosPitch = SinCos(ASin(-m10), sinPitch);
-	F32_opNeg,     m10, 0, Temp_lhs,
-	F32_opASinCos, Temp_lhs, 1, Temp_lhs,
-	F32_opSinCos,  Temp_lhs, sinPitch, cosPitch,
+	// TODO: Need to handle >45 degree orientation, where ASin falls down, or cosPitch == 0, resulting in NaN for roll
 	// 
-	//float froll  = ASin( m12 / cosPitch );
-	// cosRoll = SinCos(ASin(m12/cosPitch), sinRoll);
-	F32_opDiv,     m12, cosPitch, Temp_lhs,
-	F32_opASinCos, Temp_lhs, 1, Temp_lhs,
-	F32_opSinCos,  Temp_lhs, sinRoll, cosRoll,
+	// float fpitch = ASin(CNeg(m10,m11));		// negate M10 if M11 is negative (ie, if we're inverted)
+	F32_opCNeg,    m10, m11, Temp_lhs,
+	F32_opASinCos, Temp_lhs, const_I1, fpitch,
+	// cosPitch = SinCos(-fpitch, sinPitch);
+	F32_opNeg,     fpitch, 0, Temp_lhs,
+	F32_opSinCos,  Temp_lhs, sinPitch, cosPitch,
+	// cosPitch = CMov(cosPitch, const_epsilon);	// avoid divide by 0
+	F32_opCMov,    cosPitch, const_epsilon, cosPitch,
+	// 
+	// float froll = ASin(CNeg(m10,m11)/cosPitch);	// negate M12 if M11 is negative (ie, if we're inverted)
+	F32_opCNeg,    m10, m11, Temp_lhs,
+	F32_opDiv,     Temp_lhs, cosPitch, Temp_lhs,
+	F32_opASinCos, Temp_lhs, const_I1, froll,
+	// cosRoll = SinCos(froll, sinRoll);
+	F32_opSinCos,  froll, sinRoll, cosRoll,
 	// 
 	// float fmxSinPitch = fmx * sinPitch;
 	F32_opMul,     fmx, sinPitch, fmxSinPitch,
@@ -326,30 +333,44 @@
 	// zh /= rmag;
 	F32_opDiv,     zh, rmag, zh,
 	// 
-	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
-	// errDiffX =          -(zh * m21);
-	F32_opMul,     zh, m21, Temp_lhs,
-	F32_opNeg,     Temp_lhs, 0, errDiffX,
-	// errDiffY = zh * m20 - xh * m22;
-	F32_opMul,     zh, m20, Temp_lhs,
-	F32_opMul,     xh, m22, Temp_rhs,
-	F32_opSub,     Temp_lhs, Temp_rhs, errDiffY,
-	// errDiffZ = xh * m21;
-	F32_opMul,     xh, m21, errDiffZ,
+	// If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
 	// 
 	// float magErrScale = const_AccErrScale * 0.5f;		// Use the AccScale for now
 	F32_opShift,   const_AccErrScale, const_INeg_1, magErrScale,
 	// 
-	// TODO: If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
 	// 
-	// errCorrX += errDiffX * magErrScale;
-	F32_opMul,     errDiffX, magErrScale, Temp_rhs,
-	F32_opAdd,     errCorrX, Temp_rhs, errCorrX,
-	// errCorrY += errDiffY * magErrScale;
-	F32_opMul,     errDiffY, magErrScale, Temp_rhs,
+	// float temp = -FAbs(m11);	// Grab the vertical component of the vertical axis - If it's < 45 deg of horizontal we don't want mag correction
+	F32_opFAbs,    m11, 0, Temp_lhs,
+	F32_opNeg,     Temp_lhs, 0, temp,
+	// temp = -FMin(temp, -0.6f);	// Clamp to 0.6 .. 1.0
+	F32_opNeg,     const_F0_6, 0, Temp_rhs,
+	F32_opFMin,    temp, Temp_rhs, Temp_lhs,
+	F32_opNeg,     Temp_lhs, 0, temp,
+	// temp -= 0.707f;				// Shift the range down
+	F32_opSub,     temp, const_F0_707, temp,
+	// temp *= 10.0f;				// 0.707f to 0.807f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
+	F32_opMul,     temp, const_F10_0, temp,
+	// temp = FMin(temp, 1.0f);	// Clamp to 0 to 1
+	F32_opFMin,    temp, const_F1_0, temp,
+	// 
+	// magErrScale *= temp;		// Scale the magErr correction by this
+	F32_opMul,     magErrScale, temp, magErrScale,
+	// 
+	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
+	// 
+	// errCorrX -=            (zh * m21) * magErrScale;
+	F32_opMul,     zh, m21, Temp_lhs,
+	F32_opMul,     Temp_lhs, magErrScale, Temp_rhs,
+	F32_opSub,     errCorrX, Temp_rhs, errCorrX,
+	// errCorrY += (zh * m20 - xh * m22) * magErrScale;
+	F32_opMul,     zh, m20, Temp_lhs,
+	F32_opMul,     xh, m22, Temp_rhs,
+	F32_opSub,     Temp_lhs, Temp_rhs, Temp_lhs,
+	F32_opMul,     Temp_lhs, magErrScale, Temp_rhs,
 	F32_opAdd,     errCorrY, Temp_rhs, errCorrY,
-	// errCorrZ += errDiffZ * magErrScale;
-	F32_opMul,     errDiffZ, magErrScale, Temp_rhs,
+	// errCorrZ += (xh * m21)            * magErrScale;
+	F32_opMul,     xh, m21, Temp_lhs,
+	F32_opMul,     Temp_lhs, magErrScale, Temp_rhs,
 	F32_opAdd,     errCorrZ, Temp_rhs, errCorrZ,
 	// 
 	// TESTING
@@ -367,19 +388,18 @@
 	// Compute pitch and roll in integer form, used by compass calibration, possible user code
 	// 
 	// Pitch = Trunc( ASin(m12) * const_outAngleScale );
-	F32_opASinCos, m12, 1, Temp_lhs,
+	F32_opASinCos, m12, const_I1, Temp_lhs,
 	F32_opMul,     Temp_lhs, const_outAngleScale, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, Pitch,
-	// Roll = Trunc( ASin(m10) * const_outNegAngleScale );
-	F32_opASinCos, m10, 1, Temp_lhs,
-	F32_opMul,     Temp_lhs, const_outNegAngleScale, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, Roll,
+	F32_opTruncRound,Temp_lhs, const_I0, Pitch,
+	// Roll = Trunc( fpitch * const_outNegAngleScale );
+	F32_opMul,     fpitch, const_outNegAngleScale, Temp_lhs,
+	F32_opTruncRound,Temp_lhs, const_I0, Roll,
 	// 
 	// 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground
 	// ThrustFactor = Trunc( (1.0f / m11) * 256.0f );
 	F32_opDiv,     const_F1_0, m11, Temp_lhs,
 	F32_opShift,   Temp_lhs, const_I8, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, ThrustFactor,
+	F32_opTruncRound,Temp_lhs, const_I0, ThrustFactor,
 	// 
 	// 
 	//--------------------------------------------------------------
@@ -425,8 +445,8 @@
 	// 
 	// output integer values for PIDs
 	// AltitudeEstMM = Trunc(altitudeEstimate);
-	F32_opTruncRound,altitudeEstimate, 0, AltitudeEstMM,
+	F32_opTruncRound,altitudeEstimate, const_I0, AltitudeEstMM,
 	// VelocityEstMM = Trunc(velocityEstimate);
-	F32_opTruncRound,velocityEstimate, 0, VelocityEstMM,
+	F32_opTruncRound,velocityEstimate, const_I0, VelocityEstMM,
 	// 
 	0,0,0,0

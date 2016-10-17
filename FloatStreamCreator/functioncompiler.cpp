@@ -14,7 +14,6 @@ FunctionCompiler::~FunctionCompiler()
 bool FunctionCompiler::Compile(QByteArray & Source, QByteArray & InputOutputList, QString & OutputPathPrefix )
 {
 	outPath = OutputPathPrefix;
-	ExpressionParser parser;
 
 	// Mark variables with in/out/persist as "alwaysValid"
 	// Other variables should be ranged, per function
@@ -127,23 +126,23 @@ bool FunctionCompiler::Compile(QByteArray & Source, QByteArray & InputOutputList
 		}
 	}
 
-	GenerateOutputCode( parser );
+	GenerateOutputCode();
 
 	return true;
 }
 
-bool FunctionCompiler::GenerateOutputCode( ExpressionParser & parser )
+bool FunctionCompiler::GenerateOutputCode( void )
 {
-	bool result = GenerateTokens( parser );
+	bool result = GenerateTokens();
 
-	AssignVariableEnumIndices( parser );
+	AssignVariableEnumIndices();
 
 	// have to do this second because we generate some temps during function calls
-	if( result) result = GenerateVariables( parser );
+	if( result) result = GenerateVariables();
 	return result;
 }
 
-bool FunctionCompiler::GenerateVariables( ExpressionParser & parser )
+bool FunctionCompiler::GenerateVariables(void)
 {
 	QString fileVars = outPath + "_vars.inc";
 	QString fileInits = outPath + "_var_init.inc";
@@ -198,7 +197,7 @@ bool FunctionCompiler::GenerateVariables( ExpressionParser & parser )
 	return true;
 }
 
-bool FunctionCompiler::GenerateTokens( ExpressionParser & parser )
+bool FunctionCompiler::GenerateTokens( void )
 {
 	for( int i=0; i<parser.funcList.length(); i++ )
 	{
@@ -220,7 +219,7 @@ bool FunctionCompiler::GenerateTokens( ExpressionParser & parser )
 			}
 			else {
 				parser.Optimize(expr);
-				if( OutputExpressionTokens( parser, stream, expr ) == false ) {
+				if( OutputExpressionTokens( stream, expr ) == false ) {
 					//return false;
 				}
 			}
@@ -238,7 +237,7 @@ bool FunctionCompiler::GenerateTokens( ExpressionParser & parser )
 	return true;
 }
 
-bool FunctionCompiler::OutputExpressionTokens( ExpressionParser & parser , QTextStream & stream , Expression * expr )
+bool FunctionCompiler::OutputExpressionTokens( QTextStream & stream , Expression * expr )
 {
 	// Temp vars are used to hold intermediate results during sub-expression parsing
 	QString nameLeft = "Temp_lhs";
@@ -315,12 +314,16 @@ bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression 
 }
 
 
-static bool OpToFunction( Expression * op, QString & out, QString & outArg )
+static bool OpToFunction( ExpressionParser & parser, Expression * op, QString & out, EVar ** outArg )
 {
 	switch( op->op )
 	{
 	case T_Float:		out = "opFloat";	break;
-	case T_Int:			out = "opTrunc";	break;
+	case T_Int:			{
+			out = "opTrunc";
+			*outArg = parser.MakeVariable(T_Int, QString("0"));
+		}
+		break;
 	case T_Assign:		out = "opMov";		break;
 
 	case T_Add:
@@ -334,10 +337,24 @@ static bool OpToFunction( Expression * op, QString & out, QString & outArg )
 	case T_Negative:	out = "opNeg";		break;
 
 	case T_Function:
-		if( op->FuncName == "Float" )		out = "opFloat";
-		else if( op->FuncName == "Trunc" ) {
+		if( op->FuncName == "Float" ) {
+			out = "opFloat";
+		}
+		else if( op->FuncName == "Trunc" ) {	// trunc with integer output
 			out = "opTruncRound";
-			outArg = "0";
+			*outArg = parser.MakeVariable(T_Int, QString("0"));
+		}
+		else if( op->FuncName == "Round" ) {	// round with integer output
+			out = "opTruncRound";
+			*outArg = parser.MakeVariable(T_Int, QString("1"));
+		}
+		else if( op->FuncName == "FloatTrunc" ) {	// trunc with float output
+			out = "opTruncRound";
+			*outArg = parser.MakeVariable(T_Int, QString("2"));
+		}
+		else if( op->FuncName == "FloatRound" ) {	// round with float output
+			out = "opTruncRound";
+			*outArg = parser.MakeVariable(T_Int, QString("3"));
 		}
 		else if( op->FuncName == "Sin" )	out = "opSin";
 		else if( op->FuncName == "Cos" )	out = "opCos";
@@ -349,14 +366,15 @@ static bool OpToFunction( Expression * op, QString & out, QString & outArg )
 		else if( op->FuncName == "FAbs")	out = "opFAbs";
 		else if( op->FuncName == "Cmp")		out = "opCmp";
 		else if( op->FuncName == "CNeg")	out = "opCNeg";
+		else if( op->FuncName == "CMov")	out = "opCMov";
 		else if( op->FuncName == "Shift")	out = "opShift";
 		else if( op->FuncName == "ASin") {
 			out = "opASinCos";
-			outArg = "1";
+			*outArg = parser.MakeVariable(T_Int, QString("1"));
 		}
 		else if( op->FuncName == "ACos") {
 			out = "opASinCos";
-			outArg = "0";
+			*outArg = parser.MakeVariable(T_Int, QString("0"));
 		}
 		else if( op->FuncName == "ATan2")	out = "opATan2";
 		else {
@@ -378,14 +396,13 @@ bool FunctionCompiler::GenerateInstruction( QTextStream & stream , Expression * 
 	QString funcName;
 	QString arg2('0');
 
+	if( OpToFunction( parser, op , funcName, &pRight ) == false ) {
+		stream << "-- Problem line --" << "\n";
+		return false;
+	}
 	if( pRight != NULL ) {
 		arg2 = pRight->constName;
 		pRight->refCount++;
-	}
-
-	if( OpToFunction( op , funcName, arg2 ) == false ) {
-		stream << "-- Problem line --" << "\n";
-		return false;
 	}
 
 	stream << "\t" << ("F32_" + funcName + ",").leftJustified(15, ' ');
@@ -454,14 +471,16 @@ void FunctionCompiler::UpdateVarScope( EVar * var , bool isAssign, int iFunc, in
 }
 
 
-void FunctionCompiler::AssignVariableEnumIndices(ExpressionParser & parser)
+void FunctionCompiler::AssignVariableEnumIndices(void)
 {
-	// Assign all non-const / persist variables an EnumIndex of -1 (unassigned)
-	int NextVarIndex = 0;
+	// Assign non-const / persist variables an EnumIndex.  Others will remain -1, as EVar constructor sets them to
+	int NextVarIndex = 1;
 	int numVars = parser.orderedVarList.count();
 	for( int i=0; i<numVars; i++ )
 	{
 		EVar * var1 = parser.orderedVarList[i];
+		if( var1->enumValue >= 0 ) continue;	// already assigned, like const_I0
+
 		if( var1->isConst || var1->isPersistent ) {
 			if( var1->refCount != 0 ) {
 				var1->enumValue = NextVarIndex++;
@@ -469,13 +488,8 @@ void FunctionCompiler::AssignVariableEnumIndices(ExpressionParser & parser)
 			else {
 				var1->enumValue = -2;	// Tag these as special - const / persist, but unused
 			}
-
-		}
-		else {
-			var1->enumValue = -1;	// unassigned
 		}
 	}
-
 
 	// For each variable
 	for( int i=0; i<numVars; i++ )

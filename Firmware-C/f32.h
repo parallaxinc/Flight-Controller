@@ -91,8 +91,8 @@ PUB FShift(a, b)
 #define F32_SinCos               19   // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
 #define F32_FAbs                 20   // result = FAbs(a)
 #define F32_FMin                 21   // if(a<b) result = a  else result = b
-#define F32_Frac                 22   // result = fractional portion of a  (portion after the decimal point)
-#define F32_CNeg                 23   // if(b<0)  a = -a  else  a = a
+#define F32_CNeg                 22   // if(b<0)  a = -a  else  a = a
+#define F32_CMov                 23   // if(b==0) a = c  else  a = b
 #define F32_Mov                  24   // result = a
 #define F32_RunStream            25
 
@@ -119,8 +119,8 @@ PUB FShift(a, b)
 #define F32_opSinCos               (F32_SinCos    << 2)  // result = Sin(a),  b=Cos(a)   (faster than calling opSin(a) + opCos(a)
 #define F32_opFAbs                 (F32_FAbs      << 2)  // result = FAbs(a)
 #define F32_opFMin                 (F32_FMin      << 2)  // if(a<b) result = a  else result = b
-#define F32_opFrac                 (F32_Frac      << 2)  // result = fractional portion of a  (portion after the decimal point)
 #define F32_opCNeg                 (F32_CNeg      << 2)  // if(b<0)  a = -a  else  a = a
+#define F32_opCMov                 (F32_CMov      << 2)  // if(b==0) a = c  else  a = b
 #define F32_opMov                  (F32_Mov       << 2)  // result = a
 #define F32_opRunStream            (F32_RunStream << 2)
 

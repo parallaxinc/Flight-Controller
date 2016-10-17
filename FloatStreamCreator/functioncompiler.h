@@ -27,22 +27,24 @@ private:
 	QString outPath;
 	int funcIndex, instrIndex;
 
+	ExpressionParser parser;
+
 	EVar *pLeftTemp, *pRightTemp;
 
 	bool Parse(void);
 
-	bool GenerateOutputCode( ExpressionParser & parser );
+	bool GenerateOutputCode( void );
 
-	bool GenerateVariables( ExpressionParser & parser );
-	bool GenerateTokens( ExpressionParser & parser );
+	bool GenerateVariables( void );
+	bool GenerateTokens( void );
 
-	bool OutputExpressionTokens( ExpressionParser & parser , QTextStream & stream , Expression * expr );
+	bool OutputExpressionTokens( QTextStream & stream , Expression * expr );
 	bool ComputeSubExpressions( QTextStream & stream , Expression * expr , EVar *pUseTemp, EVar ** outVar );
 
 	bool GenerateInstruction( QTextStream & stream , Expression * op, EVar * pLeft, EVar * pRight, EVar * pOut );
 
 	void UpdateVarScope( EVar * var , bool isAssign, int iFunc, int iInstr );
-	void AssignVariableEnumIndices( ExpressionParser & parser );
+	void AssignVariableEnumIndices( void);
 
 	bool RangesOverlap( RangeList & set1, RangeList & set2 );
 	void MergeRanges( RangeList & set1, RangeList & set2 );

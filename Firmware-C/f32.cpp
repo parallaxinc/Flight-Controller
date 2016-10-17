@@ -58,7 +58,7 @@ int F32::Start(void)
   while( driverMem[i] != 0x12345678 )
     i++;
 
-  v.cmdCallTableAddr = (int *)driverMem + i + 1;
+  v.cmdCallTableAddr = (int *)driverMem + i;
 
   cog = load_cog_driver(f32_driver, &v.f32_cmd);
   return cog;
@@ -269,71 +269,6 @@ PUB FloatRound(a) | b
   repeat
   while f32_Cmd
 
-PUB FSqrt(a)
-/*
-  Square root.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFSqrt
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-
-PUB FCmp(a, b)
-/*
-  Floating point comparison.
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit integer value
-             -1 if a < b
-              0 if a == b
-              1 if a > b
-*/
-  result  := cmdFCmp
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Sin(a)
-/*
-  Sine of an angle (radians).
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFSin
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Cos(a)
-/*
-  Cosine of an angle (radians).
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFCos
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Tan(a)
-/*
-  Tangent of an angle (radians).
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFTan
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
 
 PUB Log(a) | b
 /*
@@ -419,126 +354,6 @@ PUB Exp10(a) | b
   repeat
   while f32_Cmd
 
-PUB Pow(a, b)
-/*
-  Power (a to the power b).
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value  
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFPow
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-
-{
-PUB Frac(a)
-/*
-  Fraction (returns fractional part of a).
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFFrac
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-}
-
-PUB FNeg(a)
-/*
-  Negate: result = -a.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-*/
-  return a ^ $8000_0000
-
-PUB FAbs(a)
-/*
-  Absolute Value: result = |a|.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-*/
-  return a & $7FFF_FFFF
-  
-PUB Radians(a) | b
-/*
-  Convert degrees to radians
-  Parameters:
-    a        32-bit floating point value (angle in degrees)
-    b        the conversion factor
-  Returns:   32-bit floating point value (angle in radians)
-*/
-  b       := constant(pi / 180.0)
-  result  := cmdFMul
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Degrees(a) | b
-/*
-  Convert radians to degrees
-  Parameters:
-    a        32-bit floating point value (angle in radians)
-    b        the conversion factor
-  Returns:   32-bit floating point value (angle in degrees)
-*/
-  b       := constant(180.0 / pi)
-  result  := cmdFMul
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB FMin(a, b)
-/*
-  Minimum: result = the minimum value a or b.
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value  
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFCmp
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-  if result < 0
-    return a
-  return b
-  
-PUB FMax(a, b)
-/*
-  Maximum: result = the maximum value a or b.
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value  
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFCmp
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-  if result < 0
-    return b
-  return a
-
-{
-PUB FMod(a, b)
-/*
-  Floating point remainder: result = the remainder of a / b.
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value  
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFMod
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-}
 
 PUB ASin(a) | b
 /*
@@ -579,58 +394,6 @@ PUB ATan(a) | b
 */
   b       := 1.0
   result  := cmdATan2
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB ATan2(a, b)
-/*
-  Arc Tangent of vector a, b (in radians, no division is performed, so b==0 is legal).
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit floating point value
-  Returns:   32-bit floating point value (angle in radians)
-*/
-  result  := cmdATan2
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-{
-PUB Floor(a)
-/*
-  Calculate the floating point value of the nearest integer <= a.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-*/
-  result  := cmdFloor
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-
-PUB Ceil(a)
-/*
-  Calculate the floating point value of the nearest integer >= a.
-  Parameters:
-    a        32-bit floating point value
-  Returns:   32-bit floating point value
-*/
-  result  := cmdCeil
-  f32_Cmd := @result
-  repeat
-  while f32_Cmd
-}
-
-PUB FShift(a, b)
-/*
-  Float-Shift - multiply by POW(2,a), identical to a SHL or SHR in integer
-  Parameters:
-    a        32-bit floating point value
-    b        32-bit integer value (shift amount)
-  Returns:   32-bit floating point value
-*/
-  result  := cmdShift
   f32_Cmd := @result
   repeat
   while f32_Cmd

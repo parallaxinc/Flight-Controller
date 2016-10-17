@@ -10,7 +10,7 @@ EVar::EVar()
 	Val.i = 0;
 	refCount = 0;
 	varIndex = 0;			// Index into the orderedVarList array
-	enumValue = 0;			// Index in the final enum list (may share space with other values if their usage doesn't overlap)
+	enumValue = -1;			// Index in the final enum list (may share space with other values if their usage doesn't overlap)
 
 	alwaysValid = false;
 }

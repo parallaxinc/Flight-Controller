@@ -15,10 +15,9 @@
 	F32_opAdd,     Heading, ry, Heading,
 	// 
 	// Keep Heading in the range of 0 to TwoPI
-	// Heading -= Float(Trunc(Heading / const_TwoPI)) * const_TwoPI;
+	// Heading -= FloatTrunc(Heading / const_TwoPI) * const_TwoPI;
 	F32_opDiv,     Heading, const_TwoPI, Temp_lhs,
-	F32_opTruncRound,Temp_lhs, 0, Temp_lhs,
-	F32_opFloat,   Temp_lhs, 0, Temp_lhs,
+	F32_opTruncRound,Temp_lhs, const_I2, Temp_lhs,
 	F32_opMul,     Temp_lhs, const_TwoPI, Temp_rhs,
 	F32_opSub,     Heading, Temp_rhs, Heading,
 	// 
