@@ -286,7 +286,12 @@
 	// float cosPitch, sinPitch;
 	// float cosRoll, sinRoll;
 	// 
-	// TODO: Need to handle >45 degree orientation, where ASin falls down, or cosPitch == 0, resulting in NaN for roll
+	// Might be worth trying to formulate this as a rotation between two vectors: current up and (0,1,0)
+	// because it might not suffer the NaN issue
+	// 
+	// See: http://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+	//      http://stackoverflow.com/questions/23166898/efficient-way-to-calculate-a-3x3-rotation-matrix-from-the-rotation-defined-by-tw
+	// 
 	// 
 	// float fpitch = ASin(CNeg(m10,m11));		// negate M10 if M11 is negative (ie, if we're inverted)
 	F32_opCNeg,    m10, m11, Temp_lhs,
@@ -342,15 +347,15 @@
 	// float temp = -FAbs(m11);	// Grab the vertical component of the vertical axis - If it's < 45 deg of horizontal we don't want mag correction
 	F32_opFAbs,    m11, 0, Temp_lhs,
 	F32_opNeg,     Temp_lhs, 0, temp,
-	// temp = -FMin(temp, -0.6f);	// Clamp to 0.6 .. 1.0
-	F32_opNeg,     const_F0_6, 0, Temp_rhs,
+	// temp = -FMin(temp, -0.72f);	// Clamp to 0.72 .. 1.0
+	F32_opNeg,     const_F0_72, 0, Temp_rhs,
 	F32_opFMin,    temp, Temp_rhs, Temp_lhs,
 	F32_opNeg,     Temp_lhs, 0, temp,
-	// temp -= 0.707f;				// Shift the range down
-	F32_opSub,     temp, const_F0_707, temp,
-	// temp *= 10.0f;				// 0.707f to 0.807f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
+	// temp -= 0.72f;				// Shift the range down
+	F32_opSub,     temp, const_F0_72, temp,
+	// temp *= 10.0f;				// 0.72f to 0.82f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
 	F32_opMul,     temp, const_F10_0, temp,
-	// temp = FMin(temp, 1.0f);	// Clamp to 0 to 1
+	// temp = FMin(temp, 1.0f);	// Clamp to 0 to 1 - Note that 0.707 or LESS is undesired, 0.80 or greater is perfect
 	F32_opFMin,    temp, const_F1_0, temp,
 	// 
 	// magErrScale *= temp;		// Scale the magErr correction by this

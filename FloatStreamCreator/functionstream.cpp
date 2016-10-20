@@ -207,10 +207,10 @@ void QuatUpdate( SensorData & sens )
 
 
 	float temp = -FAbs(m11);	// Grab the vertical component of the vertical axis - If it's < 45 deg of horizontal we don't want mag correction
-	temp = -FMin(temp, -0.6f);	// Clamp to 0.6 .. 1.0
-	temp -= 0.707f;				// Shift the range down
-	temp *= 10.0f;				// 0.707f to 0.807f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
-	temp = FMin(temp, 1.0f);	// Clamp to 0 to 1
+	temp = -FMin(temp, -0.72f);	// Clamp to 0.72 .. 1.0
+	temp -= 0.72f;				// Shift the range down
+	temp *= 10.0f;				// 0.72f to 0.82f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
+	temp = FMin(temp, 1.0f);	// Clamp to 0 to 1 - Note that 0.707 or LESS is undesired, 0.80 or greater is perfect
 
 	magErrScale *= temp;		// Scale the magErr correction by this
 

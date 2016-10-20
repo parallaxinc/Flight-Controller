@@ -3,8 +3,7 @@
 	INT_VARS[const_I2] = 2;
 	IMU_VARS[const_F1_0] = 1.0;
 	IMU_VARS[const_F2_0] = 2.0;
-	IMU_VARS[const_F0_6] = 0.6;
-	IMU_VARS[const_F0_707] = 0.707;
+	IMU_VARS[const_F0_72] = 0.72;
 	IMU_VARS[const_F10_0] = 10.0;
 	INT_VARS[const_INeg_1] = -1;
 	INT_VARS[const_I8] = 8;
