@@ -306,6 +306,20 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
   #include "QuatIMU_UpdateControls_ComputeOrientationChange.inc"
 };
 
+unsigned char QuatIMU_QuatIMU_Mag_ComputeCalibrate_Setup[] = {
+  #include "QuatIMU_QuatIMU_Mag_ComputeCalibrate_Setup.inc"
+};
+
+unsigned char QuatIMU_QuatIMU_Mag_AddCalibratePoint[] = {
+  #include "QuatIMU_QuatIMU_Mag_AddCalibratePoint.inc"
+};
+
+unsigned char QuatIMU_QuatIMU_Mag_ComputeCalibrate_IterationStep[] = {
+  #include "QuatIMU_QuatIMU_Mag_ComputeCalibrate_IterationStep.inc"
+};
+
+// was 24124, now 24908 with Compass calibrate functions
+// Total runtime = 27696 (32768=32kb, so approx 5Kb remain)
 
 void QuatIMU_Update( int * packetAddr )
 {

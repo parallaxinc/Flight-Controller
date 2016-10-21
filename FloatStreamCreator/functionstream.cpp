@@ -422,6 +422,150 @@ void UpdateControls_ComputeOrientationChange(void)
 	//ENDFUNCTION
 }
 
+void QuatIMU_Mag_InitCalibrate(void)
+{
+	Xn  =   0.0f, Yn  =   0.0, Zn  =   0.0;
+	Xn2 =   0.0f, Yn2 =   0.0, Zn2 =   0.0;
+	Xn3 =   0.0f, Yn3 =   0.0, Zn3 =   0.0;
+	XY  =   0.0f, XZ  =   0.0, YZ  =   0.0;
+	X2Y =   0.0f, X2Z =   0.0, Y2X =   0.0;
+	Y2Z =   0.0f, Z2X =   0.0, Z2Y =   0.0;
+	compassPointCount = 0.0f;
+}
+
+void QuatIMU_Mag_AddCalibratePoint(void)
+{
+	//FUNCTION: QuatIMU_Mag_AddCalibratePoint
+	float fmx = Float(mx);
+	float fmy = Float(my);
+	float fmz = Float(mz);
+
+	XY    += fmx * fmy;
+	XZ    += fmx * fmz;
+	YZ    += fmy * fmz;
+
+	float fmx2 = fmx * fmx;
+	Xn    += fmx;
+	Xn2   += fmx2;
+	Xn3   += fmx2 * fmx;
+	X2Y   += fmx2 * fmy;
+	X2Z   += fmx2 * fmz;
+
+	float fmy2 = fmy * fmy;
+	Yn    += fmy;
+	Yn2   += fmy2;
+	Yn3   += fmy2 * fmy;
+	Y2X   += fmy2 * fmx;
+	Y2Z   += fmy2 * fmz;
+
+	float fmz2 = fmz * fmz;
+	Zn    += fmz;
+	Zn2   += fmz2;
+	Zn3   += fmz2 * fmz;
+	Z2X   += fmz2 * fmx;
+	Z2Y   += fmz2 * fmy;
+
+	compassPointCount += 1.0f;
+	//ENDFUNCTION
+}
+
+void QuatIMU_Mag_ComputeCalibrate_Setup(void)
+{
+	//FUNCTION: QuatIMU_Mag_ComputeCalibrate_Setup
+	Xn  /= compassPointCount;
+	Xn2 /= compassPointCount;
+	Xn3 /= compassPointCount;
+	Yn  /= compassPointCount;
+	Yn2 /= compassPointCount;
+	Yn3 /= compassPointCount;
+	Zn  /= compassPointCount;
+	Zn2 /= compassPointCount;
+	Zn3 /= compassPointCount;
+
+	XY  /= compassPointCount;
+	XZ  /= compassPointCount;
+	YZ  /= compassPointCount;
+	X2Y /= compassPointCount;
+	X2Z /= compassPointCount;
+	Y2X /= compassPointCount;
+	Y2Z /= compassPointCount;
+	Z2X /= compassPointCount;
+	Z2Y /= compassPointCount;
+
+	//Reduction of multiplications
+	F0 = Xn2 + Yn2 + Zn2;
+	F1 = 0.5f * F0;
+	F2 = -(Xn3 + Y2X + Z2X) * 8.0f;
+	F3 = -(X2Y + Yn3 + Z2Y) * 8.0f;
+	F4 = -(X2Z + Y2Z + Zn3) * 8.0f;
+
+	//Set initial conditions:
+	A = Xn;
+	B = Yn;
+	C = Zn;
+
+	//First iteration computation:
+	A2 = A*A;
+	B2 = B*B;
+	C2 = C*C;
+	QS = A2 + B2 + C2;
+	QB = -(A*Xn + B*Yn + C*Zn) * 2.0f;
+
+	//Set initial conditions:
+	Rsq = F0 + QB + QS;
+
+	//First iteration computation:
+	Q0 = 0.5f * (QS - Rsq);
+	Q1 = F1 + Q0;
+	Q2 = 8.0f * ( QS - Rsq + QB + F0 );
+
+	//ENDFUNCTION
+}
+
+void QuatIMU_Mag_ComputeCalibrate_IterationStep(void)
+{
+	//FUNCTION: QuatIMU_Mag_ComputeCalibrate_IterationStep
+	//Compute denominator:
+	float aA = Q2 + 16.0f * (A2 - 2.0f*A*Xn + Xn2);
+	float aB = Q2 + 16.0f * (B2 - 2.0f*B*Yn + Yn2);
+	float aC = Q2 + 16.0f * (C2 - 2.0f*C*Zn + Zn2);
+
+	aA = CMov(aA, 1.0f);	// aA = (aA == 0) ? 1.0f : aA;
+	aB = CMov(aB, 1.0f);	// aB = (aB == 0) ? 1.0f : aB;
+	aC = CMov(aC, 1.0f);	// aC = (aC == 0) ? 1.0f : aC;
+
+	//Compute next iteration
+	float nA = A - ((F2 + 16.0f*( B*XY + C*XZ + Xn*(-A2 - Q0) + A*(Xn2 + Q1 - C*Zn - B*Yn) ) )/aA);
+	float nB = B - ((F3 + 16.0f*( A*XY + C*YZ + Yn*(-B2 - Q0) + B*(Yn2 + Q1 - A*Xn - C*Zn) ) )/aB);
+	float nC = C - ((F4 + 16.0f*( A*XZ + B*YZ + Zn*(-C2 - Q0) + C*(Zn2 + Q1 - A*Xn - B*Yn) ) )/aC);
+
+	//Check for stop condition
+	//dA = (nA - A);
+	//dB = (nB - B);
+	//dC = (nC - C);
+
+	//if( (dA*dA + dB*dB + dC*dC) <= Nstop ){
+	//	break;
+	//}
+
+	//Compute next iteration's values
+	A = nA;
+	B = nB;
+	C = nC;
+	A2 = A*A;
+	B2 = B*B;
+	C2 = C*C;
+	QS = A2 + B2 + C2;
+	QB = - 2.0f * (A*Xn + B*Yn + C*Zn);
+	Rsq = F0 + QB + QS;
+	Q0 = 0.5f * (QS - Rsq);
+	Q1 = F1 + Q0;
+	Q2 = 8.0f * ( QS - Rsq + QB + F0 );
+
+	//ENDFUNCTION
+
+	// After N (100?) iterations, A,B,C are centers of Mx,My,Mz measurements
+}
 
 #define Const_UpdateRate  (200/8)
 #define Const_OneG  4096					//Must match the scale of the accelerometer
