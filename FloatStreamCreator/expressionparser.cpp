@@ -549,7 +549,6 @@ void ExpressionParser::Optimize( Expression * expr )
 	{
 		// Convert "-A + B" into "B - A"
 
-		qDebug() << "Flip this op, remove the negation";
 		Expression * pTemp = expr->Left;
 		expr->Left = pTemp->Left;	// Negation only has one argument, we're making it OUR left argument
 		pTemp->Left = NULL;			// unhook this so we don't delete the sub-tree
@@ -562,7 +561,6 @@ void ExpressionParser::Optimize( Expression * expr )
 		// Convert "A + -B" into "A - B"
 		//    or   "A - -B" into "A + B"
 
-		qDebug() << "Flip this op, remove the negation";
 		Expression * pTemp = expr->Right;
 		expr->Right = pTemp->Left;	// Negation only has one argument, we're making it OUR right argument
 		pTemp->Left = NULL;			// unhook this so we don't delete the sub-tree

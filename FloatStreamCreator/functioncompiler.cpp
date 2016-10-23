@@ -127,6 +127,7 @@ bool FunctionCompiler::Compile(QByteArray & Source, QByteArray & InputOutputList
 	}
 
 	GenerateOutputCode();
+	qDebug() << "Done!";
 
 	return true;
 }
@@ -447,7 +448,6 @@ void FunctionCompiler::UpdateVarScope( EVar * var , bool isAssign, int iFunc, in
 		if( var->ranges.count() > 0 && var->ranges.back().Func == iFunc &&
 				(var->ranges.back().Last == iInstr || var->ranges.back().Last == iInstr-1 ) )
 		{
-			qDebug() << "";
 			return;	// This is a re-assign, like qw=qw*x  - it's simply another usage, so just extend the range
 		}
 
