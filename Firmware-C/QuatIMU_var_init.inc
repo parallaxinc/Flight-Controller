@@ -1,6 +1,7 @@
 	INT_VARS[const_I0] = 0;
 	INT_VARS[const_I1] = 1;
 	INT_VARS[const_I2] = 2;
+	INT_VARS[const_I3] = 3;
 	IMU_VARS[const_F1_0] = 1.0;
 	IMU_VARS[const_F2_0] = 2.0;
 	IMU_VARS[const_F0_72] = 0.72;
@@ -9,3 +10,4 @@
 	INT_VARS[const_I8] = 8;
 	INT_VARS[const_INeg_12] = -12;
 	INT_VARS[const_I12] = 12;
+	INT_VARS[const_I4] = 4;

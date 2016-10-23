@@ -8,6 +8,9 @@
 
 #include "quatutil.h"
 #include <math.h>
+#ifdef __APPLE__
+//#include "TargetConditionals.h"
+#endif
 
 static char beatString[] = "BEAT";
 
@@ -389,8 +392,16 @@ void MainWindow::ProcessPackets(void)
 void MainWindow::on_btnCompile_clicked()
 {
 	// Browse for the file to compile
+#ifdef TARGET_OS_MAC
+	QString filepath = "/Users/jasondorie/Flight-Controller/FloatStreamCreator/functionstream.cpp";
+	QString inputsPath = "/Users/jasondorie/Flight-Controller/FloatStreamCreator/inputoutputlist.h";
+	QString outputPrefix = "/Users/jasondorie/Flight-Controller/Firmware-C/QuatIMU";
+#endif
+#ifdef WIN32
 	QString filepath = "F:/GitHub/Flight-Controller/FloatStreamCreator/functionstream.cpp";
 	QString inputsPath = "F:/GitHub/Flight-Controller/FloatStreamCreator/inputoutputlist.h";
+	QString outputPrefix = "F:/GitHub/Flight-Controller/Firmware-C/QuatIMU";
+#endif
 
 	QByteArray contents;
 	QByteArray inputs;
@@ -413,7 +424,6 @@ void MainWindow::on_btnCompile_clicked()
 	{
 		// Compile it
 		FunctionCompiler comp;
-		QString outputPrefix = "F:/GitHub/Flight-Controller/Firmware-C/QuatIMU";
 		comp.Compile( contents , inputs, outputPrefix );
 	}
 }
