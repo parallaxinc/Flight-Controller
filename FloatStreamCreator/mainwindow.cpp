@@ -148,6 +148,7 @@ void MainWindow::ProcessPackets(void)
 	bool bTargetQuatChanged = false;
 	bool bMotorsChanged = false;
 	bool bComputedChanged = false;
+	int altmm;
 
 	packet * p;
 	do {
@@ -175,6 +176,9 @@ void MainWindow::ProcessPackets(void)
 					ui->vb_mx->setValue( sensors.MagX );
 					ui->vb_my->setValue( sensors.MagY );
 					ui->vb_mz->setValue( sensors.MagZ );
+
+					altmm = Quat_GetAltitudeEstimate();
+					ui->Altimeter_display->setAltitude( (float)altmm / 1000.0f );
 
 					{
 						QPointF pt;
@@ -213,6 +217,7 @@ void MainWindow::ProcessPackets(void)
 						packet[6] = sensors.MagX;
 						packet[7] = sensors.MagY;
 						packet[8] = sensors.MagZ;
+						packet[9] = computed.Alt;
 
 						FC::QuatIMU_Update( packet );
 

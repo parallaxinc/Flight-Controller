@@ -13,6 +13,8 @@ void QuatUpdate( SensorData & sens );
 void Quat_GetQuaternion( QQuaternion & cq );
 void Quat_GetHeadingVect( QVector3D & hv );
 
+int  Quat_GetAltitudeEstimate(void);
+
 void QuatIMU_InitVars(void);
 
 void QuatIMU_Mag_InitCalibrate(void);

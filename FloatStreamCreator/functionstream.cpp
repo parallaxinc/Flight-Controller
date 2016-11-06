@@ -249,7 +249,7 @@ void QuatUpdate( SensorData & sens )
 	//--------------------------------------------------------------
 
 	//Orient force vector into world frame & subtract gravity (1G)
-	float forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
+	float forceWY = (m10*fax + m11*fay + m12*faz) / 4096.0f - 1.0f;
 
 	//Convert G to mm/sec^2 scaled by update rate
 	forceWY *= const_G_mm_PerSecPerUpdate;
@@ -643,4 +643,8 @@ void Quat_GetHeadingVect( QVector3D & hv )
 	hv.setX(xh);
 	hv.setY(yh);
 	hv.setZ(zh);
+}
+
+int Quat_GetAltitudeEstimate(void) {
+  return AltitudeEstMM;
 }

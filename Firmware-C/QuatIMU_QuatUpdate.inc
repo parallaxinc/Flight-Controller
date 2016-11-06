@@ -416,11 +416,11 @@
 	//--------------------------------------------------------------
 	// 
 	//Orient force vector into world frame & subtract gravity (1G)
-	// float forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
-	F32_opMul,     m01, fax, Temp_0,
+	// float forceWY = (m10*fax + m11*fay + m12*faz) / 4096.0f - 1.0f;
+	F32_opMul,     m10, fax, Temp_0,
 	F32_opMul,     m11, fay, Temp_1,
 	F32_opAdd,     Temp_0, Temp_1, Temp_0,
-	F32_opMul,     m21, faz, Temp_1,
+	F32_opMul,     m12, faz, Temp_1,
 	F32_opAdd,     Temp_0, Temp_1, Temp_0,
 	F32_opShift,   Temp_0, const_INeg_12, Temp_0,
 	F32_opSub,     Temp_0, const_F1_0, forceWY,

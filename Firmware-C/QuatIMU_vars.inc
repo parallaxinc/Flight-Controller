@@ -53,13 +53,13 @@ Roll = 50 ,		 // refcount = 1
 Pitch = 51 ,		 // refcount = 1
 ThrustFactor = 52 ,		 // refcount = 1
 m00 = 53 ,		 // refcount = 1
-m01 = 54 ,		 // refcount = 2
+m01 = 54 ,		 // refcount = 1
 m02 = 55 ,		 // refcount = 1
-m10 = 56 ,		 // refcount = 5
+m10 = 56 ,		 // refcount = 6
 m11 = 57 ,		 // refcount = 8
-m12 = 58 ,		 // refcount = 4
+m12 = 58 ,		 // refcount = 5
 m20 = 59 ,		 // refcount = 3
-m21 = 60 ,		 // refcount = 4
+m21 = 60 ,		 // refcount = 3
 m22 = 61 ,		 // refcount = 3
 xh = 62 ,		 // refcount = 7
 zh = 63 ,		 // refcount = 7

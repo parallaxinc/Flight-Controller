@@ -219,9 +219,6 @@ bool FunctionCompiler::GenerateTokens( void )
 				stream << "\t" << expr->FuncName << "\n";	// line comments just get output as is
 			}
 			else {
-				if( expr->line == 21 ) {
-					qDebug() << "";
-				}
 				parser.Optimize(expr);
 				if( OutputExpressionTokens( stream, expr ) == false ) {
 					//return false;
