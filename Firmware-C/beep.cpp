@@ -132,7 +132,7 @@ static int fraction( int a, int b )
 
 void BeepOn(int CtrAB, int Pin, int Freq)
 {
-  int s, d, ctr, frq;
+  int ctr, frq;
 
   //Freq = Freq #> 0 <# 500_000         // limit frequency range
 
