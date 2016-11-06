@@ -1,3 +1,4 @@
+	IMU_VARS[const_F0_0] = 0.0;
 	INT_VARS[const_I0] = 0;
 	INT_VARS[const_I1] = 1;
 	INT_VARS[const_I2] = 2;

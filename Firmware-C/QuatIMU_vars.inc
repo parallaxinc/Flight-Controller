@@ -1,16 +1,17 @@
+const_F0_0 = 0 ,		 // = 0.0		 // refcount = 19
 const_I0 = 0 ,		 // = 0		 // refcount = 10
-const_I1 = 1 ,		 // = 1		 // refcount = 15
+const_I1 = 1 ,		 // = 1		 // refcount = 18
 const_I2 = 2 ,		 // = 2		 // refcount = 1
-const_I3 = 3 ,		 // = 3		 // refcount = 5
+const_I3 = 3 ,		 // = 3		 // refcount = 4
 gx = 4 ,		 // refcount = 1
 gy = 5 ,		 // refcount = 1
 gz = 6 ,		 // refcount = 1
 ax = 7 ,		 // refcount = 1
 ay = 8 ,		 // refcount = 1
 az = 9 ,		 // refcount = 1
-mx = 10 ,		 // refcount = 2
-my = 11 ,		 // refcount = 2
-mz = 12 ,		 // refcount = 2
+mx = 10 ,		 // refcount = 3
+my = 11 ,		 // refcount = 3
+mz = 12 ,		 // refcount = 3
 alt = 13 ,		 // refcount = 1
 altRate = 14 ,		 // refcount = 1
 In_Elev = 15 ,		 // refcount = 2
@@ -78,116 +79,117 @@ DebugFloat = 76 ,		 // refcount = 1
 Xn = 77 ,		 // refcount = 11
 Yn = 78 ,		 // refcount = 11
 Zn = 79 ,		 // refcount = 11
-Xn2 = 80 ,		 // refcount = 7
-Yn2 = 81 ,		 // refcount = 7
-Zn2 = 82 ,		 // refcount = 7
-Xn3 = 83 ,		 // refcount = 5
-Yn3 = 84 ,		 // refcount = 5
-Zn3 = 85 ,		 // refcount = 5
-XY = 86 ,		 // refcount = 6
-XZ = 87 ,		 // refcount = 6
-YZ = 88 ,		 // refcount = 6
-X2Y = 89 ,		 // refcount = 5
-X2Z = 90 ,		 // refcount = 5
-Y2X = 91 ,		 // refcount = 5
-Y2Z = 92 ,		 // refcount = 5
-Z2X = 93 ,		 // refcount = 5
-Z2Y = 94 ,		 // refcount = 5
-compassPointCount = 95 ,		 // refcount = 20
-F0 = 96 ,		 // refcount = 6
-F1 = 97 ,		 // refcount = 3
+Xn2 = 80 ,		 // refcount = 8
+Yn2 = 81 ,		 // refcount = 8
+Zn2 = 82 ,		 // refcount = 8
+Xn3 = 83 ,		 // refcount = 6
+Yn3 = 84 ,		 // refcount = 6
+Zn3 = 85 ,		 // refcount = 6
+XY = 86 ,		 // refcount = 7
+XZ = 87 ,		 // refcount = 7
+YZ = 88 ,		 // refcount = 7
+X2Y = 89 ,		 // refcount = 6
+X2Z = 90 ,		 // refcount = 6
+Y2X = 91 ,		 // refcount = 6
+Y2Z = 92 ,		 // refcount = 6
+Z2X = 93 ,		 // refcount = 6
+Z2Y = 94 ,		 // refcount = 6
+compassPointCount = 95 ,		 // refcount = 21
+F0 = 96 ,		 // refcount = 4
+F1 = 97 ,		 // refcount = 2
 F2 = 98 ,		 // refcount = 2
 F3 = 99 ,		 // refcount = 2
 F4 = 100 ,		 // refcount = 2
-A = 101 ,		 // refcount = 15
-B = 102 ,		 // refcount = 15
-C = 103 ,		 // refcount = 15
-A2 = 104 ,		 // refcount = 6
-B2 = 105 ,		 // refcount = 6
-C2 = 106 ,		 // refcount = 6
-QS = 107 ,		 // refcount = 8
-QB = 108 ,		 // refcount = 6
-Rsq = 109 ,		 // refcount = 6
-Q0 = 110 ,		 // refcount = 7
-Q1 = 111 ,		 // refcount = 5
-Q2 = 112 ,		 // refcount = 5
-rx = 124 ,		 // refcount = 14
-ry = 125 ,		 // refcount = 14
-rz = 126 ,		 // refcount = 14
-rmag = 127 ,		 // refcount = 27
-sinr = 128 ,		 // refcount = 7
-cosr = 129 ,		 // refcount = 5
-qdw = 127 ,		 // refcount = 2
-qdx = 130 ,		 // refcount = 2
-qdy = 131 ,		 // refcount = 2
-qdz = 124 ,		 // refcount = 2
-fx2 = 124 ,		 // refcount = 3
-fy2 = 125 ,		 // refcount = 3
-fz2 = 126 ,		 // refcount = 3
-fwx = 127 ,		 // refcount = 3
-fwy = 128 ,		 // refcount = 3
-fwz = 129 ,		 // refcount = 3
-fxy = 130 ,		 // refcount = 3
-fxz = 131 ,		 // refcount = 3
-fyz = 132 ,		 // refcount = 3
-const_F1_0 = 113 ,		 // = 1.0		 // refcount = 16
-const_F2_0 = 114 ,		 // = 2.0		 // refcount = 5
-fax = 124 ,		 // refcount = 8
-fay = 125 ,		 // refcount = 11
-faz = 126 ,		 // refcount = 8
-axRot = 127 ,		 // refcount = 4
-ayRot = 128 ,		 // refcount = 4
-faxn = 128 ,		 // refcount = 3
-fayn = 129 ,		 // refcount = 3
-fazn = 130 ,		 // refcount = 3
-accWeight = 127 ,		 // refcount = 6
-errDiffX = 131 ,		 // refcount = 2
-errDiffY = 130 ,		 // refcount = 2
-errDiffZ = 128 ,		 // refcount = 2
-fmx = 127 ,		 // refcount = 12
-fmy = 128 ,		 // refcount = 11
-fmz = 129 ,		 // refcount = 12
-cosPitch = 130 ,		 // refcount = 6
-sinPitch = 131 ,		 // refcount = 3
-cosRoll = 132 ,		 // refcount = 2
-sinRoll = 133 ,		 // refcount = 3
-fpitch = 134 ,		 // refcount = 3
-froll = 135 ,		 // refcount = 2
-fmxSinPitch = 135 ,		 // refcount = 2
-fmzCosPitch = 136 ,		 // refcount = 2
-magErrScale = 127 ,		 // refcount = 6
-temp = 128 ,		 // refcount = 19
-const_F0_72 = 115 ,		 // = 0.72		 // refcount = 2
-const_F10_0 = 116 ,		 // = 10.0		 // refcount = 1
-qrx = 129 ,		 // refcount = 6
-qry = 130 ,		 // refcount = 6
-qrz = 131 ,		 // refcount = 6
-qrw = 124 ,		 // refcount = 13
-csx = 125 ,		 // refcount = 4
-csy = 124 ,		 // refcount = 3
-csz = 127 ,		 // refcount = 4
-snx = 128 ,		 // refcount = 4
-sny = 129 ,		 // refcount = 3
-snz = 130 ,		 // refcount = 4
-snycsx = 126 ,		 // refcount = 3
-snysnx = 131 ,		 // refcount = 3
-csycsz = 129 ,		 // refcount = 3
-csysnz = 132 ,		 // refcount = 3
-diffAngle = 125 ,		 // refcount = 3
-fmx2 = 124 ,		 // refcount = 5
-fmy2 = 124 ,		 // refcount = 5
-fmz2 = 124 ,		 // refcount = 5
-aA = 124 ,		 // refcount = 4
-aB = 125 ,		 // refcount = 4
-aC = 126 ,		 // refcount = 4
-nA = 124 ,		 // refcount = 2
-nB = 125 ,		 // refcount = 2
-nC = 126 ,		 // refcount = 2
-Temp_lhs = 117 ,		 // refcount = 394
-Temp_rhs = 118 ,		 // refcount = 256
-const_INeg_1 = 119 ,		 // = -1		 // refcount = 10
-const_I8 = 120 ,		 // = 8		 // refcount = 1
-const_INeg_12 = 121 ,		 // = -12		 // refcount = 1
-const_I12 = 122 ,		 // = 12		 // refcount = 1
-const_I4 = 123 ,		 // = 4		 // refcount = 6
-MAX_VAR_INDEX = 136 ,
+A = 101 ,		 // refcount = 13
+B = 102 ,		 // refcount = 13
+C = 103 ,		 // refcount = 13
+rx = 113 ,		 // refcount = 14
+ry = 114 ,		 // refcount = 14
+rz = 115 ,		 // refcount = 14
+rmag = 116 ,		 // refcount = 27
+sinr = 117 ,		 // refcount = 7
+cosr = 118 ,		 // refcount = 5
+qdw = 116 ,		 // refcount = 2
+qdx = 119 ,		 // refcount = 2
+qdy = 120 ,		 // refcount = 2
+qdz = 113 ,		 // refcount = 2
+fx2 = 113 ,		 // refcount = 3
+fy2 = 114 ,		 // refcount = 3
+fz2 = 115 ,		 // refcount = 3
+fwx = 116 ,		 // refcount = 3
+fwy = 117 ,		 // refcount = 3
+fwz = 118 ,		 // refcount = 3
+fxy = 119 ,		 // refcount = 3
+fxz = 120 ,		 // refcount = 3
+fyz = 121 ,		 // refcount = 3
+const_F1_0 = 104 ,		 // = 1.0		 // refcount = 13
+const_F2_0 = 105 ,		 // = 2.0		 // refcount = 4
+fax = 113 ,		 // refcount = 8
+fay = 114 ,		 // refcount = 11
+faz = 115 ,		 // refcount = 8
+axRot = 116 ,		 // refcount = 4
+ayRot = 117 ,		 // refcount = 4
+faxn = 117 ,		 // refcount = 3
+fayn = 118 ,		 // refcount = 3
+fazn = 119 ,		 // refcount = 3
+accWeight = 116 ,		 // refcount = 6
+errDiffX = 120 ,		 // refcount = 2
+errDiffY = 119 ,		 // refcount = 2
+errDiffZ = 117 ,		 // refcount = 2
+fmx = 116 ,		 // refcount = 12
+fmy = 117 ,		 // refcount = 11
+fmz = 118 ,		 // refcount = 12
+cosPitch = 119 ,		 // refcount = 6
+sinPitch = 120 ,		 // refcount = 3
+cosRoll = 121 ,		 // refcount = 2
+sinRoll = 122 ,		 // refcount = 3
+fpitch = 123 ,		 // refcount = 3
+froll = 124 ,		 // refcount = 2
+fmxSinPitch = 124 ,		 // refcount = 2
+fmzCosPitch = 125 ,		 // refcount = 2
+magErrScale = 116 ,		 // refcount = 6
+temp = 117 ,		 // refcount = 19
+const_F0_72 = 106 ,		 // = 0.72		 // refcount = 2
+const_F10_0 = 107 ,		 // = 10.0		 // refcount = 1
+qrx = 118 ,		 // refcount = 6
+qry = 119 ,		 // refcount = 6
+qrz = 120 ,		 // refcount = 6
+qrw = 113 ,		 // refcount = 13
+csx = 114 ,		 // refcount = 4
+csy = 113 ,		 // refcount = 3
+csz = 116 ,		 // refcount = 4
+snx = 117 ,		 // refcount = 4
+sny = 118 ,		 // refcount = 3
+snz = 119 ,		 // refcount = 4
+snycsx = 115 ,		 // refcount = 3
+snysnx = 120 ,		 // refcount = 3
+csycsz = 118 ,		 // refcount = 3
+csysnz = 121 ,		 // refcount = 3
+diffAngle = 114 ,		 // refcount = 3
+fmx2 = 113 ,		 // refcount = 5
+fmy2 = 113 ,		 // refcount = 5
+fmz2 = 113 ,		 // refcount = 5
+A2 = 113 ,		 // refcount = 4
+B2 = 114 ,		 // refcount = 4
+C2 = 115 ,		 // refcount = 4
+QS = 116 ,		 // refcount = 4
+QB = 117 ,		 // refcount = 3
+Rsq = 118 ,		 // refcount = 3
+Q0 = 119 ,		 // refcount = 5
+Q1 = 120 ,		 // refcount = 4
+Q2 = 116 ,		 // refcount = 4
+aA = 117 ,		 // refcount = 2
+aB = 118 ,		 // refcount = 2
+aC = 121 ,		 // refcount = 2
+nA = 113 ,		 // refcount = 2
+nB = 114 ,		 // refcount = 2
+nC = 115 ,		 // refcount = 2
+Temp_0 = 126 ,		 // refcount = 430
+const_INeg_1 = 108 ,		 // = -1		 // refcount = 9
+Temp_1 = 127 ,		 // refcount = 178
+const_I8 = 109 ,		 // = 8		 // refcount = 1
+const_INeg_12 = 110 ,		 // = -12		 // refcount = 1
+const_I12 = 111 ,		 // = 12		 // refcount = 1
+const_I4 = 112 ,		 // = 4		 // refcount = 6
+Temp_2 = 116 ,		 // refcount = 12
+MAX_VAR_INDEX = 127 ,
