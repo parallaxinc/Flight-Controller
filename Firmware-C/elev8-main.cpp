@@ -140,7 +140,6 @@ static short BatteryVolts = 0;
 static char calib_StartQuadrant;
 static char calib_Quadrants;
 static char calib_Step;
-static long c_xmin, c_ymin, c_xmax, c_ymax, c_zmin, c_zmax;
 
 // PIDs for roll, pitch, yaw, altitude
 static IntPID  RollPID, PitchPID, YawPID, AltPID, AscentPID;
@@ -235,8 +234,6 @@ int main()                                    // Main function
 {
   Initialize(); // Set up all the objects
   
-  //Prefs_Test();
-
   //Grab the first set of sensor readings (should be ready by now)
   memcpy( &sens, Sensors_Address(), Sensors_ParamsSize );
 
@@ -400,8 +397,18 @@ int main()                                    // Main function
     QuatIMU_WaitForCompletion();    // Wait for the IMU to finish updating
 
 
-    QuatIMU_UpdateControls( &Radio , ControlMode == ControlMode_Manual , FlightMode == FlightMode_AutoManual );   // Now update the control quaternion
-    QuatIMU_WaitForCompletion();
+    if( FlightMode == FlightMode_CalibrateCompass )
+    {
+      if( (counter & 3) == 0 ) {
+        QuatIMU_CompassCalibrateAddSample();
+        QuatIMU_WaitForCompletion();
+      }
+    }
+    else
+    {
+      QuatIMU_UpdateControls( &Radio , ControlMode == ControlMode_Manual , FlightMode == FlightMode_AutoManual );   // Now update the control quaternion
+      QuatIMU_WaitForCompletion();
+    }
 
     PitchDifference = QuatIMU_GetPitchDifference();
     RollDifference = QuatIMU_GetRollDifference();
@@ -1161,6 +1168,8 @@ void StartCompassCalibrate(void)
   FlightEnabled = false;
   FlightMode = FlightMode_CalibrateCompass;
 
+  Sensors_ZeroMagnetometerScaleOffsets();
+
   Beep();
   waitcnt( 10000000 + CNT );
   Beep2();
@@ -1171,10 +1180,9 @@ void StartCompassCalibrate(void)
   calib_Quadrants = 0;
   calib_StartQuadrant = 0xff;
 
-  c_xmin = c_ymin = c_zmin =  10000;
-  c_xmax = c_ymax = c_zmax = -10000;
-
-  Sensors_ZeroMagnetometerScaleOffsets();
+  QuatIMU_WaitForCompletion();
+  QuatIMU_CompassInitCalibrate();
+  QuatIMU_WaitForCompletion();
 
   loopTimer = CNT;
 }
@@ -1191,7 +1199,6 @@ void DoCompassCalibrate(void)
   int Pitch = QuatIMU_GetPitch();
   int Roll = QuatIMU_GetRoll();
 
-  //int q, xc, xs, yc, ys, zc, zs, xr, yr, zr, mr;
   if( calib_Step == 0 )
   {
     //First cycle requires the quad to be level, and spun 360 degrees
@@ -1226,13 +1233,6 @@ void DoCompassCalibrate(void)
         calib_Quadrants |= (1<<q);
       }        
 
-      c_xmin = min(sens.MagX, c_xmin);
-      c_xmax = max(sens.MagX, c_xmax);
-      c_ymin = min(sens.MagY, c_ymin);
-      c_ymax = max(sens.MagY, c_ymax);
-      c_zmin = min(sens.MagZ, c_zmin);
-      c_zmax = max(sens.MagZ, c_zmax);
-
       // Wait for the user to have hit all quadrants
       if( calib_Quadrants == 0x0f && q == calib_StartQuadrant )
       {
@@ -1251,8 +1251,6 @@ void DoCompassCalibrate(void)
 
   if( calib_Step == 1 )
   {
-    // TODO:  Rather than pitch, check the Y 
-
     //Check to make sure the craft is vertical along the PITCH axis, nose up
     if( abs(Pitch) < 29000 ) {
       LEDModeColor = LED_Yellow;
@@ -1279,13 +1277,6 @@ void DoCompassCalibrate(void)
         calib_Quadrants |= 1<<q;
       }
 
-      c_xmin = min(sens.MagX, c_xmin);
-      c_xmax = max(sens.MagX, c_xmax);
-      c_ymin = min(sens.MagY, c_ymin);
-      c_ymax = max(sens.MagY, c_ymax);
-      c_zmin = min(sens.MagZ, c_zmin);
-      c_zmax = max(sens.MagZ, c_zmax);
-
       if( calib_Quadrants == 0x0f && q == calib_StartQuadrant )
       {
         calib_Step = 2;
@@ -1299,34 +1290,18 @@ void DoCompassCalibrate(void)
   {
     // Yay!  We're done! - Compute the necessary scales and offsets
 
-    //xr = x_range
-    //xc = x center
-    //mr = maximum range of all 3 components
-    //xs = x scale, IE a multiplier that such that (x * mult) / 2048 will normalize readings relative to each other
+    QuatIMU_WaitForCompletion();
+    QuatIMU_CompassCalibrateComputeOffsets();
+    int * pMag = QuatIMU_GetMag();
 
-    int xr = c_xmax - c_xmin;
-    int yr = c_ymax - c_ymin;
-    int zr = c_zmax - c_zmin;
-
-    int mr = max(xr, max(yr, zr));
-
-    int xc = (c_xmin + c_xmax) / 2;
-    int yc = (c_ymin + c_ymax) / 2;
-    int zc = (c_zmin + c_zmax) / 2;
-
-    int xs = (mr * 2048) / xr;
-    int ys = (mr * 2048) / yr;
-    int zs = (mr * 2048) / zr;
-
-    Prefs.MagScaleOfs[0] = xc;
-    Prefs.MagScaleOfs[1] = xs;
-    Prefs.MagScaleOfs[2] = yc;
-    Prefs.MagScaleOfs[3] = ys;
-    Prefs.MagScaleOfs[4] = zc;
-    Prefs.MagScaleOfs[5] = zs;
+    Prefs.MagScaleOfs[0] = pMag[0];
+    Prefs.MagScaleOfs[2] = pMag[1];
+    Prefs.MagScaleOfs[4] = pMag[2];
+    Prefs.MagScaleOfs[1] = 1024;
+    Prefs.MagScaleOfs[3] = 1024;
+    Prefs.MagScaleOfs[5] = 1024;
 
     ApplyPrefs();
-
     Prefs_Save();
 
     FlightMode = FlightMode_Stable;

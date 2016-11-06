@@ -2114,9 +2114,9 @@ void MainWindow::WriteSettings( QIODevice *file )
 
 	float RateScale = 2.0f / (PI/180.0f) * 1024.0;
 	WritePref( writer, "AutoLevelRollPitch", prefs.AutoLevelRollPitch * RateScale );
-	WritePref( writer, "AutoLevelYawRate", prefs.AutoLevelYawRate * RateScale * 250.0f );
-	WritePref( writer, "ManualRollPitchRate", prefs.ManualRollPitchRate * RateScale * 250.0f );
-	WritePref( writer, "ManualYawRate", prefs.ManualYawRate * RateScale * 250.0f );
+	WritePref( writer, "AutoLevelYawRate", prefs.AutoLevelYawRate * RateScale * 200.0f );
+	WritePref( writer, "ManualRollPitchRate", prefs.ManualRollPitchRate * RateScale * 200.0f );
+	WritePref( writer, "ManualYawRate", prefs.ManualYawRate * RateScale * 200.0f );
 
 	WritePref( writer, "PitchGain", prefs.PitchGain );
 	WritePref( writer, "RollGain", prefs.RollGain );
@@ -2287,7 +2287,7 @@ void MainWindow::ReadSettingsContents( QXmlStreamReader & reader )
 {
 	reader.readNext();
 
-	const float RateScale = 1.0 / (2.0f / (PI/180.0f) * 1024.0);
+	const float RateScale = 2.0f / (PI/180.0f) * 1024.0;
 
 	while( !(reader.isEndElement() && reader.name() == "Elev8-Prefs") )
 	{
@@ -2316,10 +2316,18 @@ void MainWindow::ReadSettingsContents( QXmlStreamReader & reader )
 			else if( reader.name() == "PitchCorrectSin")		ReadFloat(reader, prefs.PitchCorrectSin);
 			else if( reader.name() == "PitchCorrectCos")		ReadFloat(reader, prefs.PitchCorrectCos);
 
-			else if( reader.name() == "AutoLevelRollPitch")		ReadFloat(reader, prefs.AutoLevelRollPitch, RateScale );
-			else if( reader.name() == "AutoLevelYawRate")		ReadFloat(reader, prefs.AutoLevelYawRate, RateScale / 250.0f );
-			else if( reader.name() == "ManualRollPitchRate")	ReadFloat(reader, prefs.ManualRollPitchRate, RateScale / 250.0f );
-			else if( reader.name() == "ManualYawRate")			ReadFloat(reader, prefs.ManualYawRate, RateScale / 250.0f );
+			else if( reader.name() == "AutoLevelRollPitch")		{
+				ReadFloat(reader, prefs.AutoLevelRollPitch, RateScale );
+			}
+			else if( reader.name() == "AutoLevelYawRate")		{
+				ReadFloat(reader, prefs.AutoLevelYawRate, RateScale * 200.0f );
+			}
+			else if( reader.name() == "ManualRollPitchRate")	{
+				ReadFloat(reader, prefs.ManualRollPitchRate, RateScale * 200.0f );
+			}
+			else if( reader.name() == "ManualYawRate")			{
+				ReadFloat(reader, prefs.ManualYawRate, RateScale * 200.0f );
+			}
 
 			else if( reader.name() == "PitchGain")				ReadInt(reader, prefs.PitchGain);
 			else if( reader.name() == "RollGain")				ReadInt(reader, prefs.RollGain);

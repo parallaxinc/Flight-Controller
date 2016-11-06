@@ -126,9 +126,9 @@ void QuatIMU_SetErrScaleMode( int IsStartup )
 
 
 
-int QuatIMU_GetYaw(void) {
+//int QuatIMU_GetYaw(void) {
 //  return INT_VARS[ Yaw ];
-}
+//}
 
 int QuatIMU_GetRoll(void) {
   return INT_VARS[ Roll ];
@@ -142,9 +142,9 @@ int QuatIMU_GetThrustFactor(void) {
   return INT_VARS[ ThrustFactor ];
 }
 
-//int * QuatIMU_GetSensors(void) {
-//  return &INT_VARS[gx];
-//}
+int * QuatIMU_GetMag(void) {
+  return &INT_VARS[mx];
+}
 
 float * QuatIMU_GetMatrix(void) {
   return &IMU_VARS[m00];
@@ -289,7 +289,7 @@ void QuatIMU_SetGyroZero( int x, int y, int z )
   }
 */
 
-             
+
 unsigned char QuatUpdateCommands[] = {
   #include "QuatIMU_QuatUpdate.inc"
 };
@@ -306,17 +306,23 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
   #include "QuatIMU_UpdateControls_ComputeOrientationChange.inc"
 };
 
-unsigned char QuatIMU_QuatIMU_Mag_ComputeCalibrate_Setup[] = {
-  #include "QuatIMU_QuatIMU_Mag_ComputeCalibrate_Setup.inc"
-};
 
-unsigned char QuatIMU_QuatIMU_Mag_AddCalibratePoint[] = {
-  #include "QuatIMU_QuatIMU_Mag_AddCalibratePoint.inc"
+unsigned char QuatIMU_Mag_InitCalibrate[] = {
+  #include "QuatIMU_Mag_InitCalibrate.inc"
 };
-
-unsigned char QuatIMU_QuatIMU_Mag_ComputeCalibrate_IterationStep[] = {
-  #include "QuatIMU_QuatIMU_Mag_ComputeCalibrate_IterationStep.inc"
+  
+unsigned char QuatIMU_Mag_AddCalibratePoint[] = {
+  #include "QuatIMU_Mag_AddCalibratePoint.inc"
 };
+  
+unsigned char QuatIMU_Mag_ComputeCalibrate_SetupIteration[] = {
+  #include "QuatIMU_Mag_ComputeCalibrate_SetupIteration.inc"
+};
+  
+unsigned char QuatIMU_Mag_ComputeCalibrate_IterationStep[] = {
+  #include "QuatIMU_Mag_ComputeCalibrate_IterationStep.inc"
+};
+  
 
 // was 24124, now 24908 with Compass calibrate functions
 // Total runtime = 27696 (32768=32kb, so approx 5Kb remain)
@@ -370,6 +376,28 @@ void QuatIMU_UpdateControls( RADIO * Radio , bool ManualMode , bool AutoManual )
   F32::RunStream( UpdateControls_ComputeOrientationChange , IMU_VARS );
 }
 
+
+
+void QuatIMU_CompassInitCalibrate(void)
+{
+  F32::RunStream( QuatIMU_Mag_InitCalibrate , IMU_VARS );
+}
+
+void QuatIMU_CompassCalibrateAddSample(void)
+{
+  F32::RunStream( QuatIMU_Mag_AddCalibratePoint , IMU_VARS );
+}
+
+void QuatIMU_CompassCalibrateComputeOffsets(void)
+{
+  F32::RunStream( QuatIMU_Mag_ComputeCalibrate_SetupIteration , IMU_VARS );
+  F32::WaitStream();    // Wait for the stream to complete
+
+  for( int i=0; i<50; i++) {
+    F32::RunStream( QuatIMU_Mag_ComputeCalibrate_IterationStep , IMU_VARS );
+    F32::WaitStream();    // Wait for the stream to complete
+  }
+}
 
 void QuatIMU_WaitForCompletion(void)
 {

@@ -37,7 +37,7 @@ float QuatIMU_GetFloatHeading(void);
 
 int QuatIMU_GetThrustFactor(void);
 
-int * QuatIMU_GetSensors(void);
+int * QuatIMU_GetMag(void);
 float * QuatIMU_GetMatrix(void);
 
 float * QuatIMU_GetQuaternion(void);
@@ -68,6 +68,10 @@ void QuatIMU_SetGyroZero( int x, int y, int z );
 
 void QuatIMU_Update( int * packetAddr );
 void QuatIMU_UpdateControls( RADIO * Radio , bool ManualMode , bool AutoManual );
+
+void QuatIMU_CompassInitCalibrate(void);
+void QuatIMU_CompassCalibrateAddSample(void);
+void QuatIMU_CompassCalibrateComputeOffsets(void);
 
 void QuatIMU_WaitForCompletion(void);
 
