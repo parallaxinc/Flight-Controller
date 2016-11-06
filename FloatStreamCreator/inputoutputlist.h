@@ -67,12 +67,11 @@ OUTPUT int PitchDiff, RollDiff, YawDiff;
 OUTPUT float DebugFloat;
 
 // Compass calibration variables
-PERSIST float Xn  , Yn , Zn  ;
-PERSIST float Xn2 , Yn2, Zn2 ;
-PERSIST float Xn3 , Yn3, Zn3 ;
-PERSIST float XY  , XZ , YZ  ;
-PERSIST float X2Y , X2Z, Y2X ;
-PERSIST float Y2Z , Z2X, Z2Y ;
+PERSIST float Xn  , Yn , Zn ;
+PERSIST float Xn2 , Yn2, Zn2;
+PERSIST float Xn3 , Yn3, Zn3;
+PERSIST float XY  , XZ , YZ ;
+PERSIST float X2Y , X2Z, Y2X;
+PERSIST float Y2Z , Z2X, Z2Y;
 PERSIST float compassPointCount;
-PERSIST float F0, F1, F2, F3, F4, A, B, C, A2, B2, C2;
-PERSIST float QS, QB, Rsq, Q0, Q1, Q2;
+PERSIST float F0, F1, F2, F3, F4, A, B, C;

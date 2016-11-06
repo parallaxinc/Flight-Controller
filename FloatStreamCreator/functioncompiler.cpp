@@ -219,6 +219,9 @@ bool FunctionCompiler::GenerateTokens( void )
 				stream << "\t" << expr->FuncName << "\n";	// line comments just get output as is
 			}
 			else {
+				if( expr->line == 21 ) {
+					qDebug() << "";
+				}
 				parser.Optimize(expr);
 				if( OutputExpressionTokens( stream, expr ) == false ) {
 					//return false;
@@ -240,22 +243,51 @@ bool FunctionCompiler::GenerateTokens( void )
 
 bool FunctionCompiler::OutputExpressionTokens( QTextStream & stream , Expression * expr )
 {
-	// Temp vars are used to hold intermediate results during sub-expression parsing
-	QString nameLeft = "Temp_lhs";
-	QString nameRight = "Temp_rhs";
-
-	parser.VarsPersist = true;	// temp vars are persistent
-	pLeftTemp = parser.MakeVariable( T_Float, nameLeft );
-	pRightTemp = parser.MakeVariable( T_Float, nameRight );
-	parser.VarsPersist = false;
-
-	EVar * outVar;
-	bool result = ComputeSubExpressions( stream, expr, pRightTemp, &outVar );
+	EVar * outVar = NULL;
+	bool result = ComputeSubExpressions( stream, expr, NULL, &outVar );
 
 	return result;
 }
 
-bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression * expr , EVar *pUseTemp , EVar ** outVar )
+
+EVar *FunctionCompiler::GetTempVar(void)
+{
+	EVar * pTemp;
+	if( FreeTemp.count() > 0 ) {
+		pTemp = FreeTemp[ FreeTemp.count()-1 ];
+		FreeTemp.removeLast();
+	}
+	else {
+		QString tempname = QString::asprintf("Temp_%d", UsedTemp.count() );
+		pTemp = parser.MakeVariable( T_Float, tempname );
+		pTemp->isTemp = true;
+	}
+	UsedTemp.append(pTemp);
+	return pTemp;
+}
+
+void FunctionCompiler::FreeIfTempVar(EVar *pTemp)
+{
+	if( pTemp != NULL && pTemp->isTemp ) {
+		UsedTemp.removeAll(pTemp);
+
+		if( FreeTemp.count() == 0 ) {
+			FreeTemp.append(pTemp);
+		}
+		else {
+			QVector<EVar*>::iterator it;
+			for( it = FreeTemp.begin(); it != FreeTemp.end(); it++ ) {
+				if( pTemp->constName > (*it)->constName ) {
+					break;
+				}
+			}
+			FreeTemp.insert(it, pTemp);
+		}
+	}
+}
+
+
+bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression * expr , EVar *pAssignTo , EVar ** outVar )
 {
 	if( expr == NULL ) {
 		*outVar = NULL;		// for unaries, functions with one argument, etc
@@ -271,7 +303,7 @@ bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression 
 	EVar *leftArg = NULL, *rightArg = NULL;
 
 	if( expr->Left != NULL ) {
-		result &= ComputeSubExpressions( stream, expr->Left, pLeftTemp, &leftArg );
+		result &= ComputeSubExpressions( stream, expr->Left, NULL, &leftArg );
 	}
 
 	if( expr->Right != NULL )
@@ -281,10 +313,13 @@ bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression 
 			result &= ComputeSubExpressions( stream, expr->Right, leftArg, &rightArg );
 		}
 		else {
-			result &= ComputeSubExpressions( stream, expr->Right, pRightTemp, &rightArg );
+			result &= ComputeSubExpressions( stream, expr->Right, NULL, &rightArg );
 		}
 	}
 
+
+	FreeIfTempVar(leftArg);
+	FreeIfTempVar(rightArg);
 
 	// if this op is Assign
 	if( expr->op == T_Assign )
@@ -295,6 +330,7 @@ bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression 
 
 		if( expr->Right->op == T_Label ) {	// Is this a literal or variable?
 			result &= GenerateInstruction( stream, expr, rightArg, 0, leftArg );
+			//FreeIfTempVar(rightArg);
 		}
 	}
 	else
@@ -303,11 +339,17 @@ bool FunctionCompiler::ComputeSubExpressions( QTextStream & stream , Expression 
 			// Build the instruction:
 			result &= GenerateInstruction( stream, expr, leftArg, rightArg, leftArg );
 			*outVar = leftArg;
+
+			//FreeIfTempVar(rightArg);
 		}
 		else {
 			// Build the instruction:
-			result &= GenerateInstruction( stream, expr, leftArg, rightArg, pUseTemp );
-			*outVar = pUseTemp;
+			if( pAssignTo == NULL ) {
+				pAssignTo = GetTempVar();
+			}
+
+			result &= GenerateInstruction( stream, expr, leftArg, rightArg, pAssignTo );
+			*outVar = pAssignTo;
 		}
 	}
 

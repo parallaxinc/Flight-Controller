@@ -424,6 +424,7 @@ void UpdateControls_ComputeOrientationChange(void)
 
 void QuatIMU_Mag_InitCalibrate(void)
 {
+	//FUNCTION: Mag_InitCalibrate
 	Xn  =   0.0f, Yn  =   0.0, Zn  =   0.0;
 	Xn2 =   0.0f, Yn2 =   0.0, Zn2 =   0.0;
 	Xn3 =   0.0f, Yn3 =   0.0, Zn3 =   0.0;
@@ -431,11 +432,12 @@ void QuatIMU_Mag_InitCalibrate(void)
 	X2Y =   0.0f, X2Z =   0.0, Y2X =   0.0;
 	Y2Z =   0.0f, Z2X =   0.0, Z2Y =   0.0;
 	compassPointCount = 0.0f;
+	//ENDFUNCTION
 }
 
 void QuatIMU_Mag_AddCalibratePoint(void)
 {
-	//FUNCTION: QuatIMU_Mag_AddCalibratePoint
+	//FUNCTION: Mag_AddCalibratePoint
 	float fmx = Float(mx);
 	float fmy = Float(my);
 	float fmz = Float(mz);
@@ -469,9 +471,9 @@ void QuatIMU_Mag_AddCalibratePoint(void)
 	//ENDFUNCTION
 }
 
-void QuatIMU_Mag_ComputeCalibrate_Setup(void)
+void QuatIMU_Mag_ComputeCalibrate_SetupIteration(void)
 {
-	//FUNCTION: QuatIMU_Mag_ComputeCalibrate_Setup
+	//FUNCTION: Mag_ComputeCalibrate_SetupIteration
 	Xn  /= compassPointCount;
 	Xn2 /= compassPointCount;
 	Xn3 /= compassPointCount;
@@ -505,62 +507,60 @@ void QuatIMU_Mag_ComputeCalibrate_Setup(void)
 	C = Zn;
 
 	//First iteration computation:
-	A2 = A*A;
-	B2 = B*B;
-	C2 = C*C;
-	QS = A2 + B2 + C2;
-	QB = -(A*Xn + B*Yn + C*Zn) * 2.0f;
+	//A2 = A*A;
+	//B2 = B*B;
+	//C2 = C*C;
+	//QS = A2 + B2 + C2;
+	//QB = -(A*Xn + B*Yn + C*Zn) * 2.0f;
 
 	//Set initial conditions:
-	Rsq = F0 + QB + QS;
+	//Rsq = F0 + QB + QS;
 
 	//First iteration computation:
-	Q0 = 0.5f * (QS - Rsq);
-	Q1 = F1 + Q0;
-	Q2 = 8.0f * ( QS - Rsq + QB + F0 );
+	//Q0 = 0.5f * (QS - Rsq);
+	//Q1 = F1 + Q0;
+	//Q2 = 8.0f * ( QS - Rsq + QB + F0 );
 
 	//ENDFUNCTION
 }
 
 void QuatIMU_Mag_ComputeCalibrate_IterationStep(void)
 {
-	//FUNCTION: QuatIMU_Mag_ComputeCalibrate_IterationStep
-	//Compute denominator:
-	float aA = Q2 + 16.0f * (A2 - 2.0f*A*Xn + Xn2);
-	float aB = Q2 + 16.0f * (B2 - 2.0f*B*Yn + Yn2);
-	float aC = Q2 + 16.0f * (C2 - 2.0f*C*Zn + Zn2);
+	//FUNCTION: Mag_ComputeCalibrate_IterationStep
 
-	aA = CMov(aA, 1.0f);	// aA = (aA == 0) ? 1.0f : aA;
-	aB = CMov(aB, 1.0f);	// aB = (aB == 0) ? 1.0f : aB;
-	aC = CMov(aC, 1.0f);	// aC = (aC == 0) ? 1.0f : aC;
+	//Setup
+	float A2 = A*A;
+	float B2 = B*B;
+	float C2 = C*C;
+	float QS = A2 + B2 + C2;
+	float QB = -(A*Xn + B*Yn + C*Zn) * 2.0f;
+	float Rsq = F0 + QB + QS;
+	float Q0 = 0.5f * (QS - Rsq);
+	float Q1 = F1 + Q0;
+	float Q2 = 8.0f * (QS - Rsq + QB + F0);
+
+	//Compute denominator:
+	float aA = Q2 + 16.0f * (A2 - A*Xn*2.0f + Xn2);
+	float aB = Q2 + 16.0f * (B2 - B*Yn*2.0f + Yn2);
+	float aC = Q2 + 16.0f * (C2 - C*Zn*2.0f + Zn2);
+
+	//aA = CMov(aA, 1.0f);	// aA = (aA == 0) ? 1.0f : aA;
+	//aB = CMov(aB, 1.0f);	// aB = (aB == 0) ? 1.0f : aB;
+	//aC = CMov(aC, 1.0f);	// aC = (aC == 0) ? 1.0f : aC;
 
 	//Compute next iteration
-	float nA = A - ((F2 + 16.0f*( B*XY + C*XZ + Xn*(-A2 - Q0) + A*(Xn2 + Q1 - C*Zn - B*Yn) ) )/aA);
-	float nB = B - ((F3 + 16.0f*( A*XY + C*YZ + Yn*(-B2 - Q0) + B*(Yn2 + Q1 - A*Xn - C*Zn) ) )/aB);
-	float nC = C - ((F4 + 16.0f*( A*XZ + B*YZ + Zn*(-C2 - Q0) + C*(Zn2 + Q1 - A*Xn - B*Yn) ) )/aC);
+	float nA = A - ((F2 + 16.0f*( B*XY + C*XZ - Xn*(A2 + Q0) + A*(Xn2 + Q1 - C*Zn - B*Yn)))/aA);
+	float nB = B - ((F3 + 16.0f*( A*XY + C*YZ - Yn*(B2 + Q0) + B*(Yn2 + Q1 - A*Xn - C*Zn)))/aB);
+	float nC = C - ((F4 + 16.0f*( A*XZ + B*YZ - Zn*(C2 + Q0) + C*(Zn2 + Q1 - A*Xn - B*Yn)))/aC);
 
-	//Check for stop condition
-	//dA = (nA - A);
-	//dB = (nB - B);
-	//dC = (nC - C);
-
-	//if( (dA*dA + dB*dB + dC*dC) <= Nstop ){
-	//	break;
-	//}
-
-	//Compute next iteration's values
+	//Set next iteration's start values
 	A = nA;
 	B = nB;
 	C = nC;
-	A2 = A*A;
-	B2 = B*B;
-	C2 = C*C;
-	QS = A2 + B2 + C2;
-	QB = - 2.0f * (A*Xn + B*Yn + C*Zn);
-	Rsq = F0 + QB + QS;
-	Q0 = 0.5f * (QS - Rsq);
-	Q1 = F1 + Q0;
-	Q2 = 8.0f * ( QS - Rsq + QB + F0 );
+
+	mx = Round(A);
+	my = Round(B);	// These are the output results
+	mz = Round(C);
 
 	//ENDFUNCTION
 

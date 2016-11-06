@@ -23,6 +23,7 @@ struct EVar
 	TOKEN	type;
 	bool	isConst;
 	bool	isPersistent;
+	bool	isTemp;
 	union {
 		float	f;
 		int		i;

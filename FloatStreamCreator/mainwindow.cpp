@@ -12,6 +12,10 @@
 //#include "TargetConditionals.h"
 #endif
 
+#include "quatimu.h"
+static int MagSamples = 0;
+bool DoMagCalibrate = false;
+
 static char beatString[] = "BEAT";
 
 
@@ -191,8 +195,34 @@ void MainWindow::ProcessPackets(void)
 						//ui->Orientation_display->extraVects[4] = mv;
 					}
 
-					UpdateMagSphere();
+					static int ti = 0;
+					ti++;
+					if( (ti & 3) == 0 ) {
+						UpdateMagSphere();
+					}
 
+					if( DoMagCalibrate ) {
+						int packet[10];
+
+						packet[0] = sensors.GyroX;
+						packet[1] = sensors.GyroY;
+						packet[2] = sensors.GyroZ;
+						packet[3] = sensors.AccelX;
+						packet[4] = sensors.AccelY;
+						packet[5] = sensors.AccelZ;
+						packet[6] = sensors.MagX;
+						packet[7] = sensors.MagY;
+						packet[8] = sensors.MagZ;
+
+						FC::QuatIMU_Update( packet );
+
+						FC::QuatIMU_CompassCalibrateAddSample();
+						MagSamples++;
+
+						if( MagSamples == 512 ) {
+							FC::QuatIMU_CompassCalibrateComputeOffsets();
+						}
+					}
 
 					//ahrs.Update( sensors , (1.0/250.f) * 8.0f , false );
 
@@ -290,6 +320,23 @@ void MainWindow::ProcessPackets(void)
 					debugData.ReadFrom( p );
 					bDebugChanged = true;
 					break;
+
+					/*
+				case 8:	// tempdebug data
+					{
+						QString s;
+						float f[4];
+						for( int i=0; i<4; i++ ) {
+							f[i] = p->GetFloat();
+						}
+
+						s = QString::asprintf("%f, %f, %f, %f", f[0], f[1], f[2], f[3]);
+
+						ui->listWidget->addItem( s );
+						ui->listWidget->scrollToBottom();
+					}
+					break;
+					*/
 
 				case 0x18:	// Settings
 					{
@@ -428,6 +475,18 @@ void MainWindow::on_btnCompile_clicked()
 	}
 }
 
+
+void MainWindow::on_pbMagCalibrate_clicked()
+{
+	MagSamples = 0;
+	DoMagCalibrate = true;
+	ui->pbMagCalibrate->setEnabled(false);
+
+	FC::QuatIMU_Start();
+	FC::QuatIMU_CompassInitCalibrate();
+}
+
+
 void MainWindow::UpdateMagSphere(void)
 {
 	// mag offset 560, 746, -206 : Elev8
@@ -529,16 +588,15 @@ void MainWindow::UpdateMagSphere(void)
 	float B2 = B*B;
 	float C2 = C*C;
 	float QS = A2 + B2 + C2;
-	float QB = - 2.0f*(A*Xn + B*Yn + C*Zn);
+	float QB = -2.0f*(A*Xn + B*Yn + C*Zn);
 
 	//Set initial conditions:
 	float Rsq = F0 + QB + QS;
 
 	//First iteration computation:
-	float Q0 = 0.5*(QS - Rsq);
+	float Q0 = 0.5f*(QS - Rsq);
 	float Q1 = F1 + Q0;
 	float Q2 = 8.0f*( QS - Rsq + QB + F0 );
-	float aA,aB,aC,nA,nB,nC,dA,dB,dC;
 
 	//Iterate N times, ignore stop condition.
 	int n = 0;
@@ -550,22 +608,22 @@ void MainWindow::UpdateMagSphere(void)
 		n++;
 
 		//Compute denominator:
-		aA = Q2 + 16.0f*(A2 - 2.0f*A*Xn + Xn2);
-		aB = Q2 + 16.0f*(B2 - 2.0f*B*Yn + Yn2);
-		aC = Q2 + 16.0f*(C2 - 2.0f*C*Zn + Zn2);
+		float aA = Q2 + 16.0f*(A2 - 2.0f*A*Xn + Xn2);
+		float aB = Q2 + 16.0f*(B2 - 2.0f*B*Yn + Yn2);
+		float aC = Q2 + 16.0f*(C2 - 2.0f*C*Zn + Zn2);
 		aA = (aA == 0) ? 1.0f : aA;
 		aB = (aB == 0) ? 1.0f : aB;
 		aC = (aC == 0) ? 1.0f : aC;
 
 		//Compute next iteration
-		nA = A - ((F2 + 16.0f*( B*XY + C*XZ + Xn*(-A2 - Q0) + A*(Xn2 + Q1 - C*Zn - B*Yn) ) )/aA);
-		nB = B - ((F3 + 16.0f*( A*XY + C*YZ + Yn*(-B2 - Q0) + B*(Yn2 + Q1 - A*Xn - C*Zn) ) )/aB);
-		nC = C - ((F4 + 16.0f*( A*XZ + B*YZ + Zn*(-C2 - Q0) + C*(Zn2 + Q1 - A*Xn - B*Yn) ) )/aC);
+		float nA = A - ((F2 + 16.0f*( B*XY + C*XZ - Xn*(A2 + Q0) + A*(Xn2 + Q1 - C*Zn - B*Yn) ) )/aA);
+		float nB = B - ((F3 + 16.0f*( A*XY + C*YZ - Yn*(B2 + Q0) + B*(Yn2 + Q1 - A*Xn - C*Zn) ) )/aB);
+		float nC = C - ((F4 + 16.0f*( A*XZ + B*YZ - Zn*(C2 + Q0) + C*(Zn2 + Q1 - A*Xn - B*Yn) ) )/aC);
 
 		//Check for stop condition
-		dA = (nA - A);
-		dB = (nB - B);
-		dC = (nC - C);
+		float dA = (nA - A);
+		float dB = (nB - B);
+		float dC = (nC - C);
 		if( (dA*dA + dB*dB + dC*dC) <= Nstop ){
 			break;
 		}
@@ -578,7 +636,7 @@ void MainWindow::UpdateMagSphere(void)
 		B2 = B*B;
 		C2 = C*C;
 		QS = A2 + B2 + C2;
-		QB = - 2.0f*(A*Xn + B*Yn + C*Zn);
+		QB = -2.0f*(A*Xn + B*Yn + C*Zn);
 		Rsq = F0 + QB + QS;
 		Q0 = 0.5f*(QS - Rsq);
 		Q1 = F1 + Q0;

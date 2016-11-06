@@ -33,7 +33,9 @@ SOURCES += main.cpp\
     widgets/radiostick_widget.cpp \
     widgets/valuebar_widget.cpp \
     quatutil.cpp \
-    widgets/plot2d_widget.cpp
+    widgets/plot2d_widget.cpp \
+    functioninterpreter.cpp \
+    quatimu.cpp
 
 HEADERS  += mainwindow.h \
     floatfunctions.h \
@@ -58,7 +60,9 @@ HEADERS  += mainwindow.h \
     widgets/valuebar_widget.h \
     quatutil.h \
     functionstream.h \
-    widgets/plot2d_widget.h
+    widgets/plot2d_widget.h \
+    functioninterpreter.h \
+    quatimu.h
 
 FORMS    += mainwindow.ui
 

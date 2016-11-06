@@ -29,7 +29,10 @@ private:
 
 	ExpressionParser parser;
 
-	EVar *pLeftTemp, *pRightTemp;
+	QVector<EVar*> FreeTemp, UsedTemp;
+
+	EVar *GetTempVar(void);
+	void FreeIfTempVar(EVar *pTemp);
 
 	bool Parse(void);
 
@@ -39,7 +42,7 @@ private:
 	bool GenerateTokens( void );
 
 	bool OutputExpressionTokens( QTextStream & stream , Expression * expr );
-	bool ComputeSubExpressions( QTextStream & stream , Expression * expr , EVar *pUseTemp, EVar ** outVar );
+	bool ComputeSubExpressions( QTextStream & stream , Expression * expr , EVar *pAssignTo, EVar ** outVar );
 
 	bool GenerateInstruction( QTextStream & stream , Expression * op, EVar * pLeft, EVar * pRight, EVar * pOut );
 

@@ -15,6 +15,10 @@ ExpressionParser::ExpressionParser( )
 
 
 	//The interpreter needs zero, one, two, three to be the first entries in the const table, used by TruncRound function
+	QString zeroConstName("0.0");
+	EVar * fZero = MakeVariable( T_Float, zeroConstName );
+	fZero->enumValue = 0;	// Float zero is the same as int zero, so put them in the same location
+
 	QString constName("0");
 	for( int i=0; i<4; i++ ) {
 		constName[0] = '0' + i;
@@ -191,7 +195,9 @@ bool ExpressionParser::Parse( const char * pSrc )
 						qDebug() << "Err: No expression list to store expressions to!  Call StartFunction() first";
 						qDebug() << "Ln:" << SourceLine << " " << pSrc;
 					}
-					expr->Dump();
+					if( DumpOutput ) {
+						expr->Dump();
+					}
 				}
 
 				if( t == T_End ) {

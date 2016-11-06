@@ -99,7 +99,7 @@
       <property name="frameShadow">
        <enum>QFrame::Raised</enum>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="2,1">
+      <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,1,2">
        <property name="leftMargin">
         <number>3</number>
        </property>
@@ -119,11 +119,18 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>461</width>
+           <width>400</width>
            <height>20</height>
           </size>
          </property>
         </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pbMagCalibrate">
+         <property name="text">
+          <string>Mag Calibrate</string>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QSlider" name="headingRot">

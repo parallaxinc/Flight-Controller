@@ -7,6 +7,8 @@ EVar::EVar()
 {
 	type = T_Float;
 	isConst = false;
+	isPersistent = false;
+	isTemp = false;
 	Val.i = 0;
 	refCount = 0;
 	varIndex = 0;			// Index into the orderedVarList array
@@ -134,8 +136,8 @@ int _print_t(Expression *tree, int is_left, int offset, int depth, int & maxDept
 
 void print_t(Expression *tree)
 {
-	char s[20][255];
-	for (int i = 0; i < 20; i++)
+	char s[30][255];
+	for (int i = 0; i < 30; i++)
 		sprintf(s[i], "%180s", " ");
 
 	int maxDepth = 0;
@@ -147,10 +149,8 @@ void print_t(Expression *tree)
 	qDebug() << "";
 }
 
-static bool DoDump = false;
 void Expression::Dump(void)
 {
-	if( DoDump == false ) return;
 	print_t( this );
 }
 

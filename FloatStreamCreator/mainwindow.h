@@ -40,6 +40,8 @@ private slots:
 
 	void on_headingRot_valueChanged(int value);
 
+	void on_pbMagCalibrate_clicked();
+
 private:
 
 	QLabel * labelStatus;
