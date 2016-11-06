@@ -22,6 +22,7 @@
 
 #include "constants.h"
 #include "servo32_highres.h"
+#include "drivertable.h"
 
 
 struct ServoData {
@@ -39,8 +40,9 @@ static const int Scale = 10;
 
 void Servo32_Start(void)
 {
-  use_cog_driver(servo32_highres_driver);
-  load_cog_driver(servo32_highres_driver, &Data);
+  //use_cog_driver(servo32_highres_driver);
+  //load_cog_driver(servo32_highres_driver, &Data);
+  StartDriver( DRV_Servo32, &Data );
 }
 
 

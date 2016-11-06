@@ -22,6 +22,7 @@
 #include <propeller.h>
 #include "rc.h"
 #include "pins.h"
+#include "drivertable.h"
 
 static const int Scale = 80/2; // System clock frequency in Mhz, halved - we're converting outputs to 1/2 microsecond resolution
 
@@ -30,7 +31,7 @@ static struct {
   long PinMask;
 } data;
 
-static char Cog;
+static char Cog = 0;
 
 void RC::Start(char UsePPM)
 {
@@ -42,21 +43,24 @@ void RC::Start(char UsePPM)
   if( UsePPM ) {
     data.PinMask = PIN_RC_0_MASK;   // Elev8-FC pins are defined in pins.h
 
-    use_cog_driver(rc_driver_ppm);
-    Cog = load_cog_driver(rc_driver_ppm, &data) + 1;
+    //use_cog_driver(rc_driver_ppm);
+    //Cog = load_cog_driver(rc_driver_ppm, &data) + 1;
+    Cog = StartDriver( DRV_PPM , &data );
   }
   else {  
   	// Input pins are P0,1,2,3,4,5,26,27
     data.PinMask = PIN_RC_MASK;     // Elev8-FC pins are defined in pins.h
 
     #if defined( __PINS_V2_H__ )
-    use_cog_driver(rc_driver_v2);
-    Cog = load_cog_driver(rc_driver_v2, &data) + 1;
+    //use_cog_driver(rc_driver_v2);
+    //Cog = load_cog_driver(rc_driver_v2, &data) + 1;
+    Cog = StartDriver( DRV_RC , &data );
     #endif
-  
+
     #if defined( __PINS_V3_H__ )
-    use_cog_driver(rc_driver_v3);
-    Cog = load_cog_driver(rc_driver_v3, &data) + 1;
+    //use_cog_driver(rc_driver_v3);
+    //Cog = load_cog_driver(rc_driver_v3, &data) + 1;
+    Cog = StartDriver( DRV_RC , &data );
     #endif
   }  
 }

@@ -22,8 +22,9 @@
 
 #include "constants.h"
 #include "sbus.h"
+#include "drivertable.h"
 
-static char Cog;
+static char Cog = 0;
 
 static struct DATA {
   long  InputMask;
@@ -44,15 +45,17 @@ void SBUS::Start( int InputPin , bool UseRemoteRX )
   if( UseRemoteRX == false )
   {
     data.BaudDelay = Const_ClockFreq / 100000;                        // SBUS is 100,000 bps 
-    use_cog_driver(sbus_driver);
-    Cog = load_cog_driver(sbus_driver, &data) + 1;
+    //use_cog_driver(sbus_driver);
+    //Cog = load_cog_driver(sbus_driver, &data) + 1;
+    Cog = StartDriver( DRV_SBus, &data );
   }
   else 
   {
     data.BaudDelay = Const_ClockFreq / 115200;                        // RemoteRX is 115,200 bps
-    use_cog_driver(remote_rx_driver);
-    Cog = load_cog_driver(remote_rx_driver, &data) + 1;
-  }    
+    //use_cog_driver(remote_rx_driver);
+    //Cog = load_cog_driver(remote_rx_driver, &data) + 1;
+    Cog = StartDriver( DRV_RemoteRX, &data );
+  }
 }
 
 

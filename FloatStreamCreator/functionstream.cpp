@@ -249,12 +249,12 @@ void QuatUpdate( SensorData & sens )
 	//--------------------------------------------------------------
 
 	//Orient force vector into world frame & subtract gravity (1G)
-	forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
+	float forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
 
-	//Convert G to mm/sec^2
-	forceWY *= const_G_mm_PerSec;
+	//Convert G to mm/sec^2 scaled by update rate
+	forceWY *= const_G_mm_PerSecPerUpdate;
 
-	velocityEstimate += forceWY * const_UpdateScale;
+	velocityEstimate += forceWY;
 
 	velocityEstimate = (velocityEstimate * const_velAccScale) + (Float(altRate) * const_velAltiScale);
 	altitudeEstimate += velocityEstimate * const_UpdateScale;
@@ -607,7 +607,7 @@ void QuatIMU_InitVars(void)
 	const_MagErrScale       =    1.0f/512.0f * 8.f;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
 
 	const_AccScale          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
-	const_G_mm_PerSec       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
+	const_G_mm_PerSecPerUpdate  = 9.80665f * 1000.0f / (float)Const_UpdateRate;  // gravity in mm/sec^2 per update
 	const_UpdateScale       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
 
 	const_velAccScale       =    0.9995f;     // was 0.9995     - Used to generate the vertical velocity estimate

@@ -15,12 +15,12 @@
 
 #include <propeller.h>
 #include "f32.h"
-
+#include "drivertable.h"
 
 
 static struct F32_DATA {
   volatile long  f32_cmd;
-  int * cmdCallTableAddr;
+  int cmdCallTableAddr;         // This needs to point to the call table in HUB ram
 
   int  TempCommand, StreamAddr, VarAddr; // These have to be contiguous in memory, which is why they're in a struct
 
@@ -38,9 +38,7 @@ static struct F32_DATA {
   };
 } v;
 
-static short* CommandAddr[4];
-static char cog;
-
+static int cmdCallTable[26];    // This needs to be sized the same as the command call table in the F32 cog
 
 
 int F32::Start(void)
@@ -48,19 +46,22 @@ int F32::Start(void)
 //  Start start floating point engine in a new cog.
 //  Returns:     True (non-zero) if cog started, or False (0) if no cog is available.
 
-  //F32::Stop();
   v.f32_cmd = 0;
 
-  use_cog_driver(f32_driver);
+  // Pull the drveri from EEPROM into the temp driver buffer
+  GetDriver( DRV_F32, DriverBuffer );
 
-  uint32_t * driverMem = get_cog_driver(f32_driver);
-  int i=0;
+  // find the jump table and copy it out because it needs to be persistent
+  uint32_t * driverMem = (uint32_t *)DriverBuffer;
+  int i = 384;  // we know the call table is close to the end of the cog, so start 3/4 of the way through
   while( driverMem[i] != 0x12345678 )
     i++;
 
-  v.cmdCallTableAddr = (int *)driverMem + i;
+  memcpy( cmdCallTable, (int *)driverMem + i, sizeof(int)*26 );
+  v.cmdCallTableAddr = (int)&cmdCallTable[0]; // point the F32 cog at the call table we cached
 
-  cog = load_cog_driver(f32_driver, &v.f32_cmd);
+  int cog = cognew(DriverBuffer, &v.f32_cmd);
+  waitcnt( CNT + 512 * 16 );
   return cog;
 }
 
@@ -78,7 +79,7 @@ void F32::Stop(void)
 void F32::RunStream( unsigned char * a , float * b )
 {
   //Can't use the stack for these, because they might be different by the time the COG gets to them
-  v.TempCommand = v.cmdCallTableAddr[ F32_RunStream ];
+  v.TempCommand = cmdCallTable[ F32_RunStream ];
   v.StreamAddr = (int)a;
   v.VarAddr = (int)b;
   v.f32_cmd = (int)&v.TempCommand;
@@ -124,7 +125,7 @@ float F32::FFloat( int n )
 
   v.a = n;
 
-  v.result = v.cmdCallTableAddr[ F32_Float ];
+  v.result = cmdCallTable[ F32_Float ];
   v.f32_cmd = (int)&v.result;
 
   while(v.f32_cmd)

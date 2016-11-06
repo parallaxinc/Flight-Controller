@@ -416,7 +416,7 @@
 	//--------------------------------------------------------------
 	// 
 	//Orient force vector into world frame & subtract gravity (1G)
-	// forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
+	// float forceWY = (m01*fax + m11*fay + m21*faz) / 4096.0f - 1.0f;
 	F32_opMul,     m01, fax, Temp_0,
 	F32_opMul,     m11, fay, Temp_1,
 	F32_opAdd,     Temp_0, Temp_1, Temp_0,
@@ -425,13 +425,12 @@
 	F32_opShift,   Temp_0, const_INeg_12, Temp_0,
 	F32_opSub,     Temp_0, const_F1_0, forceWY,
 	// 
-	//Convert G to mm/sec^2
-	// forceWY *= const_G_mm_PerSec;
-	F32_opMul,     forceWY, const_G_mm_PerSec, forceWY,
+	//Convert G to mm/sec^2 scaled by update rate
+	// forceWY *= const_G_mm_PerSecPerUpdate;
+	F32_opMul,     forceWY, const_G_mm_PerSecPerUpdate, forceWY,
 	// 
-	// velocityEstimate += forceWY * const_UpdateScale;
-	F32_opMul,     forceWY, const_UpdateScale, Temp_0,
-	F32_opAdd,     velocityEstimate, Temp_0, velocityEstimate,
+	// velocityEstimate += forceWY;
+	F32_opAdd,     velocityEstimate, forceWY, velocityEstimate,
 	// 
 	// velocityEstimate = (velocityEstimate * const_velAccScale) + (Float(altRate) * const_velAltiScale);
 	F32_opMul,     velocityEstimate, const_velAccScale, Temp_0,

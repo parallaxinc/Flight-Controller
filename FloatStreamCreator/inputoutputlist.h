@@ -16,7 +16,7 @@ INPUT float const_epsilon;
 INPUT float const_AccErrScale;
 INPUT float const_MagErrScale;
 INPUT float const_AccScale;
-INPUT float const_G_mm_PerSec;
+INPUT float const_G_mm_PerSecPerUpdate;
 INPUT float const_UpdateScale;
 
 INPUT float const_velAccScale;
@@ -42,8 +42,6 @@ PERSIST float Heading;
 
 //OUTPUT float forceX, forceY, forceZ;              // Current forces acting on craft, excluding gravity
 //OUTPUT float forceWX, forceWY, forceWZ;           // Current forces acting on craft, excluding gravity, in world frame
-OUTPUT float forceWY;           // Current forces acting on craft, excluding gravity, in world frame
-
 
 OUTPUT int Roll;
 OUTPUT int Pitch;

@@ -1462,7 +1462,6 @@ cmdNeg                  call    #_FltNeg
 cmdSinCos               call    #_SinCos
 cmdFAbs                 call    #_FltAbs
 cmdFMin                 call    #_FMin
-'cmdFrac                 call    #_Frac
 cmdCNeg                 call    #_CNeg
 cmdCMov                 call    #_CMov
 cmdMov                  nop

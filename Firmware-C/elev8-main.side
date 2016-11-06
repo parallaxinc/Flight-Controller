@@ -6,7 +6,6 @@ eeprom.cpp
 eeprom.h
 f32.cpp
 f32.h
-f32_driver.spin
 intpid.cpp
 intpid.h
 pins_v2.h
@@ -14,18 +13,13 @@ rc.cpp
 rc.h
 sbus.cpp
 sbus.h
-sbus_driver.spin
 servo32_highres.cpp
 servo32_highres.h
-servo32_highres_driver.spin
 sensors.cpp
 sensors.h
-sensors_driver.spin
 elev8-main.h
 pins.h
 pins_v3.h
-rc_driver_v2.spin
-rc_driver_v3.spin
 battery.cpp
 battery.h
 quatimu.cpp
@@ -37,11 +31,11 @@ serial_4x.h
 serial_4x_driver.spin
 commlink.cpp
 commlink.h
-rc_driver_ppm.spin
 laserrange.cpp
 laserrange.h
-remote_rx_driver.spin
 elev8types.h
+drivertable.h
+drivertable.cpp
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

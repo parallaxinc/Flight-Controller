@@ -23,6 +23,8 @@
 #include "constants.h"
 #include "f32.h"
 #include "quatimu.h"
+#include "drivertable.h"
+#include "eeprom.h"
 
 
 #define RadToDeg (180.0 / 3.141592654)                         //Degrees per Radian
@@ -88,9 +90,9 @@ void QuatIMU_Start(void)
   IMU_VARS[const_epsilon]           =    0.00000001f;     //Added to vector length value before inverting (1/X) to insure no divide-by-zero problems
 
   IMU_VARS[const_AccErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
-//IMU_VARS[const_MagErrScale]       =    Startup_ErrScale;  //How much accelerometer to fuse in each update (runs a little faster if it's a fractional power of two)
   IMU_VARS[const_AccScale]          =    1.0f/(float)AccToG;//Conversion factor from accel units to G's
-  IMU_VARS[const_G_mm_PerSec]       =    9.80665f * 1000.0f;  // gravity in mm/sec^2
+
+  IMU_VARS[const_G_mm_PerSecPerUpdate] = 9.80665f * 1000.0f / (float)Const_UpdateRate;  // gravity in mm/sec^2 per update
   IMU_VARS[const_UpdateScale]       =    1.0f / (float)Const_UpdateRate;    //Convert units/sec to units/update
 
   IMU_VARS[const_velAccScale]       =    0.9995f;     // was 0.9995     - Used to generate the vertical velocity estimate
@@ -116,11 +118,9 @@ void QuatIMU_SetErrScaleMode( int IsStartup )
 {
   if( IsStartup ) {
     IMU_VARS[const_AccErrScale] = Startup_ErrScale;
-    //IMU_VARS[const_MagErrScale] = Startup_ErrScale;
   }
   else {
     IMU_VARS[const_AccErrScale] = Running_ErrScale;
-    //IMU_VARS[const_MagErrScale] = Running_ErrScale;
   }
 }
 
@@ -307,22 +307,11 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
 };
 
 
-unsigned char QuatIMU_Mag_InitCalibrate[] = {
-  #include "QuatIMU_Mag_InitCalibrate.inc"
-};
-  
-unsigned char QuatIMU_Mag_AddCalibratePoint[] = {
-  #include "QuatIMU_Mag_AddCalibratePoint.inc"
-};
-  
-unsigned char QuatIMU_Mag_ComputeCalibrate_SetupIteration[] = {
-  #include "QuatIMU_Mag_ComputeCalibrate_SetupIteration.inc"
-};
-  
-unsigned char QuatIMU_Mag_ComputeCalibrate_IterationStep[] = {
-  #include "QuatIMU_Mag_ComputeCalibrate_IterationStep.inc"
-};
-  
+// These routines have been pushed into the upper eeprom, and are only pulled down when used
+unsigned char * QuatIMU_Mag_InitCalibrate = 0;
+unsigned char * QuatIMU_Mag_AddCalibratePoint = 0;
+unsigned char * QuatIMU_Mag_ComputeCalibrate_SetupIteration = 0;
+unsigned char * QuatIMU_Mag_ComputeCalibrate_IterationStep = 0;
 
 // was 24124, now 24908 with Compass calibrate functions
 // Total runtime = 27696 (32768=32kb, so approx 5Kb remain)
@@ -380,6 +369,31 @@ void QuatIMU_UpdateControls( RADIO * Radio , bool ManualMode , bool AutoManual )
 
 void QuatIMU_CompassInitCalibrate(void)
 {
+  // These routines have been pushed into the upper eeprom, and are only pulled down when used
+
+  int TotalSize = 0;
+  unsigned char * CurPtr = (unsigned char *)DriverBuffer;
+
+  QuatIMU_Mag_InitCalibrate = CurPtr;
+  TotalSize += GetDriverSize(DRV_Mag_Init);
+  CurPtr += GetDriverSize(DRV_Mag_Init);
+
+  QuatIMU_Mag_AddCalibratePoint = CurPtr;
+  TotalSize += GetDriverSize(DRV_Mag_AddSample);
+  CurPtr += GetDriverSize(DRV_Mag_AddSample);
+
+  QuatIMU_Mag_ComputeCalibrate_SetupIteration = CurPtr;
+  TotalSize += GetDriverSize(DRV_Mag_SetupIter);
+  CurPtr += GetDriverSize(DRV_Mag_SetupIter);
+
+  QuatIMU_Mag_ComputeCalibrate_IterationStep = CurPtr;
+  TotalSize += GetDriverSize(DRV_Mag_CalcIter);
+  CurPtr += GetDriverSize(DRV_Mag_CalcIter);
+
+  int driverAddr = drivers.Table[DRV_Mag_Init].Offset;
+  EEPROM::ToRam( DriverBuffer, DriverBuffer + TotalSize, driverAddr );
+
+
   F32::RunStream( QuatIMU_Mag_InitCalibrate , IMU_VARS );
 }
 

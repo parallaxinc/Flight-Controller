@@ -33,6 +33,7 @@
 #include "beep.h"               // Piezo beeper functions
 #include "commlink.h"           // GroundStation communication link
 #include "constants.h"          // Project-wide constants, like clock rate, update frequency
+#include "drivertable.h"        // Table of PASM drivers pushed into upper 32kb of eeprom
 #include "elev8-main.h"         // Main thread functions and defines                            (Main thread takes 1 COG)
 #include "f32.h"                // 32 bit IEEE floating point math and stream processor         (1 COG)
 #include "intpid.h"             // Integer PID functions
@@ -463,17 +464,26 @@ void Initialize(void)
 
   InitSerial();
 
+  DIRA |= (1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2);      //Enable buzzer pins
+  OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));   //Set the pins low
+
+  InitDrivers();    // Initialize the driver booter
+
   All_LED( LED_Red & LED_Half );                         //LED red on startup
 
   // Do this before settings are loaded, because Sensors_Start resets the drift coefficients to defaults
   Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
 
+
   F32::Start();
+  All_LED( LED_Yellow & LED_Half );
+
   QuatIMU_Start();
   QuatIMU_SetErrScaleMode(1);   // Start with the IMU in fast-converge mode (takes ~3 instead of ~26 seconds to converge)
 
   InitializePrefs();
   InitReceiver();
+  All_LED( LED_Green & LED_Half );
 
   // Wait 2 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
   // Also used to reduce convergence rate for the IMU (starts up with a high convergence rate)
@@ -482,9 +492,6 @@ void Initialize(void)
 #ifdef __PINS_V3_H__
   Battery::Init( PIN_VBATT );
 #endif
-
-  DIRA |= (1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2);      //Enable buzzer pins
-  OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));   //Set the pins low
 
 
   Servo32_Init( 400 );
@@ -498,6 +505,7 @@ void Initialize(void)
   #endif
 
   Servo32_Start();
+  All_LED( LED_Violet & LED_Half );
 
   int RollPitch_P = 500;
   int RollPitch_D = 1560 * Const_UpdateRate;
