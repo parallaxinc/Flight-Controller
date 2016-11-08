@@ -402,7 +402,6 @@ int main()                                    // Main function
     {
       if( (counter & 3) == 0 ) {
         QuatIMU_CompassCalibrateAddSample();
-        QuatIMU_WaitForCompletion();
       }
     }
     else
@@ -469,21 +468,21 @@ void Initialize(void)
 
   InitDrivers();    // Initialize the driver booter
 
-  All_LED( LED_Red & LED_Half );                         //LED red on startup
+  All_LED( LED_Red & LED_Quarter );                   //LED red on startup
 
   // Do this before settings are loaded, because Sensors_Start resets the drift coefficients to defaults
   Sensors_Start( PIN_SDI, PIN_SDO, PIN_SCL, PIN_CS_AG, PIN_CS_M, PIN_CS_ALT, PIN_LED, (int)&LEDValue[0], LED_COUNT );
 
 
   F32::Start();
-  All_LED( LED_Yellow & LED_Half );
+  All_LED( LED_Red & LED_Half );
 
   QuatIMU_Start();
   QuatIMU_SetErrScaleMode(1);   // Start with the IMU in fast-converge mode (takes ~3 instead of ~26 seconds to converge)
 
   InitializePrefs();
   InitReceiver();
-  All_LED( LED_Green & LED_Half );
+  All_LED( LED_Red );
 
   // Wait 2 seconds after startup to begin checking battery voltage, rounded to an integer multiple of 16 updates
   // Also used to reduce convergence rate for the IMU (starts up with a high convergence rate)
@@ -505,7 +504,7 @@ void Initialize(void)
   #endif
 
   Servo32_Start();
-  All_LED( LED_Violet & LED_Half );
+  All_LED( LED_Red | (LED_Yellow & LED_Half));
 
   int RollPitch_P = 500;
   int RollPitch_D = 1560 * Const_UpdateRate;
@@ -1188,9 +1187,7 @@ void StartCompassCalibrate(void)
   calib_Quadrants = 0;
   calib_StartQuadrant = 0xff;
 
-  QuatIMU_WaitForCompletion();
   QuatIMU_CompassInitCalibrate();
-  QuatIMU_WaitForCompletion();
 
   loopTimer = CNT;
 }
@@ -1298,7 +1295,6 @@ void DoCompassCalibrate(void)
   {
     // Yay!  We're done! - Compute the necessary scales and offsets
 
-    QuatIMU_WaitForCompletion();
     QuatIMU_CompassCalibrateComputeOffsets();
     int * pMag = QuatIMU_GetMag();
 
@@ -1319,6 +1315,9 @@ void DoCompassCalibrate(void)
     Beep2();
     waitcnt( 10000000 + CNT );
     Beep2();
+
+    StartupDelay = (Const_UpdateRate * 2) & ~15;
+    QuatIMU_SetErrScaleMode(1);   // Put the IMU in fast-converge mode (IE fake startup) to converge on new heading quickly
 
     loopTimer = CNT;        // Keep the outer counter happy - the beep has a delay, which messes it up
   }

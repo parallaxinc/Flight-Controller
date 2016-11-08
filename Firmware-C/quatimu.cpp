@@ -25,6 +25,9 @@
 #include "quatimu.h"
 #include "drivertable.h"
 #include "eeprom.h"
+#include "elev8types.h"
+
+#include "serial_4x.h"
 
 
 #define RadToDeg (180.0 / 3.141592654)                         //Degrees per Radian
@@ -64,9 +67,12 @@ static union {
 
 #define PI  3.141592654
 
+//void CheckDrivers(void);
 
 void QuatIMU_Start(void)
 {
+  //CheckDrivers();
+
   memset( &IMU_VARS[0], 0, sizeof(IMU_VARS) );
 
   IMU_VARS[qx] = 0.0f;
@@ -306,12 +312,24 @@ unsigned char UpdateControls_ComputeOrientationChange[] = {
   #include "QuatIMU_UpdateControls_ComputeOrientationChange.inc"
 };
 
+/*
+// These are now being pulled in with the other drivers, used temporarily, then discarded
+unsigned char QuatIMU_Mag_InitCalibrate[] = {
+  #include "QuatIMU_Mag_InitCalibrate.inc"
+};
 
-// These routines have been pushed into the upper eeprom, and are only pulled down when used
-unsigned char * QuatIMU_Mag_InitCalibrate = 0;
-unsigned char * QuatIMU_Mag_AddCalibratePoint = 0;
-unsigned char * QuatIMU_Mag_ComputeCalibrate_SetupIteration = 0;
-unsigned char * QuatIMU_Mag_ComputeCalibrate_IterationStep = 0;
+unsigned char QuatIMU_Mag_AddCalibratePoint[] = {
+  #include "QuatIMU_Mag_AddCalibratePoint.inc"
+};
+
+unsigned char QuatIMU_Mag_ComputeCalibrate_SetupIteration[] = {
+  #include "QuatIMU_Mag_ComputeCalibrate_SetupIteration.inc"
+};
+
+unsigned char QuatIMU_Mag_ComputeCalibrate_IterationStep[] = {
+  #include "QuatIMU_Mag_ComputeCalibrate_IterationStep.inc"
+};
+*/
 
 // was 24124, now 24908 with Compass calibrate functions
 // Total runtime = 27696 (32768=32kb, so approx 5Kb remain)
@@ -369,46 +387,37 @@ void QuatIMU_UpdateControls( RADIO * Radio , bool ManualMode , bool AutoManual )
 
 void QuatIMU_CompassInitCalibrate(void)
 {
+  F32::WaitStream();  // wait for any running stream to complete
   // These routines have been pushed into the upper eeprom, and are only pulled down when used
 
-  int TotalSize = 0;
-  unsigned char * CurPtr = (unsigned char *)DriverBuffer;
+  GetDriver( DRV_Mag_Init , DriverBuffer );
 
-  QuatIMU_Mag_InitCalibrate = CurPtr;
-  TotalSize += GetDriverSize(DRV_Mag_Init);
-  CurPtr += GetDriverSize(DRV_Mag_Init);
+  F32::RunStream( (u8 *)DriverBuffer, IMU_VARS );
+  F32::WaitStream();
 
-  QuatIMU_Mag_AddCalibratePoint = CurPtr;
-  TotalSize += GetDriverSize(DRV_Mag_AddSample);
-  CurPtr += GetDriverSize(DRV_Mag_AddSample);
-
-  QuatIMU_Mag_ComputeCalibrate_SetupIteration = CurPtr;
-  TotalSize += GetDriverSize(DRV_Mag_SetupIter);
-  CurPtr += GetDriverSize(DRV_Mag_SetupIter);
-
-  QuatIMU_Mag_ComputeCalibrate_IterationStep = CurPtr;
-  TotalSize += GetDriverSize(DRV_Mag_CalcIter);
-  CurPtr += GetDriverSize(DRV_Mag_CalcIter);
-
-  int driverAddr = drivers.Table[DRV_Mag_Init].Offset;
-  EEPROM::ToRam( DriverBuffer, DriverBuffer + TotalSize, driverAddr );
-
-
-  F32::RunStream( QuatIMU_Mag_InitCalibrate , IMU_VARS );
+  GetDriver( DRV_Mag_AddSample , DriverBuffer );
 }
 
 void QuatIMU_CompassCalibrateAddSample(void)
 {
-  F32::RunStream( QuatIMU_Mag_AddCalibratePoint , IMU_VARS );
+  F32::WaitStream();
+  F32::RunStream( (u8 *)DriverBuffer , IMU_VARS );
+  F32::WaitStream();
 }
 
 void QuatIMU_CompassCalibrateComputeOffsets(void)
 {
-  F32::RunStream( QuatIMU_Mag_ComputeCalibrate_SetupIteration , IMU_VARS );
+  F32::WaitStream();
+
+  GetDriver( DRV_Mag_SetupIter, DriverBuffer );
+
+  F32::RunStream( (u8*)DriverBuffer , IMU_VARS );
   F32::WaitStream();    // Wait for the stream to complete
 
+  GetDriver( DRV_Mag_CalcIter, DriverBuffer );
+
   for( int i=0; i<50; i++) {
-    F32::RunStream( QuatIMU_Mag_ComputeCalibrate_IterationStep , IMU_VARS );
+    F32::RunStream( (u8*)DriverBuffer , IMU_VARS );
     F32::WaitStream();    // Wait for the stream to complete
   }
 }
@@ -417,3 +426,81 @@ void QuatIMU_WaitForCompletion(void)
 {
   F32::WaitStream();    // Wait for the stream to complete
 }
+
+
+/*
+static const char * nibbleToAscii = "0123456789abcdef";
+
+void CheckDriver( int DrvIndex, u8 * buf, int size )
+{
+  int drvSize = drivers.Table[DrvIndex].Size;
+  int t1 = CNT;
+  GetDriver( DrvIndex, DriverBuffer );
+  int t2 = CNT - t1;
+
+
+  for( int n=8; n>=0; n-- ) {
+    S4_Put(0, nibbleToAscii[ (t2 >> n*4) & 15 ] );
+  }
+
+  S4_Put(0, 13);
+
+  S4_Put(0, '0' + DrvIndex);
+  S4_Put(0, ':');
+
+
+  if( drvSize != size ) {
+    S4_Put(0, 'S');
+  }
+  else {
+    S4_Put(0, '-');
+  }
+
+  for( int i=0; i<size; i+=4 )
+  {
+    if( DriverBuffer[i/4] == *(int*)(buf+i) ) {
+      S4_Put(0, '-' );
+    }
+    else {
+      S4_Put(0, '#');
+    }      
+  }
+
+  S4_Put(0, 13);
+}
+
+
+void CompareDrivers( int DrvIndex, u8 * buf, int size )
+{
+  int drvSize = drivers.Table[DrvIndex].Size;
+
+  GetDriver( DrvIndex, DriverBuffer );
+
+  for( int i=0; i<size; i+=4 ) {
+    int v = *(int *)(((u8*)DriverBuffer)+i);
+    for( int n=0; n<8; n++ ) {
+      S4_Put(0, nibbleToAscii[ (v >> n*4) & 15 ] );
+    }
+    S4_Put(0, 32);
+
+    v = *(int *)(buf+i);
+    for( int n=0; n<8; n++ ) {
+      S4_Put(0, nibbleToAscii[ (v >> n*4) & 15 ] );
+    }
+    S4_Put(0, 13);
+  }    
+}
+
+
+void CheckDrivers(void)
+{
+  S4_Get(0);
+
+  //CheckDriver( DRV_Mag_Init, QuatIMU_Mag_InitCalibrate, sizeof(QuatIMU_Mag_InitCalibrate) );
+  //CheckDriver( DRV_Mag_AddSample, QuatIMU_Mag_AddCalibratePoint, sizeof(QuatIMU_Mag_AddCalibratePoint) );
+  //CheckDriver( DRV_Mag_SetupIter, QuatIMU_Mag_ComputeCalibrate_SetupIteration, sizeof(QuatIMU_Mag_ComputeCalibrate_SetupIteration) );
+  CheckDriver( DRV_Mag_CalcIter, QuatIMU_Mag_ComputeCalibrate_IterationStep, sizeof(QuatIMU_Mag_ComputeCalibrate_IterationStep) );
+
+  //CompareDrivers( DRV_Mag_CalcIter, QuatIMU_Mag_ComputeCalibrate_IterationStep, sizeof(QuatIMU_Mag_ComputeCalibrate_IterationStep) );
+}
+*/
