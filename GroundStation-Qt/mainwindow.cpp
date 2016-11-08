@@ -191,6 +191,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->vbR_Channel7->setOrigin(ValueBar_Widget::Center);
 	ui->vbR_Channel8->setOrigin(ValueBar_Widget::Center);
 
+	ui->rollPowerVal->setOrigin(ValueBar_Widget::Center);
+	ui->pitchPowerVal->setOrigin(ValueBar_Widget::Center);
+	ui->yawPowerVal->setOrigin(ValueBar_Widget::Center);
+
 	FillChannelComboBox( ui->cbR_Channel1, RadioMode == 2 ? 1 : 3 );
     FillChannelComboBox( ui->cbR_Channel2, 2 );
 	FillChannelComboBox( ui->cbR_Channel3, RadioMode == 2 ? 3 : 1 );
