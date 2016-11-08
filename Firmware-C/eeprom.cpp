@@ -206,7 +206,7 @@ void EEPROM::Poll(void)
   //Poll until acknowledge.  This is especially important if the 24LC256 is copying from
   //buffer to EEPROM.
 
-  int ackbit = 1;
+  int ackbit;
   do {                                           //Send/check acknowledge loop
     i2cStart();                                  //Send I2C start condition
     ackbit = SendByte(0xA0);                     //Write command with EEPROM's address
@@ -259,11 +259,11 @@ int EEPROM::SendByte(unsigned char b)
 int EEPROM::GetAck(void)
 {
   //GetByte and return acknowledge bit transmitted by EEPROM after it receives a byte.
-  //0 = ACK, 1 = NACK.
+  //0 = ACK, !0 = NACK.
 
   Clear(DIRA,SDA);                               //SDA -> SendByte so 24LC256 controls
   Set(OUTA,SCL);                                 //Start a pulse on SCL
-  int ackbit = (INA >> SDAPIN) & 1;                 //GetByte the SDA state from 24LC256
+  int ackbit = INA & SDA;                        //GetByte the SDA state from 24LC256
   Clear(OUTA,SCL);                               //Finish SCL pulse
   Clear(OUTA,SDA);                               //SDA will hold low
   Set(DIRA,SDA);                                 //SDA -> outSendByte, master controls
@@ -286,27 +286,39 @@ void EEPROM::i2cStop(void)
 
 void EEPROM::i2cRelease(void)                    //Necessary to release i2c bus so other devices can use it
 {                                                //SDA goes LOW to HIGH with SCL High
-   
+
    Set(OUTA,SCL);                               //Drive SCL HIGH
    Set(OUTA,SDA);                               // then SDA HIGH
    Clear(DIRA,SCL);                             //Now let them float
    Clear(DIRA,SDA);                             //If pullups present, they'll stay HIGH
 }
 
-
 unsigned char EEPROM::GetByte(void)
 {
   //Shift in a byte msb first.  
 
-  unsigned char value = 0;                       //Clear value
+  // PropGCC understands that  (value << 1) | (value >> 31) is a rotate operation,
+  // so that turns into a single instruction, and that works for any LShift | RShift
+  // combination that equates to a ROL / ROR.  That's why the inner loop below looks
+  // the way it does.  It's faster than doing this:
+    // value <<= 1
+    // value += (INA >> SDAPIN) & 1
+
   Clear(DIRA,SDA);                               //SDA input so 24LC256 can control
-  for(int i=0; i<8; i++) {                       //Repeat shift in eight times
+
+  Set(OUTA,SCL);                                 //Start an SCL pulse
+  unsigned int value = (INA & SDA);              //Get the first bit
+  Clear(OUTA,SCL);                               //Finish the SCL pulse
+
+  for(int i=0; i<7; i++) {                       //Repeat shift in (seven + previous bit) times
     Set(OUTA,SCL);                               //Start an SCL pulse
-    value <<= 1;                                 //Shift the value left
-    value += (INA >> SDAPIN) & 1;                     //Add the next most significant bit
+    value = (value << 1) | (value >> 31);        //rotate the value around
+    value += (INA & SDA);                        //Add the next most significant bit
     Clear(OUTA,SCL);                             //Finish the SCL pulse
   }
-  return value;
+
+  value = (value << (32-SDAPIN)) | (value >> SDAPIN); // rotate it into place
+  return (unsigned char)value;
 }
 
 
