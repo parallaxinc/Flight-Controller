@@ -3324,7 +3324,7 @@ throttle calibration.</string>
          <number>3</number>
         </property>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_21" stretch="1,1,1,1,0,0">
+         <layout class="QVBoxLayout" name="verticalLayout_21" stretch="1,1,1,0,0,0,0,0">
           <item>
            <widget class="QGroupBox" name="groupBox_3">
             <property name="title">
@@ -3446,6 +3446,26 @@ throttle calibration.</string>
               </layout>
              </item>
             </layout>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblGyroSampleRange">
+            <property name="text">
+             <string>Sample Range :</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="lblGyroSampleQuality">
+            <property name="text">
+             <string>Sample Quality :</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignCenter</set>
+            </property>
            </widget>
           </item>
           <item>

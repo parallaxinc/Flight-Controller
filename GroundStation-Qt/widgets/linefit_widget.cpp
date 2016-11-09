@@ -1,6 +1,7 @@
 #include "linefit_widget.h"
 #include <QPainter>
 #include <QBitmap>
+#include <math.h>
 
 
 //! [0]
@@ -33,6 +34,8 @@ void LineFit_Widget::Reset(void)
 {
 	samplesUsed = 0;
 	sampleIndex = 0;
+	noise = 0.0;
+	range = 0.0;
 }
 
 /*static int clamp(int v, int mn, int mx)
@@ -126,6 +129,21 @@ void LineFit_Widget::DrawInterceptLine( QPainter &p, float sx, float sy, float e
 	p.drawLine( p1, p2 );
 }
 
+static double LineDistSq( double x1, double y1, double x2, double y2,  double x0, double y0 )
+{
+	double ydelt = y2 - y1;
+	double xdelt = x2 - x1;
+	double denom = xdelt * xdelt + ydelt * ydelt;
+	if( denom < 0.0001 ) return 10000.0;
+	denom = sqrt(denom);
+
+	double numer = ydelt * x0 - xdelt * y0 + x2*y1 - y2*x1;
+	if( numer < 0 ) numer = -numer;
+	double res = numer / denom;
+
+	return res * res;
+}
+
 
 void LineFit_Widget::ComputeLine(void)
 {
@@ -181,4 +199,38 @@ void LineFit_Widget::ComputeLine(void)
 	dIntercept.x = (s.x - s.t * dSlope.x) / (double)samplesUsed;
 	dIntercept.y = (s.y - s.t * dSlope.y) / (double)samplesUsed;
 	dIntercept.z = (s.z - s.t * dSlope.z) / (double)samplesUsed;
+
+	float minT = samples[0].t;
+	float maxT = samples[0].t;
+	noise = 0.0;
+	range = 0.0;
+
+	// pick two arbitrary points for each line (x, y, z) so we can measure distances
+	double sx[3], sy[3];
+	double ex[3], ey[3];
+
+	sx[0] = sx[1] = sx[2] = 0.0;
+	ex[0] = ex[1] = ex[2] = 50.0f;
+	sy[0] = dSlope.x * sx[0] + dIntercept.x;
+	ey[0] = dSlope.x * ex[0] + dIntercept.x;
+
+	sy[1] = dSlope.y * sx[1] + dIntercept.y;
+	ey[1] = dSlope.y * ex[1] + dIntercept.y;
+
+	sy[2] = dSlope.z * sx[2] + dIntercept.z;
+	ey[2] = dSlope.z * ex[2] + dIntercept.z;
+
+
+	for( int i = 0; i < samplesUsed; ++i )
+	{
+		if( samples[i].t < minT ) minT = samples[i].t;
+		if( samples[i].t > maxT ) maxT = samples[i].t;
+
+		noise += LineDistSq( sx[0], sy[0], ex[0], ey[0], samples[i].t, samples[i].x );
+		noise += LineDistSq( sx[1], sy[1], ex[1], ey[1], samples[i].t, samples[i].y );
+		noise += LineDistSq( sx[2], sy[2], ex[2], ey[2], samples[i].t, samples[i].z );
+	}
+
+	noise /= (3.0 * samplesUsed);
+	range = maxT - minT;
 }

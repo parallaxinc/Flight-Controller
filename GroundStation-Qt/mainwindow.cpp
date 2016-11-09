@@ -385,6 +385,9 @@ void MainWindow::AdjustFonts(void)
 	ui->btnUploadSystemSetup->setFont(smallFont);
 	ui->lblRadioCalibrateDocs->setFont(smallFont);
 
+	ui->lblGyroSampleQuality->setFont(smallFont);
+	ui->lblGyroSampleRange->setFont(smallFont);
+
 	labelStatus->setFont(smallFont);
 	labelGSVersion->setFont(smallFont);
 	labelFWVersion->setFont(smallFont);
@@ -879,6 +882,26 @@ void MainWindow::ProcessPackets(void)
 
 			bool bDoRedraw = (calibSampleIndex & 3) == 3;
 			ui->lfGyroGraph->AddSample(sample , bDoRedraw );
+
+			if( (calibSampleIndex & 15) == 0 ) {
+				QString str = QString::asprintf("Range : %d  (60 or more is ideal)", (int)ui->lfGyroGraph->range );
+				ui->lblGyroSampleRange->setText( str );
+
+				str = QString::asprintf("Noise : %0.1f  (15 or less is ideal)", ui->lfGyroGraph->noise );
+				ui->lblGyroSampleQuality->setText( str );
+
+				if( ui->lfGyroGraph->range >= 60.0 )		str = "QLabel { background: #60ff60 }";	// green
+				else if( ui->lfGyroGraph->range >= 40.0 )	str = "QLabel { background: #ffff00 }";	// yellow
+				else										str = "QLabel { background: #ff8080 }";	// red
+
+				ui->lblGyroSampleRange->setStyleSheet( str );
+
+				if( ui->lfGyroGraph->noise <= 15.0 )		str = "QLabel { background: #60ff60 }";	// green
+				else if( ui->lfGyroGraph->noise <= 25.0 )	str = "QLabel { background: #ffff00 }";	// yellow
+				else										str = "QLabel { background: #ff8080 }";	// red
+
+				ui->lblGyroSampleQuality->setStyleSheet( str );
+			}
 
 			if( bDoRedraw == false )
 			{

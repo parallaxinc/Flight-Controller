@@ -29,6 +29,9 @@ public:
 	LFSampleD	dSlope;
 	LFSampleD	dIntercept;
 
+	double		noise;
+	double		range;
+
 public slots:
 
 protected:
