@@ -232,6 +232,8 @@ private:
 	int CalibrateTimer;
 
 	ChannelData channelData[8];
+	int channelStart[8];
+	bool channelMoved[8];
 
 	int SampleIndex;
 	int altiAxisOffset;

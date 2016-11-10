@@ -1523,8 +1523,22 @@ void MainWindow::on_btnReceiverReset_clicked()
 
 void MainWindow::on_btnReceiverCalibrate_clicked()
 {
+	QMessageBox msg;
+	msg.setWindowTitle("Radio Calibration");
+	msg.setText("Radio Calibration");
+	msg.setInformativeText(
+		"This calibration will measure the range of your radio transmitter inputs.\n"\
+		"Move all the controls on your radio, including sticks, switches, and knobs\n"\
+		"to their full extents, multiple times if possible.\n"\
+		"\n"\
+		"When finished, check the on-screen sticks against your radio and reverse\n"\
+		"any controls that are responding incorrectly."
+		);
+	msg.setStandardButtons(QMessageBox::Ok);
+	msg.exec();
+
 	CalibrateControlsStep = 1;
-	CalibrateTimer = 500;
+	CalibrateTimer = 600;
 }
 
 
@@ -1538,7 +1552,125 @@ void MainWindow::CheckCalibrateControls(void)
 			for(int i = 0; i < 8; i++) {
 				channelData[i] = ChannelData();	// reset the channel data struct
 			}
-			SendCommand("Rrad");
+			SendCommand("Rrad");	// reset radio scale & offsets
+			CalibrateControlsStep++;
+			return;
+
+		case 2:
+		{
+			ui->calibrateStack->setCurrentIndex(1);
+
+			QString str = QString( "Move all controls to their full extents multiple times to determine range\n"\
+								   "When finished, you may need to reverse some controls\n"\
+								   "%1").arg( CalibrateTimer );
+
+			ui->lblRadioCalibrateDocs->setText( str );
+
+			// wait a few cycles so we're not getting scaled packets from the FC from before we reset the scaling
+			if( CalibrateTimer == 550 )
+			{
+				// Grab the initial position of all the controls.  If the user misses one, better to leave it than zero the range
+				for( int i=0; i<8; i++ ) {
+					channelStart[i] = radio[i];
+					channelMoved[i] = false;
+				}
+			}
+			else if( CalibrateTimer < 550 )
+			{
+				for(int i = 0; i < 8; i++)
+				{
+					if( abs(radio[i] - channelStart[i]) > 30 ) {
+						channelMoved[i] = true;
+					}
+					if( radio[i] > channelData[i].max ) { channelData[i].max = radio[i]; }
+					if( radio[i] < channelData[i].min ) { channelData[i].min = radio[i]; }
+				}
+			}
+
+			if( --CalibrateTimer == 0 ) {
+				CalibrateControlsStep++;
+			}
+			break;
+		}
+
+		case 3:
+		{
+			CalibrateControlsStep = 0;
+			QString str;
+			ui->calibrateStack->setCurrentIndex(0);
+			ui->lblRadioCalibrateDocs->setText(str);
+
+			// figure out scales
+			for(int i = 0; i < 8; i++)
+			{
+				if( channelMoved[i] == false ) continue;	// Skip channels that didn't move
+
+				int range = channelData[i].max - channelData[i].min;
+				channelData[i].scale = (int)((1.0f / ((float)range / 2048.0f)) * 1024.0f);
+				if( prefs.ChannelScale(i) < 0 ) {
+					channelData[i].scale *= -1;
+				}
+				channelData[i].center = (channelData[i].min + channelData[i].max) / 2;
+			}
+
+			// apply to prefs
+			if( channelMoved[0] ) {
+				prefs.ThroScale = (short)channelData[0].scale;
+				prefs.ThroCenter = (short)channelData[0].center;
+			}
+			if( channelMoved[1] ) {
+				prefs.AileScale = (short)channelData[1].scale;
+				prefs.AileCenter = (short)channelData[1].center;
+			}
+
+			if( channelMoved[2] ) {
+				prefs.ElevScale = (short)channelData[2].scale;
+				prefs.ElevCenter = (short)channelData[2].center;
+			}
+
+			if( channelMoved[3] ) {
+				prefs.RuddScale = (short)channelData[3].scale;
+				prefs.RuddCenter = (short)channelData[3].center;
+			}
+
+			if( channelMoved[4] ) {
+				prefs.GearScale = (short)channelData[4].scale;
+				prefs.GearCenter = (short)channelData[4].center;
+			}
+
+			if( channelMoved[5] ) {
+				prefs.Aux1Scale = (short)channelData[5].scale;
+				prefs.Aux1Center = (short)channelData[5].center;
+			}
+
+			if( channelMoved[6] ) {
+				prefs.Aux2Scale = (short)channelData[6].scale;
+				prefs.Aux2Center = (short)channelData[6].center;
+			}
+
+			if( channelMoved[7] ) {
+				prefs.Aux3Scale = (short)channelData[7].scale;
+				prefs.Aux3Center = (short)channelData[7].center;
+			}
+
+			UpdateElev8Preferences();
+			break;
+		}
+	}
+}
+
+/*
+void MainWindow::CheckCalibrateControls(void)
+{
+	switch(CalibrateControlsStep)
+	{
+		case 0:	return;	// Inactive
+
+		case 1:
+			for(int i = 0; i < 8; i++) {
+				channelData[i] = ChannelData();	// reset the channel data struct
+			}
+			SendCommand("Rrad");	// reset radio scale & offsets
 			CalibrateControlsStep++;
 			return;
 
@@ -1650,6 +1782,8 @@ void MainWindow::CheckCalibrateControls(void)
 		}
 	}
 }
+*/
+
 
 void MainWindow::SetChannelMapping( int DestChannel, int SourceChannel )
 {

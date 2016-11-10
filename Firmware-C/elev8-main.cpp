@@ -1397,6 +1397,9 @@ void CheckDebugInput(void)
         Prefs.ChannelScale(i) = 1024;
         Prefs.ChannelCenter(i) = 0;
       }
+      AileExpo = 1024 * 50 / 100; // this is "zero", set during controller calibration
+      ElevExpo = 1024 * 50 / 100;
+      RuddExpo = 1024 * 50 / 100;
       Beep2();
       break;
 
