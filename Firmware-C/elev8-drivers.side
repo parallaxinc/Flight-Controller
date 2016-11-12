@@ -20,9 +20,12 @@ beep.cpp
 drivertable.h
 rc_driver_v2.spin
 drivertable.cpp
+led_simple.cpp
+led_simple.h
+led_driver.spin
 >compiler=C++
->memtype=cmm main ram compact
->optimize=-Os
+>memtype=lmm main ram
+>optimize=-O2
 >-m32bit-doubles
 >-Wall
 >-fno-exceptions

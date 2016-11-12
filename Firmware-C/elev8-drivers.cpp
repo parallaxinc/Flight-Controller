@@ -9,12 +9,14 @@
 #include "eeprom.h"
 #include "beep.h"
 #include "f32.h"    
+#include "led_simple.h"
 
 
 #define driver_size(id) (uint32_t)(binary_##id##_dat_size)
 #define use_driver(id) extern uint32_t binary_##id##_dat_start[], binary_##id##_dat_size[]
 #define driver_address(id) (char *)(binary_##id##_dat_start)
 
+//#define DO_PRINT
 
 enum IMU_VarLabels {
     #include "QuatIMU_Vars.inc"
@@ -56,9 +58,36 @@ unsigned char QuatIMU_Mag_ComputeCalibrate_IterationStep[] = {
 // Rounds a size up to the nearest eeprom page length
 int PageRound( int v ) {return v; /*(v+63) & ~63;*/}
 
+int LEDValue;
+const int LED_COUNT = 1;
+
+//LED Brightness values - AND with color values to dim them
+const int LED_Full    = 0xffffff;
+const int LED_Half    = 0x7f7f7f;
+const int LED_Quarter = 0x3f3f3f;
+const int LED_Eighth  = 0x1f1f1f;
+const int LED_Dim     = 0x0f0f0f;
+
+
+//LED Color values
+const int LED_Red   = 0x00FF00;
+const int LED_Green = 0xFF0000;
+const int LED_Blue  = 0x0000FF;
+const int LED_White = 0xFFFFFF;
+const int LED_Yellow = LED_Red | LED_Green;
+const int LED_Violet = LED_Red | LED_Blue;
+const int LED_Cyan =   LED_Blue | LED_Green;
+
+const int LED_DimCyan = (LED_Blue | LED_Green) & LED_Half;
+const int LED_DimWhite = LED_White & LED_Half;
+
 
 int main(void)
 {
+  LEDValue = LED_Red & LED_Quarter;
+  LED_Start( PIN_LED, (int)&LEDValue, LED_COUNT );
+
+
   // set up the table of information about the drivers
   memset( &drivers, 0, sizeof(drivers) );
 
@@ -135,32 +164,38 @@ int main(void)
   drivers.Version = DriverTableVersion;
   drivers.MaxSize = 0;
 
-  getChar();  // wait for a key press
-
+  #ifdef DO_PRINT
   printi( "Driver layout:\r" );
   char name[16];
+  #endif
 
   int total = 0;
   for( int i=0; i<NumDrivers; i++ ) {
+    #ifdef DO_PRINT
     memset(name, 32, sizeof(name));
     name[15] = 0;
     memcpy(name, DriverNames[i], strlen(DriverNames[i]) );
 
     printi( "%s:  0x%4x  %4d bytes\r", name, drivers.Table[i].Offset, drivers.Table[i].Size );
+    #endif
     total += drivers.Table[i].Size;
     if( drivers.MaxSize < drivers.Table[i].Size ) {
       drivers.MaxSize = drivers.Table[i].Size;
     }
   }
 
+  #ifdef DO_PRINT
   printi("---------------------------------\r");
   printi("Total:                    %4d bytes\n", total);
-
   printi("Uploading to EEPROM...\r");
+  #endif
 
   // Upload the header
   EEPROM::FromRam(&drivers, ((char *)&drivers) + sizeof(drivers)-1, TableAddr);
+
+  #ifdef DO_PRINT
   printi("...Header uploaded\r");
+  #endif
 
   for( int i=0; i<NumDrivers; i++ )
   {
@@ -169,17 +204,29 @@ int main(void)
 
     EEPROM::FromRam(start, end, drivers.Table[i].Offset );
 
+    #ifdef DO_PRINT
     printi("...");
     printi(DriverNames[i]);
     printi(" uploaded\r");
+    #endif
+
+    Beep();
+    LEDValue ^= LED_Green & LED_Quarter;  // Toggle the LED from red to yellow while uploading drivers
   }    
 
   DIRA |= (1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2);      //Enable buzzer pins
   OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));   //Set the pins low
 
+  #ifdef DO_PRINT
   printi( "\nDone!" );
+  #endif
+
+  LEDValue = LED_Green & LED_Quarter;
   Beep3();
 
+  while(true) {
+      waitcnt(CNT + 80000000);
+  }    
 
   return 0;
 }
