@@ -82,7 +82,7 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     Output = clamp( Output, -MaxOutput, MaxOutput );
   }
 
-  if( DoIntegrate && Ki != 0 )
+  if( DoIntegrate && Ki != 0 && abs(Output) != MaxOutput )
   {
     PClamped = PError;
     if( PIMax > 0 ) {
