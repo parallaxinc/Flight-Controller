@@ -36,6 +36,7 @@
 #include "drivertable.h"        // Table of PASM drivers pushed into upper 32kb of eeprom
 #include "elev8-main.h"         // Main thread functions and defines                            (Main thread takes 1 COG)
 #include "f32.h"                // 32 bit IEEE floating point math and stream processor         (1 COG)
+#include "gps.h"
 #include "intpid.h"             // Integer PID functions
 
 #if defined(ENABLE_LASER_RANGE)
@@ -461,7 +462,15 @@ void Initialize(void)
   ControlMode = ControlMode_AutoLevel;
   Stats.Version = 0x0300;   // Version 3.0.0
 
-  InitSerial();
+#ifdef GPS
+  InitSerial(true);
+  waitcnt( CNT + 80000*100 );
+  SetGPSBaud();
+  S4_Flush_Output(2);
+  waitcnt( CNT + 80000*100 );
+#endif
+
+  InitSerial(false);
 
   DIRA |= (1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2);      //Enable buzzer pins
   OUTA &= ~((1<<PIN_BUZZER_1) | (1<<PIN_BUZZER_2));   //Set the pins low
@@ -572,6 +581,10 @@ void Initialize(void)
   
   FindGyroZero();
 
+#ifdef GPS
+  StartGPSThread();   // Start GPS thread
+#endif
+
 #ifdef ENABLE_LASER_RANGE
   cogstart( &LaserRangeThread , NULL, laser_stack, sizeof(laser_stack) );
 #endif
@@ -609,22 +622,28 @@ static char RXBuf1[32], TXBuf1[64];
 static char RXBuf2[32], TXBuf2[64];
 
 #if 1 // Currently unused - these buffers might grow later
-static char RXBuf3[128],TXBuf3[4];  // GPS?
+static char RXBuf3[128],TXBuf3[32]; // GPS?
 static char RXBuf4[4],  TXBuf4[64]; // Data Logger
 #else
 static char RXBuf3[32], TXBuf3[4]; // laser rangefinder
 static char RXBuf4[4],  TXBuf4[4]; // Data Logger
 #endif
 
-void InitSerial(void)
+void InitSerial(bool GPSStartup)
 {
+  S4_Stop();
   S4_Initialize();
 
   S4_Define_Port(0, 115200,      30, TXBuf1, sizeof(TXBuf1),      31, RXBuf1, sizeof(RXBuf1));
   S4_Define_Port(1, 115200, XBEE_TX, TXBuf2, sizeof(TXBuf2), XBEE_RX, RXBuf2, sizeof(RXBuf2));
 
   // Unused ports get a pin value of 32
-  S4_Define_Port(2, 19200,       19, TXBuf3, sizeof(TXBuf3),      20, RXBuf3, sizeof(RXBuf3));
+  if( GPSStartup ) {
+    S4_Define_Port(2,  9600,       19, TXBuf3, sizeof(TXBuf3),      20, RXBuf3, sizeof(RXBuf3));
+  }
+  else {
+    S4_Define_Port(2, 57600,       19, TXBuf3, sizeof(TXBuf3),      20, RXBuf3, sizeof(RXBuf3));
+  }    
 
 #if defined(ENABLE_LASER_RANGE)
   S4_Define_Port(3, 115200, PIN_MOTOR_AUX2, TXBuf4, sizeof(TXBuf4), 32, RXBuf4, sizeof(RXBuf4));
@@ -1551,7 +1570,7 @@ void DoDebugModeOutput(void)
         COMMLINK::AddPacketData( &ShortCounter, 2 );   // Send the counter low word (sequence timestamp)
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
-        }        
+        }
         break;
 
       case 2:
@@ -1603,9 +1622,23 @@ void DoDebugModeOutput(void)
         break;
 
       case 7:
+        #ifndef GPS
         QuatIMU_GetDesiredQ( (float*)TxData );
         COMMLINK::BuildPacket( 6, TxData, 16 );   // Desired Quaternion data, 16 byte payload
         COMMLINK::SendPacket(port);
+        #endif
+
+        #ifdef GPS
+        COMMLINK::StartPacket( 8, 10 );                // GPS data, 9 byte payload
+        COMMLINK::AddPacketData( &Latitude, 4 );
+        COMMLINK::AddPacketData( &Longitude, 4 );
+        TxData[0] = SatCount;
+        COMMLINK::AddPacketData( &TxData[0], 2 );   // packets needs to be a multiple of 2 bytes
+        COMMLINK::EndPacket();
+        COMMLINK::SendPacket(port);
+        #endif
+        break;
+
         break;
       }
     }

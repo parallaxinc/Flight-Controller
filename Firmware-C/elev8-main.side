@@ -36,6 +36,8 @@ laserrange.h
 elev8types.h
 drivertable.h
 drivertable.cpp
+gps.cpp
+gps.h
 >compiler=C++
 >memtype=cmm main ram compact
 >optimize=-Os

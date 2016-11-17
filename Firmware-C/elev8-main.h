@@ -23,7 +23,7 @@
 
 void Initialize(void);
 void InitReceiver(void);
-void InitSerial(void);
+void InitSerial(bool GPSStartup);
 void FindGyroZero(void);
 void UpdateFlightLoop(void);
 void UpdateFlightLEDColor(void);
@@ -119,7 +119,9 @@ enum FLIGHTMODE {
   FlightMode_Stable = 1,          // Auto level, heading hold
   FlightMode_Manual = 2,          // Gyro stabilized, not auto level
   FlightMode_AutoManual = 3,      // Auto-level when close to center, manual at extremes
-  FlightMode_CalibrateCompass = 4,
+  FlightMode_ReturnHome = 4,
+
+  FlightMode_CalibrateCompass = 5,
 };
 
 enum CONTROLMODE {

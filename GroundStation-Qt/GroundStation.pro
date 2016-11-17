@@ -4,9 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core gui serialport printsupport
+QT       += core gui webkit network serialport printsupport
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webkitwidgets
 
 TARGET = groundstation
 TEMPLATE = app
@@ -56,7 +56,8 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui \
     aboutbox.ui
 
-DISTFILES +=
+DISTFILES += \
+    google_maps.html
 
 RESOURCES += \
     resources.qrc

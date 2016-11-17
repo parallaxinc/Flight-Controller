@@ -4656,6 +4656,22 @@ throttle calibration.</string>
         </item>
        </layout>
       </widget>
+      <widget class="QWidget" name="tpGps">
+       <attribute name="title">
+        <string>GPS</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_39">
+        <item>
+         <widget class="QWebView" name="webView">
+          <property name="url">
+           <url>
+            <string>about:blank</string>
+           </url>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -4776,6 +4792,11 @@ throttle calibration.</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
+  <customwidget>
+   <class>QWebView</class>
+   <extends>QWidget</extends>
+   <header>QtWebKitWidgets/QWebView</header>
+  </customwidget>
   <customwidget>
    <class>Heading_Widget</class>
    <extends>QWidget</extends>

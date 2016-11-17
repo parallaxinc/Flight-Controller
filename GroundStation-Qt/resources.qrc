@@ -16,5 +16,6 @@
         <file>images/parallaxlogo-s200.png</file>
         <file>images/ParallaxLogo-S200-vertical.png</file>
         <file>images/groundstation_icon64.png</file>
+        <file>google_maps.html</file>
     </qresource>
 </RCC>

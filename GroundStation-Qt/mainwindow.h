@@ -152,6 +152,8 @@ private slots:
 
 	void on_actionExport_readings_triggered();
 
+	void on_webView_loadFinished(bool arg1);
+
 private:
 	void AdjustFonts(void);
 
@@ -207,6 +209,7 @@ private:
 	int Heartbeat;
 	int RadioMode;	// Mode == 1 or 2
 	bool showHexMode;
+	bool mapReady;
 
 	Connection comm;
 	CommStatus stat;
@@ -219,6 +222,7 @@ private:
 	MotorData motors;
 	ComputedData computed;
 	DebugValues debugData;
+	GPSData gpsData;
 
 	float accXCal[4];
 	float accYCal[4];

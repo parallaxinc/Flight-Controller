@@ -220,5 +220,21 @@ struct ChannelData
 	}
 };
 
+struct GPSData
+{
+	int		Latitude;
+	int		Longitude;
+	short	SatCount;
+
+	GPSData() : Latitude(0), Longitude(0), SatCount(0) {;}
+
+	void ReadFrom( packet * p )
+	{
+		Latitude =  p->GetInt();
+		Longitude = p->GetInt();
+		SatCount  = p->GetShort();
+	}
+};
+
 
 #endif

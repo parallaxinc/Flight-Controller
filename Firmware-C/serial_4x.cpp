@@ -227,7 +227,7 @@ int The_TPB;
 void S4_Start(void)
 {
   use_cog_driver(serial_4x_driver);
-  cog = load_cog_driver(serial_4x_driver, 0);
+  cog = load_cog_driver(serial_4x_driver, 0) + 1;
 }
 
 void S4_Stop(void)

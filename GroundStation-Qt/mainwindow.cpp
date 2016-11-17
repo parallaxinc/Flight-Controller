@@ -3,6 +3,8 @@
 #include "ahrs.h"
 #include <QCoreApplication>
 #include <QTextStream>
+#include <QWebFrame>
+#include <QWebElement>
 #include "aboutbox.h"
 #include "quatutil.h"
 #include <math.h>
@@ -291,13 +293,21 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	sg->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
+	mapReady = false;
+	QWebSettings::globalSettings()->setAttribute(QWebSettings::PluginsEnabled, true);
+	ui->webView->setUrl( QUrl("qrc:/google_maps.html") );
+
 	InternalChange = false;
-
 	this->startTimer(25, Qt::PreciseTimer);		// 40 updates / sec
-
 	comm.StartConnection();
 
     Heartbeat = 0;
+}
+
+
+void MainWindow::on_webView_loadFinished(bool)
+{
+	mapReady = true;
 }
 
 
@@ -670,6 +680,42 @@ void MainWindow::ProcessPackets(void)
                     bDebugChanged = true;
                     break;
 
+				case 8:	// GPS data
+					gpsData.ReadFrom( p );
+					{
+						static bool mapCoordSet = false;
+
+						if( mapReady == true && gpsData.SatCount > 4 )
+						{
+							double lat = (double)gpsData.Latitude / 10000000.0;
+							double lon = (double)gpsData.Longitude / 10000000.0;
+
+							if( mapCoordSet == false )
+							{
+								QString str =
+									QString("var newLoc = new google.maps.LatLng(%1, %2); ").arg(lat).arg(lon) +
+									QString("map.setCenter(newLoc);") +
+
+									QString("loc = new google.maps.Marker({") +
+									QString("position: new google.maps.LatLng(%1, %2),").arg(lat).arg(lon) +
+									QString("map: map,") +
+									QString("title: \"E8\",") +
+									QString("label: \"E8\"") +
+									QString("});") +
+									QString("markers.push(marker);");
+
+								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
+								mapCoordSet = true;
+							}
+							else
+							{
+								QString str = QString("loc.setPosition( new google.maps.LatLng(%1, %2) );").arg(lat).arg(lon);
+								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
+							}
+						}
+					}
+					break;
+
                 case 0x18:	// Settings
 					{
 						PREFS tempPrefs;
@@ -981,8 +1027,15 @@ void MainWindow::ProcessPackets(void)
 
 		labelFWVersion->setText( QString( "Firmware Version %1.%2.%3" ).arg(verHigh).arg(verMid).arg(verLow) );
 
-		ui->lblCycles->setText( QString(
-			"CPU time (uS): %1 (min), %2 (max), %3 (avg)" ).arg( debugData.MinCycles * 64/80 ).arg( debugData.MaxCycles * 64/80 ).arg( debugData.AvgCycles * 64/80 ) );
+		QString str = QString("CPU time (uS): %1 (min), %2 (max), %3 (avg)" )
+				.arg( debugData.MinCycles * 64/80 ).arg( debugData.MaxCycles * 64/80 ).arg( debugData.AvgCycles * 64/80 );
+
+		int sats = gpsData.SatCount;
+		double lat = (double)gpsData.Latitude / 10000000.0;
+		double lon = (double)gpsData.Longitude / 10000000.0;
+
+		str += QString("   (%1) %2  %3").arg(sats).arg(lat,10,'f',7).arg(lon,10,'f',7);
+		ui->lblCycles->setText( str );
     }
 
     if( bComputedChanged ) {
