@@ -4,9 +4,9 @@
 #
 #-------------------------------------------------
 
-QT       += core gui webkit network serialport printsupport
+QT       += core gui webengine network serialport printsupport
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webkitwidgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets webenginewidgets
 
 TARGET = groundstation
 TEMPLATE = app

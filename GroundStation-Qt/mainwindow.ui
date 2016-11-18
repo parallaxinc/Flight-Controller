@@ -4662,13 +4662,7 @@ throttle calibration.</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_39">
         <item>
-         <widget class="QWebView" name="webView">
-          <property name="url">
-           <url>
-            <string>about:blank</string>
-           </url>
-          </property>
-         </widget>
+         <widget class="QWebEngineView" name="mapView" native="true"/>
         </item>
        </layout>
       </widget>
@@ -4682,7 +4676,7 @@ throttle calibration.</string>
      <x>0</x>
      <y>0</y>
      <width>873</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSettings">
@@ -4793,11 +4787,6 @@ throttle calibration.</string>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QWebView</class>
-   <extends>QWidget</extends>
-   <header>QtWebKitWidgets/QWebView</header>
-  </customwidget>
-  <customwidget>
    <class>Heading_Widget</class>
    <extends>QWidget</extends>
    <header>widgets/heading_widget.h</header>
@@ -4849,6 +4838,12 @@ throttle calibration.</string>
    <class>QCustomPlot</class>
    <extends>QWidget</extends>
    <header>qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QWebEngineView</class>
+   <extends>QWidget</extends>
+   <header>qwebengineview.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
