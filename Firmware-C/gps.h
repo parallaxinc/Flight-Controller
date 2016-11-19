@@ -8,6 +8,8 @@
 #define __ELEV8_GPS_H_
 
 #define GPS
+
+const long Invalid_GPS = 0x80000000;
 #ifdef GPS
 
 #include "elev8types.h"

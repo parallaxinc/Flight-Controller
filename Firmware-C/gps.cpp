@@ -12,8 +12,8 @@
 
 
 char SatCount = 0;
-int Latitude = 0;
-int Longitude = 0;
+int Latitude =  Invalid_GPS;
+int Longitude = Invalid_GPS;
 int Dilution = 0;
 int GpsAltitude = 0;
 
