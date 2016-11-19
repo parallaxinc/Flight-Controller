@@ -6,7 +6,7 @@
 #include <QLabel>
 #include <QQuaternion>
 #include <QVector>
-#include <QWebEngineView>
+
 #include "connection.h"
 #include "elev8data.h"
 #include "prefs.h"
@@ -189,7 +189,6 @@ private:
 
 	QString m_sSettingsFile;
 
-	QWebEngineView webView;
 
 	enum Mode {
 		None,

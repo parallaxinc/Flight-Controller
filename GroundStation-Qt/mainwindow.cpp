@@ -3,7 +3,8 @@
 #include "ahrs.h"
 #include <QCoreApplication>
 #include <QTextStream>
-#include <QtWebEngineWidgets>
+#include <QWebFrame>
+#include <QWebElement>
 #include "aboutbox.h"
 #include "quatutil.h"
 #include <math.h>
@@ -293,13 +294,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	sg->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
 	mapReady = false;
-
-	//QWebSettings::globalSettings()->setAttribute(QWebSettings::PluginsEnabled, true);
-	//ui->webView->setUrl( QUrl("qrc:/google_maps.html") );
-
-	QWebEnginePage *page = new QWebEnginePage(this);
-	ui->mapView->setPage(page);
-	ui->mapView->page()->setUrl( QUrl("qrc:/google_maps.html") );
+	QWebSettings::globalSettings()->setAttribute(QWebSettings::PluginsEnabled, true);
+	ui->webView->setUrl( QUrl("qrc:/google_maps.html") );
 
 	InternalChange = false;
 	this->startTimer(25, Qt::PreciseTimer);		// 40 updates / sec
@@ -708,13 +704,13 @@ void MainWindow::ProcessPackets(void)
 									QString("});") +
 									QString("markers.push(marker);");
 
-								ui->mapView->page()->runJavaScript(str);
+								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
 								mapCoordSet = true;
 							}
 							else
 							{
 								QString str = QString("loc.setPosition( new google.maps.LatLng(%1, %2) );").arg(lat).arg(lon);
-								ui->mapView->page()->runJavaScript(str);
+								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
 							}
 						}
 					}
