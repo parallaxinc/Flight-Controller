@@ -14,6 +14,8 @@
 char SatCount = 0;
 int Latitude = 0;
 int Longitude = 0;
+int Dilution = 0;
+int GpsAltitude = 0;
 
 void GPSThread(void * par);
 
@@ -198,6 +200,47 @@ int ParseLongitude(void) // DDDMM.mmmmm
 }
 
 
+int ParseFloat( void )  // used for Horizontal dilution and altitude
+{
+  int v = 0;    // Integer
+  int lowDigits = 0;
+  char ch;
+
+  while(1) {
+    ch = Get();
+    if( ch < '0' || ch > '9' ) break;
+    v *= 10;
+    v += ch - '0';
+  }
+
+  if( ch == '.' ) { // Found the decimal, so parse the fractional part
+    while(1) {
+      ch = Get();
+      if( ch < '0' || ch > '9' ) break;
+      if( lowDigits < 5 )
+      {
+        v *= 10;
+        v += ch - '0';
+        lowDigits++;
+      }        
+    }
+
+    while( lowDigits < 1 ) {
+      v *= 10;
+      lowDigits++;
+    }
+  }
+  else {
+    v *= 10;  // scale it up to the precision expected
+  }    
+
+  while( Get() != ',' )  // Skip the terminating ,
+    ;
+
+  return v;
+}
+
+
 // http://aprs.gids.nl/nmea/#rmc
 void ParseGGA(void) // Global Positioning System Fix Data
 {
@@ -222,12 +265,28 @@ void ParseGGA(void) // Global Positioning System Fix Data
     Longitude = tempLong;
   }
 
-  SatCount = 0;
+  char temp = 0;
   while(1) {
     char ch = Get();
     if( ch < '0' || ch > '9' ) break;
-    SatCount *= 10;
-    SatCount += ch - '0';
+    temp *= 10;
+    temp += ch - '0';
+  }
+  if( temp != 0 ) {
+    SatCount = temp;
+  }
+  else {
+    SatCount = (char)-1;
+  }
+
+  temp = ParseFloat();
+  if( temp != 0 ) {
+    Dilution = temp;
+  }
+
+  temp = ParseFloat();
+  if( temp != 0 ) {
+    GpsAltitude = temp;
   }
 }
 

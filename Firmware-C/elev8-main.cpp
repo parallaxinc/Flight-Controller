@@ -1629,11 +1629,12 @@ void DoDebugModeOutput(void)
         #endif
 
         #ifdef GPS
-        COMMLINK::StartPacket( 8, 10 );                // GPS data, 9 byte payload
+        COMMLINK::StartPacket( 8, 12 );                // GPS data, 12 byte payload
         COMMLINK::AddPacketData( &Latitude, 4 );
         COMMLINK::AddPacketData( &Longitude, 4 );
         TxData[0] = SatCount;
-        COMMLINK::AddPacketData( &TxData[0], 2 );   // packets needs to be a multiple of 2 bytes
+        TxData[1] = Dilution;
+        COMMLINK::AddPacketData( &TxData[0], 4 );   // packets needs to be a multiple of 2 bytes
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
         #endif

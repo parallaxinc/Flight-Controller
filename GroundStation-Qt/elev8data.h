@@ -225,14 +225,16 @@ struct GPSData
 	int		Latitude;
 	int		Longitude;
 	short	SatCount;
+	short	Dilution;
 
-	GPSData() : Latitude(0), Longitude(0), SatCount(0) {;}
+	GPSData() : Latitude(0), Longitude(0), SatCount(0), Dilution(0) {;}
 
 	void ReadFrom( packet * p )
 	{
 		Latitude =  p->GetInt();
 		Longitude = p->GetInt();
 		SatCount  = p->GetShort();
+		Dilution  = p->GetShort();
 	}
 };
 

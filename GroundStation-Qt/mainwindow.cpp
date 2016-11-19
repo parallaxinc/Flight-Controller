@@ -684,12 +684,13 @@ void MainWindow::ProcessPackets(void)
 					gpsData.ReadFrom( p );
 					{
 						static bool mapCoordSet = false;
+						static int updateCounter = 0;
+
+						double lat = (double)gpsData.Latitude / 10000000.0;
+						double lon = (double)gpsData.Longitude / 10000000.0;
 
 						if( mapReady == true && gpsData.SatCount > 4 )
 						{
-							double lat = (double)gpsData.Latitude / 10000000.0;
-							double lon = (double)gpsData.Longitude / 10000000.0;
-
 							if( mapCoordSet == false )
 							{
 								QString str =
@@ -709,10 +710,43 @@ void MainWindow::ProcessPackets(void)
 							}
 							else
 							{
-								QString str = QString("loc.setPosition( new google.maps.LatLng(%1, %2) );").arg(lat).arg(lon);
-								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
+								if( updateCounter == 0 ) {
+									QString str = QString("loc.setPosition( new google.maps.LatLng(%1, %2) );").arg(lat).arg(lon);
+									if( ui->cbTrackLocation->isChecked() ) {
+										str += "map.setCenter( loc.position );";
+									}
+
+									ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
+								}
+								updateCounter = (updateCounter + 1) & 31;
 							}
 						}
+
+						int sats = gpsData.SatCount;
+						float dil = (float)gpsData.Dilution * 0.1f;
+						QString stat;
+						if( sats == 0 ) {
+							stat = "Waiting for power up";
+						}
+						else if( sats == 255 ) {
+							stat = "Waiting for satellite lock";
+						}
+						else {
+							stat = QString("Tracking %1 satellites").arg(sats);
+						}
+						ui->lblGpsStatus->setText( stat );
+						char NS = lat < 0.0 ? 'S' : 'N';
+						char EW = lon < 0.0 ? 'W' : 'E';
+
+						if( sats >= 3 && sats != 255 ) {
+							stat = QString("Lat: %1 %2  Long: %3 %4  Precision: %5")
+									.arg(lat,10,'f',7).arg(NS)
+									.arg(lon,10,'f',7).arg(EW).arg(dil);
+						}
+						else {
+							stat = "Lat: -.-  Long: -.-";
+						}
+						ui->lblGpsCoord->setText(stat);
 					}
 					break;
 
@@ -1030,11 +1064,6 @@ void MainWindow::ProcessPackets(void)
 		QString str = QString("CPU time (uS): %1 (min), %2 (max), %3 (avg)" )
 				.arg( debugData.MinCycles * 64/80 ).arg( debugData.MaxCycles * 64/80 ).arg( debugData.AvgCycles * 64/80 );
 
-		int sats = gpsData.SatCount;
-		double lat = (double)gpsData.Latitude / 10000000.0;
-		double lon = (double)gpsData.Longitude / 10000000.0;
-
-		str += QString("   (%1) %2  %3").arg(sats).arg(lat,10,'f',7).arg(lon,10,'f',7);
 		ui->lblCycles->setText( str );
     }
 
