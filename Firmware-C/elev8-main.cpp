@@ -108,6 +108,10 @@ static int HostCommandUSB, HostCommandXBee;
 static long  AltiEst, AscentEst;                              // altitude estimate and ascent rate estimate
 static long  DesiredAltitude, DesiredAscentRate;              // desired values for altitude and ascent rate
 
+
+static long  TakeoffLat, TakeoffLong;
+static long  DesiredLat, DesiredLong;
+
 static long  RollDifference, PitchDifference, YawDifference;  //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
@@ -1112,8 +1116,10 @@ static int LEDColorTable[] = {
 };
 
 static int LEDArmDisarm[] = {
-        /* LED_Disarmed */     LED_Green,
-        /* LED_Armed    */     LED_Red,
+        /* LED_Disarmed */      LED_Green,
+        /* LED_Armed    */      LED_Red,
+        /* LED_DisarmedNoGPS */ LED_Yellow,
+        /* LED_ArmedNoGPS */    LED_Red,
 };
 
 
@@ -1144,7 +1150,13 @@ void UpdateFlightLEDColor(void)
       LEDModeColor = (LEDColorTable[FlightMode & 3] & LEDBrightMask) >> LEDBrightShift;
     }    
     else {
+      #ifndef GPS
       LEDModeColor = (LEDArmDisarm[FlightEnabled & 1] & LEDBrightMask) >> LEDBrightShift;
+      #else
+      char index = ((SatCount < 7) & 1) << 1;
+      index += FlightEnabled & 1;
+      LEDModeColor = (LEDArmDisarm[index] & LEDBrightMask) >> LEDBrightShift;
+      #endif
     }
   }
 }
@@ -1164,6 +1176,10 @@ void ArmFlightMode(void)
   BeepTune();
 
   DesiredAltitude = AltiEst;
+
+  TakeoffLat = Latitude;
+  TakeoffLong = Longitude;
+
   loopTimer = CNT;
 }
 
