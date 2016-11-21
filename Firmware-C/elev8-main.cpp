@@ -1,7 +1,7 @@
 /*
   This file is part of the ELEV-8 Flight Controller Firmware
   for Parallax part #80204, Revisions A & B
-  Version 2.0.0
+  Version 3.0.0
   
   Copyright 2015 Parallax Incorporated
 
@@ -15,11 +15,10 @@
 
   You should have received a copy of the GNU General Public License
   along with the ELEV-8 Flight Controller Firmware.  If not, see <http://www.gnu.org/licenses/>.
-  
+
  
   Actively In Development / To Be Developed:
   - Altitude Hold
-  - Heading Hold & Compass Calibration
 
 
   Written by Jason Dorie
@@ -115,9 +114,6 @@ static long  DesiredLat, DesiredLong;
 static long  RollDifference, PitchDifference, YawDifference;  //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
 
-static long  GyroRPFilter, GyroYawFilter;   // Tunable damping values for gyro noise
-
-
 static short Motor[MOTOR_COUNT];            //Motor output values
 static long  LEDValue[LED_COUNT];           //LED outputs (copied to the LEDs by the Sensors cog)
 
@@ -127,7 +123,7 @@ static short FlightEnableStep;        //Flight arm/disarm counter
 static short CompassConfigStep;       //Compass configure mode counter
 static short ReArmTimer = 0;          // ONLY used in throttle cut - set this value to non-zero to allow instant re-arm if throttle present until it expires
 
-static long idleTimeout = IDLE_TIMEOUT * 250;   // Timeout and disarm if armed but idle (throttle below -900) for longer than 10 seconds
+static short idleTimeout = IDLE_TIMEOUT * Const_UpdateRate;   // Timeout and disarm if armed but idle (throttle below -900) for longer than 10 seconds
 static char FlightEnabled = 0;        //Flight arm/disarm flag
 static char FlightMode;
 static char ControlMode;
@@ -525,14 +521,14 @@ void Initialize(void)
   RollPID.Init( (RollPitch_P * (Prefs.RollGain+1)) >> 7, 0,  (RollPitch_D * (Prefs.RollGain+1)) >> 7 , Const_UpdateRate );
   RollPID.SetMaxOutput( 3000 );
   RollPID.SetPIMax( 100 );
-  RollPID.SetMaxIntegral( 1900 );
+  //RollPID.SetMaxIntegral( 1900 );
   RollPID.SetDervativeFilter( 224 );
 
 
   PitchPID.Init( (RollPitch_P * (Prefs.PitchGain+1)) >> 7, 0,  (RollPitch_D * (Prefs.PitchGain+1)) >> 7 , Const_UpdateRate );
   PitchPID.SetMaxOutput( 3000 );
   PitchPID.SetPIMax( 100 );
-  PitchPID.SetMaxIntegral( 1900 );
+  //PitchPID.SetMaxIntegral( 1900 );
   PitchPID.SetDervativeFilter( 224 );
 
   int YawP = (1200 * (Prefs.YawGain+1)) >> 7;
@@ -541,7 +537,7 @@ void Initialize(void)
   YawPID.Init( YawP,  0,  YawD , Const_UpdateRate );
   YawPID.SetMaxOutput( 5000 );
   YawPID.SetPIMax( 100 );
-  YawPID.SetMaxIntegral( 2000 );
+  //YawPID.SetMaxIntegral( 2000 );
   YawPID.SetDervativeFilter( 192 );
 
   int AltP = (1000 * (Prefs.AltiGain+1)) >> 7;
@@ -549,19 +545,19 @@ void Initialize(void)
 
   // Altitude hold PID object
   // The altitude hold PID object feeds speeds into the vertical rate PID object, when in "hold" mode
-  AltPID.Init( AltP, AltI, 600*250, Const_UpdateRate );
+  AltPID.Init( AltP, AltI, 600*Const_UpdateRate, Const_UpdateRate );
   AltPID.SetMaxOutput( 5000 );    // Fastest the altitude hold object will ask for is 5000 mm/sec (5 M/sec)
   AltPID.SetPIMax( 1000 );
-  AltPID.SetMaxIntegral( 4000 );
+  //AltPID.SetMaxIntegral( 4000 );
 
   int AscentP = (300 * (Prefs.AscentGain+1)) >> 7;
 
   // Vertical rate PID object
   // The vertical rate PID object manages vertical speed in alt hold mode
-  AscentPID.Init( AscentP, 0, 400 * 250, Const_UpdateRate );
+  AscentPID.Init( AscentP, 0, 400 * Const_UpdateRate, Const_UpdateRate );
   AscentPID.SetMaxOutput( 3000 );   // Limit of the control rate applied to the throttle
   AscentPID.SetPIMax( 500 );
-  AscentPID.SetMaxIntegral( 2000 );
+  //AscentPID.SetMaxIntegral( 2000 );
 
 
 #ifdef ENABLE_LOGGING
@@ -817,7 +813,7 @@ void UpdateFlightLoop(void)
 
         LEDModeColor = (LED_Blue | LED_Red) & LED_Half;
 
-        if( CompassConfigStep == 250 ) {   //Hold for 1 second
+        if( CompassConfigStep == Const_UpdateRate ) {   //Hold for 1 second
           StartCompassCalibrate();
         }
       }
@@ -876,11 +872,11 @@ void UpdateFlightLoop(void)
         CompassConfigStep = 0;
         
         // Start a 1 second countdown
-        if( Radio.Thro < -1100 ) ReArmTimer = 250;   
+        if( Radio.Thro < -1100 ) ReArmTimer = Const_UpdateRate;   
         
         // If the motors have been at idle too long, disarm
         if( idleTimeout <= 0 ) {                     
-          idleTimeout = IDLE_TIMEOUT * 250;
+          idleTimeout = IDLE_TIMEOUT * Const_UpdateRate;
           DisarmFlightMode();
         }
         
@@ -905,7 +901,7 @@ void UpdateFlightLoop(void)
     else {
       DoIntegrate = 1;
       
-      idleTimeout = IDLE_TIMEOUT * 250;
+      idleTimeout = IDLE_TIMEOUT * Const_UpdateRate;
     }
 
 

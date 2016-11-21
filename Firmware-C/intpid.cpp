@@ -46,7 +46,7 @@ void IntPID::Init( int PGain, int IGain, int DGain, short _SampleRate )
   DError = 0;
   LastPError = 0;
   IError = 0;
-  MaxIntegral = 0x010000;
+  //∫MaxIntegral = 0x010000;
   MaxOutput = 1000;
   Precision = 8;
   RoundOffset = 1 << (Precision-1);
@@ -82,7 +82,7 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     Output = clamp( Output, -MaxOutput, MaxOutput );
   }
 
-  if( DoIntegrate && Ki != 0 && abs(Output) != MaxOutput )
+  if( DoIntegrate && Ki != 0 && (abs(Output) <= MaxOutput || (IError > 0 && PError < 0) || (IError < 0 && PError > 0)) )
   {
     PClamped = PError;
     if( PIMax > 0 ) {
@@ -90,7 +90,7 @@ int IntPID::Calculate( int SetPoint , int Measured , char DoIntegrate )
     }
 
     IError += PClamped;
-    IError = clamp( IError, -MaxIntegral, MaxIntegral );
+    //IError = clamp( IError, -MaxIntegral, MaxIntegral );
   }
 
   return Output;

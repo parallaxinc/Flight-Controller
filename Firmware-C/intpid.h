@@ -30,7 +30,7 @@ public:
   void SetPrecision( unsigned char prec ) {
       Precision = prec;
       RoundOffset = 1 << ((int)Precision-1);
-      ScaledMaxOutput = MaxOutput << Precision;
+      //ScaledMaxOutput = MaxOutput << Precision;
   }
 
   void SetPGain( int Value )        { Kp = Value; }
@@ -38,8 +38,8 @@ public:
   void SetDGain( int Value )        { Kd = Value / (int)SampleRate; }
   void SetPMax( int Value )         { PMax = Value; }
   void SetPIMax( int Value )        { PIMax = Value; }
-  void SetMaxIntegral( int Value )  { MaxIntegral = Value; }
-  void SetMaxOutput( int Value )    { MaxOutput = Value; ScaledMaxOutput = MaxOutput << Precision; }
+  //void SetMaxIntegral( int Value )  { MaxIntegral = Value; }
+  void SetMaxOutput( int Value )    { MaxOutput = Value; /*ScaledMaxOutput = MaxOutput << Precision;*/ }
 
 
   //Derivative is normally used "raw", but if the set point or measurement change quickly
@@ -76,9 +76,10 @@ public:
   long DError;         //Derivative error (kept for filtering)
   long IError;         //Accumulated integral error
   long LastPError;     //Previous Error
-  long MaxIntegral, PIMax;  
+  //long MaxIntegral;
+  long PIMax;
   long MaxOutput;
-  long ScaledMaxOutput; // MaxOutput << Precision
+  //long ScaledMaxOutput; // MaxOutput << Precision
 };
 
 
