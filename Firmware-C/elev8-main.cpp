@@ -1558,6 +1558,7 @@ void DoDebugModeOutput(void)
       switch( phase )
       {
       case 0:
+        if(0)
         {
         struct RADIO_PACKED Pack;
         Pack.ThroLow = Radio.Thro & 255;
@@ -1630,12 +1631,15 @@ void DoDebugModeOutput(void)
         break;
 
       case 5: // Motor data
+        #ifndef GPS // save bandwidth by not sending this in GPS mode
         COMMLINK::BuildPacket( 5, &Motor[0], MOTOR_COUNT * 2 );   // 8 to 12 byte payload (quad or hex)
         COMMLINK::SendPacket(port);
+        #endif
         break;
 
 
       case 6:
+        if(0)
         {
         COMMLINK::StartPacket( 4, 16 );   // Computed data, 16 byte payload
 
@@ -1661,12 +1665,19 @@ void DoDebugModeOutput(void)
         #endif
 
         #ifdef GPS
-        COMMLINK::StartPacket( 8, 12 );                // GPS data, 12 byte payload
+        COMMLINK::StartPacket( 8, 36 );                // GPS data, 36 byte payload
         COMMLINK::AddPacketData( &Latitude, 4 );
         COMMLINK::AddPacketData( &Longitude, 4 );
+        COMMLINK::AddPacketData( &TargetLat, 4 );
+        COMMLINK::AddPacketData( &TargetLong, 4 );
+        COMMLINK::AddPacketData( &TargetDirX, 4 );
+        COMMLINK::AddPacketData( &TargetDirY, 4 );
+        COMMLINK::AddPacketData( &TargetDist, 4 );
         TxData[0] = SatCount;
         TxData[1] = Dilution;
-        COMMLINK::AddPacketData( &TxData[0], 4 );   // packets needs to be a multiple of 2 bytes
+        TxData[2] = QuatIMU_GetYawSin();
+        TxData[3] = QuatIMU_GetYawCos();
+        COMMLINK::AddPacketData( &TxData[0], 8 );   // packets needs to be a multiple of 2 bytes
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
         #endif

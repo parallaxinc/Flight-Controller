@@ -224,17 +224,31 @@ struct GPSData
 {
 	int		Latitude;
 	int		Longitude;
+	int		TargetLat;
+	int		TargetLong;
+	int		TargetDirX;
+	int		TargetDirY;
+	int		TargetDist;
 	short	SatCount;
 	short	Dilution;
+	short	YawSin;
+	short	YawCos;
 
-	GPSData() : Latitude(0), Longitude(0), SatCount(0), Dilution(0) {;}
+	GPSData() : Latitude(0), Longitude(0), TargetLat(0), TargetLong(0), TargetDist(0), SatCount(0), Dilution(0) {;}
 
 	void ReadFrom( packet * p )
 	{
-		Latitude =  p->GetInt();
-		Longitude = p->GetInt();
-		SatCount  = p->GetShort();
-		Dilution  = p->GetShort();
+		Latitude =   p->GetInt();
+		Longitude =  p->GetInt();
+		TargetLat =  p->GetInt();
+		TargetLong = p->GetInt();
+		TargetDist = p->GetInt();
+		TargetDirX = p->GetInt();
+		TargetDirY = p->GetInt();
+		SatCount  =  p->GetShort();
+		Dilution  =  p->GetShort();
+		YawSin =     p->GetShort();
+		YawCos =     p->GetShort();
 	}
 };
 

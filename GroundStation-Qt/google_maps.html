@@ -14,9 +14,12 @@
       var map;
       var markers = [];
 	  var loc;
+	  var home;
 
       function initialize() {
-		var loc = new google.maps.LatLng(-34.397, 150.644);
+	    loc = new google.maps.LatLng(-34.397, 150.644);
+		home = new google.maps.LatLng(-34.397, 150.644);
+
         var myOptions = {
           center: new google.maps.LatLng(-34.397, 150.644),
 		  zoom: 17,

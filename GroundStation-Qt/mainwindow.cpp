@@ -293,6 +293,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	sg->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
+	ui->gTargetDir->setRange(0x4000);
+	ui->gTargetDir->setWrap(true);
+
 	mapReady = false;
 	QWebSettings::globalSettings()->setAttribute(QWebSettings::PluginsEnabled, true);
 	ui->webView->setUrl( QUrl("qrc:/google_maps.html") );
@@ -568,6 +571,69 @@ void MainWindow::AddGraphSample(int GraphIndex, float SampleValue)
 }
 
 
+
+//-----------------------------------------------------------------------
+static const unsigned int BRAD_PI_SHIFT=14,    BRAD_PI = 1<<BRAD_PI_SHIFT;
+static const unsigned int BRAD_HPI= BRAD_PI/2, BRAD_2PI= BRAD_PI*2;
+static const unsigned int ATAN_ONE = 0x1000,   ATAN_FP = 12;
+
+
+// Get the octant a coordinate pair is in.
+#define OCTANTIFY(_x, _y, _o)   {                               \
+	int _t; _o= 0;                                              \
+	if(_y<  0)  {            _x= -_x;   _y= -_y; _o += 4; }     \
+	if(_x<= 0)  { _t= _x;    _x=  _y;   _y= -_t; _o += 2; }     \
+	if(_x<=_y)  { _t= _y-_x; _x= _x+_y; _y=  _t; _o += 1; }     \
+  }
+
+static unsigned short atan2Cordic(int x, int y)
+{
+	if(y==0)    return (x>=0 ? 0 : BRAD_PI);
+
+	int phi;
+
+	OCTANTIFY(x, y, phi);
+	phi *= BRAD_PI/4;
+
+	// Scale up a bit for greater accuracy.
+	if(x < 0x10000)
+	{
+		x *= 0x1000;
+		y *= 0x1000;
+	}
+
+	// atan(2^-i) terms using PI=0x10000 for accuracy
+	const unsigned short list[]=
+	{
+		0x4000, 0x25C8, 0x13F6, 0x0A22, 0x0516, 0x028C, 0x0146, 0x00A3,
+		0x0051, 0x0029, 0x0014, 0x000A, 0x0005, 0x0003, 0x0001, 0x0001
+	};
+
+	int i, tmp, dphi=0;
+	for(i=1; i<12; i++)
+	{
+		if(y>=0)
+		{
+			tmp= x + (y>>i);
+			y  = y - (x>>i);
+			x  = tmp;
+			dphi += list[i];
+		}
+		else
+		{
+			tmp= x - (y>>i);
+			y  = y + (x>>i);
+			x  = tmp;
+			dphi -= list[i];
+		}
+	}
+	return phi + (dphi>>2);
+}
+//-----------------------------------------------------------------------
+
+
+
+
 const float PI = 3.141592654f;
 
 void MainWindow::ProcessPackets(void)
@@ -689,6 +755,9 @@ void MainWindow::ProcessPackets(void)
 						double lat = (double)gpsData.Latitude / 10000000.0;
 						double lon = (double)gpsData.Longitude / 10000000.0;
 
+						double homeLat = (double)gpsData.TargetLat / 10000000.0;
+						double homeLon = (double)gpsData.TargetLong / 10000000.0;
+
 						if( mapReady == true && (gpsData.SatCount > 4) )
 						{
 							if( mapCoordSet == false )
@@ -703,7 +772,14 @@ void MainWindow::ProcessPackets(void)
 									QString("title: \"E8\",") +
 									QString("label: \"E8\"") +
 									QString("});") +
-									QString("markers.push(marker);");
+									QString("markers.push(marker);") +
+
+									QString("home = new google.maps.Marker({") +
+									QString("position: new google.maps.LatLng(%1, %2),").arg(lat).arg(lon) +
+									QString("map: map,") +
+									QString("title: \"Home\",") +
+									QString("label: \"X\"") +
+									QString("});") ;
 
 								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
 								mapCoordSet = true;
@@ -712,11 +788,17 @@ void MainWindow::ProcessPackets(void)
 							{
 								if( updateCounter == 0 ) {
 									QString str = QString("loc.setPosition( new google.maps.LatLng(%1, %2) );").arg(lat).arg(lon);
+									str += QString("home.setPosition( new google.maps.LatLng(%1, %2) );").arg(homeLat).arg(homeLon);
 									if( ui->cbTrackLocation->isChecked() ) {
 										str += "map.setCenter( loc.position );";
 									}
 
 									ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
+
+									ui->lblTargetDist->setText( QString("Dist: %1  (%2,%3)").arg(gpsData.TargetDist).arg(gpsData.YawSin).arg(gpsData.YawCos));
+
+									int angle = atan2Cordic( gpsData.TargetDirX, gpsData.TargetDirY );
+									ui->gTargetDir->setValue( angle );
 								}
 								updateCounter = (updateCounter + 1) & 31;
 							}
