@@ -46,6 +46,7 @@ PERSIST float Heading;
 OUTPUT int Roll;
 OUTPUT int Pitch;
 OUTPUT int Yaw;
+OUTPUT int YawSin, YawCos;
 OUTPUT int ThrustFactor;
 
 OUTPUT float m00, m01, m02;

@@ -8,10 +8,16 @@
 #include "gps.h"
 #ifdef GPS
 
+#include "quatimu.h"  // to get the YawSin & YawCos values
 #include "serial_4x.h"
 
+extern int TargetLat, TargetLong;   // current target location
+extern int TargetDirX, TargetDirY;  // difference to target location, corrected for heading, normalized
+extern int TargetDist;
 
-char SatCount = 0;
+
+bool HasGpsFix = false;
+char SatCount = 255;  // invalid
 int Latitude =  Invalid_GPS;
 int Longitude = Invalid_GPS;
 int Dilution = 0;
@@ -89,7 +95,6 @@ void SetGPSOutputConfig(void)
   S4_Put_Bytes(2, rateCommand, sizeof(rateCommand) );
 }
 
-static char HasFix = 0;
 static char Line[128];
 static int Len, Pos;
 
@@ -115,7 +120,7 @@ int ParseLatitude(void) // DDMM.mmmmm
   // peek to see if the next char is a comma - if so we haven't got sat-lock
   if( Line[Pos] == ',' ) {
     Pos+=2; // skip lat and N/S
-    return 0;
+    return Invalid_GPS;
   }
 
   int degs = (GetI() * 10) + GetI();
@@ -124,7 +129,7 @@ int ParseLatitude(void) // DDMM.mmmmm
   degs *= 10000000;
 
   if( Get() != '.' ) {
-    HasFix = false;
+    HasGpsFix = false;
     return Latitude;
   }
   int i=5;
@@ -160,7 +165,7 @@ int ParseLongitude(void) // DDDMM.mmmmm
   // peek to see if the next char is a comma - if so we haven't got sat-lock
   if( Line[Pos] == ',' ) {
     Pos+=2; // skip long and E/W
-    return 0;
+    return Invalid_GPS;
   }
 
   int degs = ((GetI() * 10) + GetI())*10 + GetI();
@@ -169,7 +174,7 @@ int ParseLongitude(void) // DDDMM.mmmmm
   degs *= 10000000;
 
   if( Get() != '.' ) {
-    HasFix = false;
+    HasGpsFix = false;
     return Longitude;
   }
   int i=5;
@@ -240,6 +245,13 @@ int ParseFloat( void )  // used for Horizontal dilution and altitude
   return v;
 }
 
+static int abs(int v) {
+  v = (v<0) ? -v : v;
+  return v;
+}
+
+void SendInt( int v );
+
 
 // http://aprs.gids.nl/nmea/#rmc
 void ParseGGA(void) // Global Positioning System Fix Data
@@ -255,14 +267,66 @@ void ParseGGA(void) // Global Positioning System Fix Data
   int tempLong = ParseLongitude();   // Parse longitude
 
   char ch = Get();
-  HasFix = (ch != '0' && ch != ',');
+  HasGpsFix = (ch != '0' && ch != ',');
   if( ch != ',' ) {
     Get(); // Skip the comma
   }    
 
-  if( HasFix ) {
+  if( HasGpsFix )
+  {
     Latitude = tempLat;     // try to make sure they update at the same time
     Longitude = tempLong;
+
+    int ySin = QuatIMU_GetYawSin();
+    int yCos = QuatIMU_GetYawCos();
+
+    int diffX = Longitude - TargetLong;
+    int diffY = Latitude - TargetLat;
+
+    // Length approximation
+    if( diffX >= diffY ) {
+      TargetDist = abs(diffX) + abs(3*diffY) >> 3;
+    }
+    else {
+      TargetDist = abs(diffY) + abs(3*diffX) >> 3;
+    }
+    /*
+    SendInt( Longitude );
+    S4_Put(0, 32);
+    SendInt( TargetLong );
+    S4_Put(0, 32);
+    S4_Put(0, 32);
+
+    SendInt( Latitude );
+    S4_Put(0, 32);
+    SendInt( TargetLat );
+    S4_Put(0, 32);
+    S4_Put(0, 32);
+
+    SendInt( diffX );
+    S4_Put(0, 32);
+    SendInt( diffY );
+    S4_Put(0, 32);
+    S4_Put(0, 32);
+
+    SendInt( ySin );
+    S4_Put(0, 32);
+    SendInt( yCos );
+    S4_Put(0, 32);
+    S4_Put(0, 32);
+    */
+
+    TargetDirX = -(diffX * yCos - diffY * ySin) / TargetDist;   // results in a "unit" vector where 4096 = unit
+    TargetDirY = -(diffX * ySin + diffY * yCos) / TargetDist;
+
+    /*
+    SendInt( TargetDirX );
+    S4_Put(0, 32);
+    SendInt( TargetDirY );
+    S4_Put(0, 32);
+    SendInt( TargetDist );
+    S4_Put(0, 13);
+    */
   }
 
   char temp = 0;
@@ -272,12 +336,7 @@ void ParseGGA(void) // Global Positioning System Fix Data
     temp *= 10;
     temp += ch - '0';
   }
-  if( temp != 0 ) {
-    SatCount = temp;
-  }
-  else {
-    SatCount = (char)-1;
-  }
+  SatCount = temp;
 
   temp = ParseFloat();
   if( temp != 0 ) {

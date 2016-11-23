@@ -48,9 +48,9 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->lblRadioCalibrateDocs->setStyleSheet("QLabel { background-color : orange; color : black; }");
 
 	// These have to match the modes and order defined in Elev8-Main.h in the firmware
-	const char * flightModes[] = {"Assisted", "Stable", "Manual", "Auto-Manual" };
+	const char * flightModes[] = {"Assisted", "Stable", "Manual", "Auto-Manual", "ReturnHome"};
 
-	for( int i=0; i<4; i++ )
+	for( int i=0; i<sizeof(flightModes)/sizeof(flightModes[0]); i++ )
 	{
 		ui->cb_FlightMode_Up->addItem( QString(flightModes[i]) );
 		ui->cb_FlightMode_Middle->addItem( QString(flightModes[i]) );
@@ -689,7 +689,7 @@ void MainWindow::ProcessPackets(void)
 						double lat = (double)gpsData.Latitude / 10000000.0;
 						double lon = (double)gpsData.Longitude / 10000000.0;
 
-						if( mapReady == true && gpsData.SatCount > 4 )
+						if( mapReady == true && (gpsData.SatCount > 4) )
 						{
 							if( mapCoordSet == false )
 							{
@@ -725,10 +725,10 @@ void MainWindow::ProcessPackets(void)
 						int sats = gpsData.SatCount;
 						float dil = (float)gpsData.Dilution * 0.1f;
 						QString stat;
-						if( sats == 0 ) {
+						if( sats == 255 ) {
 							stat = "Waiting for power up";
 						}
-						else if( sats == 255 ) {
+						else if( sats == 0 ) {
 							stat = "Waiting for satellite lock";
 						}
 						else {
@@ -738,7 +738,7 @@ void MainWindow::ProcessPackets(void)
 						char NS = lat < 0.0 ? 'S' : 'N';
 						char EW = lon < 0.0 ? 'W' : 'E';
 
-						if( sats >= 3 && sats != 255 ) {
+						if( sats >= 3 ) {
 							stat = QString("Lat: %1 %2  Long: %3 %4  Precision: %5")
 									.arg(lat,10,'f',7).arg(NS)
 									.arg(lon,10,'f',7).arg(EW).arg(dil);
@@ -748,6 +748,9 @@ void MainWindow::ProcessPackets(void)
 						}
 						ui->lblGpsCoord->setText(stat);
 					}
+
+					// With GPS enabled, this is actually the last packet sent by the quad, so use this to advance the sample index
+					SampleIndex++;
 					break;
 
                 case 0x18:	// Settings

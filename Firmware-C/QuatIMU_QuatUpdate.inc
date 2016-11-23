@@ -272,6 +272,15 @@
 	F32_opATan2,   m20, m22, Temp_0,
 	F32_opNeg,     Temp_0, 0, FloatYaw,
 	// 
+	// cosr = SinCos(FloatYaw, sinr);
+	F32_opSinCos,  FloatYaw, sinr, cosr,
+	// YawSin = Trunc(sinr * 4096.0f);
+	F32_opShift,   sinr, const_I12, Temp_0,
+	F32_opTruncRound,Temp_0, const_I0, YawSin,
+	// YawCos = Trunc(cosr * 4096.0f);
+	F32_opShift,   cosr, const_I12, Temp_0,
+	F32_opTruncRound,Temp_0, const_I0, YawCos,
+	// 
 	// 
 	// 
 	// TESTING compass hold
@@ -340,10 +349,6 @@
 	// 
 	// If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
 	// 
-	// float magErrScale = const_AccErrScale * 0.5f;		// Use the AccScale for now
-	F32_opShift,   const_AccErrScale, const_INeg_1, magErrScale,
-	// 
-	// 
 	// float temp = -FAbs(m11);	// Grab the vertical component of the vertical axis - If it's < 45 deg of horizontal we don't want mag correction
 	F32_opFAbs,    m11, 0, Temp_0,
 	F32_opNeg,     Temp_0, 0, temp,
@@ -358,8 +363,8 @@
 	// temp = FMin(temp, 1.0f);	// Clamp to 0 to 1 - Note that 0.707 or LESS is undesired, 0.80 or greater is perfect
 	F32_opFMin,    temp, const_F1_0, temp,
 	// 
-	// magErrScale *= temp;		// Scale the magErr correction by this
-	F32_opMul,     magErrScale, temp, magErrScale,
+	// float magErrScale = temp * const_MagErrScale;	// Scale the magErr correction by this
+	F32_opMul,     temp, const_MagErrScale, magErrScale,
 	// 
 	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
 	// 
@@ -399,6 +404,9 @@
 	// Roll = Trunc( fpitch * const_outNegAngleScale );
 	F32_opMul,     fpitch, const_outNegAngleScale, Temp_0,
 	F32_opTruncRound,Temp_0, const_I0, Roll,
+	// Yaw = Trunc( FloatYaw * const_outAngleScale );
+	F32_opMul,     FloatYaw, const_outAngleScale, Temp_0,
+	F32_opTruncRound,Temp_0, const_I0, Yaw,
 	// 
 	// 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground
 	// ThrustFactor = Trunc( (1.0f / m11) * 256.0f );

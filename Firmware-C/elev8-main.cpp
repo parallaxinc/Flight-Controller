@@ -16,7 +16,7 @@
   You should have received a copy of the GNU General Public License
   along with the ELEV-8 Flight Controller Firmware.  If not, see <http://www.gnu.org/licenses/>.
 
- 
+
   Actively In Development / To Be Developed:
   - Altitude Hold
 
@@ -109,7 +109,12 @@ static long  DesiredAltitude, DesiredAscentRate;              // desired values 
 
 
 static long  TakeoffLat, TakeoffLong;
-static long  DesiredLat, DesiredLong;
+
+long TargetLat =   373846685;   // current target location (Berryessa subdivision, north San Jose)
+long TargetLong = -1218911086;
+long TargetDirX, TargetDirY;  // difference to target location, corrected for heading, normalized
+long TargetDist;              // distance to target location
+
 
 static long  RollDifference, PitchDifference, YawDifference;  //Delta between current measured roll/pitch and desired roll/pitch                         
 static long  GyroRoll, GyroPitch, GyroYaw;                    //Raw gyro values altered by desired pitch & roll targets
@@ -343,6 +348,20 @@ int main()                                    // Main function
         }
         ControlMode = NewControlMode;
       }
+
+#ifdef GPS
+      if( FlightMode == FlightMode_ReturnHome && HasGpsFix ) {
+
+        int dirScale = TargetDist;
+        if( dirScale > 1024 ) dirScale = 1024;
+        
+        int dirX = (TargetDirX * dirScale) / 1024;
+        int dirY = (TargetDirY * dirScale) / 1024;
+
+        Radio.Aile += dirX >> 4;   // Scale it down until we know how it behaves
+        Radio.Elev += -(dirY >> 4);
+      }
+#endif
 
       UpdateFlightLoop();            //~72000 cycles when in flight mode
       //-------------------------------------------------
@@ -1108,6 +1127,7 @@ static int LEDColorTable[] = {
         /* LED_Stable  */      LED_Cyan,
         /* LED_Manual    */    LED_Yellow,
         /* LED_AutoManual */   LED_Red | (LED_Yellow & LED_Half),
+        /* LED_ReturnHome */   LED_Violet,
         /* LED_CompCalib */    LED_Violet,
 };
 
@@ -1863,10 +1883,165 @@ void ApplyPrefs(void)
 }
 
 
+static const unsigned int BRAD_PI_SHIFT=14,    BRAD_PI = 1<<BRAD_PI_SHIFT;
+static const unsigned int BRAD_HPI= BRAD_PI/2, BRAD_2PI= BRAD_PI*2; 
+static const unsigned int ATAN_ONE = 0x1000,   ATAN_FP = 12;
+
+
+// Get the octant a coordinate pair is in.
+#define OCTANTIFY(_x, _y, _o)   {                               \
+    int _t; _o= 0;                                              \
+    if(_y<  0)  {            _x= -_x;   _y= -_y; _o += 4; }     \
+    if(_x<= 0)  { _t= _x;    _x=  _y;   _y= -_t; _o += 2; }     \
+    if(_x<=_y)  { _t= _y-_x; _x= _x+_y; _y=  _t; _o += 1; }     \
+  }
+
+static unsigned short atan2Cordic(int x, int y)
+{
+    if(y==0)    return (x>=0 ? 0 : BRAD_PI);
+
+    int phi;
+
+    OCTANTIFY(x, y, phi);
+    phi *= BRAD_PI/4;
+
+    // Scale up a bit for greater accuracy.
+    if(x < 0x10000)
+    { 
+        x *= 0x1000;
+        y *= 0x1000;
+    }
+
+    // atan(2^-i) terms using PI=0x10000 for accuracy
+    const u16 list[]=
+    { 
+        0x4000, 0x25C8, 0x13F6, 0x0A22, 0x0516, 0x028C, 0x0146, 0x00A3, 
+        0x0051, 0x0029, 0x0014, 0x000A, 0x0005, 0x0003, 0x0001, 0x0001
+    };
+
+    int i, tmp, dphi=0;
+    for(i=1; i<12; i++)
+    {
+        if(y>=0)
+        {
+            tmp= x + (y>>i);
+            y  = y - (x>>i);
+            x  = tmp;
+            dphi += list[i];
+        }
+        else
+        {
+            tmp= x - (y>>i);
+            y  = y + (x>>i);
+            x  = tmp;
+            dphi -= list[i];
+        }
+    }
+    return phi + (dphi>>2);
+}
+
+
+void SendInt( int v )
+{
+  char chars[15];
+  if(v < 0) {
+    S4_Put(0, '-');
+    v = -v;
+  }
+  int i=0;
+  do {
+    chars[i] = '0' + (v%10);
+    v /= 10;
+    i++;
+  } while(v);
+
+  while( i > 0 ) {
+    --i;
+    S4_Put(0, chars[i] );
+  }    
+}
+
+
 void All_LED( int Color )
 {
 #if defined(EXTRA_LIGHTS)
   LEDValue[0] = Color;
+
+  #if defined GPS
+
+  static char update = 0;
+  update++;
+  if((update & 15) != 0) return;
+
+  int xdiff = TargetDirX;
+  int ydiff = TargetDirY;
+  int diffAngle = atan2Cordic(xdiff, ydiff);
+
+  /*
+  S4_Put(0, 1);
+  SendInt( xdiff );
+  S4_Put(0, 32);
+  SendInt( ydiff );
+  S4_Put(0, 32);
+  SendInt( diffAngle );
+  S4_Put(0, 32);
+  SendInt( TargetDist );
+  S4_Put(0, 11);
+  */
+
+  diffAngle = ((diffAngle >> 11) - 4) & 15;
+
+  int dirScale = TargetDist;
+  if( dirScale > 1024 ) dirScale = 1024;
+  
+  xdiff = (xdiff * dirScale) / 1024;
+  ydiff = (ydiff * dirScale) / 1024;
+
+  int diffpx = xdiff >> 2;
+  int diffpy = ydiff >> 2;
+  int diffnx = -diffpx;
+  int diffny = -diffpy;
+
+  if( diffpx > 255 ) diffpx = 255;
+  if( diffpx < 0 )   diffpx = 0;
+  if( diffpy > 255 ) diffpy = 255;
+  if( diffpy < 0 )   diffpy = 0;
+
+  if( diffnx > 255 ) diffnx = 255;
+  if( diffnx < 0 )   diffnx = 0;
+  if( diffny > 255 ) diffny = 255;
+  if( diffny < 0 )   diffny = 0;
+
+  diffpx |= (diffpx<<8) | (diffpx<<16);
+  diffpy |= (diffpy<<8) | (diffpy<<16);
+  diffnx |= (diffnx<<8) | (diffnx<<16);
+  diffny |= (diffny<<8) | (diffny<<16);
+
+  //diffpx = ( diffpx & LEDBrightMask) >> LEDBrightShift;
+  //diffpy = ( diffpy & LEDBrightMask) >> LEDBrightShift;
+  //diffnx = ( diffny & LEDBrightMask) >> LEDBrightShift;
+  //diffny = ( diffny & LEDBrightMask) >> LEDBrightShift;
+
+  int y = (QuatIMU_GetYaw() >> (16-3)) & 15;
+
+  for( int i=0; i<16; i++ )
+  {
+    int val = 0;
+    if( SatCount >= i ) {
+      val += (LED_Green & LED_Quarter);
+    }
+    if(i == y)          { val |= LED_Red; }
+    if(i == diffAngle ) { val |= LED_Blue & LED_Half; }
+
+    else if(i == 0)  { val |= diffpy; }
+    else if(i == 4)  { val |= diffpx; }
+    else if(i == 8)  { val |= diffny; }
+    else if(i == 12) { val |= diffnx; }
+
+    LEDValue[1 + i] = val;
+  }
+
+  #else
 
   LEDValue[1 +  0] = Color;
   LEDValue[2 +  0] = Color;
@@ -1879,6 +2054,7 @@ void All_LED( int Color )
 
   LEDValue[1 + 15] = Color;
   LEDValue[2 + 15] = Color;
+  #endif
 
 #else
   for( int i=0; i<LED_COUNT; i++ )

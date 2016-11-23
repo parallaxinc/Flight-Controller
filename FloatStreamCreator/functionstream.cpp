@@ -164,6 +164,10 @@ void QuatUpdate( SensorData & sens )
 	// compute heading using Atan2 and the Z vector of the orientation matrix
 	FloatYaw = -ATan2(m20, m22);
 
+	cosr = SinCos(FloatYaw, sinr);
+	YawSin = Trunc(sinr * 4096.0f);
+	YawCos = Trunc(cosr * 4096.0f);
+
 
 
 	// TESTING compass hold
@@ -203,16 +207,13 @@ void QuatUpdate( SensorData & sens )
 
 	// If pitch/roll are outsite "reasonable" limits, zero magErrScale ?
 
-	float magErrScale = const_AccErrScale * 0.5f;		// Use the AccScale for now
-
-
 	float temp = -FAbs(m11);	// Grab the vertical component of the vertical axis - If it's < 45 deg of horizontal we don't want mag correction
 	temp = -FMin(temp, -0.72f);	// Clamp to 0.72 .. 1.0
 	temp -= 0.72f;				// Shift the range down
 	temp *= 10.0f;				// 0.72f to 0.82f is now 0.0f to 1.0f  (0.707y is 45 deg from vertical.  < 0.8 we scale off - translates to ~37deg to 45deg)
 	temp = FMin(temp, 1.0f);	// Clamp to 0 to 1 - Note that 0.707 or LESS is undesired, 0.80 or greater is perfect
 
-	magErrScale *= temp;		// Scale the magErr correction by this
+	float magErrScale = temp * const_MagErrScale;	// Scale the magErr correction by this
 
 	// Cross the mag heading vector with our orientation Z vector (zero mult terms removed)
 
@@ -235,6 +236,7 @@ void QuatUpdate( SensorData & sens )
 
 	Pitch = Trunc( ASin(m12) * const_outAngleScale );
 	Roll = Trunc( fpitch * const_outNegAngleScale );
+	Yaw = Trunc( FloatYaw * const_outAngleScale );
 
 	// 1.0/m11 = scale factor for thrust - this will be infinite if perpendicular to ground
 	ThrustFactor = Trunc( (1.0f / m11) * 256.0f );

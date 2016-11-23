@@ -8,7 +8,7 @@
 	IMU_VARS[const_F0_72] = 0.72;
 	IMU_VARS[const_F10_0] = 10.0;
 	INT_VARS[const_INeg_1] = -1;
+	INT_VARS[const_I12] = 12;
 	INT_VARS[const_I8] = 8;
 	INT_VARS[const_INeg_12] = -12;
-	INT_VARS[const_I12] = 12;
 	INT_VARS[const_I4] = 4;

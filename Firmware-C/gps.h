@@ -14,6 +14,7 @@ const long Invalid_GPS = 0x80000000;
 
 #include "elev8types.h"
 
+extern bool HasGpsFix;
 extern char SatCount;
 extern int Latitude;
 extern int Longitude;
