@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	// These have to match the modes and order defined in Elev8-Main.h in the firmware
 	const char * flightModes[] = {"Assisted", "Stable", "Manual", "Auto-Manual", "ReturnHome"};
 
-	for( int i=0; i<sizeof(flightModes)/sizeof(flightModes[0]); i++ )
+	for( int i=0; i<(int)(sizeof(flightModes)/sizeof(flightModes[0])); i++ )
 	{
 		ui->cb_FlightMode_Up->addItem( QString(flightModes[i]) );
 		ui->cb_FlightMode_Middle->addItem( QString(flightModes[i]) );
@@ -647,12 +647,6 @@ void TestATan(void)
 	}
 	done = 1;
 }
-
-static int E8abs(int v) {
-  v = (v<0) ? -v : v;
-  return v;
-}
-
 
 
 const float PI = 3.141592654f;

@@ -7,7 +7,7 @@ rd /s /q GroundStation-Release
 mkdir GroundStation-Release
 cd GroundStation-Release
 
-copy F:\QtApps\build-GroundStation-Desktop_Qt_5_5_1_MinGW_32bit-Release\release\groundstation.exe .
+copy F:\GitHub\Flight-Controller\build-GroundStation-Qt_5_5_1_MinGW_32bit2-Release\release\groundstation.exe .
 windeployqt .
 cd ..
 

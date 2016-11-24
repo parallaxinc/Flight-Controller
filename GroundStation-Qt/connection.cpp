@@ -55,6 +55,7 @@ void Connection::run()
     serial = 0;
 }
 
+/*
 static void dbgOnErr( QSerialPort * serial , const char * context )
 {
 (void)serial;	// "Use" these params to prevent the compiler from warning
@@ -102,7 +103,7 @@ static void dbgOnErr( QSerialPort * serial , const char * context )
 	serial->clearError();
 #endif
 }
-
+*/
 
 
 void Connection::Update(void)
