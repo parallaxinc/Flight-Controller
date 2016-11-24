@@ -4660,7 +4660,7 @@ throttle calibration.</string>
        <attribute name="title">
         <string>GPS</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_30">
+       <layout class="QVBoxLayout" name="verticalLayout_19">
         <item>
          <widget class="QFrame" name="frame_13">
           <property name="sizePolicy">
@@ -4734,50 +4734,13 @@ throttle calibration.</string>
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_39" stretch="3,1">
-          <item>
-           <widget class="QWebView" name="webView" native="true">
-            <property name="url" stdset="0">
-             <url>
-              <string>about:blank</string>
-             </url>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <layout class="QVBoxLayout" name="verticalLayout_19" stretch="2,0,2">
-            <item>
-             <widget class="Gauge_Widget" name="gTargetDir" native="true">
-              <property name="font">
-               <font>
-                <pointsize>8</pointsize>
-               </font>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QLabel" name="lblTargetDist">
-              <property name="text">
-               <string>Distance:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="verticalSpacer_2">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>20</width>
-                <height>40</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
-         </layout>
+         <widget class="QWebView" name="webView" native="true">
+          <property name="url" stdset="0">
+           <url>
+            <string>about:blank</string>
+           </url>
+          </property>
+         </widget>
         </item>
        </layout>
       </widget>

@@ -293,9 +293,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	sg->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
-	ui->gTargetDir->setRange(0x4000);
-	ui->gTargetDir->setWrap(true);
-
 	mapReady = false;
 	QWebSettings::globalSettings()->setAttribute(QWebSettings::PluginsEnabled, true);
 	ui->webView->setUrl( QUrl("qrc:/google_maps.html") );
@@ -632,6 +629,30 @@ static unsigned short atan2Cordic(int x, int y)
 //-----------------------------------------------------------------------
 
 
+void TestATan(void)
+{
+	static int done = 1;
+	if( done ) return;
+
+	for( int a=0; a<32768; a+=2 )
+	{
+		double ang = (double)a / 32768.0 * 3.141592654 * 2.0;
+
+		int sina = (int)(sin(ang) * 4096.0);
+		int cosa = (int)(cos(ang) * 4096.0);
+
+		int x = atan2Cordic(cosa, sina);
+
+		qDebug() << QString("a: %1, x: %2,  diff: %3").arg(a).arg(x).arg(a - x);
+	}
+	done = 1;
+}
+
+static int E8abs(int v) {
+  v = (v<0) ? -v : v;
+  return v;
+}
+
 
 
 const float PI = 3.141592654f;
@@ -646,6 +667,8 @@ void MainWindow::ProcessPackets(void)
     bool bMotorsChanged = false;
     bool bComputedChanged = false;
     bool bPrefsChanged = false;
+
+	TestATan();
 
     packet * p;
     do {
@@ -772,14 +795,15 @@ void MainWindow::ProcessPackets(void)
 									QString("title: \"E8\",") +
 									QString("label: \"E8\"") +
 									QString("});") +
-									QString("markers.push(marker);") +
+									QString("markers.push(loc);") +
 
 									QString("home = new google.maps.Marker({") +
 									QString("position: new google.maps.LatLng(%1, %2),").arg(lat).arg(lon) +
 									QString("map: map,") +
 									QString("title: \"Home\",") +
 									QString("label: \"X\"") +
-									QString("});") ;
+									QString("});") +
+									QString("markers.push(home);");
 
 								ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
 								mapCoordSet = true;
@@ -795,12 +819,15 @@ void MainWindow::ProcessPackets(void)
 
 									ui->webView->page()->currentFrame()->documentElement().evaluateJavaScript(str);
 
-									ui->lblTargetDist->setText( QString("Dist: %1  (%2,%3)").arg(gpsData.TargetDist).arg(gpsData.YawSin).arg(gpsData.YawCos));
+									//ui->lblTargetDist->setText( QString("Dist: %1  (%2,%3)").arg(gpsData.TargetDist)
+									//							.arg(gpsData.YawSin).arg(gpsData.YawCos) );
 
-									int angle = atan2Cordic( gpsData.TargetDirX, gpsData.TargetDirY );
-									ui->gTargetDir->setValue( angle );
+									//int angle = atan2Cordic( gpsData.TargetDirY, gpsData.TargetDirX );
+									//angle -= 16384;
+									//if( angle > 16384 ) angle -= -32768;
+									//ui->gTargetDir->setValue( angle );
 								}
-								updateCounter = (updateCounter + 1) & 31;
+								updateCounter = (updateCounter + 1) & 3;
 							}
 						}
 

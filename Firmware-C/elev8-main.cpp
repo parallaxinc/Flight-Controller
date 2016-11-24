@@ -352,14 +352,18 @@ int main()                                    // Main function
 #ifdef GPS
       if( FlightMode == FlightMode_ReturnHome && HasGpsFix ) {
 
+        // TODO:  Will need a proper PID in here to control tilt scale based on distance to target
+        // Likely needs derivative, and the GPS signal may need some filtering too
+        // Might also be worth implementing a dead-zone radius, which could help with the wander?  Maybe?
+
         int dirScale = TargetDist;
         if( dirScale > 1024 ) dirScale = 1024;
-        
+
         int dirX = (TargetDirX * dirScale) / 1024;
         int dirY = (TargetDirY * dirScale) / 1024;
 
-        Radio.Aile += dirX >> 4;   // Scale it down until we know how it behaves
-        Radio.Elev += -(dirY >> 4);
+        Radio.Aile -= dirX >> 3;   // Scale it down until we know how it behaves
+        Radio.Elev += dirY >> 3;
       }
 #endif
 
@@ -1195,6 +1199,8 @@ void ArmFlightMode(void)
 
   TakeoffLat = Latitude;
   TakeoffLong = Longitude;
+  TargetLat = TakeoffLat;
+  TargetLong = TakeoffLong;
 
   loopTimer = CNT;
 }
@@ -1558,7 +1564,6 @@ void DoDebugModeOutput(void)
       switch( phase )
       {
       case 0:
-        if(0)
         {
         struct RADIO_PACKED Pack;
         Pack.ThroLow = Radio.Thro & 255;
@@ -1639,7 +1644,6 @@ void DoDebugModeOutput(void)
 
 
       case 6:
-        if(0)
         {
         COMMLINK::StartPacket( 4, 16 );   // Computed data, 16 byte payload
 
@@ -1665,19 +1669,14 @@ void DoDebugModeOutput(void)
         #endif
 
         #ifdef GPS
-        COMMLINK::StartPacket( 8, 36 );                // GPS data, 36 byte payload
+        COMMLINK::StartPacket( 8, 20 );                // GPS data, 20 byte payload
         COMMLINK::AddPacketData( &Latitude, 4 );
         COMMLINK::AddPacketData( &Longitude, 4 );
         COMMLINK::AddPacketData( &TargetLat, 4 );
         COMMLINK::AddPacketData( &TargetLong, 4 );
-        COMMLINK::AddPacketData( &TargetDirX, 4 );
-        COMMLINK::AddPacketData( &TargetDirY, 4 );
-        COMMLINK::AddPacketData( &TargetDist, 4 );
         TxData[0] = SatCount;
         TxData[1] = Dilution;
-        TxData[2] = QuatIMU_GetYawSin();
-        TxData[3] = QuatIMU_GetYawCos();
-        COMMLINK::AddPacketData( &TxData[0], 8 );   // packets needs to be a multiple of 2 bytes
+        COMMLINK::AddPacketData( &TxData[0], 4 );   // packets needs to be a multiple of 2 bytes
         COMMLINK::EndPacket();
         COMMLINK::SendPacket(port);
         #endif
@@ -1988,19 +1987,7 @@ void All_LED( int Color )
   int ydiff = TargetDirY;
   int diffAngle = atan2Cordic(xdiff, ydiff);
 
-  /*
-  S4_Put(0, 1);
-  SendInt( xdiff );
-  S4_Put(0, 32);
-  SendInt( ydiff );
-  S4_Put(0, 32);
-  SendInt( diffAngle );
-  S4_Put(0, 32);
-  SendInt( TargetDist );
-  S4_Put(0, 11);
-  */
-
-  diffAngle = ((diffAngle >> 11) - 4) & 15;
+  diffAngle = (4 - (diffAngle >> 11)) & 15;
 
   int dirScale = TargetDist;
   if( dirScale > 1024 ) dirScale = 1024;
@@ -2008,8 +1995,8 @@ void All_LED( int Color )
   xdiff = (xdiff * dirScale) / 1024;
   ydiff = (ydiff * dirScale) / 1024;
 
-  int diffpx = xdiff >> 2;
-  int diffpy = ydiff >> 2;
+  int diffpx = xdiff >> 4;
+  int diffpy = ydiff >> 4;
   int diffnx = -diffpx;
   int diffny = -diffpy;
 
@@ -2044,7 +2031,7 @@ void All_LED( int Color )
     if(i == y)          { val |= LED_Red; }
     if(i == diffAngle ) { val |= LED_Blue & LED_Half; }
 
-    else if(i == 0)  { val |= diffpy; }
+    if(i == 0)       { val |= diffpy; }
     else if(i == 4)  { val |= diffpx; }
     else if(i == 8)  { val |= diffny; }
     else if(i == 12) { val |= diffnx; }

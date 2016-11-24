@@ -272,7 +272,7 @@ void ParseGGA(void) // Global Positioning System Fix Data
     Get(); // Skip the comma
   }    
 
-  if( HasGpsFix )
+  if( tempLat != Invalid_GPS && tempLong != Invalid_GPS )
   {
     Latitude = tempLat;     // try to make sure they update at the same time
     Longitude = tempLong;
@@ -284,49 +284,14 @@ void ParseGGA(void) // Global Positioning System Fix Data
     int diffY = Latitude - TargetLat;
 
     // Length approximation
-    if( diffX >= diffY ) {
-      TargetDist = abs(diffX) + abs(3*diffY) >> 3;
+    if( abs(diffX) >= abs(diffY) ) {
+      TargetDist = abs(diffX) + ((3*abs(diffY)) >> 3);
     }
     else {
-      TargetDist = abs(diffY) + abs(3*diffX) >> 3;
+      TargetDist = abs(diffY) + ((3*abs(diffX)) >> 3);
     }
-    /*
-    SendInt( Longitude );
-    S4_Put(0, 32);
-    SendInt( TargetLong );
-    S4_Put(0, 32);
-    S4_Put(0, 32);
-
-    SendInt( Latitude );
-    S4_Put(0, 32);
-    SendInt( TargetLat );
-    S4_Put(0, 32);
-    S4_Put(0, 32);
-
-    SendInt( diffX );
-    S4_Put(0, 32);
-    SendInt( diffY );
-    S4_Put(0, 32);
-    S4_Put(0, 32);
-
-    SendInt( ySin );
-    S4_Put(0, 32);
-    SendInt( yCos );
-    S4_Put(0, 32);
-    S4_Put(0, 32);
-    */
-
-    TargetDirX = -(diffX * yCos - diffY * ySin) / TargetDist;   // results in a "unit" vector where 4096 = unit
+    TargetDirX =  (diffX * yCos - diffY * ySin) / TargetDist;   // results in a "unit" vector where 4096 = unit
     TargetDirY = -(diffX * ySin + diffY * yCos) / TargetDist;
-
-    /*
-    SendInt( TargetDirX );
-    S4_Put(0, 32);
-    SendInt( TargetDirY );
-    S4_Put(0, 32);
-    SendInt( TargetDist );
-    S4_Put(0, 13);
-    */
   }
 
   char temp = 0;
