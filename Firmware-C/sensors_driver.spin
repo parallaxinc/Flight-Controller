@@ -43,10 +43,11 @@ CON
 ' LED_RESET   = 50 * ONE_uS     'Too big to be a constant, so it's in a variable in the DAT section
 
 'WS2812B Timings
-  LED_0_HI    = (ONE_uS * 35)/100       
-  LED_0_LO    = (ONE_uS * 90)/100       
-  LED_1_HI    = (ONE_uS * 90)/100       
-  LED_1_LO    = (ONE_uS * 35)/100       
+' (The number subtracted from the end adjusts for the unaccounted instructions between reading cnt and executing the waitcnt.  --David Carrier 10 Aug 2017) 
+  LED_0_HI    = (ONE_uS * 35)/100 - 8                              
+  LED_0_LO    = (ONE_uS * 90)/100 - 16      
+  LED_1_HI    = (ONE_uS * 90)/100 - 16      
+  LED_1_LO    = (ONE_uS * 35)/100 - 9      
 
 
 'WS2812 Timings
